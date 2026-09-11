@@ -9539,11 +9539,15 @@ video {
   background: #07090d;
 }
 .asset-workbench__chrome::before {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
+  position: fixed;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  left: var(--sidebar-width);
+  height: 300px;
   background: #07090d;
   content: '';
+  pointer-events: none;
 }
 .asset-workbench__chrome > * {
   position: relative;

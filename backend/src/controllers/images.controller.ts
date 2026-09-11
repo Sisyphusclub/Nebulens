@@ -234,7 +234,10 @@ export function buildImagesController(deps: ImagesControllerDeps): {
           }
         }
 
-        const providerCredential = deps.userImageApiKeys.getProviderCredential(user.id);
+        const providerCredential = deps.userImageApiKeys.getProviderCredentialForGroup(
+          user.id,
+          'standard',
+        );
         const quotaPool =
           providerCredential === undefined ? deps.userQuota.forUser(user.id) : undefined;
         const result = await generateImage(
@@ -292,7 +295,12 @@ export function buildImagesController(deps: ImagesControllerDeps): {
         const user = requireUser(req);
         const parsed = parseGenerateBody(highResGenerateBodySchema, req.body);
         const referenceIds = normalizeReferenceIds(parsed.referenceIds, parsed.referenceId);
-        const quotaPool = deps.userQuota.forUser(user.id);
+        const providerCredential = deps.userImageApiKeys.getProviderCredentialForGroup(
+          user.id,
+          'high-res',
+        );
+        const quotaPool =
+          providerCredential === undefined ? deps.userQuota.forUser(user.id) : undefined;
         const result = await generateImage(
           {
             prompt: parsed.prompt,
@@ -304,8 +312,12 @@ export function buildImagesController(deps: ImagesControllerDeps): {
             userId: user.id,
             requestId: req.requestId,
             signal: requestAbort.signal,
+            ...(providerCredential === undefined ? {} : { providerCredential }),
+            ...(providerCredential === undefined
+              ? {}
+              : { providerCredentialGroup: 'high-res' as const }),
           },
-          { provider: deps.provider, quotaPool },
+          { provider: deps.provider, ...(quotaPool === undefined ? {} : { quotaPool }) },
         );
 
         if (requestAbort.signal.aborted) {

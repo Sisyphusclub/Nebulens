@@ -41,7 +41,7 @@ export const IMAGE_MODELS = [
   'gpt-image-2',
   'gpt-image-2.5-flare',
   'gpt-image-2.5-sunburst',
-  'gemini-3.1-flash-image',
+  'gemini-3-pro-image',
 ] as const;
 export type ImageModel = (typeof IMAGE_MODELS)[number];
 export const DEFAULT_IMAGE_MODEL: ImageModel = IMAGE_MODELS[0];
@@ -49,7 +49,7 @@ export const IMAGE_MODEL_LABELS: Record<ImageModel, string> = {
   'gpt-image-2': 'gpt-image-2',
   'gpt-image-2.5-flare': 'gpt-image-2.5-flare',
   'gpt-image-2.5-sunburst': 'gpt-image-2.5-sunburst',
-  'gemini-3.1-flash-image': 'Nano Banana 2',
+  'gemini-3-pro-image': 'Nano Banana Pro',
 };
 export const IMAGE_QUALITIES = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
 export type ImageQuality = (typeof IMAGE_QUALITIES)[number];

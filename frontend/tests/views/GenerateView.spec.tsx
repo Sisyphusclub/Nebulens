@@ -236,7 +236,7 @@ it('offers the default model and all upstream models', async () => {
   );
   expect(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-flare' })).toBeInTheDocument();
   expect(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-sunburst' })).toBeInTheDocument();
-  expect(screen.getByRole('menuitemradio', { name: 'Nano Banana 2' })).toBeInTheDocument();
+  expect(screen.getByRole('menuitemradio', { name: 'Nano Banana Pro' })).toBeInTheDocument();
 });
 
 it.each(['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'] as const)(
@@ -281,7 +281,7 @@ it.each(['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'] as const)(
 
 it.each([
   ['gpt-image-2', 'gpt-image-2'],
-  ['gemini-3.1-flash-image', 'Nano Banana 2'],
+  ['gemini-3-pro-image', 'Nano Banana Pro'],
 ] as const)('does not expose or submit quality for %s', async (model, label) => {
   const user = userEvent.setup();
   render(

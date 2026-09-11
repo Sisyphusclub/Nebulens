@@ -29,7 +29,7 @@ const OPENAI_COMPAT_MODEL_IDS = [
   'gpt-image-2',
   'gpt-image-2.5-flare',
   'gpt-image-2.5-sunburst',
-  'gemini-3.1-flash-image',
+  'gemini-3-pro-image',
   'codex-gpt-image-2',
   'auto',
   'gpt-5',

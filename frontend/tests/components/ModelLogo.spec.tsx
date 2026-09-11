@@ -5,7 +5,7 @@ import { ModelLogo } from '@/components/premium/agent-chat-input/model-logo';
 
 describe('ModelLogo', () => {
   it('uses the local Gemini artwork for Gemini image models', () => {
-    const { container } = render(<ModelLogo modelId="gemini-3.1-flash-image" />);
+    const { container } = render(<ModelLogo modelId="gemini-3-pro-image" />);
 
     expect(container.firstElementChild).toHaveStyle({
       backgroundImage: 'url("/brand/gemini.svg")',

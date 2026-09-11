@@ -163,13 +163,13 @@ describe('TwoApiImageProvider', () => {
       }),
     );
     const provider = new TwoApiImageProvider(
-      { ...baseConfig, modelApiKeys: { 'gemini-3.1-flash-image': 'sk-gemini' } },
+      { ...baseConfig, modelApiKeys: { 'gemini-3-pro-image': 'sk-gemini' } },
       fetchMock,
     );
 
     const out = await provider.generate({
       prompt: 'a red cube',
-      model: 'gemini-3.1-flash-image',
+      model: 'gemini-3-pro-image',
       aspectRatio: '16:9',
       resolution: '2k',
     });
@@ -178,7 +178,7 @@ describe('TwoApiImageProvider', () => {
     expect(out.images[0]?.outputPath).toMatch(/\.jpeg$/);
     const [calledUrl, init] = fetchMock.mock.calls[0]!;
     expect(calledUrl).toBe(
-      'https://api.example.com/v1beta/models/gemini-3.1-flash-image:generateContent',
+      'https://api.example.com/v1beta/models/gemini-3-pro-image:generateContent',
     );
     expect((init as RequestInit).headers).toMatchObject({ Authorization: 'Bearer sk-gemini' });
     const body = JSON.parse((init as RequestInit).body as string) as {
@@ -201,13 +201,13 @@ describe('TwoApiImageProvider', () => {
       }),
     );
     const provider = new TwoApiImageProvider(
-      { ...baseConfig, modelApiKeys: { 'gemini-3.1-flash-image': 'sk-gemini' } },
+      { ...baseConfig, modelApiKeys: { 'gemini-3-pro-image': 'sk-gemini' } },
       fetchMock,
     );
 
     const out = await provider.generate({
       prompt: 'edit this',
-      model: 'gemini-3.1-flash-image',
+      model: 'gemini-3-pro-image',
       referencePath: refPath,
       count: 2,
     });

@@ -11196,3 +11196,40 @@ video {
     min-height: 52px;
   }
 }
+
+/* Natural image dimensions prevent cropping and stale metadata from distorting assets. */
+.assets-page .image-grid {
+  display: block;
+  column-count: 4;
+  column-gap: 12px;
+}
+.assets-page .image-grid .image-tile {
+  break-inside: avoid;
+  padding-bottom: 0;
+  margin-bottom: 12px;
+}
+.assets-page .image-grid .image-tile__morph {
+  aspect-ratio: auto !important;
+}
+.assets-page .image-grid .image-tile__preview {
+  height: auto;
+  aspect-ratio: auto;
+}
+.assets-page .image-grid .image-tile__preview img {
+  height: auto;
+}
+@media (min-width: 1600px) {
+  .assets-page .image-grid {
+    column-count: 5;
+  }
+}
+@media (max-width: 1180px) {
+  .assets-page .image-grid {
+    column-count: 2;
+  }
+}
+@media (max-width: 640px) {
+  .assets-page .image-grid {
+    column-count: 1;
+  }
+}

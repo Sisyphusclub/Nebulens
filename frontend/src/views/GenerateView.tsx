@@ -1063,7 +1063,6 @@ export function GenerateView() {
     setIsPublic(settings.isPublic);
     setReusedReferenceIds([...settings.referenceIds]);
     upload.clear();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     notify('完整设置已恢复。');
   };
 
@@ -1083,7 +1082,6 @@ export function GenerateView() {
       const result = upload.selectFile(file);
       if (result.skipped) throw new Error('参考图已达到 4 张上限。');
       setReusedReferenceIds([]);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       notify('图片已加入参考图。');
     } catch (error) {
       notify(error instanceof Error ? error.message : '无法添加参考图。', 'error');
@@ -1621,7 +1619,10 @@ export function GenerateView() {
           if (item) reuseSettings(item.settings);
           setSelected(null);
         }}
-        onUseAsReference={(entry) => void addAsReference(entry)}
+        onUseAsReference={async (entry) => {
+          await addAsReference(entry);
+          setSelected(null);
+        }}
         onToggleVisibility={(entry) => void toggleVisibility(entry)}
         onDelete={(entry) => {
           setSelected(null);

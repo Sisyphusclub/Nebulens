@@ -25,6 +25,8 @@ export interface MorphicCardProps {
   className?: string;
   style?: MotionStyle;
   onClick?: () => void;
+  /** Disable position interpolation for dynamic collections such as filtered grids. */
+  animateLayout?: boolean;
 }
 
 export interface MorphicCardModalProps {
@@ -43,11 +45,18 @@ export interface MorphicCardModalProps {
  * Wrap the collapsed card content. Shares a layoutId with MorphicCardModal
  * so framer animates the expansion automatically.
  */
-export function MorphicCard({ id, children, className, style, onClick }: MorphicCardProps) {
+export function MorphicCard({
+  id,
+  children,
+  className,
+  style,
+  onClick,
+  animateLayout = true,
+}: MorphicCardProps) {
   'use no memo';
   return (
     <motion.div
-      layout
+      layout={animateLayout}
       layoutId={`morphic-card-${id}`}
       style={{ borderRadius: 8, ...style }}
       onClick={onClick}

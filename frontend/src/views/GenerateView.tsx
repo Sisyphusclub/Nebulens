@@ -143,6 +143,7 @@ const IMAGE_MODEL_OPTIONS = [
   { value: 'gpt-image-2', label: 'gpt-image-2' },
   { value: 'gpt-image-2.5-flare', label: 'gpt-image-2.5-flare' },
   { value: 'gpt-image-2.5-sunburst', label: 'gpt-image-2.5-sunburst' },
+  { value: 'gemini-3.1-flash-image', label: 'Nano Banana 2' },
 ] as const;
 const AGENT_IMAGE_MODELS = IMAGE_MODEL_OPTIONS.map(({ value, label }) => ({ id: value, label }));
 const DEFAULT_IMAGE_MODEL = IMAGE_MODEL_OPTIONS[0].value;

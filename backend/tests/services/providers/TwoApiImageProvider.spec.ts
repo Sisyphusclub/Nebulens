@@ -132,6 +132,81 @@ describe('TwoApiImageProvider', () => {
     expect(body['size']).toBe('1792x1024');
   });
 
+  it('calls Gemini generateContent and stores inline image data', async () => {
+    const fetchMock = vi.fn<typeof globalThis.fetch>(async () =>
+      jsonResponse({
+        candidates: [
+          {
+            content: {
+              parts: [{ inlineData: { mimeType: 'image/jpeg', data: TINY_PNG_B64 } }],
+            },
+          },
+        ],
+      }),
+    );
+    const provider = new TwoApiImageProvider(
+      { ...baseConfig, modelApiKeys: { 'gemini-3.1-flash-image': 'sk-gemini' } },
+      fetchMock,
+    );
+
+    const out = await provider.generate({
+      prompt: 'a red cube',
+      model: 'gemini-3.1-flash-image',
+      aspectRatio: '16:9',
+      resolution: '2k',
+    });
+
+    expect(out.images).toHaveLength(1);
+    expect(out.images[0]?.outputPath).toMatch(/\.jpeg$/);
+    const [calledUrl, init] = fetchMock.mock.calls[0]!;
+    expect(calledUrl).toBe(
+      'https://api.example.com/v1beta/models/gemini-3.1-flash-image:generateContent',
+    );
+    expect((init as RequestInit).headers).toMatchObject({ Authorization: 'Bearer sk-gemini' });
+    const body = JSON.parse((init as RequestInit).body as string) as {
+      contents: Array<{ parts: Array<Record<string, unknown>> }>;
+      generationConfig: Record<string, unknown>;
+    };
+    expect(body.contents[0]!.parts).toEqual([{ text: 'a red cube' }]);
+    expect(body.generationConfig).toEqual({
+      responseModalities: ['IMAGE'],
+      imageConfig: { aspectRatio: '16:9', imageSize: '2K' },
+    });
+  });
+
+  it('sends each reference image as Gemini inlineData and repeats requests for count', async () => {
+    const refBytes = Buffer.from(TINY_PNG_B64, 'base64');
+    const refPath = await seedUpload('cccccccc-cccc-cccc-cccc-cccccccccccc.png', refBytes);
+    const fetchMock = vi.fn<typeof globalThis.fetch>(async () =>
+      jsonResponse({
+        candidates: [{ content: { parts: [{ inlineData: { data: TINY_PNG_B64 } }] } }],
+      }),
+    );
+    const provider = new TwoApiImageProvider(
+      { ...baseConfig, modelApiKeys: { 'gemini-3.1-flash-image': 'sk-gemini' } },
+      fetchMock,
+    );
+
+    const out = await provider.generate({
+      prompt: 'edit this',
+      model: 'gemini-3.1-flash-image',
+      referencePath: refPath,
+      count: 2,
+    });
+
+    expect(out.images).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const body = JSON.parse(fetchMock.mock.calls[0]![1]!.body as string) as {
+      contents: Array<{ parts: Array<Record<string, unknown>> }>;
+    };
+    expect(body.contents[0]!.parts).toHaveLength(2);
+    expect(body.contents[0]!.parts[0]).toEqual({ text: 'edit this' });
+    expect(body.contents[0]!.parts[1]!.inlineData).toEqual({
+      mimeType: 'image/png',
+      data: TINY_PNG_B64,
+    });
+  });
+
   it('maps 2k resolution to provider size payload', async () => {
     const fetchMock = vi.fn<typeof globalThis.fetch>(async () =>
       jsonResponse({ data: [{ b64_json: TINY_PNG_B64 }] }),

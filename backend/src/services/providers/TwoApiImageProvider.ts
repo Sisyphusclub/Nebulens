@@ -9,6 +9,7 @@ import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_COUNT,
   DEFAULT_IMAGE_RESOLUTION,
+  GEMINI_IMAGE_MODEL,
   aspectSizeForResolution,
   type AspectRatio,
   type GenerateImageItem,
@@ -26,6 +27,7 @@ export interface TwoApiConfig {
   baseUrl: string;
   highResBaseUrl?: string;
   apiKey: string;
+  modelApiKeys?: Readonly<Record<string, string>>;
   highResApiKey?: string;
   defaultModel: string;
   highResModel?: string;
@@ -35,6 +37,16 @@ export interface TwoApiConfig {
 interface OpenAIImageResponse {
   created?: number;
   data?: Array<{ b64_json?: string; revised_prompt?: string }>;
+}
+
+interface GeminiImageResponse {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{
+        inlineData?: { data?: string; mimeType?: string };
+      }>;
+    };
+  }>;
 }
 
 type FetchImpl = typeof globalThis.fetch;
@@ -145,8 +157,8 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
     const aspectRatio: AspectRatio = input.aspectRatio ?? DEFAULT_ASPECT_RATIO;
     const resolution: ImageResolution = input.resolution ?? DEFAULT_IMAGE_RESOLUTION;
     const model = this.modelForResolution(resolution, input.model);
-    const baseUrl = this.baseUrlForResolution(resolution);
-    const apiKey = this.apiKeyForResolution(resolution, input.providerCredential);
+    const baseUrl = this.baseUrlForRequest(model, resolution);
+    const apiKey = this.apiKeyForRequest(model, resolution, input.providerCredential);
     const count = input.count ?? DEFAULT_COUNT;
     const sizing = aspectSizeForResolution(aspectRatio, resolution);
     if (sizing === undefined) {
@@ -165,30 +177,62 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       input.signal === undefined ? timeoutSignal : AbortSignal.any([input.signal, timeoutSignal]);
 
     const start = Date.now();
-    let response: Response;
+    const isGemini = model === GEMINI_IMAGE_MODEL;
+    let responses: Response[];
     try {
-      response = hasReference
-        ? await this.callEdits(
-            baseUrl,
-            apiKey,
-            model,
-            input.prompt,
-            referencePaths,
-            count,
-            sizing.size,
-            requestSignal,
-            input.requestId,
-          )
-        : await this.callGenerations(
-            baseUrl,
-            apiKey,
-            model,
-            input.prompt,
-            count,
-            sizing.size,
-            requestSignal,
-            input.requestId,
-          );
+      if (isGemini) {
+        responses = await Promise.all(
+          Array.from({ length: count }, () =>
+            hasReference
+              ? this.callGeminiEdits(
+                  baseUrl,
+                  apiKey,
+                  model,
+                  input.prompt,
+                  referencePaths,
+                  aspectRatio,
+                  resolution,
+                  requestSignal,
+                  input.requestId,
+                )
+              : this.callGeminiGenerations(
+                  baseUrl,
+                  apiKey,
+                  model,
+                  input.prompt,
+                  aspectRatio,
+                  resolution,
+                  requestSignal,
+                  input.requestId,
+                ),
+          ),
+        );
+      } else {
+        responses = [
+          hasReference
+            ? await this.callEdits(
+                baseUrl,
+                apiKey,
+                model,
+                input.prompt,
+                referencePaths,
+                count,
+                sizing.size,
+                requestSignal,
+                input.requestId,
+              )
+            : await this.callGenerations(
+                baseUrl,
+                apiKey,
+                model,
+                input.prompt,
+                count,
+                sizing.size,
+                requestSignal,
+                input.requestId,
+              ),
+        ];
+      }
     } catch (err) {
       if (input.signal?.aborted === true) {
         throw new AppError('REQUEST_ABORTED', 'Image generation request was cancelled', 499, err);
@@ -204,6 +248,10 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       throw new AppError('PROVIDER_ERROR', 'Failed to reach image generation provider', 502, err);
     }
 
+    const response = responses.find((candidate) => !candidate.ok) ?? responses[0];
+    if (response === undefined) {
+      throw new AppError('PROVIDER_EMPTY_RESULT', 'Provider returned no response', 502);
+    }
     if (response.status === 429) {
       const summary = await summarizeBody(response);
       logger.warn(
@@ -255,9 +303,22 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       );
     }
 
-    let parsed: OpenAIImageResponse;
+    const imageData: Array<{ data: string; mimeType?: string }> = [];
     try {
-      parsed = (await response.json()) as OpenAIImageResponse;
+      for (const candidate of responses) {
+        const parsed = (await candidate.json()) as OpenAIImageResponse | GeminiImageResponse;
+        if (isGemini) {
+          imageData.push(...extractGeminiImageData(parsed as GeminiImageResponse));
+        } else {
+          imageData.push(
+            ...((parsed as OpenAIImageResponse).data ?? []).flatMap((item) =>
+              typeof item.b64_json === 'string' && item.b64_json.length > 0
+                ? [{ data: item.b64_json }]
+                : [],
+            ),
+          );
+        }
+      }
     } catch (err) {
       if (input.signal?.aborted === true) {
         throw new AppError('REQUEST_ABORTED', 'Image generation request was cancelled', 499, err);
@@ -273,8 +334,7 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       throw new AppError('PROVIDER_ERROR', 'Provider returned malformed JSON', 502, err);
     }
 
-    const data = parsed.data ?? [];
-    if (data.length === 0) {
+    if (imageData.length === 0) {
       throw new AppError(
         'PROVIDER_EMPTY_RESULT',
         'Provider did not return image data',
@@ -286,19 +346,10 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
 
     const images: GenerateImageItem[] = [];
     try {
-      for (const item of data) {
+      for (const item of imageData) {
         requestSignal.throwIfAborted();
-        if (typeof item.b64_json !== 'string' || item.b64_json.length === 0) {
-          throw new AppError(
-            'PROVIDER_EMPTY_RESULT',
-            'Provider did not return image data',
-            502,
-            undefined,
-            { reason: 'empty_result' },
-          );
-        }
-        const buffer = Buffer.from(item.b64_json, 'base64');
-        const saved = await saveOutput(buffer, 'png');
+        const buffer = Buffer.from(item.data, 'base64');
+        const saved = await saveOutput(buffer, extensionForMime(item.mimeType));
         if (requestSignal.aborted) {
           await removeOutput(saved.absolutePath);
           requestSignal.throwIfAborted();
@@ -336,15 +387,19 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
     return { images, aspectRatio, model };
   }
 
-  private baseUrlForResolution(resolution: ImageResolution): string {
+  private baseUrlForRequest(model: string, resolution: ImageResolution): string {
+    if (this.config.modelApiKeys?.[model] !== undefined) return this.config.baseUrl;
     if (resolution === DEFAULT_IMAGE_RESOLUTION) return this.config.baseUrl;
     return this.config.highResBaseUrl ?? this.config.baseUrl;
   }
 
-  private apiKeyForResolution(
+  private apiKeyForRequest(
+    model: string,
     resolution: ImageResolution,
     providerCredential: string | undefined,
   ): string {
+    const modelApiKey = this.config.modelApiKeys?.[model];
+    if (modelApiKey !== undefined) return modelApiKey;
     if (resolution === DEFAULT_IMAGE_RESOLUTION) {
       return providerCredential ?? this.config.apiKey;
     }
@@ -363,6 +418,95 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       return this.config.highResModel;
     }
     return requestedModel ?? this.config.defaultModel;
+  }
+
+  private async callGeminiGenerations(
+    baseUrl: string,
+    apiKey: string,
+    model: string,
+    prompt: string,
+    aspectRatio: AspectRatio,
+    resolution: ImageResolution,
+    signal: AbortSignal,
+    requestId?: string,
+  ): Promise<Response> {
+    return this.callGemini(
+      baseUrl,
+      apiKey,
+      model,
+      [{ text: prompt }],
+      aspectRatio,
+      resolution,
+      signal,
+      requestId,
+    );
+  }
+
+  private async callGeminiEdits(
+    baseUrl: string,
+    apiKey: string,
+    model: string,
+    prompt: string,
+    referencePaths: string[],
+    aspectRatio: AspectRatio,
+    resolution: ImageResolution,
+    signal: AbortSignal,
+    requestId?: string,
+  ): Promise<Response> {
+    const referenceFiles = await Promise.all(
+      referencePaths.map((referencePath) => readReferenceFile(referencePath)),
+    );
+    const parts = [
+      { text: prompt },
+      ...referenceFiles.map((file) => ({
+        inlineData: { mimeType: file.mime, data: file.buffer.toString('base64') },
+      })),
+    ];
+    return this.callGemini(
+      baseUrl,
+      apiKey,
+      model,
+      parts,
+      aspectRatio,
+      resolution,
+      signal,
+      requestId,
+    );
+  }
+
+  private async callGemini(
+    baseUrl: string,
+    apiKey: string,
+    model: string,
+    parts: Array<Record<string, unknown>>,
+    aspectRatio: AspectRatio,
+    resolution: ImageResolution,
+    signal: AbortSignal,
+    requestId?: string,
+  ): Promise<Response> {
+    const url = buildUrl(baseUrl, `v1beta/models/${encodeURIComponent(model)}:generateContent`);
+    logger.info(
+      { requestId, model, promptLength: parts.length, url, aspectRatio, resolution },
+      'image generation: provider request (gemini generateContent)',
+    );
+    return this.fetchImpl(url, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts }],
+        generationConfig: {
+          responseModalities: ['IMAGE'],
+          imageConfig: {
+            aspectRatio,
+            imageSize: geminiImageSize(resolution),
+          },
+        },
+      }),
+      signal,
+    });
   }
 
   private async callGenerations(
@@ -474,6 +618,36 @@ async function readReferenceFile(
 function buildUrl(baseUrl: string, suffix: string): string {
   const trimmed = baseUrl.replace(/\/+$/, '');
   return `${trimmed}/${suffix}`;
+}
+
+function geminiImageSize(resolution: ImageResolution): '1K' | '2K' | '4K' {
+  if (resolution === '4k') return '4K';
+  if (resolution === '2k') return '2K';
+  return '1K';
+}
+
+function extractGeminiImageData(
+  response: GeminiImageResponse,
+): Array<{ data: string; mimeType?: string }> {
+  return (response.candidates ?? []).flatMap((candidate) =>
+    (candidate.content?.parts ?? []).flatMap((part) => {
+      const inlineData = part.inlineData;
+      return inlineData?.data
+        ? [
+            {
+              data: inlineData.data,
+              ...(inlineData.mimeType ? { mimeType: inlineData.mimeType } : {}),
+            },
+          ]
+        : [];
+    }),
+  );
+}
+
+function extensionForMime(mimeType: string | undefined): 'png' | 'jpeg' | 'webp' {
+  if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') return 'jpeg';
+  if (mimeType === 'image/webp') return 'webp';
+  return 'png';
 }
 
 function isTimeoutLike(err: unknown): boolean {

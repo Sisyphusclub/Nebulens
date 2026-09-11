@@ -462,6 +462,7 @@ export function GenerateView() {
   const composerRef = useRef<HTMLDivElement>(null);
   const sessionFeedRef = useRef<HTMLElement>(null);
   const latestBatchRef = useRef<HTMLElement>(null);
+  const initialLatestScrollSessionRef = useRef<string | null>(null);
   latestFeed.current = feed;
   const [selected, setSelected] = useState<HistoryEntry | null>(null);
   const [activeHistoryBatchId, setActiveHistoryBatchId] = useState<string | null>(null);
@@ -592,6 +593,22 @@ export function GenerateView() {
     feedBySession.current.set(activeSessionId, next);
     setFeed((current) => (sameFeed(current, next) ? current : next));
   }, [activeSessionId, history.batches, searchParams, sessions]);
+
+  useLayoutEffect(() => {
+    if (
+      !activeSessionId ||
+      !feed.length ||
+      initialLatestScrollSessionRef.current === activeSessionId
+    ) {
+      return;
+    }
+    initialLatestScrollSessionRef.current = activeSessionId;
+    const latestId = feed[feed.length - 1]?.id;
+    if (latestId) {
+      pendingScrollId.current = latestId;
+      scrollToGenerationBatch(latestId);
+    }
+  }, [activeSessionId, feed]);
 
   useEffect(() => {
     if (!feedSessionId.current) return;

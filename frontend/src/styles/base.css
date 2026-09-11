@@ -6173,10 +6173,13 @@ video {
   transform: translateY(-50%);
 }
 .generation-history-popover-content {
+  width: min(360px, calc(100vw - 96px)) !important;
+  max-width: min(360px, calc(100vw - 96px)) !important;
   overflow: visible !important;
   border: 0 !important;
   background: transparent !important;
   padding: 0 !important;
+  transform: none !important;
 }
 .generation-history-popover-content .generation-history-panel {
   right: auto !important;
@@ -6565,16 +6568,13 @@ video {
   transition:
     background 160ms var(--ease-out-expo),
     border-color 160ms var(--ease-out-expo),
-    transform 160ms var(--ease-out-expo);
+    transform none;
 }
 .generation-history-item:hover,
 .generation-history-item:focus-visible,
 .generation-history-item.is-active {
   border-color: color-mix(in oklch, var(--border-strong) 76%, transparent);
   background: color-mix(in oklch, var(--surface-hover) 76%, transparent);
-}
-.generation-history-item:hover {
-  transform: translateX(-2px);
 }
 .generation-history-item__thumb {
   display: grid;

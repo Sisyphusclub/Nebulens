@@ -66,6 +66,8 @@ const LANDING_COMPOSER_OPEN_CLIP = 'inset(0 0% 0 0% round 20px)';
 function isComposerDropdownTarget(anchor: HTMLElement, target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
 
+  if (target.closest('[role="menu"], [data-radix-popper-content-wrapper]')) return true;
+
   const content = target.closest<HTMLElement>('[data-radix-menu-content]');
   if (!content?.id) return false;
 

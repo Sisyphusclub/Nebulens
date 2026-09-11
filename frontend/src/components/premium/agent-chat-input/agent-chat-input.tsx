@@ -483,14 +483,19 @@ function StreamingPlaceholder({ active, examples, reduce }: StreamingPlaceholder
   }, [active, reduce, signature]);
 
   return (
-    <span
+    <button
+      type="button"
       className="agent-chat-input__streaming-placeholder"
       data-active={active ? 'true' : undefined}
-      aria-hidden="true"
+      aria-label="复制当前提示词示例"
+      onClick={() => {
+        const prompt = textRef.current?.textContent?.trim();
+        if (prompt) void navigator.clipboard.writeText(prompt);
+      }}
     >
       <span ref={textRef} className="agent-chat-input__streaming-placeholder-text" />
       <span className="agent-chat-input__streaming-placeholder-caret" />
-    </span>
+    </button>
   );
 }
 

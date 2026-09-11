@@ -575,14 +575,19 @@ export function GenerateView() {
         .filter((item) => session.batchIds.includes(item.id) && !persisted.has(item.id))
         .map((item) => [item.id, item]),
     );
-    const persistedBatchIds = [...history.batches].reverse().map((batch) => batch.batchId);
     const orderedBatchIds = [
-      ...persistedBatchIds,
+      ...history.batches.map((batch) => batch.batchId),
       ...session.batchIds.filter((batchId) => !persisted.has(batchId)),
     ];
+    const orderIndex = new Map(orderedBatchIds.map((batchId, index) => [batchId, index]));
     const next = orderedBatchIds
       .map((batchId) => transient.get(batchId) ?? persisted.get(batchId))
-      .filter((item): item is FeedItem => item !== undefined);
+      .filter((item): item is FeedItem => item !== undefined)
+      .sort((left, right) => {
+        const byCreatedAt = left.createdAt.localeCompare(right.createdAt);
+        if (byCreatedAt !== 0) return byCreatedAt;
+        return (orderIndex.get(left.id) ?? 0) - (orderIndex.get(right.id) ?? 0);
+      });
     feedSessionId.current = activeSessionId;
     feedBySession.current.set(activeSessionId, next);
     setFeed((current) => (sameFeed(current, next) ? current : next));

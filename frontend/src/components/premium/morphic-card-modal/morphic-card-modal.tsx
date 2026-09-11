@@ -27,6 +27,8 @@ export interface MorphicCardProps {
   onClick?: () => void;
   /** Disable position interpolation for dynamic collections such as filtered grids. */
   animateLayout?: boolean;
+  /** Disable shared-layout matching when the card is rendered in a reordering collection. */
+  sharedLayout?: boolean;
 }
 
 export interface MorphicCardModalProps {
@@ -52,12 +54,13 @@ export function MorphicCard({
   style,
   onClick,
   animateLayout = true,
+  sharedLayout = true,
 }: MorphicCardProps) {
   'use no memo';
   return (
     <motion.div
       layout={animateLayout}
-      layoutId={`morphic-card-${id}`}
+      {...(sharedLayout ? { layoutId: `morphic-card-${id}` } : {})}
       style={{ borderRadius: 8, ...style }}
       onClick={onClick}
       className={cn('cursor-pointer', className)}

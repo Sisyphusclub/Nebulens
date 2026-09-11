@@ -128,6 +128,7 @@ import {
   attachGenerationBatch,
   createGenerationSession,
   resetGenerationSessionsForTests,
+  upsertGenerationTask,
 } from '@/hooks/useGenerationSessions';
 import { GenerateView } from '@/views/GenerateView';
 
@@ -530,6 +531,73 @@ it('recovers a legacy pending task that was saved without feed details', async (
   expect(restoredError.closest('[data-generation-batch]')).toHaveTextContent('旧失败任务');
   expect(restoredError).toHaveTextContent('上一条生成任务未能完成，请重试。');
   expect(restoredError.closest('[data-generation-batch]')).toHaveAttribute('data-count', '4');
+});
+
+it('keeps failed tasks in chronological position among restored results', async () => {
+  const makeBatch = (batchId: string, createdAt: string, prompt: string) => ({
+    batchId,
+    createdAt,
+    prompt,
+    model: 'gpt-image-2',
+    entries: [
+      {
+        record: {
+          id: `${batchId}.png`,
+          batchId,
+          createdAt,
+          prompt,
+          model: 'gpt-image-2',
+          aspectRatio: '16:9' as const,
+          width: 1792,
+          height: 1024,
+          count: 1,
+          resolution: 'standard' as const,
+          isPublic: false,
+        },
+        imageUrl: `/${batchId}.png`,
+      },
+    ],
+    settings: {
+      prompt,
+      model: 'gpt-image-2',
+      count: 1,
+      aspectRatio: '16:9' as const,
+      resolution: 'standard' as const,
+      isPublic: false,
+      referenceIds: [],
+    },
+  });
+
+  historyMocks.batches = [
+    makeBatch('new-result', '2026-09-11T10:00:00.000Z', '新结果'),
+    makeBatch('old-result', '2026-09-11T08:00:00.000Z', '旧结果'),
+  ];
+  const session = createGenerationSession('时间顺序');
+  attachGenerationBatch(session.id, 'old-result', '旧结果');
+  attachGenerationBatch(session.id, 'failed-result', '失败结果');
+  attachGenerationBatch(session.id, 'new-result', '新结果');
+  upsertGenerationTask(session.id, {
+    id: 'failed-result',
+    createdAt: '2026-09-11T09:00:00.000Z',
+    settings: makeBatch('failed-result', '2026-09-11T09:00:00.000Z', '失败结果').settings,
+    error: '上游生成服务异常',
+  });
+
+  const { container } = render(
+    <MemoryRouter initialEntries={[`/generate?session=${session.id}`]}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await waitFor(() =>
+    expect(
+      Array.from(container.querySelectorAll<HTMLElement>('[data-generation-batch]')).map(
+        (element) => element.dataset.generationBatch,
+      ),
+    ).toEqual(['old-result', 'failed-result', 'new-result']),
+  );
 });
 
 it('supports up to four images per generation', async () => {

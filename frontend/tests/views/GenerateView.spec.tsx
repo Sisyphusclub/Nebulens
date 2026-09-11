@@ -24,7 +24,12 @@ const publicGalleryMocks = vi.hoisted(() => ({
 
 const imageApiKeyMocks = vi.hoisted(
   (): {
-    status: { configured: boolean; keySuffix?: string };
+    status: {
+      configured: boolean;
+      keySuffix?: string;
+      highResConfigured?: boolean;
+      highResKeySuffix?: string;
+    };
     isLoading: boolean;
   } => ({
     status: { configured: false },
@@ -190,6 +195,35 @@ it('shows personal Key routing instead of site quota when configured', () => {
 
   expect(screen.getByLabelText('当前使用个人 API Key')).toHaveTextContent('调用：个人 Key · 4321');
   expect(screen.queryByLabelText('今日生成额度')).not.toBeInTheDocument();
+});
+
+it('uses the Key status for the currently selected resolution group', () => {
+  imageApiKeyMocks.status = {
+    configured: true,
+    keySuffix: '1111',
+    highResConfigured: true,
+    highResKeySuffix: '4444',
+  };
+  const { rerender } = render(
+    <MemoryRouter initialEntries={['/generate?resolution=2k']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  expect(screen.getByLabelText('当前使用个人 API Key')).toHaveTextContent('调用：个人 Key · 4444');
+
+  imageApiKeyMocks.status = { configured: true, keySuffix: '1111' };
+  rerender(
+    <MemoryRouter initialEntries={['/generate?resolution=2k']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  expect(screen.getByLabelText('2K/4K 永久积分')).toHaveTextContent('永久积分：18 / 20');
 });
 
 it('keeps the generation workspace prompt plain and focused', () => {

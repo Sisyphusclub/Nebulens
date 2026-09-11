@@ -79,7 +79,7 @@ function generationError(error: unknown): Error {
   const suffix = error.requestId ? `（请求编号：${error.requestId}）` : '';
   const quotaMessage =
     error.details?.['quotaScope'] === 'permanent'
-      ? '2K/4K 仅可使用永久积分，当前永久积分不足。'
+      ? '未配置 2K/4K 分组 Key，且当前永久积分不足。'
       : 'GPT 号池剩余额度不足，请稍后补充额度后再试。';
   const messages: Record<string, string> = {
     PAYLOAD_TOO_LARGE: '参考图超过后端限制，请压缩后重试。',

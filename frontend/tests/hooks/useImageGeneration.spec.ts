@@ -152,7 +152,7 @@ describe('useImageGeneration', () => {
     await act(async () => {
       await expect(
         result.current.generate({ prompt: 'high resolution', resolution: '2k' }),
-      ).rejects.toThrow('2K/4K 仅可使用永久积分，当前永久积分不足。');
+      ).rejects.toThrow('未配置 2K/4K 分组 Key，且当前永久积分不足。');
     });
   });
 });

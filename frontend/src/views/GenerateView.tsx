@@ -474,6 +474,22 @@ export function GenerateView() {
   const previousSessionId = useRef<string | null>(activeSessionId);
   const accountName = user?.username ?? user?.name ?? '账户';
   const currentUserId = isAuthenticated ? (user?.id ?? null) : null;
+  const activeImageApiKeyConfigured =
+    resolution === DEFAULT_IMAGE_RESOLUTION
+      ? imageApiKey.status?.configured === true
+      : imageApiKey.status?.highResConfigured === true;
+  const activeImageApiKeySuffix =
+    resolution === DEFAULT_IMAGE_RESOLUTION
+      ? imageApiKey.status?.keySuffix
+      : imageApiKey.status?.highResKeySuffix;
+  const activeQuotaRemaining =
+    resolution === DEFAULT_IMAGE_RESOLUTION
+      ? quota?.remaining
+      : (quota?.permanentRemaining ?? quota?.remaining);
+  const activeQuotaTotal =
+    resolution === DEFAULT_IMAGE_RESOLUTION
+      ? quota?.total
+      : (quota?.permanentTotal ?? quota?.total);
   const currentUserIdRef = useRef(currentUserId);
   useLayoutEffect(() => {
     currentUserIdRef.current = currentUserId;
@@ -1332,19 +1348,21 @@ export function GenerateView() {
                   <span
                     className="studio-toolbar-quota"
                     aria-label={
-                      imageApiKey.status?.configured === true
+                      activeImageApiKeyConfigured
                         ? '当前使用个人 API Key'
-                        : '今日生成额度'
+                        : resolution === DEFAULT_IMAGE_RESOLUTION
+                          ? '今日生成额度'
+                          : '2K/4K 永久积分'
                     }
                   >
                     {imageApiKey.isLoading
                       ? '调用：同步中'
-                      : imageApiKey.status?.configured === true
-                        ? `调用：个人 Key · ${imageApiKey.status.keySuffix ?? '已配置'}`
+                      : activeImageApiKeyConfigured
+                        ? `调用：个人 Key · ${activeImageApiKeySuffix ?? '已配置'}`
                         : quotaLoading
                           ? '额度：同步中'
                           : isAuthenticated
-                            ? `额度：${quota?.remaining ?? '—'} / ${quota?.total ?? '—'}`
+                            ? `${resolution === DEFAULT_IMAGE_RESOLUTION ? '额度' : '永久积分'}：${activeQuotaRemaining ?? '—'} / ${activeQuotaTotal ?? '—'}`
                             : '额度：登录后查看'}
                   </span>
                 </span>

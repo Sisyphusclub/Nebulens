@@ -9747,6 +9747,10 @@ video {
   background: color-mix(in oklch, var(--surface-hover) 88%, transparent);
 }
 .assets-page .image-tile__select {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
   top: 8px;
   left: 8px;
   border-radius: 6px;
@@ -9846,7 +9850,8 @@ video {
   grid-template-columns:
     36px 56px minmax(180px, 1.6fr) minmax(130px, 0.8fr) 70px 90px 132px
     minmax(216px, auto);
-  gap: 10px;
+  gap: 14px;
+  align-items: center;
 }
 .assets-page .asset-list__head {
   min-height: 40px;
@@ -9854,9 +9859,24 @@ video {
   font-weight: 550;
 }
 .assets-page .asset-list__row {
-  min-height: 72px;
+  min-height: 84px;
+  padding-top: 10px;
+  padding-bottom: 10px;
   border-top-color: var(--border);
 }
+.assets-page .asset-row-select {
+  display: grid;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+  box-sizing: border-box;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+}
+.assets-page .asset-row-select svg { width: 15px; height: 15px; }
 .assets-page .asset-list__row:hover {
   background: color-mix(in oklch, var(--muted) 48%, transparent);
 }

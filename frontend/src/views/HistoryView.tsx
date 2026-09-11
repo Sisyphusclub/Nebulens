@@ -104,6 +104,10 @@ export function HistoryView() {
   const [collectionAssignment, setCollectionAssignment] = useState('choose');
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
+
   const collections = useMemo(
     () => [
       ...new Set([

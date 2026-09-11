@@ -3,8 +3,10 @@ import { cn } from '@/lib/utils';
 const OPENAI_LOGO_URL =
   'https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/OpenAI_logo_2025_%28symbol%29.svg/120px-OpenAI_logo_2025_%28symbol%29.svg.png';
 const CLAUDE_LOGO_URL = 'https://cdn.simpleicons.org/claude/D97757';
-const GEMINI_LOGO_URL =
-  'https://www.gstatic.com/lamda/images/gemini_sparkle_aurora_33f86dc0c0257da337c63.svg';
+// Keep the Gemini mark local so it renders in Discover even when third-party
+// image hosts are blocked by an ad blocker, offline mode, or a restrictive
+// network policy.
+const GEMINI_LOGO_URL = '/brand/gemini.svg';
 
 export function ModelLogo({ modelId, className }: { modelId: string; className?: string }) {
   const openAi = modelId.startsWith('gpt');

@@ -6833,13 +6833,21 @@ video {
 }
 
 .agent-chat-input__streaming-placeholder {
+  display: block;
   position: absolute;
   top: 18px;
   right: 21px;
   left: 21px;
   z-index: 1;
   overflow: hidden;
-  pointer-events: none;
+  width: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  pointer-events: auto;
+  cursor: copy;
   font-size: 16px;
   line-height: 1.55;
   opacity: 0;

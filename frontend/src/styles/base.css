@@ -3908,7 +3908,7 @@ video {
 .generation-console::before {
   position: absolute;
   inset: 16px 0 18px;
-  z-index: -1;
+  z-index: 0;
   border: 0;
   border-radius: 20px;
   background: color-mix(in oklch, var(--surface-raised) 34%, transparent);
@@ -9535,6 +9535,19 @@ video {
   border-bottom: 1px solid var(--border-strong);
   background: var(--background);
   padding: var(--workbench-header-safe-top) 0 0;
+  isolation: isolate;
+  background: #07090d;
+}
+.asset-workbench__chrome::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: #07090d;
+  content: '';
+}
+.asset-workbench__chrome > * {
+  position: relative;
+  z-index: 1;
 }
 .asset-commandbar {
   display: flex;

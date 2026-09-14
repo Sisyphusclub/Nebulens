@@ -6,6 +6,12 @@ import { describe, expect, it } from 'vitest';
 const baseStyles = readFileSync(resolve(process.cwd(), 'src/styles/base.css'), 'utf8');
 
 describe('landing composer surface contract', () => {
+  it('resets browser focus chrome on editable surfaces globally', () => {
+    expect(baseStyles).toMatch(
+      /\[contenteditable='true'\]\s*\{[^}]*border:\s*0 !important;[^}]*outline:\s*0 !important;[^}]*box-shadow:\s*none !important;[^}]*background:\s*transparent !important;/s,
+    );
+  });
+
   it('keeps pasted unbroken prompts inside the composer width', () => {
     const editorRule = baseStyles.match(/\.agent-chat-input__textarea\s*\{([^}]+)\}/)?.[1] ?? '';
 

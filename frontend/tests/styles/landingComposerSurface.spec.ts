@@ -37,7 +37,7 @@ describe('landing composer surface contract', () => {
     expect(focusRule).toContain('background: transparent !important;');
     expect(focusRule).toContain('appearance: none;');
     expect(baseStyles).toMatch(
-      /\.generation-composer \[role='textbox'\]:focus,\s*\.generation-composer \[role='textbox'\]:focus-visible\s*\{[^}]*border:\s*0 !important;[^}]*outline:\s*0 !important;[^}]*box-shadow:\s*none !important;/s,
+      /\.generation-composer \.agent-chat-input__textarea,\s*\.generation-composer \.agent-chat-input__textarea:focus,\s*\.generation-composer \.agent-chat-input__textarea:focus-visible,\s*\.generation-composer \[role='textbox'\]:focus,\s*\.generation-composer \[role='textbox'\]:focus-visible\s*\{[^}]*border:\s*0 !important;[^}]*outline:\s*0 !important;[^}]*box-shadow:\s*none !important;[^}]*background:\s*transparent !important;/s,
     );
     expect(baseStyles).toMatch(
       /\.generation-composer\.agent-chat-input:focus-within\s*\{[^}]*border-color:\s*color-mix\(in oklch, var\(--border-strong\) 76%, transparent\);/s,

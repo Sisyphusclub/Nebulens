@@ -10785,11 +10785,15 @@ video {
 .generation-composer .agent-chat-input__surface:focus,
 .generation-composer .agent-chat-input__surface:focus-visible,
 .generation-composer .agent-chat-input__surface:focus-within,
+.generation-composer .agent-chat-input__textarea,
+.generation-composer .agent-chat-input__textarea:focus,
+.generation-composer .agent-chat-input__textarea:focus-visible,
 .generation-composer [role='textbox']:focus,
 .generation-composer [role='textbox']:focus-visible {
   border: 0 !important;
   outline: 0 !important;
   box-shadow: none !important;
+  background: transparent !important;
 }
 .generation-composer .agent-chat-input__textarea {
   min-height: 88px !important;

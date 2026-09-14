@@ -472,7 +472,7 @@ export const AgentChatComposer = forwardRef<AgentChatComposerHandle, AgentChatCo
           WebkitAppearance: 'none',
         }}
         className={cn(
-          'w-full overflow-y-auto whitespace-pre-wrap break-words border-0 border-none bg-transparent px-4 pt-4 pb-3 text-base leading-7 outline-none ring-0 focus:border-none focus:outline-none focus:ring-0 sm:px-5 sm:pt-5 md:text-lg',
+          'w-full overflow-y-auto whitespace-pre-wrap break-words border-0 border-none bg-transparent px-4 pt-4 pb-3 text-base leading-7 outline-none ring-0 focus:border-0 focus:border-none focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 sm:px-5 sm:pt-5 md:text-lg',
           'data-[empty=true]:before:pointer-events-none data-[empty=true]:before:text-muted-foreground/70 data-[empty=true]:before:content-[attr(data-placeholder)]',
           disabled && 'cursor-not-allowed opacity-60',
           className,

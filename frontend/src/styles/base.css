@@ -6888,8 +6888,8 @@ video {
   background: transparent;
   color: inherit;
   text-align: left;
-  pointer-events: auto;
-  cursor: copy;
+  pointer-events: none;
+  cursor: default;
   font-size: 16px;
   line-height: 1.55;
   opacity: 0;

@@ -63,6 +63,25 @@ describe('AgentChatInput reference image drop', () => {
 });
 
 describe('AgentChatInput text paste', () => {
+  it('renders streaming prompt text as a non-interactive display layer', () => {
+    const { container } = render(
+      <AgentChatInput
+        ariaLabel="图像提示词"
+        models={[]}
+        reasoningLevels={[]}
+        speedModes={[]}
+        agents={[]}
+        skills={[]}
+        streamingPlaceholders={['一幅山间晨雾图']}
+      />,
+    );
+    const placeholder = container.querySelector('.agent-chat-input__streaming-placeholder');
+
+    expect(placeholder?.tagName).toBe('DIV');
+    expect(placeholder).toHaveAttribute('aria-hidden', 'true');
+    expect(placeholder?.querySelector('button')).toBeNull();
+  });
+
   it('keeps the editable prompt surface borderless at the component level', () => {
     const { getByRole } = renderInput(vi.fn());
     const editor = getByRole('textbox');

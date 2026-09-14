@@ -37,8 +37,15 @@ describe('ImageDetailModal media framing', () => {
     const image = media?.querySelector('img');
 
     expect(dialog).toHaveStyle(`--image-detail-image-ratio: ${width / height}`);
-    expect(media).toHaveClass('image-detail__media');
-    expect(image).toHaveClass('w-full', 'h-full', 'object-contain');
+    expect(media).toHaveClass(
+      'image-detail__media',
+      'p-6',
+      'min-w-0',
+      'min-h-0',
+      'items-center',
+      'justify-center',
+    );
+    expect(image).toHaveClass('w-auto', 'h-auto', 'max-w-full', 'max-h-full', 'object-contain');
     expect(image).toHaveAttribute('width', String(width));
     expect(image).toHaveAttribute('height', String(height));
   });

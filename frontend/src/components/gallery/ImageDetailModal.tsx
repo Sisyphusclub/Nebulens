@@ -85,13 +85,13 @@ export function ImageDetailModal({
             </Button>
           </IconTooltip>
         </div>
-        <div className="image-detail__media">
+        <div className="image-detail__media flex min-h-0 min-w-0 items-center justify-center p-6">
           <img
             src={entry.imageUrl}
             alt={entry.record.prompt || '生成图片'}
             width={entry.record.width}
             height={entry.record.height}
-            className="image-detail__image h-full w-full object-contain"
+            className="image-detail__image h-auto max-h-full max-w-full w-auto object-contain"
           />
         </div>
         <div className="image-detail__body">

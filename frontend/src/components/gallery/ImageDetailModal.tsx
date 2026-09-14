@@ -91,6 +91,7 @@ export function ImageDetailModal({
             alt={entry.record.prompt || '生成图片'}
             width={entry.record.width}
             height={entry.record.height}
+            className="image-detail__image h-full w-full object-contain"
           />
         </div>
         <div className="image-detail__body">

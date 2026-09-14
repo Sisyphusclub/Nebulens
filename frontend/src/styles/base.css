@@ -11060,7 +11060,7 @@ video {
   display: block;
   width: 16px;
   height: 16px;
-  border: 1.25px solid currentColor;
+  border: 1.75px solid currentColor;
   border-radius: 2px;
 }
 .generation-custom-option[data-state='checked'] .generation-custom-option__visual {

@@ -58,13 +58,14 @@ describe('image detail sizing contract', () => {
     expect(mediaRule).toContain('justify-content: center;');
     expect(mediaRule).toContain('background: transparent;');
     expect(mediaRule).toContain('overflow: hidden;');
-    expect(imageRule).toContain('width: auto;');
-    expect(imageRule).toContain('height: auto;');
+    expect(imageRule).toContain('width: 100%;');
+    expect(imageRule).toContain('height: 100%;');
     expect(imageRule).toContain('max-width: 100%;');
     expect(imageRule).toContain('max-height: 100%;');
     expect(imageRule).toContain('border-radius: 0;');
     expect(imageRule).toContain('box-shadow: none;');
     expect(imageRule).toContain('object-fit: contain;');
+    expect(desktopContract).toContain('aspect-ratio: auto;');
     expect(promptRule).toContain('max-width: 100%;');
     expect(promptRule).toContain('overflow-wrap: anywhere;');
     expect(promptRule).toContain('white-space: pre-wrap;');

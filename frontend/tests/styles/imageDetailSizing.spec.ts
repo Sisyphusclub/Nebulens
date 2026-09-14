@@ -50,10 +50,15 @@ describe('image detail sizing contract', () => {
     const promptRule = ruleBody(baseStyles, '.image-detail__prompt');
 
     expect(mediaRule).toContain('aspect-ratio: var(--image-detail-image-ratio);');
+    expect(mediaRule).toContain('display: flex;');
+    expect(mediaRule).toContain('align-items: center;');
+    expect(mediaRule).toContain('justify-content: center;');
     expect(mediaRule).toContain('background: transparent;');
     expect(mediaRule).toContain('overflow: hidden;');
-    expect(imageRule).toContain('width: 100%;');
-    expect(imageRule).toContain('height: 100%;');
+    expect(imageRule).toContain('width: auto;');
+    expect(imageRule).toContain('height: auto;');
+    expect(imageRule).toContain('max-width: 100%;');
+    expect(imageRule).toContain('max-height: 100%;');
     expect(imageRule).toContain('border-radius: 0;');
     expect(imageRule).toContain('box-shadow: none;');
     expect(imageRule).toContain('object-fit: contain;');

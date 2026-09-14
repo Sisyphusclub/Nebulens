@@ -2096,6 +2096,7 @@ video {
     width: calc(var(--image-detail-media-width) + var(--image-detail-body-width));
     height: 100%;
     min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
     grid-template-columns: minmax(0, 1fr) var(--image-detail-body-width);
   }
   .image-detail__body {
@@ -2109,6 +2110,9 @@ video {
     gap: 8px;
     margin-top: 4px;
     padding-top: 12px;
+  }
+  .image-detail__media {
+    height: 100%;
   }
 }
 @media (min-width: 861px) and (max-width: 1100px) {

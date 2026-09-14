@@ -46,6 +46,8 @@ describe('image detail sizing contract', () => {
     expect(desktopContract).toContain('840px,');
     expect(desktopContract).toContain('height: 100%;');
     expect(desktopContract).toContain('min-height: 0;');
+    expect(desktopContract).toContain('grid-template-rows: minmax(0, 1fr);');
+    expect(desktopContract).toContain('.image-detail__media');
     const mediaRule = ruleBody(baseStyles, '.image-detail__media');
     const imageRule = ruleBody(baseStyles, '.image-detail__media img');
     const promptRule = ruleBody(baseStyles, '.image-detail__prompt');

@@ -41,4 +41,19 @@ describe('application security middleware', () => {
     expect(response?.body.error.requestId).toEqual(expect.any(String));
     expect(response?.headers['ratelimit']).toEqual(expect.any(String));
   });
+
+  it('does not spend the auth mutation budget on session and profile reads', async () => {
+    const app = createApp({ provider });
+
+    for (let index = 0; index < 25; index += 1) {
+      expect((await request(app).get('/api/auth/get-session')).status).toBe(200);
+      expect((await request(app).get('/api/auth/me')).status).toBe(401);
+    }
+
+    const response = await request(app)
+      .post('/api/auth/sign-in/username')
+      .send({ username: 'missing-user', password: 'password123' });
+
+    expect(response.status).not.toBe(429);
+  });
 });

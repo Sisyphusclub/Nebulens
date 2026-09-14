@@ -10773,8 +10773,23 @@ video {
   border-radius: 19px;
   background: transparent !important;
 }
+.generation-composer.agent-chat-input:focus-within {
+  border-color: color-mix(in oklch, var(--border-strong) 76%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(236 248 255 / 0.08),
+    0 22px 56px -34px rgb(0 0 0 / 0.92);
+}
 .generation-composer .agent-chat-input__surface {
   padding: 4px 8px 8px;
+}
+.generation-composer .agent-chat-input__surface:focus,
+.generation-composer .agent-chat-input__surface:focus-visible,
+.generation-composer .agent-chat-input__surface:focus-within,
+.generation-composer [role='textbox']:focus,
+.generation-composer [role='textbox']:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
 }
 .generation-composer .agent-chat-input__textarea {
   min-height: 88px !important;

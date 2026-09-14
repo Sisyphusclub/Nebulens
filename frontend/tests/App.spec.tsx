@@ -1089,7 +1089,11 @@ describe('React application routes', () => {
 
   it('keeps history and admin routes', async () => {
     const history = renderRoute('/history');
-    expect(await screen.findByRole('region', { name: '个人资产' })).toHaveClass('workspace-page');
+    const assetsPage = await screen.findByRole('region', { name: '个人资产' });
+    expect(assetsPage).toHaveClass('workspace-page');
+    expect(assetsPage.closest('.app-workspace')).toHaveClass('app-workspace--assets');
+    expect(assetsPage.closest('.app-main')).toHaveClass('app-main--assets');
+    expect(assetsPage.closest('.app-shell')).toHaveClass('app-shell--assets');
     expect(screen.getByRole('heading', { level: 1, name: '资产' }).closest('header')).toHaveClass(
       'operational-page-header',
     );

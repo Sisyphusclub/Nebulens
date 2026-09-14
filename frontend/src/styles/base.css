@@ -1036,10 +1036,10 @@ video {
   min-height: 52px !important;
   max-height: 112px !important;
   overflow-x: hidden;
-  border: none;
-  outline: none;
-  box-shadow: none;
-  background: transparent;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
   padding: 12px 12px 3px !important;
   font-size: 16px !important;
   line-height: 1.55 !important;
@@ -1047,11 +1047,13 @@ video {
   white-space: pre-wrap;
   word-break: break-word;
 }
-.agent-chat-input__textarea:focus,
-.agent-chat-input__textarea:focus-visible {
-  border: none;
-  outline: none;
-  box-shadow: none;
+.agent-chat-input__textarea[contenteditable='true']:focus,
+.agent-chat-input__textarea[contenteditable='true']:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  appearance: none;
 }
 .agent-chat-input__toolbar {
   display: flex;

@@ -24,16 +24,18 @@ describe('landing composer surface contract', () => {
     const editorRule = baseStyles.match(/\.agent-chat-input__textarea\s*\{([^}]+)\}/)?.[1] ?? '';
     const focusRule =
       baseStyles.match(
-        /\.agent-chat-input__textarea:focus,\s*\.agent-chat-input__textarea:focus-visible\s*\{([^}]+)\}/,
+        /\.agent-chat-input__textarea\[contenteditable='true'\]:focus,\s*\.agent-chat-input__textarea\[contenteditable='true'\]:focus-visible\s*\{([^}]+)\}/,
       )?.[1] ?? '';
 
-    expect(editorRule).toContain('border: none;');
-    expect(editorRule).toContain('outline: none;');
-    expect(editorRule).toContain('box-shadow: none;');
-    expect(editorRule).toContain('background: transparent;');
-    expect(focusRule).toContain('border: none;');
-    expect(focusRule).toContain('outline: none;');
-    expect(focusRule).toContain('box-shadow: none;');
+    expect(editorRule).toContain('border: 0 !important;');
+    expect(editorRule).toContain('outline: 0 !important;');
+    expect(editorRule).toContain('box-shadow: none !important;');
+    expect(editorRule).toContain('background: transparent !important;');
+    expect(focusRule).toContain('border: 0 !important;');
+    expect(focusRule).toContain('outline: 0 !important;');
+    expect(focusRule).toContain('box-shadow: none !important;');
+    expect(focusRule).toContain('background: transparent !important;');
+    expect(focusRule).toContain('appearance: none;');
   });
 
   it('keeps the generation action after the controls in the desktop toolbar', () => {

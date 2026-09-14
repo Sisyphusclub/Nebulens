@@ -11061,7 +11061,7 @@ video {
   width: 16px;
   height: 16px;
   border: 1.75px solid currentColor;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 .generation-custom-option[data-state='checked'] .generation-custom-option__visual {
   color: var(--foreground);

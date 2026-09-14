@@ -37,9 +37,14 @@ describe('image detail sizing contract', () => {
     expect(desktopContract).toContain(
       'calc(min(900px, 100svh - 144px) * var(--image-detail-image-ratio))',
     );
-    expect(desktopContract).toContain(
-      'height: calc(var(--image-detail-media-width) / var(--image-detail-image-ratio));',
+    const desktopModalRule = ruleBody(desktopContract, '.image-detail-modal');
+    expect(desktopModalRule).toContain(
+      'height: min(80svh, 720px, calc(100svh - 2rem)) !important;',
     );
+    expect(desktopModalRule).toContain('min-height: min(580px, calc(100svh - 2rem)) !important;');
+    expect(desktopModalRule).toContain('max-height: calc(100svh - 2rem) !important;');
+    expect(desktopContract).toContain('height: 100%;');
+    expect(desktopContract).toContain('min-height: 0;');
     const mediaRule = ruleBody(baseStyles, '.image-detail__media');
     const imageRule = ruleBody(baseStyles, '.image-detail__media img');
     const promptRule = ruleBody(baseStyles, '.image-detail__prompt');

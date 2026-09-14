@@ -2078,6 +2078,9 @@ video {
 }
 @media (min-width: 861px) {
   .image-detail-modal {
+    height: min(80svh, 720px, calc(100svh - 2rem)) !important;
+    min-height: min(580px, calc(100svh - 2rem)) !important;
+    max-height: calc(100svh - 2rem) !important;
     overflow: hidden;
   }
   .image-detail {
@@ -2087,7 +2090,8 @@ video {
       calc(min(900px, 100svh - 144px) * var(--image-detail-image-ratio))
     );
     width: calc(var(--image-detail-media-width) + var(--image-detail-body-width));
-    height: calc(var(--image-detail-media-width) / var(--image-detail-image-ratio));
+    height: 100%;
+    min-height: 0;
     grid-template-columns: minmax(0, 1fr) var(--image-detail-body-width);
   }
   .image-detail__body {

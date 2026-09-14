@@ -63,6 +63,14 @@ describe('AgentChatInput reference image drop', () => {
 });
 
 describe('AgentChatInput text paste', () => {
+  it('keeps the editable prompt surface borderless at the component level', () => {
+    const { getByRole } = renderInput(vi.fn());
+    const editor = getByRole('textbox');
+
+    expect(editor).toHaveStyle({ border: '0px', outline: 'none', background: 'transparent' });
+    expect(editor.style.boxShadow).toBe('none');
+  });
+
   it('inserts only plain text from a rich clipboard and preserves line breaks', () => {
     const onValueChange = vi.fn();
     const { getByRole } = render(

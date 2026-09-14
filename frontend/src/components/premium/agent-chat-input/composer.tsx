@@ -465,6 +465,11 @@ export const AgentChatComposer = forwardRef<AgentChatComposerHandle, AgentChatCo
         style={{
           minHeight: `${minRows * LINE_HEIGHT_REM}rem`,
           maxHeight: `${maxRows * LINE_HEIGHT_REM}rem`,
+          border: 0,
+          outline: 'none',
+          boxShadow: 'none',
+          background: 'transparent',
+          WebkitAppearance: 'none',
         }}
         className={cn(
           'w-full overflow-y-auto whitespace-pre-wrap break-words border-0 border-none bg-transparent px-4 pt-4 pb-3 text-base leading-7 outline-none ring-0 focus:border-none focus:outline-none focus:ring-0 sm:px-5 sm:pt-5 md:text-lg',

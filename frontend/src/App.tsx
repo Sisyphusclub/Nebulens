@@ -10,6 +10,7 @@ export function App() {
   const location = useLocation();
   const isLanding = location.pathname === '/';
   const isGenerate = location.pathname === '/generate';
+  const isAssets = location.pathname === '/history';
   const { isImageDetailModalOpen } = useImageDetailModalState();
   return (
     <div
@@ -17,6 +18,7 @@ export function App() {
         'app-shell',
         isLanding && 'app-shell--landing',
         isGenerate && 'app-shell--generate',
+        isAssets && 'app-shell--assets',
       )}
     >
       {!isLanding && !isGenerate && !isImageDetailModalOpen ? <AppHeader /> : null}
@@ -25,10 +27,17 @@ export function App() {
           'app-main',
           isLanding && 'app-main--landing',
           isGenerate && 'app-main--generate',
+          isAssets && 'app-main--assets',
         )}
         aria-label={isLanding ? 'Nebulens 首页' : 'Nebulens 工作区'}
       >
-        <div className={cn('app-workspace', !isLanding && 'app-workspace--studio')}>
+        <div
+          className={cn(
+            'app-workspace',
+            !isLanding && 'app-workspace--studio',
+            isAssets && 'app-workspace--assets',
+          )}
+        >
           <AppRoutes />
         </div>
       </main>

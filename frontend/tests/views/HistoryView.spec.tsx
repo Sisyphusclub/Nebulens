@@ -169,6 +169,13 @@ describe('HistoryView asset workflows', () => {
     ).toHaveClass('operational-toolbar');
     expect(screen.getByRole('navigation', { name: '收藏集筛选' })).toBeInTheDocument();
 
+    const page = screen.getByRole('region', { name: '个人资产' });
+    const scrollRegion = page.querySelector('[data-asset-scroll-region]');
+    expect(scrollRegion).toBeInTheDocument();
+    expect(scrollRegion).toContainElement(screen.getByRole('region', { name: '个人资产列表' }));
+    expect(scrollRegion).not.toContainElement(title.closest('header'));
+    expect(scrollRegion).not.toContainElement(page.querySelector('.asset-workbench__chrome'));
+
     const visibilityFilter = screen.getByRole('button', { name: '可见范围筛选' });
     expect(visibilityFilter).toHaveTextContent('全部范围');
     await user.click(visibilityFilter);

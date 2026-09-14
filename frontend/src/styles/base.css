@@ -2082,14 +2082,14 @@ video {
 }
 @media (min-width: 861px) {
   .image-detail-modal {
-    height: min(80svh, 720px, calc(100svh - 2rem)) !important;
-    min-height: min(580px, calc(100svh - 2rem)) !important;
+    height: min(80svh, 640px, calc(100svh - 2rem)) !important;
+    min-height: min(480px, calc(100svh - 2rem)) !important;
     max-height: calc(100svh - 2rem) !important;
     overflow: hidden;
   }
   .image-detail {
     --image-detail-media-width: min(
-      720px,
+      840px,
       calc(100vw - 48px - var(--image-detail-body-width)),
       calc(min(900px, 100svh - 144px) * var(--image-detail-image-ratio))
     );

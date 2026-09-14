@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import {
+  ASPECT_RATIO_CONFIGS,
   DEFAULT_ASPECT_RATIO,
   DEFAULT_IMAGE_RESOLUTION,
   IMAGE_RESOLUTION_LABELS,
@@ -19,8 +20,9 @@ interface ImageGenerationPlaceholderProps {
 }
 
 function getOrientation(aspectRatio: AspectRatio): ImageGenerationOrientation {
-  if (aspectRatio === '1:1') return 'square';
-  return aspectRatio === '3:2' || aspectRatio === '16:9' ? 'landscape' : 'portrait';
+  const ratio = ASPECT_RATIO_CONFIGS[aspectRatio].ratio;
+  if (ratio === 1) return 'square';
+  return ratio > 1 ? 'landscape' : 'portrait';
 }
 
 function toCssAspectRatio(aspectRatio: AspectRatio): string {

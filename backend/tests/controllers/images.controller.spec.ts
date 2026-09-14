@@ -420,8 +420,8 @@ describe('POST /api/images/generate', () => {
     expect(res.status).toBe(200);
     expect(res.body.aspectRatio).toBe('16:9');
     expect(res.body.images[0]).toMatchObject({
-      width: 3840,
-      height: 2160,
+      width: 2560,
+      height: 1440,
     });
     const call = (provider.generate as ReturnType<typeof vi.fn>).mock.calls[0]![0] as GenerateInput;
     expect(call.resolution).toBe('4k');
@@ -433,8 +433,8 @@ describe('POST /api/images/generate', () => {
     const history = await request(app).get('/api/history');
     expect(history.body.records[0]).toMatchObject({
       prompt: '登录用户生成 4K 宽屏图',
-      width: 3840,
-      height: 2160,
+      width: 2560,
+      height: 1440,
       count: 1,
       resolution: '4k',
       isPublic: true,
@@ -588,8 +588,8 @@ describe('POST /api/images/generate', () => {
     expect(res.status).toBe(200);
     expect(res.body.generationMode).toBe('image-to-image');
     expect(res.body.images[0]).toMatchObject({
-      width: 1360,
-      height: 2048,
+      width: 1440,
+      height: 2160,
     });
     const call = (harness.provider.generate as ReturnType<typeof vi.fn>).mock
       .calls[0]![0] as GenerateInput;
@@ -887,7 +887,7 @@ describe('POST /api/images/generate', () => {
 
     const res = await request(app)
       .post('/api/images/generate')
-      .send({ prompt: 'p', aspectRatio: '5:4' });
+      .send({ prompt: 'p', aspectRatio: '7:5' });
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('BAD_REQUEST');
   });

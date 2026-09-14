@@ -1,30 +1,166 @@
 export type GenerationMode = 'text-to-image' | 'image-to-image';
 
-export const ASPECT_RATIOS = ['1:1', '3:4', '4:3', '16:9', '9:16', '2:3', '3:2'] as const;
+export const ASPECT_RATIOS = [
+  '3:1',
+  '21:9',
+  '2:1',
+  '16:9',
+  '16:10',
+  '3:2',
+  '4:3',
+  '5:4',
+  '1:1',
+  '4:5',
+  '3:4',
+  '2:3',
+  '10:16',
+  '9:16',
+  '9:19.5',
+  '1:2',
+  '1:3',
+] as const;
 export type AspectRatio = (typeof ASPECT_RATIOS)[number];
 
 export const ASPECT_CHOICES = ['auto', ...ASPECT_RATIOS] as const;
 export type AspectChoice = (typeof ASPECT_CHOICES)[number];
 
-export const ASPECT_RATIO_LABELS: Record<AspectRatio, string> = {
-  '1:1': '1:1（正方形）',
-  '3:4': '3:4（竖向）',
-  '4:3': '4:3（横向）',
-  '16:9': '16:9（宽屏）',
-  '9:16': '9:16（竖屏）',
-  '2:3': '2:3（纵向）',
-  '3:2': '3:2（横向）',
+export interface AspectRatioConfig {
+  key: AspectRatio;
+  label: string;
+  ratio: number;
+  standard_size: string;
+  high_res_size: string;
+}
+
+export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
+  '3:1': {
+    key: '3:1',
+    label: '极限超宽 / 3:1',
+    ratio: 3,
+    standard_size: '2304x768',
+    high_res_size: '3072x1024',
+  },
+  '21:9': {
+    key: '21:9',
+    label: '宽银幕 / 21:9',
+    ratio: 2.37,
+    standard_size: '2560x1088',
+    high_res_size: '3360x1424',
+  },
+  '2:1': {
+    key: '2:1',
+    label: '宽画幅 / 2:1',
+    ratio: 2,
+    standard_size: '2048x1024',
+    high_res_size: '2560x1280',
+  },
+  '16:9': {
+    key: '16:9',
+    label: '横屏宽屏 / 16:9',
+    ratio: 1.778,
+    standard_size: '1920x1088',
+    high_res_size: '2560x1440',
+  },
+  '16:10': {
+    key: '16:10',
+    label: '屏幕比例 / 16:10',
+    ratio: 1.6,
+    standard_size: '1920x1200',
+    high_res_size: '2560x1600',
+  },
+  '3:2': {
+    key: '3:2',
+    label: '经典相机 / 3:2',
+    ratio: 1.5,
+    standard_size: '1536x1024',
+    high_res_size: '2160x1440',
+  },
+  '4:3': {
+    key: '4:3',
+    label: '传统横画 / 4:3',
+    ratio: 1.333,
+    standard_size: '1440x1088',
+    high_res_size: '2048x1536',
+  },
+  '5:4': {
+    key: '5:4',
+    label: '印刷横幅 / 5:4',
+    ratio: 1.25,
+    standard_size: '1280x1024',
+    high_res_size: '2000x1600',
+  },
+  '1:1': {
+    key: '1:1',
+    label: '正方形 / 1:1',
+    ratio: 1,
+    standard_size: '1024x1024',
+    high_res_size: '2048x2048',
+  },
+  '4:5': {
+    key: '4:5',
+    label: '社交媒体竖图 / 4:5',
+    ratio: 0.8,
+    standard_size: '1024x1280',
+    high_res_size: '1600x2000',
+  },
+  '3:4': {
+    key: '3:4',
+    label: '人像肖像 / 3:4',
+    ratio: 0.75,
+    standard_size: '1088x1440',
+    high_res_size: '1536x2048',
+  },
+  '2:3': {
+    key: '2:3',
+    label: '经典竖图 / 2:3',
+    ratio: 0.667,
+    standard_size: '1024x1536',
+    high_res_size: '1440x2160',
+  },
+  '10:16': {
+    key: '10:16',
+    label: '平板竖屏 / 10:16',
+    ratio: 0.625,
+    standard_size: '1200x1920',
+    high_res_size: '1600x2560',
+  },
+  '9:16': {
+    key: '9:16',
+    label: '移动竖屏 / 9:16',
+    ratio: 0.563,
+    standard_size: '1088x1920',
+    high_res_size: '1440x2560',
+  },
+  '9:19.5': {
+    key: '9:19.5',
+    label: '手机满屏 / 9:19.5',
+    ratio: 0.462,
+    standard_size: '1088x2352',
+    high_res_size: '1120x2432',
+  },
+  '1:2': {
+    key: '1:2',
+    label: '超长竖构图 / 1:2',
+    ratio: 0.5,
+    standard_size: '1024x2048',
+    high_res_size: '1280x2560',
+  },
+  '1:3': {
+    key: '1:3',
+    label: '极限长图 / 1:3',
+    ratio: 0.333,
+    standard_size: '1024x3072',
+    high_res_size: '1280x3840',
+  },
 };
+
+export const ASPECT_RATIO_LABELS: Record<AspectRatio, string> = Object.fromEntries(
+  ASPECT_RATIOS.map((ratio) => [ratio, ASPECT_RATIO_CONFIGS[ratio].label]),
+) as Record<AspectRatio, string>;
 
 export const ASPECT_CHOICE_LABELS: Record<AspectChoice, string> = {
   auto: '智能',
-  '1:1': '1:1（正方形）',
-  '3:4': '3:4（竖向）',
-  '4:3': '4:3（横向）',
-  '16:9': '16:9（宽屏）',
-  '9:16': '9:16（竖屏）',
-  '2:3': '2:3（纵向）',
-  '3:2': '3:2（横向）',
+  ...ASPECT_RATIO_LABELS,
 };
 
 export const DEFAULT_ASPECT_CHOICE: AspectChoice = 'auto';

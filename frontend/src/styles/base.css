@@ -11351,3 +11351,61 @@ video {
     padding-bottom: calc(82px + env(safe-area-inset-bottom));
   }
 }
+
+/* Creation templates follow the same bounded layout as assets: the route and
+   page clip viewport overflow, while only the gallery plane can scroll. */
+.app-shell--templates,
+.app-main--templates,
+.app-workspace--templates {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-main--templates {
+  padding-bottom: 0;
+}
+
+.templates-page {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--background);
+  padding-bottom: 0;
+}
+
+.templates-page > .operational-page-header,
+.templates-page > .template-toolbar {
+  position: relative;
+  top: auto;
+  z-index: 20;
+  flex: 0 0 auto;
+  background: var(--background);
+}
+
+.templates-page > .template-toolbar {
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.template-page-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  background: var(--background);
+  padding-top: 16px;
+  padding-bottom: 80px;
+}
+
+@media (max-width: 860px) {
+  .template-page-scroll {
+    padding-bottom: calc(82px + env(safe-area-inset-bottom));
+  }
+}

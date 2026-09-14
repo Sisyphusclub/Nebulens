@@ -148,92 +148,96 @@ export function TemplatesView() {
         </IconTooltip>
       </div>
 
-      {filtered.length ? (
-        <div className="template-gallery" aria-label="创作模板列表">
-          {visibleTemplates.map((template, index) => {
-            const favorite = favoriteIds.includes(template.id);
-            const used = recent[template.id] !== undefined;
-            return (
-              <article
-                className={cn('template-tile', index % 5 === 0 && 'template-tile--wide')}
-                key={template.id}
-              >
-                <MorphicCard id={`template-${template.id}`} className="template-tile__morph">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="template-tile__preview"
-                    aria-label={`预览模板：${template.title}`}
-                    onClick={() => setSelected(template)}
-                  >
-                    <img src={template.imageUrl} alt={`${template.title}示例`} loading="lazy" />
-                    <span className="template-tile__label">
-                      <small>{used ? '最近使用' : template.category}</small>
-                      <strong>{template.title}</strong>
-                    </span>
-                  </Button>
-                </MorphicCard>
-                <div className="template-tile__actions">
-                  <IconTooltip label={favorite ? '取消收藏模板' : '收藏模板'}>
+      <div className="template-page-scroll" data-template-scroll-region>
+        {filtered.length ? (
+          <div className="template-gallery" aria-label="创作模板列表">
+            {visibleTemplates.map((template, index) => {
+              const favorite = favoriteIds.includes(template.id);
+              const used = recent[template.id] !== undefined;
+              return (
+                <article
+                  className={cn('template-tile', index % 5 === 0 && 'template-tile--wide')}
+                  key={template.id}
+                >
+                  <MorphicCard id={`template-${template.id}`} className="template-tile__morph">
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon"
-                      aria-label={
-                        favorite ? `取消收藏 ${template.title}` : `收藏 ${template.title}`
-                      }
-                      aria-pressed={favorite}
-                      onClick={() => toggleFavorite(template.id)}
+                      className="template-tile__preview"
+                      aria-label={`预览模板：${template.title}`}
+                      onClick={() => setSelected(template)}
                     >
-                      <Heart aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
+                      <img src={template.imageUrl} alt={`${template.title}示例`} loading="lazy" />
+                      <span className="template-tile__label">
+                        <small>{used ? '最近使用' : template.category}</small>
+                        <strong>{template.title}</strong>
+                      </span>
                     </Button>
-                  </IconTooltip>
-                  <IconTooltip label="使用模板">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`使用模板 ${template.title}`}
-                      onClick={() => applyTemplate(template)}
-                    >
-                      <ArrowUpRight aria-hidden="true" />
-                    </Button>
-                  </IconTooltip>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="empty-state template-empty" role="status">
-          <p>没有匹配的模板。</p>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              setQuery('');
-              setCategory('全部');
-              setFavoritesOnly(false);
-            }}
-          >
-            清除筛选
-          </Button>
-        </div>
-      )}
+                  </MorphicCard>
+                  <div className="template-tile__actions">
+                    <IconTooltip label={favorite ? '取消收藏模板' : '收藏模板'}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={
+                          favorite ? `取消收藏 ${template.title}` : `收藏 ${template.title}`
+                        }
+                        aria-pressed={favorite}
+                        onClick={() => toggleFavorite(template.id)}
+                      >
+                        <Heart aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
+                      </Button>
+                    </IconTooltip>
+                    <IconTooltip label="使用模板">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`使用模板 ${template.title}`}
+                        onClick={() => applyTemplate(template)}
+                      >
+                        <ArrowUpRight aria-hidden="true" />
+                      </Button>
+                    </IconTooltip>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="empty-state template-empty" role="status">
+            <p>没有匹配的模板。</p>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setQuery('');
+                setCategory('全部');
+                setFavoritesOnly(false);
+              }}
+            >
+              清除筛选
+            </Button>
+          </div>
+        )}
 
-      {visibleTemplates.length < filtered.length ? (
-        <div className="template-gallery-more">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() =>
-              setVisibleCount((current) => Math.min(current + TEMPLATE_BATCH_SIZE, filtered.length))
-            }
-          >
-            加载更多
-          </Button>
-        </div>
-      ) : null}
+        {visibleTemplates.length < filtered.length ? (
+          <div className="template-gallery-more">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() =>
+                setVisibleCount((current) =>
+                  Math.min(current + TEMPLATE_BATCH_SIZE, filtered.length),
+                )
+              }
+            >
+              加载更多
+            </Button>
+          </div>
+        ) : null}
+      </div>
 
       {selected
         ? createPortal(

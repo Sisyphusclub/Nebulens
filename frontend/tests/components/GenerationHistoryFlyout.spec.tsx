@@ -66,7 +66,7 @@ describe('GenerationHistoryFlyout', () => {
     expect(preview).toHaveAttribute('aria-hidden', 'false');
     expect(preview).toHaveTextContent('雨夜列车');
     expect(preview).toHaveTextContent('gpt-image-2');
-    expect(preview).toHaveTextContent('横屏宽屏 / 16:9 · 2 张');
+    expect(preview).toHaveTextContent('16:9（宽屏） · 2 张');
     expect(preview).toHaveTextContent('仅自己可见');
     expect(hoveredTick).toHaveClass('is-previewed');
     expect(panelTrigger).toHaveAttribute('aria-expanded', 'false');

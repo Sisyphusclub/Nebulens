@@ -148,12 +148,12 @@ describe('TwoApiImageProvider', () => {
       prompt: 'cinematic wide',
       model: 'gpt-image-2.5-flare',
       count: 1,
-      aspectRatio: '21:9',
+      aspectRatio: '3:1',
     });
     const init = fetchMock.mock.calls[0]![1] as RequestInit;
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
     expect(body['model']).toBe('gpt-image-2.5-flare');
-    expect(body['size']).toBe('2560x1088');
+    expect(body['size']).toBe('2304x768');
   });
 
   it('calls Gemini generateContent and stores inline image data', async () => {
@@ -244,10 +244,10 @@ describe('TwoApiImageProvider', () => {
       resolution: '2k',
     });
 
-    expect(out.images[0]).toMatchObject({ width: 1440, height: 2160 });
+    expect(out.images[0]).toMatchObject({ width: 1360, height: 2048 });
     const init = fetchMock.mock.calls[0]![1] as RequestInit;
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
-    expect(body['size']).toBe('1440x2160');
+    expect(body['size']).toBe('1360x2048');
   });
 
   it('routes high-resolution text-to-image calls to the configured high-res base URL', async () => {
@@ -406,10 +406,10 @@ describe('TwoApiImageProvider', () => {
       resolution: '4k',
     });
 
-    expect(out.images[0]).toMatchObject({ width: 2560, height: 1440 });
+    expect(out.images[0]).toMatchObject({ width: 2048, height: 1152 });
     const init = fetchMock.mock.calls[0]![1] as RequestInit;
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
-    expect(body['size']).toBe('2560x1440');
+    expect(body['size']).toBe('2048x1152');
   });
 
   it('supports 4k square requests before provider IO', async () => {
@@ -491,11 +491,11 @@ describe('TwoApiImageProvider', () => {
       resolution: '4k',
     });
 
-    expect(out.images[0]).toMatchObject({ width: 1440, height: 2560 });
+    expect(out.images[0]).toMatchObject({ width: 1152, height: 2048 });
     const [calledUrl, init] = fetchMock.mock.calls[0]!;
     expect(calledUrl).toBe('https://codex.example.com/v1/images/edits');
     const form = (init as RequestInit).body as FormData;
-    expect(form.get('size')).toBe('1440x2560');
+    expect(form.get('size')).toBe('1152x2048');
   });
 
   it('maps prompt rejection upstream statuses to PROVIDER_PROMPT_REJECTED 422', async () => {

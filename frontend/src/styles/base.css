@@ -10994,7 +10994,7 @@ video {
   padding: 3px;
 }
 .generation-custom-options--aspect {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
 }
 .generation-custom-options--compact {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -11230,7 +11230,7 @@ video {
     row-gap: 11px;
   }
   .generation-custom-options--aspect {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .generation-custom-option--aspect {
     min-height: 52px;

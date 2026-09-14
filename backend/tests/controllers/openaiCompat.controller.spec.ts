@@ -426,7 +426,7 @@ describe('POST /v1/chat/completions', () => {
       .send({
         model: 'gpt-5',
         n: 2,
-        size: '1920x1088',
+        size: '1792x1024',
         messages: [
           { role: 'user', content: 'old prompt' },
           { role: 'assistant', content: 'ok' },
@@ -557,7 +557,7 @@ describe('POST /v1/responses', () => {
         ],
         n: 2,
         size: '1024x1024',
-        tools: [{ type: 'image_generation', model: 'gpt-5-mini', size: '1088x1920' }],
+        tools: [{ type: 'image_generation', model: 'gpt-5-mini', size: '1024x1792' }],
       });
 
     expect(res.status).toBe(200);

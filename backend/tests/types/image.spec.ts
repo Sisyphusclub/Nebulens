@@ -12,8 +12,8 @@ import {
 } from '../../src/types/image.js';
 
 describe('GPT-Image-2.5 image sizes', () => {
-  it('provides all 17 standard and high-resolution presets within physical limits', () => {
-    expect(ASPECT_RATIOS).toHaveLength(17);
+  it('provides the original ratios plus four extended presets within physical limits', () => {
+    expect(ASPECT_RATIOS).toHaveLength(11);
 
     for (const ratio of ASPECT_RATIOS) {
       const config = ASPECT_RATIO_CONFIGS[ratio];
@@ -55,8 +55,9 @@ describe('GPT-Image-2.5 image sizes', () => {
 
   it('returns the requested API size strings', () => {
     expect(getSizeByRatio('1:1')).toBe('1024x1024');
-    expect(getSizeByRatio('16:9')).toBe('1920x1088');
-    expect(getSizeByRatio('21:9', 'high_res')).toBe('3360x1424');
+    expect(getSizeByRatio('16:9')).toBe('1792x1024');
+    expect(getSizeByRatio('3:1')).toBe('2304x768');
+    expect(getSizeByRatio('5:4', 'high_res')).toBe('2000x1600');
     expect(getSizeByRatio('1:3', 'high_res')).toBe('1280x3840');
   });
 });

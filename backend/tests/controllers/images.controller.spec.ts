@@ -420,8 +420,8 @@ describe('POST /api/images/generate', () => {
     expect(res.status).toBe(200);
     expect(res.body.aspectRatio).toBe('16:9');
     expect(res.body.images[0]).toMatchObject({
-      width: 2560,
-      height: 1440,
+      width: 2048,
+      height: 1152,
     });
     const call = (provider.generate as ReturnType<typeof vi.fn>).mock.calls[0]![0] as GenerateInput;
     expect(call.resolution).toBe('4k');
@@ -433,8 +433,8 @@ describe('POST /api/images/generate', () => {
     const history = await request(app).get('/api/history');
     expect(history.body.records[0]).toMatchObject({
       prompt: '登录用户生成 4K 宽屏图',
-      width: 2560,
-      height: 1440,
+      width: 2048,
+      height: 1152,
       count: 1,
       resolution: '4k',
       isPublic: true,
@@ -588,8 +588,8 @@ describe('POST /api/images/generate', () => {
     expect(res.status).toBe(200);
     expect(res.body.generationMode).toBe('image-to-image');
     expect(res.body.images[0]).toMatchObject({
-      width: 1440,
-      height: 2160,
+      width: 1360,
+      height: 2048,
     });
     const call = (harness.provider.generate as ReturnType<typeof vi.fn>).mock
       .calls[0]![0] as GenerateInput;

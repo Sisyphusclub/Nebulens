@@ -38,10 +38,16 @@ describe('ImageDetailModal media framing', () => {
 
     expect(dialog).toHaveStyle(`--image-detail-image-ratio: ${width / height}`);
     expect(media).toHaveClass('image-detail__media');
-    expect(media).toHaveClass('flex-1', 'min-w-0', 'min-h-0', 'items-center', 'justify-center');
+    expect(media).toHaveClass('h-full', 'w-auto', 'min-w-0', 'items-center', 'justify-center');
     expect(image).toHaveAttribute('width', String(width));
     expect(image).toHaveAttribute('height', String(height));
-    expect(image).toHaveClass('max-w-full', 'max-h-full', 'w-auto', 'h-auto', 'object-contain');
+    expect(image).toHaveClass(
+      'h-full',
+      'w-auto',
+      'max-h-full',
+      'max-w-[calc(92vw-360px)]',
+      'object-contain',
+    );
     expect(body).toHaveClass('w-[340px]', 'flex-shrink-0', 'min-h-0', 'flex-col');
     expect(body?.querySelector('.image-detail__body-content')).toHaveClass(
       'flex-1',
@@ -50,11 +56,10 @@ describe('ImageDetailModal media framing', () => {
     );
     expect(body?.querySelector('.detail-actions')).toHaveClass('flex-shrink-0', 'mt-auto', 'pt-3');
     expect(modal).toHaveClass(
-      'w-[90vw]',
-      'max-w-5xl',
-      'h-[85vh]',
-      'min-h-[600px]',
-      'max-h-[780px]',
+      'w-fit',
+      'max-w-[92vw]',
+      'h-[80vh]',
+      'max-h-[720px]',
       'flex',
       'overflow-hidden',
       'rounded-2xl',

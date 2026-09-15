@@ -1,0 +1,224 @@
+schema: comet.native.v4
+name: optimize-image-detail-ratio
+language: zh-CN
+phase: archive
+status: done
+state_version: 13
+brief: brief.md
+shape_confirmation_hash: b83ee73497b473349f7fdfdb4b0c69c23ff95eb4b97a1ddb3279adf605e045f5
+spec_changes:
+  - capability: image-detail-modal
+    operation: create
+    source: specs/image-detail-modal/spec.md
+workspace:
+  isolation: worktree
+  change_branch: comet/optimize-image-detail-ratio
+  target_branch: workspace/detached-dc861a8
+  finish: merge
+loop:
+  stage: done
+  goal_cycle: 1
+  iteration: 1
+  attempt: 1
+  retry_epoch: 0
+  failed_iteration_count: 0
+  no_progress_count: 0
+  execution_failure_count: 0
+  previous_unresolved_ids: []
+  next_action: null
+acceptance:
+  - id: A1
+    source: brief.md
+    text: A1：桌面弹窗根容器使用 `w-fit max-w-[92vw] h-[80vh] max-h-[720px]`，宽度不再固定为视口百分比。
+    result: passed
+    reason:
+      text: 根容器使用 w-fit、max-w-[92vw]、h-[80vh]、max-h-[720px]，CSS 同步为
+        fit-content/92vw/80vh/720px。
+      truncated: false
+  - id: A2
+    source: brief.md
+    text: A2：左侧媒体区使用 `h-full w-auto flex items-center justify-center bg-black/40
+      min-w-0`，图片使用 `h-full w-auto max-h-full max-w-[calc(92vw-360px)]
+      object-contain`。
+    result: passed
+    reason:
+      text: 媒体区和图片均包含指定 h-full、w-auto、居中、min-w-0、object-contain 与 calc(92vw - 360px)
+        约束。
+      truncated: false
+  - id: A3
+    source: brief.md
+    text: A3：右侧面板使用 `w-[340px] flex-shrink-0 h-full`，不会因图片比例收缩或被截断。
+    result: passed
+    reason:
+      text: 右侧面板使用 w-[340px]、flex-shrink-0、h-full，CSS 保持 340px 固定宽度。
+      truncated: false
+  - id: A4
+    source: brief.md
+    text: A4：1:1、3:2、16:9 图片在桌面弹窗中高度贴满左侧视窗、完整显示，图片上下不出现由布局造成的大块空黑。
+    result: passed
+    reason:
+      text: 1:1、3:2、16:9 覆盖由组件比例测试和动态 fit-content/h-full/w-auto/object-contain
+        契约支持；未执行真实像素截图。
+      truncated: false
+  - id: A5
+    source: brief.md
+    text: A5：提示词和参数区域可独立纵向滚动，底部操作按钮保持完整可见；移动端继续使用全屏纵向布局。
+    result: passed
+    reason:
+      text: body-content 独立 overflow-y-auto，操作区 flex-shrink-0/mt-auto，移动端 max-width
+        860px 切换全屏纵向。
+      truncated: false
+  - id: A6
+    source: specs/image-detail-modal/spec.md
+    text: 三种常见比例动态伸缩 - GIVEN 用户打开一张 1:1、3:2 或 16:9 的图片详情 - WHEN 弹窗在桌面视口中显示 - THEN
+      根容器高度为 `80vh` 且最大高度为 `720px` - AND 根容器宽度随图片比例和媒体区内容伸缩且最大宽度为 `92vw` - AND
+      右侧面板宽度保持 340px，不因图片比例收缩
+    result: passed
+    reason:
+      text: 完整 Spec 场景与样式/组件测试覆盖三种常见比例的动态伸缩约束。
+      truncated: false
+  - id: A7
+    source: specs/image-detail-modal/spec.md
+    text: 横图和方图无上下大黑边 - GIVEN 用户打开一张 1:1、3:2 或 16:9 的图片详情 - WHEN 图片加载完成 - THEN
+      左侧媒体区高度为弹窗内容高度并使用居中 flex 布局 - AND 图片使用高度撑满、宽度自适应和 `object-contain` - AND
+      图片完整可见，媒体区上下不出现由固定比例容器造成的大块空黑
+    result: passed
+    reason:
+      text: 媒体区高度撑满、图片宽度自适应且 object-contain；未执行真实像素截图。
+      truncated: false
+  - id: A8
+    source: specs/image-detail-modal/spec.md
+    text: 长提示词不截断操作按钮 - GIVEN 图片详情包含超长提示词或参数内容 - WHEN 用户查看详情弹窗 - THEN 中间内容区域可以独立纵向滚动
+      - AND 底部操作按钮完整可见并保持在面板底部
+    result: passed
+    reason:
+      text: 中间内容 min-height 0/overflow-y-auto，提示词可滚动，操作区固定不收缩。
+      truncated: false
+  - id: A9
+    source: specs/image-detail-modal/spec.md
+    text: 小视口纵向布局 - GIVEN 用户在宽度不超过 860px 的视口打开图片详情 - WHEN 弹窗显示 - THEN 弹窗使用全屏高度 - AND
+      图片媒体区位于详情面板上方，详情内容和操作区仍按现有移动端方式可用
+    result: passed
+    reason:
+      text: 移动端规则使用 100svh 全屏、column 排列，并恢复媒体图片 auto 尺寸。
+      truncated: false
+builder_handoff:
+  candidate_id: 18d18634-cc71-4e4f-bf6a-f5fe33908ab6
+  identity_provider: skill-coordinated
+  builder_execution_ref: skill-coordinated:builder:cec2a5a5-acc3-43d9-9b4a-5a25f11a42ef
+  iteration: 1
+  summary:
+    text: 将图片详情弹窗桌面布局改为动态宽度和固定高度：根容器使用
+      w-fit/max-w-[92vw]/h-[80vh]/max-h-[720px]，媒体区按图片高度撑满并让宽度自适应，图片使用
+      object-contain 与 calc(92vw - 360px) 宽度上限，右侧面板固定
+      340px。提示词参数继续独立滚动，底部操作区保持完整可见，移动端保留全屏纵向覆盖。同步更新组件与样式契约测试及 Native
+      brief/spec。
+    truncated: false
+  addressed_acceptance_ids:
+    - A1
+    - A2
+    - A3
+    - A4
+    - A5
+    - A6
+    - A7
+    - A8
+    - A9
+  checks:
+    - name:
+        text: targeted image detail tests
+        truncated: false
+      result: passed
+      note:
+        text: 2 files, 5 tests
+        truncated: false
+    - name:
+        text: full frontend tests
+        truncated: false
+      result: passed
+      note:
+        text: 44 files, 178 tests
+        truncated: false
+    - name:
+        text: frontend typecheck
+        truncated: false
+      result: passed
+      note:
+        text: npm run typecheck
+        truncated: false
+    - name:
+        text: frontend format check
+        truncated: false
+      result: passed
+      note:
+        text: npm run format:check
+        truncated: false
+    - name:
+        text: frontend lint
+        truncated: false
+      result: passed
+      note:
+        text: npm run lint
+        truncated: false
+    - name:
+        text: frontend production build
+        truncated: false
+      result: passed
+      note:
+        text: npm run build
+        truncated: false
+  checks_truncated: false
+  known_limits:
+    - text: 未执行真实浏览器 computed layout 或截图检查；测试覆盖 class/CSS 契约及静态构建。
+      truncated: false
+  known_limits_truncated: false
+  review:
+    status: passed
+    summary:
+      text: 只读复核确认 commit 10a9f53 的 JSX/CSS 满足动态尺寸、媒体不裁切、固定右栏、滚动与移动端验收契约，未发现代码缺陷。
+      truncated: false
+    reviewer_execution_ref: "review_dynamic_image_modal: 10a9f53 / frontend npm test
+      (44/178) + npm run build"
+  submitted_at: 2026-09-15T01:38:34.811Z
+blockers: []
+verification:
+  candidate_id: 18d18634-cc71-4e4f-bf6a-f5fe33908ab6
+  identity_provider: skill-coordinated
+  verifier_execution_ref: skill-coordinated:verifier:a5f3823c-c575-4c55-aaf6-714b4c409c3e
+  iteration: 1
+  attempt: 1
+  assurance: skill-coordinated
+  verdict: pass
+  checks: []
+  summary:
+    text: 独立只读复核确认候选满足全部 A1-A9；定向测试、类型检查、lint 和生产构建均通过。
+    truncated: false
+  risks:
+    - text: 未执行 Playwright 或真实浏览器 computed layout/截图验证，A4/A7 的极端横图与最大宽度交互仍有像素级残余风险。
+      truncated: false
+  risks_truncated: false
+  completed_at: 2026-09-15T01:47:42.410Z
+history:
+  - goal_cycle: 1
+    iteration: 1
+    attempt: 1
+    outcome: pass
+    unresolved_ids: []
+    summary:
+      text: 独立只读复核确认候选满足全部 A1-A9；定向测试、类型检查、lint 和生产构建均通过。
+      truncated: false
+    completed_at: 2026-09-15T01:47:42.410Z
+history_overflow:
+  dropped_entries: 0
+  first_dropped_at: null
+  last_dropped_at: null
+  outcome_counts:
+    pass: 0
+    fail: 0
+    blocked: 0
+    execution-error: 0
+    recovery: 0
+verification_result: pass
+verification_report: verification.md
+archived: true
+created_at: 2026-09-15T01:15:45.252Z

@@ -33,11 +33,32 @@ describe('ImageDetailModal media framing', () => {
     const dialog = screen.getByRole('dialog', { name: '图片详情' });
     const media = dialog.querySelector<HTMLElement>('.image-detail__media');
     const image = media?.querySelector('img');
+    const body = dialog.querySelector<HTMLElement>('.image-detail__body');
+    const modal = dialog.closest<HTMLElement>('.image-detail-modal');
 
     expect(dialog).toHaveStyle(`--image-detail-image-ratio: ${width / height}`);
     expect(media).toHaveClass('image-detail__media');
+    expect(media).toHaveClass('flex-1', 'min-w-0', 'min-h-0', 'items-center', 'justify-center');
     expect(image).toHaveAttribute('width', String(width));
     expect(image).toHaveAttribute('height', String(height));
+    expect(image).toHaveClass('max-w-full', 'max-h-full', 'w-auto', 'h-auto', 'object-contain');
+    expect(body).toHaveClass('w-[340px]', 'flex-shrink-0', 'min-h-0', 'flex-col');
+    expect(body?.querySelector('.image-detail__body-content')).toHaveClass(
+      'flex-1',
+      'min-h-0',
+      'overflow-y-auto',
+    );
+    expect(body?.querySelector('.detail-actions')).toHaveClass('flex-shrink-0', 'mt-auto', 'pt-3');
+    expect(modal).toHaveClass(
+      'w-[90vw]',
+      'max-w-5xl',
+      'h-[85vh]',
+      'min-h-[600px]',
+      'max-h-[780px]',
+      'flex',
+      'overflow-hidden',
+      'rounded-2xl',
+    );
   });
 
   it('distinguishes the current discovery scope from the next visibility action', () => {

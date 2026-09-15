@@ -1959,11 +1959,10 @@ video {
   background: var(--color-hairline-light);
 }
 .image-detail {
-  --image-detail-body-width: 360px;
-  display: grid;
+  display: flex;
+  min-height: 0;
   width: 100%;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
-  gap: 0;
+  height: 100%;
   overflow: hidden;
   border: 1px solid color-mix(in oklch, var(--border-strong) 88%, transparent);
   border-radius: inherit;
@@ -1974,8 +1973,18 @@ video {
   padding: 0;
 }
 .image-detail-modal {
-  width: fit-content !important;
-  max-width: calc(100vw - 48px) !important;
+  width: 90vw !important;
+  max-width: 1024px !important;
+  height: 85vh !important;
+  min-height: 600px !important;
+  max-height: 780px !important;
+  overflow: hidden !important;
+}
+.image-detail-modal > div {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 .image-detail__close {
   position: absolute;
@@ -1994,30 +2003,47 @@ video {
   background: var(--surface-hover);
 }
 .image-detail__media {
-  display: grid;
-  aspect-ratio: var(--image-detail-image-ratio);
-  align-content: start;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
   border-right: 1px solid color-mix(in oklch, var(--border) 92%, transparent);
-  background: transparent;
+  background: rgb(0 0 0 / 0.4);
   overflow: hidden;
 }
 .image-detail__media img {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: auto;
+  height: auto;
   max-width: 100%;
+  max-height: 100%;
   border-radius: 0;
   box-shadow: none;
   object-fit: contain;
 }
 .image-detail__body {
   display: flex;
+  width: 340px;
+  height: 100%;
+  flex-shrink: 0;
   min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  background: #141414;
+  padding: 20px;
+}
+.image-detail__body-content {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 15px;
   overflow-y: auto;
-  background: color-mix(in oklch, var(--card) 94%, var(--surface-raised));
-  padding: 34px 28px 24px;
 }
 .image-detail__body .eyebrow {
   color: color-mix(in oklch, var(--foreground) 72%, var(--background));
@@ -2060,33 +2086,10 @@ video {
 }
 .detail-actions {
   display: grid;
+  flex-shrink: 0;
   gap: 8px;
   margin-top: auto;
-}
-@media (min-width: 861px) {
-  .image-detail-modal {
-    overflow: hidden;
-  }
-  .image-detail {
-    --image-detail-media-width: min(
-      720px,
-      calc(100vw - 48px - var(--image-detail-body-width)),
-      calc(min(900px, 100svh - 144px) * var(--image-detail-image-ratio))
-    );
-    width: calc(var(--image-detail-media-width) + var(--image-detail-body-width));
-    height: calc(var(--image-detail-media-width) / var(--image-detail-image-ratio));
-    grid-template-columns: minmax(0, 1fr) var(--image-detail-body-width);
-  }
-  .image-detail__body {
-    min-height: 0;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-  }
-}
-@media (min-width: 861px) and (max-width: 1100px) {
-  .image-detail {
-    --image-detail-body-width: 320px;
-  }
+  padding-top: 12px;
 }
 .toast-region {
   position: fixed;
@@ -3228,23 +3231,28 @@ video {
   }
   .image-detail {
     min-height: 0;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
+    flex-direction: column;
     padding: 0;
   }
   .image-detail__media {
+    width: 100%;
+    flex: 0 1 auto;
     min-height: 0;
-    aspect-ratio: var(--image-detail-image-ratio);
     border-right: 0;
     border-bottom: 1px solid color-mix(in oklch, var(--border) 92%, transparent);
   }
   .image-detail__body {
+    width: 100%;
+    height: auto;
+    flex: 1 1 auto;
     padding: 26px 20px 20px;
   }
   .image-detail-modal {
     inset-inline: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100svh !important;
+    min-height: 0 !important;
     max-height: 100svh !important;
     border-radius: 0 !important;
   }
@@ -3563,7 +3571,7 @@ video {
   }
   .image-detail {
     min-height: 0;
-    grid-template-rows: auto auto;
+    flex-direction: column;
     padding: 0;
   }
   .image-detail__media {

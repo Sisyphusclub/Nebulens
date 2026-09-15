@@ -100,28 +100,28 @@ export function ImageDetailModal({
             <h2 id="image-detail-title">图片详情</h2>
             <p className="image-detail__prompt">{entry.record.prompt}</p>
             <dl className="metadata-grid">
-            <div>
-              <dt>模型</dt>
-              <dd>{imageModelLabel(entry.record.model)}</dd>
-            </div>
-            <div>
-              <dt>尺寸</dt>
-              <dd>
-                {entry.record.width} × {entry.record.height}
-              </dd>
-            </div>
-            <div>
-              <dt>比例</dt>
-              <dd>{entry.record.aspectRatio ?? '智能'}</dd>
-            </div>
-            <div>
-              <dt>时间</dt>
-              <dd>{formatDateTime(entry.record.createdAt)}</dd>
-            </div>
-            <div>
-              <dt>可见范围</dt>
-              <dd>{getImageVisibilityLabel(entry.record.isPublic)}</dd>
-            </div>
+              <div>
+                <dt>模型</dt>
+                <dd>{imageModelLabel(entry.record.model)}</dd>
+              </div>
+              <div>
+                <dt>尺寸</dt>
+                <dd>
+                  {entry.record.width} × {entry.record.height}
+                </dd>
+              </div>
+              <div>
+                <dt>比例</dt>
+                <dd>{entry.record.aspectRatio ?? '智能'}</dd>
+              </div>
+              <div>
+                <dt>时间</dt>
+                <dd>{formatDateTime(entry.record.createdAt)}</dd>
+              </div>
+              <div>
+                <dt>可见范围</dt>
+                <dd>{getImageVisibilityLabel(entry.record.isPublic)}</dd>
+              </div>
             </dl>
           </div>
           <div className="detail-actions flex-shrink-0 mt-auto pt-3">

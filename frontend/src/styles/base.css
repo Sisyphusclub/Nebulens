@@ -3319,6 +3319,7 @@ video {
   .image-detail-modal {
     inset-inline: 0 !important;
     width: 100% !important;
+    min-height: 0 !important;
     max-width: 100% !important;
     max-height: 100svh !important;
     border-radius: 0 !important;

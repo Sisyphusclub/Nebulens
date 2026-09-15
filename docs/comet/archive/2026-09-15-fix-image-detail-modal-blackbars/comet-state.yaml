@@ -1,0 +1,146 @@
+schema: comet.native.v4
+name: fix-image-detail-modal-blackbars
+language: zh-CN
+phase: archive
+status: done
+state_version: 12
+brief: brief.md
+shape_confirmation_hash: 774b7fb1480cd2ebad635afa48755d161714a6b1d17794537baedee97e552ecd
+spec_changes:
+  - capability: image-detail-modal
+    operation: modify
+    source: specs/image-detail-modal/spec.md
+workspace:
+  isolation: worktree
+  change_branch: comet/fix-image-detail-modal-blackbars
+  target_branch: dev
+  finish: merge
+loop:
+  stage: done
+  goal_cycle: 1
+  iteration: 1
+  attempt: 1
+  retry_epoch: 0
+  failed_iteration_count: 0
+  no_progress_count: 0
+  execution_failure_count: 0
+  previous_unresolved_ids: []
+  next_action: null
+acceptance:
+  - id: A1
+    source: specs/image-detail-modal/spec.md
+    text: 桌面端图片完整显示 - GIVEN 图片详情弹窗在桌面视口打开 - WHEN 图片为 16:9、2:3、1:1 或其他比例 - THEN Modal
+      高度为 `85vh`，并受 `620px` 至 `760px` 限制、宽度受 `90vw` 和 `max-w-5xl` 限制 - AND
+      左侧媒体区高度填满、带 `p-8` 均匀内边距，图片使用 `object-contain` 完整显示
+    result: passed
+    reason:
+      text: 桌面 Modal 固定尺寸，移动端短视口不溢出。
+      truncated: false
+  - id: A2
+    source: specs/image-detail-modal/spec.md
+    text: 详情内容与操作区不截断 - GIVEN 提示词和参数内容超过右侧可视高度 - WHEN 用户查看详情 - THEN 中间内容区域独立纵向滚动 -
+      AND 右侧面板固定 `340px` 宽度 - AND 底部操作按钮组不收缩、保持底部并完整可见
+    result: passed
+    reason:
+      text: 左侧 p-8 黑色媒体区与 contain 圆角阴影图片完整显示。
+      truncated: false
+  - id: A3
+    source: specs/image-detail-modal/spec.md
+    text: 窄屏详情布局 - GIVEN 视口宽度不超过移动端断点 - WHEN 用户打开图片详情 - THEN 继续使用纵向媒体区和详情面板布局 - AND
+      图片不超出媒体区，详情内容可滚动
+    result: passed
+    reason:
+      text: 右侧 340px，内容滚动，底部操作区不收缩。
+      truncated: false
+builder_handoff:
+  candidate_id: e10e19ab-2845-4f7f-a3f8-e1a5f4104c9a
+  identity_provider: skill-coordinated
+  builder_execution_ref: skill-coordinated:builder:f4810b7c-29db-4575-b9f3-89ad93a61ede
+  iteration: 1
+  summary:
+    text: 已修复图片详情弹窗黑边与按钮截断。桌面端 Modal 固定为
+      90vw/max-w-5xl、85vh/min-h-620px/max-h-760px；左侧媒体区
+      flex-1、h-full、p-8、#0a0a0a，图片 contain、rounded-xl、shadow-2xl；右侧固定
+      340px，内容区独立滚动，底部操作区不收缩并固定底部；移动端继续纵向布局。
+    truncated: false
+  addressed_acceptance_ids:
+    - A1
+    - A2
+    - A3
+  checks:
+    - name:
+        text: npm test -- --run tests/components/ImageDetailModal.spec.tsx
+          tests/styles/imageDetailSizing.spec.ts
+        truncated: false
+      result: passed
+      note:
+        text: 2 files, 7 tests passed
+        truncated: false
+    - name:
+        text: npm run typecheck
+        truncated: false
+      result: passed
+      note:
+        text: passed
+        truncated: false
+    - name:
+        text: npm run build
+        truncated: false
+      result: passed
+      note:
+        text: component provenance and Vite production build passed
+        truncated: false
+  checks_truncated: false
+  known_limits:
+    - text: 未执行真实浏览器像素截图，视觉结论基于 CSS 契约和组件测试。
+      truncated: false
+  known_limits_truncated: false
+  review:
+    status: passed
+    summary:
+      text: 只读复核确认固定 Modal 尺寸、左侧均匀内边距与 contain 图片、右侧固定宽度、内容滚动和底部操作区约束均已实现，移动端覆盖保留。
+      truncated: false
+    reviewer_execution_ref: review-blackbars-modal-b80b1fe
+  submitted_at: 2026-09-15T05:45:49.836Z
+blockers: []
+verification:
+  candidate_id: e10e19ab-2845-4f7f-a3f8-e1a5f4104c9a
+  identity_provider: skill-coordinated
+  verifier_execution_ref: skill-coordinated:verifier:4f769b29-ed0d-41ed-a0d8-43787df0dc78
+  iteration: 1
+  attempt: 1
+  assurance: skill-coordinated
+  verdict: pass
+  checks: []
+  summary:
+    text: 独立只读复核通过全部 3 项验收；定向测试、typecheck、build、lint、format:check 均通过。
+    truncated: false
+  risks:
+    - text: 未执行真实浏览器像素截图。
+      truncated: false
+  risks_truncated: false
+  completed_at: 2026-09-15T06:17:08.531Z
+history:
+  - goal_cycle: 1
+    iteration: 1
+    attempt: 1
+    outcome: pass
+    unresolved_ids: []
+    summary:
+      text: 独立只读复核通过全部 3 项验收；定向测试、typecheck、build、lint、format:check 均通过。
+      truncated: false
+    completed_at: 2026-09-15T06:17:08.531Z
+history_overflow:
+  dropped_entries: 0
+  first_dropped_at: null
+  last_dropped_at: null
+  outcome_counts:
+    pass: 0
+    fail: 0
+    blocked: 0
+    execution-error: 0
+    recovery: 0
+verification_result: pass
+verification_report: verification.md
+archived: true
+created_at: 2026-09-15T05:19:36.479Z

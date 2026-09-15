@@ -58,10 +58,10 @@ export function ImageDetailModal({
       onClose={onClose}
       sharedLayout={false}
       backdropClassName="!bg-black/[0.78]"
-      className="image-detail-modal w-[90vw] max-w-5xl min-h-[580px] h-[80vh] max-h-[720px] flex overflow-hidden rounded-2xl !bg-card !text-card-foreground !shadow-[var(--shadow-modal)]"
+      className="image-detail-modal w-fit max-w-[92vw] min-h-[580px] h-[80vh] max-h-[720px] flex overflow-hidden rounded-2xl !bg-card !text-card-foreground !shadow-[var(--shadow-modal)]"
     >
       <section
-        className="dialog image-detail"
+        className="dialog image-detail flex h-full min-h-0 w-full overflow-hidden rounded-2xl"
         style={
           {
             '--image-detail-image-ratio': entry.record.width / entry.record.height,
@@ -85,13 +85,13 @@ export function ImageDetailModal({
             </Button>
           </IconTooltip>
         </div>
-        <div className="image-detail__media flex-1 h-full min-w-0 min-h-0 p-0 flex items-center justify-center bg-[#0a0a0a]">
+        <div className="image-detail__media h-full w-auto min-w-0 flex items-center justify-center bg-black/40">
           <img
             src={entry.imageUrl}
             alt={entry.record.prompt || '生成图片'}
             width={entry.record.width}
             height={entry.record.height}
-            className="image-detail__image w-full h-full object-cover rounded-xl shadow-2xl"
+            className="image-detail__image h-full w-auto max-h-full max-w-[calc(92vw-360px)] object-contain"
           />
         </div>
         <div className="image-detail__body w-[340px] flex-shrink-0 h-full flex flex-col min-h-0 bg-[#141414] p-5">

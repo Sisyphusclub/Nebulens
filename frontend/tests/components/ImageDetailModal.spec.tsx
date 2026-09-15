@@ -39,20 +39,15 @@ describe('ImageDetailModal media framing', () => {
     expect(dialog).toHaveStyle(`--image-detail-image-ratio: ${width / height}`);
     expect(media).toHaveClass(
       'image-detail__media',
-      'flex-1',
+      'w-auto',
       'h-full',
-      'p-0',
-      'min-w-0',
-      'min-h-0',
       'items-center',
       'justify-center',
     );
     expect(image).toHaveClass(
-      'w-full',
       'h-full',
-      'object-cover',
-      'rounded-xl',
-      'shadow-2xl',
+      'w-auto',
+      'object-contain',
     );
     expect(image).toHaveAttribute('width', String(width));
     expect(image).toHaveAttribute('height', String(height));

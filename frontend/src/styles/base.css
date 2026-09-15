@@ -173,7 +173,7 @@ video {
   height: 17px;
 }
 .route-loading {
-  display: grid;
+  display: flex;
   min-height: 50vh;
   place-items: center;
 }
@@ -1976,9 +1976,8 @@ video {
 }
 .image-detail {
   --image-detail-body-width: 340px;
-  display: grid;
+  display: flex;
   width: 100%;
-  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 0;
   overflow: hidden;
   border: 1px solid color-mix(in oklch, var(--border-strong) 88%, transparent);
@@ -1990,8 +1989,8 @@ video {
   padding: 0;
 }
 .image-detail-modal {
-  width: 90vw !important;
-  max-width: 1024px !important;
+  width: fit-content !important;
+  max-width: 92vw !important;
   height: 80vh !important;
   min-height: 580px !important;
   max-height: 720px !important;
@@ -2015,26 +2014,26 @@ video {
 }
 .image-detail__media {
   display: flex;
-  flex: 1 1 auto;
+  width: auto;
   height: 100%;
   align-items: center;
   justify-content: center;
   min-width: 0;
   min-height: 0;
-  padding: 0;
   border-right: 1px solid color-mix(in oklch, var(--border) 92%, transparent);
-  background: #0a0a0a;
+  flex: 0 1 auto;
+  background: rgb(0 0 0 / 0.4);
   overflow: hidden;
 }
 .image-detail__media img {
   display: block;
-  width: 100%;
+  width: auto;
   height: 100%;
-  max-width: none;
-  max-height: none;
-  border-radius: 12px;
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.8);
-  object-fit: cover;
+  max-width: calc(92vw - 360px);
+  max-height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  object-fit: contain;
 }
 .image-detail__body {
   display: flex;
@@ -2115,8 +2114,7 @@ video {
     width: 100%;
     height: 100%;
     min-height: 0;
-    grid-template-rows: minmax(0, 1fr);
-    grid-template-columns: minmax(0, 1fr) var(--image-detail-body-width);
+    display: flex;
   }
   .image-detail__body {
     min-height: 0;
@@ -2133,15 +2131,14 @@ video {
   .image-detail__media {
     height: 100%;
     aspect-ratio: auto;
-    flex: 1 1 auto;
-    padding: 0;
-    background: #0a0a0a;
+    flex: 0 1 auto;
+    background: rgb(0 0 0 / 0.4);
   }
   .image-detail__media img {
-    width: 100%;
+    width: auto;
     height: 100%;
-    max-width: none;
-    max-height: none;
+    max-width: calc(92vw - 360px);
+    max-height: 100%;
   }
 }
 @media (min-width: 861px) and (max-width: 1100px) {
@@ -3308,10 +3305,11 @@ video {
     border-bottom: 1px solid color-mix(in oklch, var(--border) 92%, transparent);
   }
   .image-detail__media img {
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    max-height: none;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
   }
   .image-detail__body {
     padding: 26px 20px 20px;

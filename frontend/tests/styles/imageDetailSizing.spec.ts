@@ -27,15 +27,16 @@ describe('image detail sizing contract', () => {
     const bodyContentRule = ruleBody(baseStyles, '.image-detail__body-content');
     const actionsRule = ruleBody(baseStyles, '.detail-actions');
 
-    expect(modalRule).toContain('width: 90vw !important;');
-    expect(modalRule).toContain('max-width: 1024px !important;');
-    expect(modalRule).toContain('height: 85vh !important;');
-    expect(modalRule).toContain('min-height: 600px !important;');
-    expect(modalRule).toContain('max-height: 780px !important;');
+    expect(modalRule).toContain('width: fit-content !important;');
+    expect(modalRule).toContain('max-width: 92vw !important;');
+    expect(modalRule).toContain('height: 80vh !important;');
+    expect(modalRule).toContain('max-height: 720px !important;');
     expect(detailRule).toContain('display: flex;');
     expect(detailRule).toContain('min-height: 0;');
     expect(detailRule).toContain('height: 100%;');
     expect(mediaRule).toContain('display: flex;');
+    expect(mediaRule).toContain('width: auto;');
+    expect(mediaRule).toContain('height: 100%;');
     expect(mediaRule).toContain('min-width: 0;');
     expect(mediaRule).toContain('min-height: 0;');
     expect(mediaRule).toContain('align-items: center;');
@@ -43,8 +44,8 @@ describe('image detail sizing contract', () => {
     expect(mediaRule).toContain('background: rgb(0 0 0 / 0.4);');
     expect(mediaRule).toContain('overflow: hidden;');
     expect(imageRule).toContain('width: auto;');
-    expect(imageRule).toContain('height: auto;');
-    expect(imageRule).toContain('max-width: 100%;');
+    expect(imageRule).toContain('height: 100%;');
+    expect(imageRule).toContain('max-width: calc(92vw - 360px);');
     expect(imageRule).toContain('max-height: 100%;');
     expect(imageRule).toContain('object-fit: contain;');
     expect(bodyRule).toContain('width: 340px;');

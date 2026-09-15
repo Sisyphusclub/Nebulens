@@ -58,7 +58,7 @@ export function ImageDetailModal({
       onClose={onClose}
       sharedLayout={false}
       backdropClassName="!bg-black/[0.78]"
-      className="image-detail-modal flex h-[85vh] max-h-[780px] min-h-[600px] w-[90vw] max-w-5xl overflow-hidden rounded-2xl !bg-card !text-card-foreground !shadow-[var(--shadow-modal)]"
+      className="image-detail-modal w-fit max-w-[92vw] h-[80vh] max-h-[720px] flex overflow-hidden rounded-2xl !bg-card !text-card-foreground !shadow-[var(--shadow-modal)]"
     >
       <section
         className="dialog image-detail flex h-full min-h-0 w-full overflow-hidden rounded-2xl"
@@ -85,16 +85,16 @@ export function ImageDetailModal({
             </Button>
           </IconTooltip>
         </div>
-        <div className="image-detail__media flex h-full min-h-0 min-w-0 flex-1 items-center justify-center bg-black/40 p-6">
+        <div className="image-detail__media h-full w-auto min-w-0 flex items-center justify-center bg-black/40">
           <img
             src={entry.imageUrl}
             alt={entry.record.prompt || '生成图片'}
             width={entry.record.width}
             height={entry.record.height}
-            className="h-auto w-auto max-h-full max-w-full object-contain"
+            className="h-full w-auto max-h-full max-w-[calc(92vw-360px)] object-contain"
           />
         </div>
-        <div className="image-detail__body flex h-full min-h-0 w-[340px] flex-shrink-0 flex-col bg-[#141414] p-5">
+        <div className="image-detail__body w-[340px] flex-shrink-0 h-full flex flex-col min-h-0 bg-[#141414] p-5">
           <div className="image-detail__body-content flex-1 min-h-0 overflow-y-auto">
             <p className="eyebrow">NEBULENS OUTPUT</p>
             <h2 id="image-detail-title">图片详情</h2>

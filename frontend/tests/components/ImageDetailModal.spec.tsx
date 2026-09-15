@@ -48,9 +48,9 @@ describe('ImageDetailModal media framing', () => {
       'justify-center',
     );
     expect(image).toHaveClass(
-      'max-w-full',
-      'max-h-full',
-      'object-contain',
+      'w-full',
+      'h-full',
+      'object-cover',
       'rounded-xl',
       'shadow-2xl',
     );

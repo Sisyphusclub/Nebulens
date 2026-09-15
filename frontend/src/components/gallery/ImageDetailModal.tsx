@@ -91,7 +91,7 @@ export function ImageDetailModal({
             alt={entry.record.prompt || '生成图片'}
             width={entry.record.width}
             height={entry.record.height}
-            className="image-detail__image max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+            className="image-detail__image w-full h-full object-cover rounded-xl shadow-2xl"
           />
         </div>
         <div className="image-detail__body w-[340px] flex-shrink-0 h-full flex flex-col min-h-0 bg-[#141414] p-5">

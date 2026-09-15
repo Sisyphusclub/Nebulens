@@ -4,10 +4,8 @@ import {
   buildImagesController,
   type ImagesControllerDeps,
 } from '../controllers/images.controller.js';
-import { AppError } from '../errors/AppError.js';
 import { requireAuth } from '../middlewares/requireAuth.js';
 import { uploadImageMiddleware } from '../middlewares/upload.js';
-import { isUserAdmin } from '../services/adminUser.service.js';
 
 export interface ImagesRouterDeps extends ImagesControllerDeps {
   /** Optional override for the auth middleware; defaults to `requireAuth`. */
@@ -42,28 +40,10 @@ export function buildImagesRouter(deps: ImagesRouterDeps): Router {
   router.post('/generate', deps.generationRateLimiter ?? passThrough, (req, res, next) => {
     void controller.generate(req, res, next);
   });
-  // POST /api/images/generate/high-res -> admin or personal 2K/4K credential.
-  router.post(
-    '/generate/high-res',
-    deps.generationRateLimiter ?? passThrough,
-    (req, _res, next) => {
-      try {
-        if (!req.user) throw new AppError('UNAUTHORIZED', 'Authentication required', 401);
-        const canUseHighRes =
-          isUserAdmin(req.user.id) ||
-          deps.userImageApiKeys.getStatus(req.user.id).highResConfigured === true;
-        if (!canUseHighRes) {
-          throw new AppError('FORBIDDEN', '请先配置 2K/4K 生图 Key。', 403);
-        }
-        next();
-      } catch (err) {
-        next(err);
-      }
-    },
-    (req, res, next) => {
-      void controller.generateHighRes(req, res, next);
-    },
-  );
+  // POST /api/images/generate/high-res (auth, JSON body) -> 2K/4K image generation.
+  router.post('/generate/high-res', deps.generationRateLimiter ?? passThrough, (req, res, next) => {
+    void controller.generateHighRes(req, res, next);
+  });
 
   return router;
 }

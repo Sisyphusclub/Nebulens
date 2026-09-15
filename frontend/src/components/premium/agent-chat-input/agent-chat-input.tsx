@@ -483,14 +483,14 @@ function StreamingPlaceholder({ active, examples, reduce }: StreamingPlaceholder
   }, [active, reduce, signature]);
 
   return (
-    <span
+    <div
       className="agent-chat-input__streaming-placeholder"
       data-active={active ? 'true' : undefined}
       aria-hidden="true"
     >
       <span ref={textRef} className="agent-chat-input__streaming-placeholder-text" />
       <span className="agent-chat-input__streaming-placeholder-caret" />
-    </span>
+    </div>
   );
 }
 

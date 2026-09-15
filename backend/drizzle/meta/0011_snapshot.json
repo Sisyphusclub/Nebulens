@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "c9cdf750-8a3f-4306-a2d8-e9dd93e0e61d",
+  "id": "9f19dea0-a5ab-4d87-8343-0cbf744e2bd4",
   "prevId": "516403bc-0eb1-4004-8138-8e8181ebd542",
   "tables": {
     "account": {
@@ -242,6 +242,13 @@
           "notNull": true,
           "autoincrement": false,
           "default": "'standard'"
+        },
+        "quality": {
+          "name": "quality",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "elapsed_ms": {
           "name": "elapsed_ms",
@@ -646,28 +653,14 @@
           "name": "encrypted_key",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "key_suffix": {
           "name": "key_suffix",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "high_res_encrypted_key": {
-          "name": "high_res_encrypted_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "high_res_key_suffix": {
-          "name": "high_res_key_suffix",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "created_at": {

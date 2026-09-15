@@ -323,6 +323,53 @@ describe('POST /api/images/generate', () => {
     expect(history.body.records[0]).toMatchObject({ prompt: 'publish to gallery', isPublic: true });
   });
 
+  it('forwards and persists quality for supported models', async () => {
+    const { provider } = fakeProvider();
+    const userId = `quality-user-${randomUUID()}`;
+    const app = buildApp(provider, stubAuth(userId));
+
+    const response = await request(app).post('/api/images/generate').send({
+      prompt: 'quality generation',
+      model: 'gpt-image-2.5-flare',
+      quality: 'high',
+    });
+
+    expect(response.status).toBe(200);
+    expect(provider.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ model: 'gpt-image-2.5-flare', quality: 'high' }),
+    );
+    const history = await request(app).get('/api/history');
+    expect(history.body.records[0]).toMatchObject({
+      model: 'gpt-image-2.5-flare',
+      quality: 'high',
+    });
+  });
+
+  it('rejects quality for gpt-image-2 and invalid quality values', async () => {
+    const { provider } = fakeProvider();
+    const app = buildApp(provider);
+
+    const unsupported = await request(app).post('/api/images/generate').send({
+      prompt: 'unsupported quality',
+      model: 'gpt-image-2',
+      quality: 'high',
+    });
+    const invalid = await request(app).post('/api/images/generate').send({
+      prompt: 'invalid quality',
+      model: 'gpt-image-2.5-flare',
+      quality: 'ultra',
+    });
+
+    expect(unsupported.status).toBe(400);
+    expect(unsupported.body.error).toMatchObject({
+      code: 'BAD_REQUEST',
+      details: { model: 'gpt-image-2', quality: 'high' },
+    });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.error.code).toBe('BAD_REQUEST');
+    expect(provider.generate).not.toHaveBeenCalled();
+  });
+
   it('respects explicit count + aspectRatio', async () => {
     const { provider } = fakeProvider();
     const app = buildApp(provider);
@@ -357,13 +404,13 @@ describe('POST /api/images/generate', () => {
     expect(quota.body.remaining).toBe(20);
   });
 
-  it('lets admins call the dedicated high-resolution endpoint', async () => {
+  it('lets authenticated users call the dedicated high-resolution endpoint', async () => {
     const { provider } = fakeProvider();
     const userId = `high-res-admin-${randomUUID()}`;
     const app = buildApp(provider, stubAuth(userId, true));
 
     const res = await request(app).post('/api/images/generate/high-res').send({
-      prompt: '管理员生成 4K 宽屏图',
+      prompt: '登录用户生成 4K 宽屏图',
       count: 1,
       aspectRatio: '16:9',
       resolution: '4k',
@@ -373,28 +420,48 @@ describe('POST /api/images/generate', () => {
     expect(res.status).toBe(200);
     expect(res.body.aspectRatio).toBe('16:9');
     expect(res.body.images[0]).toMatchObject({
-      width: 3840,
-      height: 2160,
+      width: 2048,
+      height: 1152,
     });
     const call = (provider.generate as ReturnType<typeof vi.fn>).mock.calls[0]![0] as GenerateInput;
     expect(call.resolution).toBe('4k');
     expect(call.aspectRatio).toBe('16:9');
 
     const quota = await request(app).get('/api/images/quota');
-    expect(quota.body.remaining).toBe(19);
+    expect(quota.body.remaining).toBe(17);
 
     const history = await request(app).get('/api/history');
     expect(history.body.records[0]).toMatchObject({
-      prompt: '管理员生成 4K 宽屏图',
-      width: 3840,
-      height: 2160,
+      prompt: '登录用户生成 4K 宽屏图',
+      width: 2048,
+      height: 1152,
       count: 1,
       resolution: '4k',
       isPublic: true,
     });
   });
 
-  it('rejects high-resolution endpoint calls from non-admin users', async () => {
+  it('charges four credits for a sunburst high-resolution image', async () => {
+    const { provider } = fakeProvider();
+    const userId = `sunburst-high-res-${randomUUID()}`;
+    const app = buildApp(provider, stubAuth(userId, true));
+
+    const res = await request(app).post('/api/images/generate/high-res').send({
+      prompt: 'Sunburst 生成 2K 图片',
+      model: 'gpt-image-2.5-sunburst',
+      resolution: '2k',
+    });
+
+    expect(res.status).toBe(200);
+    expect(provider.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ model: 'gpt-image-2.5-sunburst', resolution: '2k' }),
+    );
+
+    const quota = await request(app).get('/api/images/quota');
+    expect(quota.body.remaining).toBe(16);
+  });
+
+  it('lets non-admin users call the high-resolution endpoint', async () => {
     const { provider } = fakeProvider();
     const userId = `high-res-user-${randomUUID()}`;
     const app = buildApp(provider, stubAuth(userId, false));
@@ -404,12 +471,65 @@ describe('POST /api/images/generate', () => {
       resolution: '2k',
     });
 
-    expect(res.status).toBe(403);
-    expect(res.body.error.code).toBe('FORBIDDEN');
-    expect(provider.generate).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(provider.generate).toHaveBeenCalledWith(expect.objectContaining({ resolution: '2k' }));
 
     const quota = await request(app).get('/api/images/quota');
-    expect(quota.body.remaining).toBe(20);
+    expect(quota.body.remaining).toBe(17);
+  });
+
+  it('rejects high-resolution generation when only check-in credits remain', async () => {
+    const { provider } = fakeProvider();
+    const userId = `high-res-check-in-only-${randomUUID()}`;
+    const app = buildApp(provider, stubAuth(userId));
+    db.update(userQuota)
+      .set({ dailyTotal: 0, permanentTotal: 0, permanentUsed: 0, usedToday: 0 })
+      .where(eq(userQuota.userId, userId))
+      .run();
+
+    const checkIn = await request(app).post('/api/images/quota/check-in');
+    expect(checkIn.body.remaining).toBe(5);
+
+    const highResolution = await request(app).post('/api/images/generate/high-res').send({
+      prompt: '签到积分不能生成 2K',
+      resolution: '2k',
+    });
+    expect(highResolution.status).toBe(429);
+    expect(highResolution.body.error).toMatchObject({
+      code: 'QUOTA_EXHAUSTED',
+      details: { requested: 3, remaining: 0, quotaScope: 'permanent' },
+    });
+    expect(provider.generate).not.toHaveBeenCalled();
+
+    const standard = await request(app)
+      .post('/api/images/generate')
+      .send({ prompt: '签到积分仍可生成 1K' });
+    expect(standard.status).toBe(200);
+    expect((await request(app).get('/api/images/quota')).body.remaining).toBe(4);
+  });
+
+  it('lets a non-admin use the saved 2K/4K credential without consuming site quota', async () => {
+    const { provider } = fakeProvider();
+    const userId = createDbUser({ userId: `high-res-key-${randomUUID()}` });
+    const userImageApiKeys = createUserImageApiKeyService();
+    userImageApiKeys.save(userId, 'sk-high-res-user-4444', 'high-res');
+    const app = createApp({
+      provider,
+      authMiddleware: stubAuth(userId, false),
+      userImageApiKeys,
+      demoGenerationDelayMs: 0,
+    });
+
+    const res = await request(app).post('/api/images/generate/high-res').send({
+      prompt: '用户 Key 生成 2K',
+      resolution: '2k',
+    });
+
+    expect(res.status).toBe(200);
+    const call = (provider.generate as ReturnType<typeof vi.fn>).mock.calls[0]![0] as GenerateInput;
+    expect(call.providerCredential).toBe('sk-high-res-user-4444');
+    expect(call.resolution).toBe('2k');
+    expect((await request(app).get('/api/images/quota')).body.remaining).toBe(20);
   });
 
   it('lets a non-admin use the saved 2K/4K credential without consuming site quota', async () => {
@@ -451,7 +571,7 @@ describe('POST /api/images/generate', () => {
     expect(provider.generate).not.toHaveBeenCalled();
   });
 
-  it('rejects 4k requests when the selected aspect ratio is not supported upstream', async () => {
+  it('accepts 4k requests for every supported aspect ratio', async () => {
     const { provider } = fakeProvider();
     const userId = `high-res-aspect-${randomUUID()}`;
     const app = buildApp(provider, stubAuth(userId, true));
@@ -462,9 +582,13 @@ describe('POST /api/images/generate', () => {
       resolution: '4k',
     });
 
-    expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe('BAD_REQUEST');
-    expect(provider.generate).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(provider.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ aspectRatio: '1:1', resolution: '4k' }),
+    );
+
+    const quota = await request(app).get('/api/images/quota');
+    expect(quota.body.remaining).toBe(17);
   });
 
   it('passes reference ids through dedicated high-resolution image-to-image calls', async () => {
@@ -787,7 +911,7 @@ describe('POST /api/images/generate', () => {
 
     const res = await request(app)
       .post('/api/images/generate')
-      .send({ prompt: 'p', aspectRatio: '4:3' });
+      .send({ prompt: 'p', aspectRatio: '7:5' });
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('BAD_REQUEST');
   });

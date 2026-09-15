@@ -14,10 +14,13 @@ import {
   MAX_COUNT,
   MAX_REFERENCE_IMAGES,
   MIN_COUNT,
+  imageGenerationCreditCost,
+  supportsImageQuality,
   isAspectRatioSupportedForResolution,
   type AspectRatio,
   type GenerateOutput,
   type ImageResolution,
+  type ImageQuality,
 } from '../types/image.js';
 
 import type { ImageGenerationProvider } from './providers/ImageGenerationProvider.js';
@@ -34,6 +37,7 @@ export interface GenerateImageInput {
   count?: number;
   aspectRatio?: AspectRatio;
   resolution?: ImageResolution;
+  quality?: ImageQuality;
   userId?: string;
   requestId?: string;
   signal?: AbortSignal;
@@ -118,6 +122,15 @@ export async function generateImage(
       { aspectRatio, resolution },
     );
   }
+  if (input.quality !== undefined && !supportsImageQuality(input.model)) {
+    throw new AppError(
+      'BAD_REQUEST',
+      `Image quality is not supported for model ${input.model ?? '<default>'}`,
+      400,
+      undefined,
+      { model: input.model ?? null, quality: input.quality },
+    );
+  }
 
   logger.info(
     {
@@ -129,12 +142,16 @@ export async function generateImage(
       count,
       aspectRatio,
       resolution,
+      quality: input.quality,
     },
     'image generation: service invoke',
   );
 
   throwIfAborted(input.signal);
-  const reservation = deps.quotaPool?.reserve(count);
+  const creditCost = imageGenerationCreditCost(resolution, input.model);
+  const reservation = deps.quotaPool?.reserve(count * creditCost, {
+    scope: resolution === DEFAULT_IMAGE_RESOLUTION ? 'all' : 'permanent',
+  });
   let generatedResult: GenerateOutput | undefined;
   try {
     generatedResult = await deps.provider.generate({
@@ -150,6 +167,7 @@ export async function generateImage(
         ? { providerCredentialGroup: input.providerCredentialGroup }
         : {}),
       ...(input.resolution !== undefined ? { resolution } : {}),
+      ...(input.quality !== undefined ? { quality: input.quality } : {}),
       ...(referencePaths.length > 0 ? { referencePaths } : {}),
       ...(input.model !== undefined ? { model: input.model } : {}),
     });
@@ -176,7 +194,7 @@ export async function generateImage(
       await Promise.all(generatedResult.images.map((image) => removeOutput(image.outputPath)));
       throw requestAbortedError(input.signal.reason);
     }
-    reservation?.commit(generatedResult.images.length);
+    reservation?.commit(generatedResult.images.length * creditCost);
 
     return {
       batchId: randomUUID(),

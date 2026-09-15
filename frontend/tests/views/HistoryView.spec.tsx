@@ -150,8 +150,12 @@ beforeEach(() => {
 });
 
 describe('HistoryView asset workflows', () => {
-  it('uses a compact command bar and keeps collection context in the working plane', async () => {
+  it('filters assets by model and restores all models', async () => {
     const user = userEvent.setup();
+    historyMocks.entries = [
+      entries[0]!,
+      { ...entries[1]!, record: { ...entries[1]!.record, model: 'gemini-3-pro-image' } },
+    ];
     renderView();
 
     const title = screen.getByRole('heading', { level: 1, name: '资产' });
@@ -167,7 +171,7 @@ describe('HistoryView asset workflows', () => {
     expect(
       screen.getByRole('searchbox', { name: '搜索资产' }).closest('.asset-commandbar'),
     ).toHaveClass('operational-toolbar');
-    expect(screen.getByRole('navigation', { name: '收藏集筛选' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: '模型筛选' })).toBeInTheDocument();
 
     const page = screen.getByRole('region', { name: '个人资产' });
     const scrollRegion = page.querySelector('[data-asset-scroll-region]');
@@ -183,11 +187,21 @@ describe('HistoryView asset workflows', () => {
     expect(screen.getByRole('menuitemradio', { name: '仅自己可见' })).toBeInTheDocument();
     await user.keyboard('{Escape}');
 
-    await user.click(screen.getByRole('button', { name: '灵感库' }));
+    await user.click(screen.getByRole('button', { name: 'Nano Banana Pro' }));
 
     expect(screen.getByLabelText('当前显示 1 项，共 2 项')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /查看图片：/ })).toHaveLength(1);
-    expect(screen.getByRole('button', { name: '灵感库' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Nano Banana Pro' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: '查看图片：森林建筑' })).toBeInTheDocument();
+    await user.click(
+      within(screen.getByRole('navigation', { name: '模型筛选' })).getByRole('button', {
+        name: '全部',
+      }),
+    );
+    expect(screen.getAllByRole('button', { name: /查看图片：/ })).toHaveLength(2);
   });
 
   it('uses the beUI Archive drawer for a truly empty asset library', async () => {

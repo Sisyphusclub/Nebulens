@@ -6,6 +6,21 @@ import { describe, expect, it } from 'vitest';
 const baseStyles = readFileSync(resolve(process.cwd(), 'src/styles/base.css'), 'utf8');
 
 describe('assets media layout contract', () => {
+  it('keeps the header outside the only vertical scroll region', () => {
+    expect(baseStyles).toMatch(
+      /\.app-shell--assets,\s*\.app-main--assets,\s*\.app-workspace--assets\s*\{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden;/s,
+    );
+    expect(baseStyles).toMatch(
+      /\.assets-page\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[^}]*overflow:\s*hidden;/s,
+    );
+    expect(baseStyles).toMatch(
+      /\.assets-page\s*>\s*\.operational-page-header,\s*\.assets-page\s*>\s*\.asset-workbench__chrome\s*\{[^}]*flex:\s*0 0 auto;[^}]*background:\s*var\(--background\);/s,
+    );
+    expect(baseStyles).toMatch(
+      /\.asset-page-scroll\s*\{[^}]*min-height:\s*0;[^}]*flex:\s*1 1 auto;[^}]*overflow-y:\s*auto;/s,
+    );
+  });
+
   it('preserves source media ratios and fixed icon-button geometry', () => {
     const assetsContract = baseStyles.slice(
       baseStyles.indexOf('.assets-page .image-tile__morph,'),

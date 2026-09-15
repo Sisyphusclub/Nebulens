@@ -59,6 +59,33 @@ describe('imageGeneration.service', () => {
     });
   });
 
+  it('passes quality through for supported 2.5 models', async () => {
+    const provider = fakeProvider();
+    await generateImage(
+      { prompt: 'p', model: 'gpt-image-2.5-flare', quality: 'xhigh' },
+      { provider },
+    );
+    expect(provider.generate).toHaveBeenCalledWith({
+      prompt: 'p',
+      model: 'gpt-image-2.5-flare',
+      quality: 'xhigh',
+      count: 1,
+      aspectRatio: '1:1',
+    });
+  });
+
+  it('rejects quality for gpt-image-2 before provider work', async () => {
+    const provider = fakeProvider();
+    await expect(
+      generateImage({ prompt: 'p', model: 'gpt-image-2', quality: 'high' }, { provider }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      status: 400,
+      details: { model: 'gpt-image-2', quality: 'high' },
+    });
+    expect(provider.generate).not.toHaveBeenCalled();
+  });
+
   it('honours explicit count and aspectRatio', async () => {
     const provider = fakeProvider();
     const result = await generateImage(
@@ -109,18 +136,80 @@ describe('imageGeneration.service', () => {
     expect(provider.generate).not.toHaveBeenCalled();
   });
 
-  it('rejects unsupported resolution and aspect ratio combinations before provider work', async () => {
+  it('accepts every aspect ratio at 4K resolution', async () => {
     const provider = fakeProvider();
+    const aspectRatios = ['1:1', '3:4', '4:3', '16:9', '9:16', '2:3', '3:2'] as const;
 
-    await expect(
-      generateImage({ prompt: 'p', aspectRatio: '1:1', resolution: '4k' }, { provider }),
-    ).rejects.toMatchObject({
-      code: 'BAD_REQUEST',
-      status: 400,
-      details: { aspectRatio: '1:1', resolution: '4k' },
+    for (const aspectRatio of aspectRatios) {
+      await generateImage({ prompt: 'p', aspectRatio, resolution: '4k' }, { provider });
+    }
+
+    expect(provider.generate).toHaveBeenCalledTimes(aspectRatios.length);
+    aspectRatios.forEach((aspectRatio, index) => {
+      expect(provider.generate).toHaveBeenNthCalledWith(
+        index + 1,
+        expect.objectContaining({ aspectRatio, resolution: '4k' }),
+      );
     });
-    expect(provider.generate).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['gpt-image-2.5-flare', '2k', 6],
+    ['gpt-image-2.5-flare', '4k', 6],
+    ['gpt-image-2.5-sunburst', '2k', 8],
+    ['gpt-image-2.5-sunburst', '4k', 8],
+  ] as const)(
+    'charges the configured high-resolution cost for %s at %s',
+    async (model, resolution, expectedCost) => {
+      const provider = fakeProvider();
+      const commit = vi.fn();
+      const release = vi.fn();
+      const quotaPool: QuotaPool = {
+        snapshot: vi.fn(() => ({
+          total: 20,
+          remaining: 20,
+          checkedInToday: false,
+          dailyCheckInReward: 5,
+        })),
+        reserve: vi.fn(() => ({ commit, release })),
+        checkIn: vi.fn(() => ({
+          total: 20,
+          remaining: 20,
+          checkedInToday: true,
+          dailyCheckInReward: 5,
+          claimed: true,
+        })),
+      };
+
+      await generateImage(
+        { prompt: 'high resolution', model, count: 2, resolution },
+        { provider, quotaPool },
+      );
+
+      expect(quotaPool.reserve).toHaveBeenCalledWith(expectedCost, { scope: 'permanent' });
+      expect(commit).toHaveBeenCalledWith(expectedCost);
+      expect(release).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'])(
+    'charges one credit per standard image for %s',
+    async (model) => {
+      const provider = fakeProvider();
+      const commit = vi.fn();
+      const quotaPool = {
+        reserve: vi.fn(() => ({ commit, release: vi.fn() })),
+      } as unknown as QuotaPool;
+
+      await generateImage(
+        { prompt: 'standard resolution', model, count: 1, resolution: 'standard' },
+        { provider, quotaPool },
+      );
+
+      expect(quotaPool.reserve).toHaveBeenCalledWith(1, { scope: 'all' });
+      expect(commit).toHaveBeenCalledWith(1);
+    },
+  );
 
   it('image-to-image: resolves referenceId to an absolute path under UPLOAD_DIR', async () => {
     const buf = Buffer.concat([PNG_PREFIX, Buffer.alloc(64, 0)]);

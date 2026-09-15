@@ -60,6 +60,8 @@ export function ImageGrid({
             <MorphicCard
               id={entry.record.id}
               className="image-tile__morph"
+              animateLayout={false}
+              sharedLayout={false}
               style={{ aspectRatio: `${entry.record.width} / ${entry.record.height}` }}
             >
               <Button

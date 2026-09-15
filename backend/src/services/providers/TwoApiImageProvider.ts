@@ -16,6 +16,7 @@ import {
   type GenerateInput,
   type GenerateOutput,
   type ImageResolution,
+  type ImageQuality,
 } from '../../types/image.js';
 
 import type {
@@ -227,6 +228,7 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
                 referencePaths,
                 count,
                 sizing.size,
+                input.quality,
                 requestSignal,
                 input.requestId,
               )
@@ -237,6 +239,7 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
                 input.prompt,
                 count,
                 sizing.size,
+                input.quality,
                 requestSignal,
                 input.requestId,
               ),
@@ -539,12 +542,13 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
     prompt: string,
     count: number,
     size: string,
+    quality: ImageQuality | undefined,
     signal: AbortSignal,
     requestId?: string,
   ): Promise<Response> {
     const url = buildUrl(baseUrl, 'v1/images/generations');
     logger.info(
-      { requestId, model, promptLength: prompt.length, url, count, size },
+      { requestId, model, promptLength: prompt.length, url, count, size, quality },
       'image generation: provider request (text-to-image)',
     );
     return this.fetchImpl(url, {
@@ -558,6 +562,7 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
         prompt,
         n: count,
         size,
+        ...(quality === undefined ? {} : { quality }),
         response_format: 'b64_json',
       }),
       signal,
@@ -572,6 +577,7 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
     referencePaths: string[],
     count: number,
     size: string,
+    quality: ImageQuality | undefined,
     signal: AbortSignal,
     requestId?: string,
   ): Promise<Response> {
@@ -592,6 +598,7 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
     form.append('model', model);
     form.append('n', String(count));
     form.append('size', size);
+    if (quality !== undefined) form.append('quality', quality);
     form.append('response_format', 'b64_json');
 
     logger.info(
@@ -605,6 +612,7 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
         referenceCount: referenceFiles.length,
         count,
         size,
+        quality,
       },
       'image generation: provider request (image-to-image)',
     );

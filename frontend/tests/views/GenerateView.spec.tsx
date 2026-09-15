@@ -24,7 +24,12 @@ const publicGalleryMocks = vi.hoisted(() => ({
 
 const imageApiKeyMocks = vi.hoisted(
   (): {
-    status: { configured: boolean; keySuffix?: string };
+    status: {
+      configured: boolean;
+      keySuffix?: string;
+      highResConfigured?: boolean;
+      highResKeySuffix?: string;
+    };
     isLoading: boolean;
   } => ({
     status: { configured: false },
@@ -123,6 +128,7 @@ import {
   attachGenerationBatch,
   createGenerationSession,
   resetGenerationSessionsForTests,
+  upsertGenerationTask,
 } from '@/hooks/useGenerationSessions';
 import { GenerateView } from '@/views/GenerateView';
 
@@ -192,6 +198,35 @@ it('shows personal Key routing instead of site quota when configured', () => {
   expect(screen.queryByLabelText('今日生成额度')).not.toBeInTheDocument();
 });
 
+it('uses the Key status for the currently selected resolution group', () => {
+  imageApiKeyMocks.status = {
+    configured: true,
+    keySuffix: '1111',
+    highResConfigured: true,
+    highResKeySuffix: '4444',
+  };
+  const { rerender } = render(
+    <MemoryRouter initialEntries={['/generate?resolution=2k']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  expect(screen.getByLabelText('当前使用个人 API Key')).toHaveTextContent('调用：个人 Key · 4444');
+
+  imageApiKeyMocks.status = { configured: true, keySuffix: '1111' };
+  rerender(
+    <MemoryRouter initialEntries={['/generate?resolution=2k']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  expect(screen.getByLabelText('2K/4K 永久积分')).toHaveTextContent('永久积分：18 / 20');
+});
+
 it('keeps the generation workspace prompt plain and focused', () => {
   render(
     <MemoryRouter initialEntries={['/generate']}>
@@ -216,7 +251,7 @@ it('keeps the generation workspace prompt plain and focused', () => {
   expect(document.querySelectorAll('.generation-history-track__mark')).toHaveLength(0);
 });
 
-it('offers the default model and both new upstream models', async () => {
+it('offers the default model and all upstream models', async () => {
   const user = userEvent.setup();
   render(
     <MemoryRouter initialEntries={['/generate']}>
@@ -236,10 +271,11 @@ it('offers the default model and both new upstream models', async () => {
   );
   expect(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-flare' })).toBeInTheDocument();
   expect(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-sunburst' })).toBeInTheDocument();
+  expect(screen.getByRole('menuitemradio', { name: 'Nano Banana Pro' })).toBeInTheDocument();
 });
 
 it.each(['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'] as const)(
-  'submits the selected upstream model %s',
+  'offers all quality levels and submits the selected quality for %s',
   async (model) => {
     const user = userEvent.setup();
     render(
@@ -255,11 +291,147 @@ it.each(['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'] as const)(
     await user.click(screen.getByRole('menuitemradio', { name: model }));
     expect(trigger).toHaveTextContent(model);
 
+    const customTrigger = screen.getByRole('button', { name: '自定义生成参数' });
+    await user.click(customTrigger);
+    const qualityGroup = screen.getByRole('group', { name: '质量' });
+    expect(
+      within(qualityGroup)
+        .getAllByRole('menuitemradio')
+        .map((option) => option.textContent),
+    ).toEqual(['low', 'medium', 'high', 'xhigh', 'max']);
+    expect(within(qualityGroup).getByRole('menuitemradio', { name: 'medium' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await user.click(within(qualityGroup).getByRole('menuitemradio', { name: 'max' }));
+    expect(customTrigger).toHaveTextContent('max');
+
     await user.click(screen.getByRole('button', { name: '生成图片' }));
     await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
-    expect(generation.generate).toHaveBeenCalledWith(expect.objectContaining({ model }));
+    expect(generation.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ model, quality: 'max' }),
+    );
   },
 );
+
+it.each([
+  ['gpt-image-2', 'gpt-image-2'],
+  ['gemini-3-pro-image', 'Nano Banana Pro'],
+] as const)('does not expose or submit quality for %s', async (model, label) => {
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter initialEntries={[`/generate?prompt=雨夜建筑&quality=max&model=${model}`]}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  expect(screen.getByRole('button', { name: '选择模型' })).toHaveTextContent(label);
+  await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
+  expect(screen.queryByRole('group', { name: '质量' })).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: '生成图片' }));
+  await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
+  expect(generation.generate).toHaveBeenCalledWith(expect.objectContaining({ model }));
+  expect(generation.generate.mock.calls[0]?.[0]).not.toHaveProperty('quality');
+});
+
+it('opens the generation settings panel above its trigger', async () => {
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter initialEntries={['/generate']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
+  expect(screen.getByRole('menu', { name: '自定义生成参数' })).toHaveAttribute('data-side', 'top');
+});
+
+it('shows the requested custom aspect ratios in order and preserves a selection', async () => {
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter initialEntries={['/generate']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  const customTrigger = screen.getByRole('button', { name: '自定义生成参数' });
+  await user.click(customTrigger);
+  const aspectGroup = screen.getByRole('group', { name: '画面比例' });
+  expect(
+    within(aspectGroup)
+      .getAllByRole('menuitemradio')
+      .map((option) => option.textContent),
+  ).toEqual([
+    '智能',
+    '1:1',
+    '3:4',
+    '4:3',
+    '16:9',
+    '9:16',
+    '2:3',
+    '3:2',
+    '1:3',
+    '3:1',
+    '4:5',
+    '5:4',
+  ]);
+
+  await user.click(within(aspectGroup).getByRole('menuitemradio', { name: '4:3' }));
+  await user.keyboard('{Escape}');
+  expect(screen.queryByRole('group', { name: '画面比例' })).not.toBeInTheDocument();
+  expect(customTrigger).toHaveTextContent('4:3');
+
+  await user.click(customTrigger);
+  expect(
+    within(screen.getByRole('group', { name: '画面比例' })).getByRole('menuitemradio', {
+      name: '4:3',
+    }),
+  ).toHaveAttribute('aria-checked', 'true');
+});
+
+it('resolves the smart aspect from the first discovery reference image', async () => {
+  const close = vi.fn();
+  vi.stubGlobal(
+    'createImageBitmap',
+    vi.fn().mockResolvedValue({ width: 750, height: 1000, close }),
+  );
+  const reference = new File(['portrait'], 'portrait.png', { type: 'image/png' });
+
+  render(
+    <MemoryRouter
+      initialEntries={[
+        {
+          pathname: '/generate',
+          search: '?prompt=%E7%AB%96%E7%89%88%E6%B5%B7%E6%8A%A5&aspect=auto',
+          state: {
+            autoGenerate: true,
+            attachments: [{ id: 'portrait', name: reference.name, file: reference }],
+          },
+        },
+      ]}
+    >
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
+  expect(generation.generate).toHaveBeenCalledWith(
+    expect.objectContaining({
+      aspectRatio: '3:4',
+      referenceFiles: [reference],
+    }),
+  );
+  expect(close).toHaveBeenCalledTimes(1);
+});
 
 it('restores a generated batch model when reusing its complete settings', async () => {
   const user = userEvent.setup();
@@ -374,11 +546,80 @@ it('recovers a legacy pending task that was saved without feed details', async (
   expect(restoredError.closest('[data-generation-batch]')).toHaveAttribute('data-count', '4');
 });
 
+it('keeps failed tasks in chronological position among restored results', async () => {
+  const makeBatch = (batchId: string, createdAt: string, prompt: string) => ({
+    batchId,
+    createdAt,
+    prompt,
+    model: 'gpt-image-2',
+    entries: [
+      {
+        record: {
+          id: `${batchId}.png`,
+          batchId,
+          createdAt,
+          prompt,
+          model: 'gpt-image-2',
+          aspectRatio: '16:9' as const,
+          width: 1792,
+          height: 1024,
+          count: 1,
+          resolution: 'standard' as const,
+          isPublic: false,
+        },
+        imageUrl: `/${batchId}.png`,
+      },
+    ],
+    settings: {
+      prompt,
+      model: 'gpt-image-2',
+      count: 1,
+      aspectRatio: '16:9' as const,
+      resolution: 'standard' as const,
+      isPublic: false,
+      referenceIds: [],
+    },
+  });
+
+  historyMocks.batches = [
+    makeBatch('new-result', '2026-09-11T10:00:00.000Z', '新结果'),
+    makeBatch('old-result', '2026-09-11T08:00:00.000Z', '旧结果'),
+  ];
+  const session = createGenerationSession('时间顺序');
+  attachGenerationBatch(session.id, 'old-result', '旧结果');
+  attachGenerationBatch(session.id, 'failed-result', '失败结果');
+  attachGenerationBatch(session.id, 'new-result', '新结果');
+  upsertGenerationTask(session.id, {
+    id: 'failed-result',
+    createdAt: '2026-09-11T09:00:00.000Z',
+    settings: makeBatch('failed-result', '2026-09-11T09:00:00.000Z', '失败结果').settings,
+    error: '上游生成服务异常',
+  });
+
+  const { container } = render(
+    <MemoryRouter initialEntries={[`/generate?session=${session.id}`]}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await waitFor(() =>
+    expect(
+      Array.from(container.querySelectorAll<HTMLElement>('[data-generation-batch]')).map(
+        (element) => element.dataset.generationBatch,
+      ),
+    ).toEqual(['old-result', 'failed-result', 'new-result']),
+  );
+});
+
 it('supports up to four images per generation', async () => {
   const user = userEvent.setup();
   render(
     <MemoryRouter
-      initialEntries={['/generate?prompt=%E5%9B%9B%E5%BC%A0%E6%A6%82%E5%BF%B5%E5%9B%BE']}
+      initialEntries={[
+        '/generate?prompt=%E5%9B%9B%E5%BC%A0%E6%A6%82%E5%BF%B5%E5%9B%BE&model=gpt-image-2.5-sunburst',
+      ]}
     >
       <ToastProvider>
         <GenerateView />
@@ -386,18 +627,28 @@ it('supports up to four images per generation', async () => {
     </MemoryRouter>,
   );
 
-  const increase = screen.getByRole('button', { name: '增加生成张数' });
   expect(screen.getByRole('button', { name: '生成图片' })).toHaveTextContent('1');
-  await user.click(increase);
-  await user.click(increase);
-  await user.click(increase);
+  await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
+  const countGroup = screen.getByRole('group', { name: '生成张数' });
+  await user.click(within(countGroup).getByRole('menuitemradio', { name: '4 张' }));
 
   expect(screen.getByRole('status', { name: '4 张' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: '生成图片' })).toHaveTextContent('4');
-  expect(increase).toBeDisabled();
+  expect(within(countGroup).getByRole('menuitemradio', { name: '4 张' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await user.click(
+    within(screen.getByRole('group', { name: '清晰度' })).getByRole('menuitemradio', {
+      name: '2K',
+    }),
+  );
+  expect(screen.getByRole('button', { name: '生成图片' })).toHaveTextContent('16');
   await user.click(screen.getByRole('button', { name: '生成图片' }));
   await waitFor(() =>
-    expect(generation.generate).toHaveBeenCalledWith(expect.objectContaining({ count: 4 })),
+    expect(generation.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ count: 4, model: 'gpt-image-2.5-sunburst', resolution: '2k' }),
+    ),
   );
 });
 
@@ -664,10 +915,45 @@ it('opens the right history flyout, searches, and loads a selected batch', async
         referenceIds: [],
       },
     },
+    {
+      batchId: 'older-history-batch',
+      createdAt: '2026-07-29T08:00:00.000Z',
+      prompt: '山间木屋',
+      model: 'gpt-image-2',
+      entries: [
+        {
+          record: {
+            id: 'older-history-result.png',
+            batchId: 'older-history-batch',
+            createdAt: '2026-07-29T08:00:00.000Z',
+            prompt: '山间木屋',
+            model: 'gpt-image-2',
+            aspectRatio: '16:9',
+            width: 1792,
+            height: 1024,
+            count: 1,
+            resolution: 'standard',
+            isPublic: false,
+          },
+          imageUrl: '/older-history-result.png',
+        },
+      ],
+      settings: {
+        prompt: '山间木屋',
+        model: 'gpt-image-2',
+        count: 1,
+        aspectRatio: '16:9',
+        resolution: 'standard',
+        isPublic: false,
+        referenceIds: [],
+      },
+    },
   ];
+  const session = createGenerationSession('海边灯塔');
+  attachGenerationBatch(session.id, 'history-batch', '海边灯塔');
   const user = userEvent.setup();
   render(
-    <MemoryRouter initialEntries={['/generate']}>
+    <MemoryRouter initialEntries={[`/generate?session=${session.id}`]}>
       <ToastProvider>
         <GenerateView />
       </ToastProvider>
@@ -676,12 +962,15 @@ it('opens the right history flyout, searches, and loads a selected batch', async
 
   const rail = screen.getByRole('button', { name: '展开生成历史' });
   await waitFor(() =>
-    expect(document.querySelectorAll('.generation-history-track__mark')).toHaveLength(1),
+    expect(document.querySelectorAll('.generation-history-track__mark')).toHaveLength(2),
   );
-  expect(screen.getByRole('region', { name: '本次创作结果' })).toHaveTextContent('海边灯塔');
+  const generationResults = screen.getByRole('region', { name: '本次创作结果' });
+  expect(generationResults).toHaveTextContent('海边灯塔');
+  expect(generationResults).toHaveTextContent('山间木屋');
   await user.click(rail);
   const panel = await screen.findByRole('complementary', { name: '生成历史' });
   expect(panel).toBeVisible();
+  expect(within(panel).getByRole('button', { name: /山间木屋/ })).toBeVisible();
   await user.type(within(panel).getByRole('searchbox'), '灯塔');
   expect(within(panel).getByRole('button', { name: /海边灯塔/ })).toBeVisible();
   await user.click(within(panel).getByRole('button', { name: /海边灯塔/ }));
@@ -952,7 +1241,7 @@ it('edits a completed prompt and replaces the original generation batch', async 
       referenceIds: ['reference-one.png'],
     }),
   );
-  expect(generation.generate.mock.calls[1]?.[0]).not.toHaveProperty('resolution');
+  expect(generation.generate.mock.calls[1]?.[0]).toHaveProperty('resolution', '2k');
 
   await act(async () => {
     replacement.resolve({
@@ -1067,7 +1356,7 @@ it('replaces pending skeletons with a retryable error card on failure', async ()
   expect(within(errorCard).getByRole('button', { name: '重试' })).toBeEnabled();
 });
 
-it('keeps admin generation fixed to 1K and ignores legacy high-resolution URL settings', async () => {
+it('preserves and submits every ratio at 4K resolution', async () => {
   const user = userEvent.setup();
   render(
     <MemoryRouter initialEntries={['/generate?prompt=夜空&aspect=2%3A3&resolution=4k']}>
@@ -1077,17 +1366,25 @@ it('keeps admin generation fixed to 1K and ignores legacy high-resolution URL se
     </MemoryRouter>,
   );
 
-  expect(screen.queryByRole('radiogroup', { name: '清晰度' })).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: '选择画面比例' })).toHaveTextContent('2:3');
+  expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2:3');
+  expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('4K');
+  await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
+  const aspectGroup = screen.getByRole('group', { name: '画面比例' });
+  expect(within(aspectGroup).getByRole('menuitemradio', { name: '2:3' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  for (const option of within(aspectGroup).getAllByRole('menuitemradio')) {
+    expect(option).not.toHaveAttribute('data-disabled');
+  }
   await user.click(screen.getByRole('button', { name: '生成图片' }));
   await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
   expect(generation.generate.mock.calls[0]?.[0]).toEqual(
-    expect.objectContaining({ aspectRatio: '2:3' }),
+    expect.objectContaining({ aspectRatio: '2:3', resolution: '4k' }),
   );
-  expect(generation.generate.mock.calls[0]?.[0]).not.toHaveProperty('resolution');
 });
 
-it('does not render or submit high-resolution settings for non-admin users', async () => {
+it('lets non-admin users select and submit high-resolution settings', async () => {
   authMocks.isAdmin = false;
   const user = userEvent.setup();
   render(
@@ -1098,13 +1395,18 @@ it('does not render or submit high-resolution settings for non-admin users', asy
     </MemoryRouter>,
   );
 
-  expect(screen.queryByRole('radiogroup', { name: '清晰度' })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
+  await user.click(
+    within(screen.getByRole('group', { name: '清晰度' })).getByRole('menuitemradio', {
+      name: '2K',
+    }),
+  );
   await user.click(screen.getByRole('button', { name: '生成图片' }));
   await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
-  expect(generation.generate.mock.calls[0]?.[0]).not.toHaveProperty('resolution');
+  expect(generation.generate.mock.calls[0]?.[0]).toHaveProperty('resolution', '2k');
 });
 
-it('restores supported settings and normalizes legacy high-resolution snapshots to 1K', async () => {
+it('restores supported settings and preserves high-resolution snapshots', async () => {
   const user = userEvent.setup();
   render(
     <MemoryRouter
@@ -1128,14 +1430,15 @@ it('restores supported settings and normalizes legacy high-resolution snapshots 
       prompt: '雨夜建筑',
       aspectRatio: '16:9',
       count: 2,
+      resolution: '2k',
       isPublic: true,
     }),
   );
-  expect(generation.generate.mock.calls[0]?.[0]).not.toHaveProperty('resolution');
 
   await user.click(screen.getByRole('button', { name: '复用完整设置' }));
   expect(screen.getByText('沿用 1 张历史参考图')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: '选择画面比例' })).toHaveTextContent('16:9');
+  expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('16:9');
+  expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K');
   expect(screen.getByRole('status', { name: '2 张' })).toBeInTheDocument();
   expect(screen.getByRole('switch', { name: '发布到发现页' })).toBeChecked();
 });

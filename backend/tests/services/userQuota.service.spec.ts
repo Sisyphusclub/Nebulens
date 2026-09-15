@@ -71,10 +71,41 @@ describe('user quota reservations', () => {
     const pool = createUserQuotaService().forUser(createQuotaUser(4));
 
     const reservation = pool.reserve(4);
+    expect(pool.snapshot().remaining).toBe(0);
     reservation.commit(1);
 
     expect(pool.snapshot().remaining).toBe(3);
     expect(() => reservation.release()).toThrowError(expect.objectContaining({ code: 'INTERNAL' }));
+  });
+
+  it('does not persist an uncommitted reservation across a service restart', () => {
+    const userId = createQuotaUser(1);
+    const pool = createUserQuotaService().forUser(userId);
+
+    pool.reserve(1);
+
+    expect(pool.snapshot().remaining).toBe(0);
+    expect(createUserQuotaService().forUser(userId).snapshot().remaining).toBe(1);
+    expect(db.select().from(userQuota).where(eq(userQuota.userId, userId)).get()?.usedToday).toBe(
+      0,
+    );
+  });
+
+  it('keeps check-in credits unavailable to permanent-only reservations', () => {
+    const pool = createUserQuotaService().forUser(createQuotaUser(1));
+    expect(pool.checkIn()).toMatchObject({ claimed: true, remaining: 6 });
+
+    pool.reserve(1, { scope: 'permanent' }).commit(1);
+    expect(pool.snapshot().remaining).toBe(5);
+    expect(() => pool.reserve(1, { scope: 'permanent' })).toThrowError(
+      expect.objectContaining({
+        code: 'QUOTA_EXHAUSTED',
+        details: expect.objectContaining({ remaining: 0, quotaScope: 'permanent' }),
+      }),
+    );
+
+    pool.reserve(1).commit(1);
+    expect(pool.snapshot().remaining).toBe(4);
   });
 
   it('keeps permanent credits after the product date changes', () => {

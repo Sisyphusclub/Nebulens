@@ -294,7 +294,9 @@ export function setUserPermanentQuota(userId: string, permanentTotal: number): A
         quotaDate: sql`excluded.quota_date`,
         dailyTotal: sql`excluded.daily_total`,
         permanentTotal: sql`excluded.permanent_total`,
-        permanentUsed: sql`COALESCE(${userQuota.permanentUsed}, excluded.permanent_used)`,
+        // Admin input is an absolute quota value; reset consumption so the
+        // resulting available amount matches exactly what was entered.
+        permanentUsed: sql`0`,
       },
     })
     .run();

@@ -1,5 +1,5 @@
 import { ChevronRight, CircleAlert, Search, Sparkles, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import {
   MorphPopoverTrigger,
 } from '@/components/motion/popover-morph';
 import type { GroupedBatch } from '@/hooks/useImageHistory';
-import { ASPECT_RATIO_LABELS } from '@/types/image';
+import { ASPECT_RATIO_LABELS, imageModelLabel } from '@/types/image';
 import { formatClockTime } from '@/utils/format';
 import { getImageVisibilityLabel } from '@/utils/imageVisibility';
 
@@ -77,6 +77,7 @@ function matchesQuery(batch: GroupedBatch, query: string, groupLabel: string): b
     batch.prompt,
     batch.batchId,
     batch.model,
+    imageModelLabel(batch.model),
     groupLabel,
     formatHistoryDate(batch.createdAt),
     formatClockTime(batch.createdAt),
@@ -222,7 +223,7 @@ export function GenerationHistoryFlyout({
   const trackHeight = Math.min(
     360,
     getMaxTrackHeight(viewportSize),
-    Math.max(36, trackBatches.length * 20 + 12),
+    Math.max(36, trackBatches.length * 18 + 12),
   );
   const previewBatch = previewBatchId
     ? (trackBatches.find((batch) => batch.batchId === previewBatchId) ?? null)
@@ -230,6 +231,20 @@ export function GenerationHistoryFlyout({
   const previewIndex = previewBatch
     ? trackBatches.findIndex((batch) => batch.batchId === previewBatch.batchId)
     : -1;
+  const hoveredIndex = hoveredBatchId
+    ? trackBatches.findIndex((batch) => batch.batchId === hoveredBatchId)
+    : -1;
+  const activeIndex = trackBatches.findIndex((batch) => batch.batchId === activeBatchId);
+  const focusIndex =
+    previewIndex >= 0 ? previewIndex : hoveredIndex >= 0 ? hoveredIndex : activeIndex;
+  const getTickLength = (index: number) => {
+    if (focusIndex < 0) return 11;
+    const distance = Math.abs(index - focusIndex);
+    if (distance === 0) return 30;
+    if (distance === 1) return 22;
+    if (distance === 2) return 17;
+    return 11;
+  };
   const previewOffset =
     previewIndex < 0 || trackBatches.length <= 1
       ? trackHeight / 2
@@ -313,7 +328,7 @@ export function GenerationHistoryFlyout({
             className={`generation-history-track__marks${trackBatches.length === 1 ? ' is-single' : ''}`}
             aria-hidden={isOpen}
           >
-            {trackBatches.map((batch) => (
+            {trackBatches.map((batch, index) => (
               <Button
                 type="button"
                 variant="ghost"
@@ -323,6 +338,7 @@ export function GenerationHistoryFlyout({
                 aria-label={`查看生成记录：${batch.prompt.trim() || '未命名任务'}`}
                 aria-current={batch.batchId === activeBatchId ? 'true' : undefined}
                 tabIndex={isOpen ? -1 : 0}
+                style={{ '--history-tick-length': `${getTickLength(index)}px` } as CSSProperties}
                 onMouseEnter={() => showPreview(batch.batchId)}
                 onFocus={() => {
                   if (suppressPreviewFocusRef.current) {
@@ -357,7 +373,7 @@ export function GenerationHistoryFlyout({
               <span className="generation-history-preview__content">
                 <strong>{previewBatch.prompt.trim() || '未命名任务'}</strong>
                 <span className="generation-history-preview__summary">
-                  {previewBatch.model} · {formatClockTime(previewBatch.createdAt)}
+                  {imageModelLabel(previewBatch.model)} · {formatClockTime(previewBatch.createdAt)}
                   <br />
                   {ASPECT_RATIO_LABELS[previewBatch.settings.aspectRatio]} ·{' '}
                   {previewBatch.settings.count} 张 ·{' '}
@@ -476,7 +492,7 @@ export function GenerationHistoryFlyout({
                             <span className="generation-history-item__content">
                               <strong>{batch.prompt.trim() || '未命名任务'}</strong>
                               <small>
-                                {batch.error ? '生成失败' : batch.model} ·{' '}
+                                {batch.error ? '生成失败' : imageModelLabel(batch.model)} ·{' '}
                                 {formatClockTime(batch.createdAt)}
                               </small>
                               <small>

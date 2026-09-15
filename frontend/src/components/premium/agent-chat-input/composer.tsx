@@ -1,6 +1,6 @@
 'use client';
 
-import type { KeyboardEvent } from 'react';
+import type { ClipboardEvent, KeyboardEvent } from 'react';
 import {
   forwardRef,
   useCallback,
@@ -177,6 +177,62 @@ function insertSkillAtCaret(editor: HTMLElement, skill: AgentChatSkill, emit: ()
   selection.addRange(caret);
 
   emit();
+}
+
+function insertPlainTextAtCaret(editor: HTMLElement, text: string) {
+  if (!text) {
+    return;
+  }
+
+  const selection = window.getSelection();
+  if (!selection) {
+    return;
+  }
+
+  let range: Range;
+  if (
+    selection.rangeCount > 0 &&
+    editor.contains(selection.anchorNode) &&
+    editor.contains(selection.focusNode)
+  ) {
+    range = selection.getRangeAt(0);
+  } else {
+    range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+  }
+
+  range.deleteContents();
+
+  const fragment = document.createDocumentFragment();
+  const insertedNodes: Node[] = [];
+  const lines = text.replace(/\r\n?/g, '\n').split('\n');
+
+  lines.forEach((line, index) => {
+    if (index > 0) {
+      const lineBreak = document.createElement('br');
+      insertedNodes.push(lineBreak);
+      fragment.appendChild(lineBreak);
+    }
+    if (line) {
+      const textNode = document.createTextNode(line);
+      insertedNodes.push(textNode);
+      fragment.appendChild(textNode);
+    }
+  });
+
+  range.insertNode(fragment);
+
+  const caret = document.createRange();
+  const lastInsertedNode = insertedNodes.at(-1);
+  if (lastInsertedNode?.parentNode) {
+    caret.setStartAfter(lastInsertedNode);
+  } else {
+    caret.setStart(range.startContainer, range.startOffset);
+  }
+  caret.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(caret);
 }
 
 function deletePillBeforeCaret(editor: HTMLElement): boolean {
@@ -370,6 +426,24 @@ export const AgentChatComposer = forwardRef<AgentChatComposerHandle, AgentChatCo
       }
     }
 
+    function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
+      const hasFiles =
+        event.clipboardData.files.length > 0 ||
+        Array.from(event.clipboardData.items).some((item) => item.kind === 'file');
+      if (hasFiles) {
+        return;
+      }
+
+      event.preventDefault();
+      const editor = editorRef.current;
+      if (!editor) {
+        return;
+      }
+
+      insertPlainTextAtCaret(editor, event.clipboardData.getData('text/plain'));
+      emit();
+    }
+
     return (
       // biome-ignore lint/a11y/useFocusableInteractive: contentEditable is focusable.
       // biome-ignore lint/a11y/useSemanticElements: a rich token editor needs contentEditable, not a textarea.
@@ -385,14 +459,20 @@ export const AgentChatComposer = forwardRef<AgentChatComposerHandle, AgentChatCo
         data-empty="true"
         onInput={emit}
         onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         onFocus={onFocus}
         onBlur={onBlur}
         style={{
           minHeight: `${minRows * LINE_HEIGHT_REM}rem`,
           maxHeight: `${maxRows * LINE_HEIGHT_REM}rem`,
+          border: 0,
+          outline: 'none',
+          boxShadow: 'none',
+          background: 'transparent',
+          WebkitAppearance: 'none',
         }}
         className={cn(
-          'w-full overflow-y-auto whitespace-pre-wrap break-words border-0 border-none bg-transparent px-4 pt-4 pb-3 text-base leading-7 outline-none ring-0 focus:border-none focus:outline-none focus:ring-0 sm:px-5 sm:pt-5 md:text-lg',
+          'w-full overflow-y-auto whitespace-pre-wrap break-words border-0 border-none bg-transparent px-4 pt-4 pb-3 text-base leading-7 outline-none ring-0 focus:border-0 focus:border-none focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 sm:px-5 sm:pt-5 md:text-lg',
           'data-[empty=true]:before:pointer-events-none data-[empty=true]:before:text-muted-foreground/70 data-[empty=true]:before:content-[attr(data-placeholder)]',
           disabled && 'cursor-not-allowed opacity-60',
           className,

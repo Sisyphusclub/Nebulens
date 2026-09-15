@@ -29,9 +29,12 @@ import {
   DEFAULT_COUNT,
   DEFAULT_IMAGE_RESOLUTION,
   HIGH_RES_IMAGE_RESOLUTIONS,
+  IMAGE_QUALITIES,
   MAX_COUNT,
   MAX_REFERENCE_IMAGES,
   MIN_COUNT,
+  supportsImageQuality,
+  type ImageQuality,
   type ImageResolution,
 } from '../types/image.js';
 
@@ -44,6 +47,7 @@ const generateBaseBodySchema = z.object({
   model: z.string().min(1).max(100).optional(),
   count: z.number().int().min(MIN_COUNT).max(MAX_COUNT).optional(),
   aspectRatio: z.enum(ASPECT_RATIOS).optional(),
+  quality: z.enum(IMAGE_QUALITIES).optional(),
   isPublic: z.boolean().optional(),
 });
 
@@ -164,6 +168,7 @@ export function buildImagesController(deps: ImagesControllerDeps): {
       try {
         const user = requireUser(req);
         const parsed = parseGenerateBody(generateBodySchema, req.body);
+        assertQualitySupported(parsed.model ?? env.IMAGE_MODEL, parsed.quality);
 
         const referenceIds = normalizeReferenceIds(parsed.referenceIds, parsed.referenceId);
         if (parsed.demoPresetId !== undefined) {
@@ -192,6 +197,7 @@ export function buildImagesController(deps: ImagesControllerDeps): {
             referenceIds,
             count: parsed.count ?? DEFAULT_COUNT,
             resolution: DEFAULT_IMAGE_RESOLUTION,
+            ...(parsed.quality !== undefined ? { quality: parsed.quality } : {}),
             isPublic: parsed.isPublic ?? false,
             requestId: req.requestId,
           });
@@ -204,7 +210,7 @@ export function buildImagesController(deps: ImagesControllerDeps): {
           await assertReferenceImagesOwnedByUser(referenceIds, user.id, requestAbort.signal);
         }
         const promptCacheHit =
-          deps.demoPromptCache !== undefined
+          deps.demoPromptCache !== undefined && parsed.quality === undefined
             ? findDemoPromptCacheHit(parsed.prompt, deps.demoPromptCache)
             : null;
         if (promptCacheHit !== null && deps.demoPromptCache !== undefined) {
@@ -226,6 +232,7 @@ export function buildImagesController(deps: ImagesControllerDeps): {
               referenceIds,
               count: parsed.count ?? DEFAULT_COUNT,
               resolution: DEFAULT_IMAGE_RESOLUTION,
+              ...(parsed.quality !== undefined ? { quality: parsed.quality } : {}),
               isPublic: parsed.isPublic ?? false,
               requestId: req.requestId,
             });
@@ -245,8 +252,9 @@ export function buildImagesController(deps: ImagesControllerDeps): {
             prompt: parsed.prompt,
             count: parsed.count ?? DEFAULT_COUNT,
             ...(referenceIds.length > 0 ? { referenceIds } : {}),
-            ...(parsed.model !== undefined ? { model: parsed.model } : {}),
+            model: parsed.model ?? env.IMAGE_MODEL,
             ...(parsed.aspectRatio !== undefined ? { aspectRatio: parsed.aspectRatio } : {}),
+            ...(parsed.quality !== undefined ? { quality: parsed.quality } : {}),
             userId: user.id,
             requestId: req.requestId,
             signal: requestAbort.signal,
@@ -268,6 +276,7 @@ export function buildImagesController(deps: ImagesControllerDeps): {
           referenceIds,
           count: parsed.count ?? DEFAULT_COUNT,
           resolution: DEFAULT_IMAGE_RESOLUTION,
+          ...(parsed.quality !== undefined ? { quality: parsed.quality } : {}),
           isPublic: parsed.isPublic ?? false,
           requestId: req.requestId,
         });
@@ -294,6 +303,7 @@ export function buildImagesController(deps: ImagesControllerDeps): {
       try {
         const user = requireUser(req);
         const parsed = parseGenerateBody(highResGenerateBodySchema, req.body);
+        assertQualitySupported(parsed.model ?? env.IMAGE_MODEL, parsed.quality);
         const referenceIds = normalizeReferenceIds(parsed.referenceIds, parsed.referenceId);
         const providerCredential = deps.userImageApiKeys.getProviderCredentialForGroup(
           user.id,
@@ -306,9 +316,10 @@ export function buildImagesController(deps: ImagesControllerDeps): {
             prompt: parsed.prompt,
             count: parsed.count ?? DEFAULT_COUNT,
             ...(referenceIds.length > 0 ? { referenceIds } : {}),
-            ...(parsed.model !== undefined ? { model: parsed.model } : {}),
+            model: parsed.model ?? env.IMAGE_MODEL,
             ...(parsed.aspectRatio !== undefined ? { aspectRatio: parsed.aspectRatio } : {}),
             resolution: parsed.resolution,
+            ...(parsed.quality !== undefined ? { quality: parsed.quality } : {}),
             userId: user.id,
             requestId: req.requestId,
             signal: requestAbort.signal,
@@ -331,6 +342,7 @@ export function buildImagesController(deps: ImagesControllerDeps): {
           referenceIds,
           count: parsed.count ?? DEFAULT_COUNT,
           resolution: parsed.resolution,
+          ...(parsed.quality !== undefined ? { quality: parsed.quality } : {}),
           isPublic: parsed.isPublic ?? false,
           requestId: req.requestId,
         });
@@ -365,6 +377,7 @@ async function persistGeneratedImages(input: {
   referenceIds: string[];
   count: number;
   resolution: ImageResolution;
+  quality?: ImageQuality;
   isPublic: boolean;
   requestId: string;
 }): Promise<void> {
@@ -385,6 +398,7 @@ async function persistGeneratedImages(input: {
     height: image.height,
     count: input.count,
     resolution: input.resolution,
+    ...(input.quality !== undefined ? { quality: input.quality } : {}),
     isPublic: input.isPublic,
     createdAt,
   }));
@@ -413,6 +427,17 @@ async function persistGeneratedImages(input: {
       { batchId: input.result.batchId },
     );
   }
+}
+
+function assertQualitySupported(model: string, quality: ImageQuality | undefined): void {
+  if (quality === undefined || supportsImageQuality(model)) return;
+  throw new AppError(
+    'BAD_REQUEST',
+    `Image quality is not supported for model ${model}`,
+    400,
+    undefined,
+    { model, quality },
+  );
 }
 
 function responseFromGeneratedResult(result: GenerateImageOutput): GenerateResponse {

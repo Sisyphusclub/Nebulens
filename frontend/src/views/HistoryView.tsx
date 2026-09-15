@@ -34,6 +34,7 @@ import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_COUNT,
   DEFAULT_IMAGE_RESOLUTION,
+  imageModelLabel,
   type HistoryEntry,
 } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
@@ -91,13 +92,21 @@ export function HistoryView() {
   const [date, setDate] = useState<DateFilter>('all');
   const [visibility, setVisibility] = useState<VisibilityFilter>('all');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [collection, setCollection] = useState('all');
+  const [model, setModel] = useState('all');
+  const models = useMemo(
+    () => [...new Set(history.records.map((record) => record.model))],
+    [history.records],
+  );
   const [view, setView] = useState<AssetView>('grid');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<HistoryEntry | null>(null);
   const [mutating, setMutating] = useState(false);
   const [collectionAssignment, setCollectionAssignment] = useState('choose');
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
 
   const collections = useMemo(
     () => [
@@ -123,7 +132,7 @@ export function HistoryView() {
       const record = entry.record;
       if (
         normalized &&
-        !`${record.prompt} ${record.model} ${record.id} ${record.collection ?? ''}`
+        !`${record.prompt} ${record.model} ${imageModelLabel(record.model)} ${record.id} ${record.collection ?? ''}`
           .toLocaleLowerCase('zh-CN')
           .includes(normalized)
       ) {
@@ -133,8 +142,7 @@ export function HistoryView() {
       if (visibility === 'public' && !record.isPublic) return false;
       if (visibility === 'private' && record.isPublic) return false;
       if (favoritesOnly && !record.isFavorite) return false;
-      if (collection === 'none' && record.collection) return false;
-      if (collection !== 'all' && collection !== 'none' && record.collection !== collection) {
+      if (model !== 'all' && record.model !== model) {
         return false;
       }
       return true;
@@ -144,7 +152,7 @@ export function HistoryView() {
       if (sort === 'prompt') return a.record.prompt.localeCompare(b.record.prompt, 'zh-CN');
       return b.record.createdAt.localeCompare(a.record.createdAt);
     });
-  }, [collection, date, favoritesOnly, history.entries, query, sort, visibility]);
+  }, [model, date, favoritesOnly, history.entries, query, sort, visibility]);
 
   useEffect(() => {
     const available = new Set(history.records.map((record) => record.id));
@@ -399,21 +407,20 @@ export function HistoryView() {
               </div>
             </div>
 
-            <nav className="collection-rail" aria-label="收藏集筛选">
-              <span className="collection-rail__label">收藏集</span>
+            <nav className="collection-rail" aria-label="模型筛选">
+              <span className="collection-rail__label">模型</span>
               <div className="collection-rail__items">
                 {[
                   { id: 'all', label: '全部' },
-                  { id: 'none', label: '未分类' },
-                  ...collections.map((item) => ({ id: item, label: item })),
+                  ...models.map((item) => ({ id: item, label: imageModelLabel(item) })),
                 ].map((item) => (
                   <Button
                     key={item.id}
                     type="button"
                     variant="ghost"
                     size="compact"
-                    aria-pressed={collection === item.id}
-                    onClick={() => setCollection(item.id)}
+                    aria-pressed={model === item.id}
+                    onClick={() => setModel(item.id)}
                   >
                     {item.label}
                   </Button>
@@ -587,7 +594,7 @@ export function HistoryView() {
                         {entry.record.prompt}
                       </span>
                       <span role="cell" data-label="模型与尺寸">
-                        {entry.record.model}
+                        {imageModelLabel(entry.record.model)}
                         <small>
                           {entry.record.width} × {entry.record.height} ·{' '}
                           {entry.record.aspectRatio ?? '1:1'}

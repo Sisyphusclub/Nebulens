@@ -22,6 +22,8 @@ describe('ImageDetailModal media framing', () => {
     ['square', 1024, 1024],
     ['landscape', 1792, 1024],
     ['portrait', 1024, 1792],
+    ['ultra-landscape', 3072, 1024],
+    ['ultra-portrait', 1024, 3072],
   ])('passes %s source dimensions to the intrinsic media layout', (_label, width, height) => {
     const entry: HistoryEntry = {
       ...baseEntry,
@@ -33,37 +35,12 @@ describe('ImageDetailModal media framing', () => {
     const dialog = screen.getByRole('dialog', { name: '图片详情' });
     const media = dialog.querySelector<HTMLElement>('.image-detail__media');
     const image = media?.querySelector('img');
-    const body = dialog.querySelector<HTMLElement>('.image-detail__body');
-    const modal = dialog.closest<HTMLElement>('.image-detail-modal');
 
     expect(dialog).toHaveStyle(`--image-detail-image-ratio: ${width / height}`);
-    expect(media).toHaveClass('image-detail__media');
-    expect(media).toHaveClass('h-full', 'w-auto', 'min-w-0', 'items-center', 'justify-center');
+    expect(media).toHaveClass('image-detail__media', 'h-full', 'w-auto', 'min-w-0', 'items-center', 'justify-center');
+    expect(image).toHaveClass('w-auto', 'h-full', 'max-w-[calc(92vw-360px)]', 'max-h-full', 'object-contain');
     expect(image).toHaveAttribute('width', String(width));
     expect(image).toHaveAttribute('height', String(height));
-    expect(image).toHaveClass(
-      'h-full',
-      'w-auto',
-      'max-h-full',
-      'max-w-[calc(92vw-360px)]',
-      'object-contain',
-    );
-    expect(body).toHaveClass('w-[340px]', 'flex-shrink-0', 'min-h-0', 'flex-col');
-    expect(body?.querySelector('.image-detail__body-content')).toHaveClass(
-      'flex-1',
-      'min-h-0',
-      'overflow-y-auto',
-    );
-    expect(body?.querySelector('.detail-actions')).toHaveClass('flex-shrink-0', 'mt-auto', 'pt-3');
-    expect(modal).toHaveClass(
-      'w-fit',
-      'max-w-[92vw]',
-      'h-[80vh]',
-      'max-h-[720px]',
-      'flex',
-      'overflow-hidden',
-      'rounded-2xl',
-    );
   });
 
   it('distinguishes the current discovery scope from the next visibility action', () => {

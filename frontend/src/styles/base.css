@@ -3290,8 +3290,7 @@ video {
   }
   .image-detail {
     min-height: 0;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
+    flex-direction: column;
     padding: 0;
   }
   .image-detail__media {

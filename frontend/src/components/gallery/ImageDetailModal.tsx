@@ -58,7 +58,7 @@ export function ImageDetailModal({
       onClose={onClose}
       sharedLayout={false}
       backdropClassName="!bg-black/[0.78]"
-      className="image-detail-modal w-fit max-w-[92vw] h-[80vh] max-h-[720px] flex overflow-hidden rounded-2xl !bg-card !text-card-foreground !shadow-[var(--shadow-modal)]"
+      className="image-detail-modal w-[90vw] max-w-5xl h-[85vh] min-h-[620px] max-h-[760px] flex overflow-hidden rounded-2xl !bg-card !text-card-foreground !shadow-[var(--shadow-modal)]"
     >
       <section
         className="dialog image-detail"
@@ -85,21 +85,21 @@ export function ImageDetailModal({
             </Button>
           </IconTooltip>
         </div>
-        <div className="image-detail__media h-full w-auto min-w-0 flex items-center justify-center bg-black/40">
+        <div className="image-detail__media flex-1 h-full min-w-0 min-h-0 p-8 flex items-center justify-center bg-[#0a0a0a]">
           <img
             src={entry.imageUrl}
             alt={entry.record.prompt || '生成图片'}
             width={entry.record.width}
             height={entry.record.height}
-            className="image-detail__image h-full w-auto max-h-full max-w-[calc(92vw-360px)] object-contain"
+            className="image-detail__image max-w-full max-h-full object-contain rounded-xl shadow-2xl"
           />
         </div>
         <div className="image-detail__body w-[340px] flex-shrink-0 h-full flex flex-col min-h-0 bg-[#141414] p-5">
           <div className="image-detail__body-content flex-1 min-h-0 overflow-y-auto">
-          <p className="eyebrow">NEBULENS OUTPUT</p>
-          <h2 id="image-detail-title">图片详情</h2>
-          <p className="image-detail__prompt">{entry.record.prompt}</p>
-          <dl className="metadata-grid">
+            <p className="eyebrow">NEBULENS OUTPUT</p>
+            <h2 id="image-detail-title">图片详情</h2>
+            <p className="image-detail__prompt">{entry.record.prompt}</p>
+            <dl className="metadata-grid">
             <div>
               <dt>模型</dt>
               <dd>{imageModelLabel(entry.record.model)}</dd>
@@ -122,7 +122,7 @@ export function ImageDetailModal({
               <dt>可见范围</dt>
               <dd>{getImageVisibilityLabel(entry.record.isPublic)}</dd>
             </div>
-          </dl>
+            </dl>
           </div>
           <div className="detail-actions flex-shrink-0 mt-auto pt-3">
             <Button type="button" onClick={() => void downloadUrl(entry.imageUrl, filename)}>

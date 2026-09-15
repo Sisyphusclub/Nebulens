@@ -32,15 +32,10 @@ describe('image detail sizing contract', () => {
     const narrowContract = normalizeCss(baseStyles.slice(narrowStart));
 
     expect(desktopStart).toBeGreaterThanOrEqual(0);
-    expect(desktopContract).toContain('--image-detail-media-width: min(');
-    expect(desktopContract).toContain('calc(100vw - 48px - var(--image-detail-body-width))');
-    expect(desktopContract).toContain(
-      'calc(min(900px, 100svh - 144px) * var(--image-detail-image-ratio))',
-    );
     const desktopModalRule = ruleBody(desktopContract, '.image-detail-modal');
-    expect(desktopModalRule).toContain('height: min(80vh, 720px, calc(100svh - 2rem)) !important;');
-    expect(desktopModalRule).toContain('max-height: min(720px, calc(100svh - 2rem)) !important;');
-    expect(desktopContract).toContain('840px,');
+    expect(desktopModalRule).toContain('height: min(85vh, 760px, calc(100svh - 2rem)) !important;');
+    expect(desktopModalRule).toContain('min-height: min(620px, calc(100svh - 2rem)) !important;');
+    expect(desktopModalRule).toContain('max-height: min(760px, calc(100svh - 2rem)) !important;');
     expect(desktopContract).toContain('height: 100%;');
     expect(desktopContract).toContain('min-height: 0;');
     expect(desktopContract).toContain('grid-template-rows: minmax(0, 1fr);');
@@ -49,22 +44,24 @@ describe('image detail sizing contract', () => {
     const imageRule = ruleBody(baseStyles, '.image-detail__media img');
     const promptRule = ruleBody(baseStyles, '.image-detail__prompt');
 
-    expect(mediaRule).toContain('width: auto;');
+    expect(mediaRule).toContain('flex: 1 1 auto;');
     expect(mediaRule).toContain('height: 100%;');
+    expect(mediaRule).toContain('padding: 32px;');
     expect(mediaRule).toContain('display: flex;');
     expect(mediaRule).toContain('align-items: center;');
     expect(mediaRule).toContain('justify-content: center;');
-    expect(mediaRule).toContain('background: color-mix');
+    expect(mediaRule).toContain('background: #0a0a0a;');
     expect(mediaRule).toContain('overflow: hidden;');
     expect(imageRule).toContain('width: auto;');
-    expect(imageRule).toContain('height: 100%;');
-    expect(imageRule).toContain('max-width: calc(92vw - 360px);');
+    expect(imageRule).toContain('height: auto;');
+    expect(imageRule).toContain('max-width: 100%;');
     expect(imageRule).toContain('max-height: 100%;');
-    expect(imageRule).toContain('border-radius: 0;');
-    expect(imageRule).toContain('box-shadow: none;');
+    expect(imageRule).toContain('border-radius: 12px;');
+    expect(imageRule).toContain('box-shadow: 0 25px 50px -12px');
     expect(imageRule).toContain('object-fit: contain;');
     expect(desktopContract).toContain('aspect-ratio: auto;');
     expect(baseStyles).toContain('.image-detail__body-content');
+    expect(baseStyles).toContain('width: 340px;');
     expect(promptRule).toContain('max-width: 100%;');
     expect(promptRule).toContain('overflow-wrap: anywhere;');
     expect(promptRule).toContain('white-space: pre-wrap;');

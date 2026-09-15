@@ -58,7 +58,7 @@ export function ImageDetailModal({
       onClose={onClose}
       sharedLayout={false}
       backdropClassName="!bg-black/[0.78]"
-      className="image-detail-modal w-[90vw] max-w-5xl h-[85vh] min-h-[620px] max-h-[760px] flex overflow-hidden rounded-2xl !bg-card !text-card-foreground !shadow-[var(--shadow-modal)]"
+      className="image-detail-modal w-[90vw] max-w-5xl min-h-[580px] h-[80vh] max-h-[720px] flex overflow-hidden rounded-2xl !bg-card !text-card-foreground !shadow-[var(--shadow-modal)]"
     >
       <section
         className="dialog image-detail"
@@ -85,7 +85,7 @@ export function ImageDetailModal({
             </Button>
           </IconTooltip>
         </div>
-        <div className="image-detail__media flex-1 h-full min-w-0 min-h-0 p-8 flex items-center justify-center bg-[#0a0a0a]">
+        <div className="image-detail__media flex-1 h-full min-w-0 min-h-0 p-0 flex items-center justify-center bg-[#0a0a0a]">
           <img
             src={entry.imageUrl}
             alt={entry.record.prompt || '生成图片'}
@@ -95,7 +95,7 @@ export function ImageDetailModal({
           />
         </div>
         <div className="image-detail__body w-[340px] flex-shrink-0 h-full flex flex-col min-h-0 bg-[#141414] p-5">
-          <div className="image-detail__body-content flex-1 min-h-0 overflow-y-auto">
+          <div className="image-detail__body-content flex-1 min-h-0 overflow-y-auto space-y-2">
             <p className="eyebrow">NEBULENS OUTPUT</p>
             <h2 id="image-detail-title">图片详情</h2>
             <p className="image-detail__prompt">{entry.record.prompt}</p>
@@ -124,7 +124,7 @@ export function ImageDetailModal({
               </div>
             </dl>
           </div>
-          <div className="detail-actions flex-shrink-0 mt-auto pt-3">
+          <div className="detail-actions flex-shrink-0 mt-auto pt-3 space-y-1.5">
             <Button type="button" onClick={() => void downloadUrl(entry.imageUrl, filename)}>
               <Download aria-hidden="true" />
               保存图片

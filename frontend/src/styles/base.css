@@ -1992,9 +1992,9 @@ video {
 .image-detail-modal {
   width: 90vw !important;
   max-width: 1024px !important;
-  height: 85vh !important;
-  min-height: 620px !important;
-  max-height: 760px !important;
+  height: 80vh !important;
+  min-height: 580px !important;
+  max-height: 720px !important;
   overflow: hidden !important;
 }
 .image-detail__close {
@@ -2021,7 +2021,7 @@ video {
   justify-content: center;
   min-width: 0;
   min-height: 0;
-  padding: 32px;
+  padding: 0;
   border-right: 1px solid color-mix(in oklch, var(--border) 92%, transparent);
   background: #0a0a0a;
   overflow: hidden;
@@ -2101,14 +2101,14 @@ video {
 }
 .detail-actions {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   margin-top: auto;
 }
 @media (min-width: 861px) {
   .image-detail-modal {
-    height: min(85vh, 760px, calc(100svh - 2rem)) !important;
-    min-height: min(620px, calc(100svh - 2rem)) !important;
-    max-height: min(760px, calc(100svh - 2rem)) !important;
+    height: min(80vh, 720px, calc(100svh - 2rem)) !important;
+    min-height: min(580px, calc(100svh - 2rem)) !important;
+    max-height: min(720px, calc(100svh - 2rem)) !important;
     overflow: hidden;
   }
   .image-detail {
@@ -2123,7 +2123,7 @@ video {
     gap: 12px;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    padding: 28px 24px 20px;
+    padding: 20px;
   }
   .image-detail .metadata-grid {
     gap: 8px;
@@ -2134,7 +2134,7 @@ video {
     height: 100%;
     aspect-ratio: auto;
     flex: 1 1 auto;
-    padding: 32px;
+    padding: 0;
     background: #0a0a0a;
   }
   .image-detail__media img {
@@ -3303,7 +3303,7 @@ video {
     width: 100%;
     flex: 0 1 auto;
     aspect-ratio: auto;
-    padding: 24px;
+    padding: 0;
     border-right: 0;
     border-bottom: 1px solid color-mix(in oklch, var(--border) 92%, transparent);
   }

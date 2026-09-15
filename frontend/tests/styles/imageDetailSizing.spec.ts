@@ -33,9 +33,9 @@ describe('image detail sizing contract', () => {
 
     expect(desktopStart).toBeGreaterThanOrEqual(0);
     const desktopModalRule = ruleBody(desktopContract, '.image-detail-modal');
-    expect(desktopModalRule).toContain('height: min(85vh, 760px, calc(100svh - 2rem)) !important;');
-    expect(desktopModalRule).toContain('min-height: min(620px, calc(100svh - 2rem)) !important;');
-    expect(desktopModalRule).toContain('max-height: min(760px, calc(100svh - 2rem)) !important;');
+    expect(desktopModalRule).toContain('height: min(80vh, 720px, calc(100svh - 2rem)) !important;');
+    expect(desktopModalRule).toContain('min-height: min(580px, calc(100svh - 2rem)) !important;');
+    expect(desktopModalRule).toContain('max-height: min(720px, calc(100svh - 2rem)) !important;');
     expect(desktopContract).toContain('height: 100%;');
     expect(desktopContract).toContain('min-height: 0;');
     expect(desktopContract).toContain('grid-template-rows: minmax(0, 1fr);');
@@ -46,7 +46,7 @@ describe('image detail sizing contract', () => {
 
     expect(mediaRule).toContain('flex: 1 1 auto;');
     expect(mediaRule).toContain('height: 100%;');
-    expect(mediaRule).toContain('padding: 32px;');
+    expect(mediaRule).toContain('padding: 0;');
     expect(mediaRule).toContain('display: flex;');
     expect(mediaRule).toContain('align-items: center;');
     expect(mediaRule).toContain('justify-content: center;');

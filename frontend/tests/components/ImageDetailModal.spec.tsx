@@ -41,7 +41,7 @@ describe('ImageDetailModal media framing', () => {
       'image-detail__media',
       'flex-1',
       'h-full',
-      'p-8',
+      'p-0',
       'min-w-0',
       'min-h-0',
       'items-center',

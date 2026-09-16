@@ -1101,6 +1101,8 @@ it('reveals a completed image only after its load event', async () => {
 
   expect(batch).not.toBeNull();
   expect(batch).toHaveAttribute('data-count', '1');
+  expect(within(batch!).getByRole('status')).toHaveTextContent('生成完成');
+  expect(screen.queryByText('图片生成完成。')).not.toBeInTheDocument();
   expect(batch?.querySelector('.session-batch__prompt')).toHaveTextContent('雨夜建筑');
   const batchActions = within(batch!).getByRole('toolbar', { name: '整组操作' });
   expect(within(batchActions).getByRole('button', { name: '复用完整设置' })).toBeInTheDocument();

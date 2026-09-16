@@ -7533,11 +7533,29 @@ video {
 .session-batch__header {
   display: flex;
   min-width: 0;
+  align-items: flex-start;
   justify-content: flex-end;
+  gap: 10px;
   border: 0;
   border-radius: 0;
   background: transparent;
   padding: 0;
+}
+.session-batch__completion {
+  display: inline-flex;
+  min-height: 30px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: color-mix(in oklch, var(--foreground) 78%, var(--accent));
+  font-size: 12px;
+  font-weight: 600;
+}
+.session-batch__completion svg {
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
 }
 .session-batch__prompt {
   position: relative;

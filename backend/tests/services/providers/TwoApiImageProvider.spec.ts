@@ -118,8 +118,8 @@ describe('TwoApiImageProvider', () => {
     expect(out.aspectRatio).toBe('1:1');
     expect(out.images).toHaveLength(4);
     for (const image of out.images) {
-      expect(image.width).toBe(1024);
-      expect(image.height).toBe(1024);
+      expect(image.width).toBe(1);
+      expect(image.height).toBe(1);
       expect(image.outputPath).toMatch(/\.png$/);
     }
 
@@ -316,7 +316,7 @@ describe('TwoApiImageProvider', () => {
       resolution: '2k',
     });
 
-    expect(out.images[0]).toMatchObject({ width: 1360, height: 2048 });
+    expect(out.images[0]).toMatchObject({ width: 1, height: 1 });
     const init = fetchMock.mock.calls[0]![1] as RequestInit;
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
     expect(body['size']).toBe('1360x2048');
@@ -448,7 +448,7 @@ describe('TwoApiImageProvider', () => {
       resolution: '4k',
     });
 
-    expect(out.images[0]).toMatchObject({ width: 4096, height: 2304 });
+    expect(out.images[0]).toMatchObject({ width: 1, height: 1 });
     const init = fetchMock.mock.calls[0]![1] as RequestInit;
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
     expect(body['size']).toBe('4096x2304');
@@ -466,7 +466,7 @@ describe('TwoApiImageProvider', () => {
       resolution: '4k',
     });
 
-    expect(out.images[0]).toMatchObject({ width: 4096, height: 4096 });
+    expect(out.images[0]).toMatchObject({ width: 1, height: 1 });
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
@@ -530,7 +530,7 @@ describe('TwoApiImageProvider', () => {
       resolution: '4k',
     });
 
-    expect(out.images[0]).toMatchObject({ width: 2304, height: 4096 });
+    expect(out.images[0]).toMatchObject({ width: 1, height: 1 });
     const [calledUrl, init] = fetchMock.mock.calls[0]!;
     expect(calledUrl).toBe('https://api.example.com/v1/images/edits');
     const form = (init as RequestInit).body as FormData;

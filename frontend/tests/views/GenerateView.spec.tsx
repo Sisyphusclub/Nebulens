@@ -1120,8 +1120,13 @@ it('reveals a completed image only after its load event', async () => {
   expect(preview).toHaveStyle({ aspectRatio: '1792 / 1024' });
   expect(preview).not.toHaveClass('is-loaded');
   expect(preview.querySelector('.session-result__loading')).toBeInTheDocument();
+  Object.defineProperties(image, {
+    naturalWidth: { configurable: true, value: 3840 },
+    naturalHeight: { configurable: true, value: 2304 },
+  });
   fireEvent.load(image);
   expect(preview).toHaveClass('is-loaded');
+  expect(preview).toHaveStyle({ aspectRatio: '3840 / 2304' });
   await user.click(preview);
   expect(screen.getByRole('dialog', { name: '图片详情' })).toBeInTheDocument();
 });

@@ -420,8 +420,8 @@ describe('POST /api/images/generate', () => {
     expect(res.status).toBe(200);
     expect(res.body.aspectRatio).toBe('16:9');
     expect(res.body.images[0]).toMatchObject({
-      width: 2048,
-      height: 1152,
+      width: 4096,
+      height: 2304,
     });
     const call = (provider.generate as ReturnType<typeof vi.fn>).mock.calls[0]![0] as GenerateInput;
     expect(call.resolution).toBe('4k');
@@ -433,8 +433,8 @@ describe('POST /api/images/generate', () => {
     const history = await request(app).get('/api/history');
     expect(history.body.records[0]).toMatchObject({
       prompt: '登录用户生成 4K 宽屏图',
-      width: 2048,
-      height: 1152,
+      width: 4096,
+      height: 2304,
       count: 1,
       resolution: '4k',
       isPublic: true,

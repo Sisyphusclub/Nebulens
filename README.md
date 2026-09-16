@@ -99,12 +99,10 @@ docker compose down -v
 
 ### 3. 可选配置
 
-登录用户的 2K/4K 请求可以使用独立上游：
+登录用户的 2K/4K 请求与标准请求使用相同的上游地址和模型，仅使用独立的 API Key：
 
 ```env
-HIGH_RES_IMAGE_API_BASE_URL=
 HIGH_RES_IMAGE_API_KEY=
-HIGH_RES_IMAGE_MODEL=
 ```
 
 如需 Google 登录，必须同时填写 `GOOGLE_CLIENT_ID` 和 `GOOGLE_CLIENT_SECRET`。本地回调地址为：
@@ -181,12 +179,12 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 | ----------------------------- | ---- | -------------------------------------------- |
 | `IMAGE_API_BASE_URL`          | 是   | 标准图像生成上游                             |
 | `IMAGE_API_KEY`               | 是   | 标准图像生成密钥                             |
+| `HIGH_RES_IMAGE_API_KEY`      | 否   | 2K/4K 请求使用的独立密钥                     |
 | `GEMINI_IMAGE_API_KEY`        | 是   | Nano Banana Pro 上游密钥                     |
 | `USER_API_KEY_ENCRYPTION_KEY` | 是   | AES-256-GCM 用户 Key 加密主密钥              |
 | `OPENAI_COMPAT_API_KEY`       | 是   | OpenAI-compatible API 调用密钥               |
 | `BETTER_AUTH_SECRET`          | 是   | 会话签名密钥                                 |
 | `IMAGE_MODEL`                 | 否   | 后端默认模型，默认 `gpt-image-2`             |
-| `HIGH_RES_IMAGE_MODEL`        | 否   | 2K/4K 默认模型                               |
 | `IMAGE_API_TIMEOUT_MS`        | 否   | 生图请求超时，默认 300000ms                  |
 | `UPLOAD_MAX_BYTES`            | 否   | 参考图上传上限，默认 10MiB                   |
 | `DAILY_USER_QUOTA`            | 否   | 新用户默认永久额度，默认 20                  |

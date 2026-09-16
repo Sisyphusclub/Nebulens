@@ -6,6 +6,7 @@ import {
   MAX_IMAGE_PIXELS,
   MAX_IMAGE_SIDE,
   MIN_IMAGE_PIXELS,
+  RESOLUTION_SIZE_MAP,
   getSizeByRatio,
   normalizeSize,
   snapTo16,
@@ -19,7 +20,7 @@ describe('GPT-Image-2.5 image sizes', () => {
       const config = ASPECT_RATIO_CONFIGS[ratio];
       expect(config.key).toBe(ratio);
 
-      for (const tier of ['standard', 'high_res'] as const) {
+      for (const tier of ['standard', 'high_res', '4k'] as const) {
         const sizeStr = getSizeByRatio(ratio, tier);
         const [width, height] = sizeStr.split('x').map(Number) as [number, number];
         expect(width % 16).toBe(0);
@@ -46,9 +47,9 @@ describe('GPT-Image-2.5 image sizes', () => {
 
   it('rejects invalid ratios, side lengths, pixel counts, and unknown presets', () => {
     expect(() => normalizeSize(1024, 3088)).toThrow(/ratio/);
-    expect(() => normalizeSize(3856, 1920)).toThrow(/3840/);
+    expect(() => normalizeSize(4112, 1920)).toThrow(/4096/);
     expect(() => normalizeSize(256, 256)).toThrow(/pixel count/);
-    expect(() => normalizeSize(3840, 3840)).toThrow(/pixel count/);
+    expect(() => normalizeSize(4096, 4096)).not.toThrow();
     expect(() => getSizeByRatio('7:5')).toThrow(/Unsupported aspect ratio/);
     expect(() => getSizeByRatio('1:1', 'ultra' as never)).toThrow(/size tier/);
   });
@@ -59,5 +60,27 @@ describe('GPT-Image-2.5 image sizes', () => {
     expect(getSizeByRatio('3:1')).toBe('2304x768');
     expect(getSizeByRatio('5:4', 'high_res')).toBe('2000x1600');
     expect(getSizeByRatio('1:3', 'high_res')).toBe('1280x3840');
+    expect(getSizeByRatio('1:1', '4k')).toBe('4096x4096');
+    expect(getSizeByRatio('16:9', '4k')).toBe('4096x2304');
+  });
+
+  it('provides an independent 4096-class mapping for every 4k aspect ratio', () => {
+    expect(
+      Object.fromEntries(
+        ASPECT_RATIOS.map((ratio) => [ratio, RESOLUTION_SIZE_MAP['4k'][ratio]?.size]),
+      ),
+    ).toEqual({
+      '1:1': '4096x4096',
+      '3:4': '3072x4096',
+      '4:3': '4096x3072',
+      '16:9': '4096x2304',
+      '9:16': '2304x4096',
+      '2:3': '2736x4096',
+      '3:2': '4096x2736',
+      '1:3': '1376x4096',
+      '3:1': '4096x1376',
+      '4:5': '3280x4096',
+      '5:4': '4096x3280',
+    });
   });
 });

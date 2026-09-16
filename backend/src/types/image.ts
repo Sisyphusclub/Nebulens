@@ -43,7 +43,7 @@ export interface AspectSize {
   height: number;
 }
 
-export type ImageSizeTier = 'standard' | 'high_res';
+export type ImageSizeTier = 'standard' | 'high_res' | '4k';
 
 export interface AspectRatioConfig {
   key: AspectRatio;
@@ -51,13 +51,14 @@ export interface AspectRatioConfig {
   ratio: number;
   standard_size: string;
   high_res_size: string;
+  four_k_size: string;
 }
 
 export const MIN_IMAGE_DIMENSION_RATIO = 1 / 3;
 export const MAX_IMAGE_DIMENSION_RATIO = 3;
-export const MAX_IMAGE_SIDE = 3840;
+export const MAX_IMAGE_SIDE = 4096;
 export const MIN_IMAGE_PIXELS = 655_360;
-export const MAX_IMAGE_PIXELS = 8_294_400;
+export const MAX_IMAGE_PIXELS = 16_777_216;
 
 export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
   '1:1': {
@@ -66,6 +67,7 @@ export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
     ratio: 1,
     standard_size: '1024x1024',
     high_res_size: '2048x2048',
+    four_k_size: '4096x4096',
   },
   '3:4': {
     key: '3:4',
@@ -73,6 +75,7 @@ export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
     ratio: 0.75,
     standard_size: '1024x1360',
     high_res_size: '1536x2048',
+    four_k_size: '3072x4096',
   },
   '4:3': {
     key: '4:3',
@@ -80,6 +83,7 @@ export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
     ratio: 4 / 3,
     standard_size: '1360x1024',
     high_res_size: '2048x1536',
+    four_k_size: '4096x3072',
   },
   '16:9': {
     key: '16:9',
@@ -87,6 +91,7 @@ export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
     ratio: 16 / 9,
     standard_size: '1792x1024',
     high_res_size: '2048x1152',
+    four_k_size: '4096x2304',
   },
   '9:16': {
     key: '9:16',
@@ -94,6 +99,7 @@ export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
     ratio: 9 / 16,
     standard_size: '1024x1792',
     high_res_size: '1152x2048',
+    four_k_size: '2304x4096',
   },
   '2:3': {
     key: '2:3',
@@ -101,6 +107,7 @@ export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
     ratio: 2 / 3,
     standard_size: '1024x1536',
     high_res_size: '1360x2048',
+    four_k_size: '2736x4096',
   },
   '3:2': {
     key: '3:2',
@@ -108,6 +115,7 @@ export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
     ratio: 3 / 2,
     standard_size: '1536x1024',
     high_res_size: '2048x1360',
+    four_k_size: '4096x2736',
   },
   '1:3': {
     key: '1:3',
@@ -115,6 +123,7 @@ export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
     ratio: 1 / 3,
     standard_size: '1024x3072',
     high_res_size: '1280x3840',
+    four_k_size: '1376x4096',
   },
   '3:1': {
     key: '3:1',
@@ -122,6 +131,7 @@ export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
     ratio: 3,
     standard_size: '2304x768',
     high_res_size: '3072x1024',
+    four_k_size: '4096x1376',
   },
   '4:5': {
     key: '4:5',
@@ -129,6 +139,7 @@ export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
     ratio: 0.8,
     standard_size: '1024x1280',
     high_res_size: '1600x2000',
+    four_k_size: '3280x4096',
   },
   '5:4': {
     key: '5:4',
@@ -136,6 +147,7 @@ export const ASPECT_RATIO_CONFIGS: Record<AspectRatio, AspectRatioConfig> = {
     ratio: 1.25,
     standard_size: '1280x1024',
     high_res_size: '2000x1600',
+    four_k_size: '4096x3280',
   },
 };
 
@@ -172,14 +184,19 @@ export function normalizeSize(
 }
 
 export function getSizeByRatio(ratioKey: string, tier: ImageSizeTier = 'standard'): string {
-  if (tier !== 'standard' && tier !== 'high_res') {
+  if (tier !== 'standard' && tier !== 'high_res' && tier !== '4k') {
     throw new RangeError(`Unsupported image size tier: ${String(tier)}`);
   }
   const config = ASPECT_RATIO_CONFIGS[ratioKey as AspectRatio];
   if (config === undefined || !ASPECT_RATIOS.includes(ratioKey as AspectRatio)) {
     throw new RangeError(`Unsupported aspect ratio: ${ratioKey}`);
   }
-  const rawSize = tier === 'high_res' ? config.high_res_size : config.standard_size;
+  const rawSize =
+    tier === '4k'
+      ? config.four_k_size
+      : tier === 'high_res'
+        ? config.high_res_size
+        : config.standard_size;
   const [width, height] = rawSize.split('x').map(Number);
   if (width === undefined || height === undefined) {
     throw new RangeError(`Invalid image size preset: ${rawSize}`);
@@ -206,7 +223,7 @@ export const RESOLUTION_SIZE_MAP: Record<
     ASPECT_RATIOS.map((ratio) => [ratio, aspectSize(ratio, 'high_res')]),
   ) as Record<AspectRatio, AspectSize>,
   '4k': Object.fromEntries(
-    ASPECT_RATIOS.map((ratio) => [ratio, aspectSize(ratio, 'high_res')]),
+    ASPECT_RATIOS.map((ratio) => [ratio, aspectSize(ratio, '4k')]),
   ) as Record<AspectRatio, AspectSize>,
 };
 

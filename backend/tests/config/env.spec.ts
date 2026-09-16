@@ -20,9 +20,7 @@ describe('config/env', () => {
     delete process.env.GOOGLE_CLIENT_ID;
     delete process.env.GOOGLE_CLIENT_SECRET;
     delete process.env.IMAGE_MODEL;
-    delete process.env.HIGH_RES_IMAGE_API_BASE_URL;
     delete process.env.HIGH_RES_IMAGE_API_KEY;
-    delete process.env.HIGH_RES_IMAGE_MODEL;
     delete process.env.PORT;
     delete process.env.IMAGE_API_TIMEOUT_MS;
     delete process.env.UPLOAD_DIR;
@@ -43,14 +41,12 @@ describe('config/env', () => {
     const { env } = await import('../../src/config/env.js');
 
     expect(env.IMAGE_API_BASE_URL).toBe('https://api.example.com');
-    expect(env.HIGH_RES_IMAGE_API_BASE_URL).toBeUndefined();
     expect(env.IMAGE_API_KEY).toBe('sk-test');
     expect(env.GEMINI_IMAGE_API_KEY).toBe('test-gemini-key');
     expect(env.USER_API_KEY_ENCRYPTION_KEY).toBe(Buffer.alloc(32, 7).toString('base64'));
     expect(env.HIGH_RES_IMAGE_API_KEY).toBeUndefined();
     expect(env.OPENAI_COMPAT_API_KEY).toBe('compat-test');
     expect(env.IMAGE_MODEL).toBe('gpt-image-2');
-    expect(env.HIGH_RES_IMAGE_MODEL).toBeUndefined();
     expect(env.PORT).toBe(3000);
     expect(env.IMAGE_API_TIMEOUT_MS).toBe(300_000);
     expect(env.UPLOAD_DIR).toBe('./tmp/uploads');
@@ -134,20 +130,16 @@ describe('config/env', () => {
     expect(env.DEMO_PROMPT_CACHE_DELAY_MS).toBe(250);
   });
 
-  it('parses optional high-resolution provider overrides', async () => {
+  it('parses the optional high-resolution API key', async () => {
     process.env.IMAGE_API_BASE_URL = 'https://api.example.com';
-    process.env.HIGH_RES_IMAGE_API_BASE_URL = 'https://codex.example.com';
     process.env.IMAGE_API_KEY = 'sk-test';
     process.env.HIGH_RES_IMAGE_API_KEY = 'sk-high-res-test';
     process.env.OPENAI_COMPAT_API_KEY = 'compat-test';
     process.env.BETTER_AUTH_SECRET = 'test-secret-padding';
-    process.env.HIGH_RES_IMAGE_MODEL = 'codex-gpt-image-2';
 
     const { env } = await import('../../src/config/env.js');
 
-    expect(env.HIGH_RES_IMAGE_API_BASE_URL).toBe('https://codex.example.com');
     expect(env.HIGH_RES_IMAGE_API_KEY).toBe('sk-high-res-test');
-    expect(env.HIGH_RES_IMAGE_MODEL).toBe('codex-gpt-image-2');
   });
 
   it('throws on import when IMAGE_API_KEY is missing', async () => {

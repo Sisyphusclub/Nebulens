@@ -1,19 +1,10 @@
 import {
+  ASPECT_RATIO_CONFIGS,
   ASPECT_RATIOS,
   DEFAULT_ASPECT_RATIO,
   type AspectChoice,
   type AspectRatio,
 } from '@/types/image';
-
-const ASPECT_VALUES: Record<AspectRatio, number> = {
-  '1:1': 1,
-  '3:4': 3 / 4,
-  '4:3': 4 / 3,
-  '16:9': 16 / 9,
-  '9:16': 9 / 16,
-  '2:3': 2 / 3,
-  '3:2': 3 / 2,
-};
 
 export function closestAspectRatio(width: number, height: number): AspectRatio {
   if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
@@ -22,7 +13,8 @@ export function closestAspectRatio(width: number, height: number): AspectRatio {
 
   const value = width / height;
   return ASPECT_RATIOS.reduce((closest, candidate) =>
-    Math.abs(ASPECT_VALUES[candidate] - value) < Math.abs(ASPECT_VALUES[closest] - value)
+    Math.abs(ASPECT_RATIO_CONFIGS[candidate].ratio - value) <
+    Math.abs(ASPECT_RATIO_CONFIGS[closest].ratio - value)
       ? candidate
       : closest,
   );

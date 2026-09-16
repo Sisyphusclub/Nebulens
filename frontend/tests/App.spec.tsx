@@ -1026,7 +1026,11 @@ describe('React application routes', () => {
     const user = userEvent.setup();
     renderRoute('/templates');
 
-    expect(await screen.findByRole('region', { name: '创作模板' })).toHaveClass('workspace-page');
+    const templatesPage = await screen.findByRole('region', { name: '创作模板' });
+    expect(templatesPage).toHaveClass('workspace-page');
+    expect(templatesPage.closest('.app-workspace')).toHaveClass('app-workspace--templates');
+    expect(templatesPage.closest('.app-main')).toHaveClass('app-main--templates');
+    expect(templatesPage.closest('.app-shell')).toHaveClass('app-shell--templates');
     const templatesTitle = screen.getByRole('heading', { level: 1, name: '创作模板' });
     expect(templatesTitle.closest('header')).toHaveClass('operational-page-header');
     expect(within(templatesTitle.closest('header')!).getByText('163 个模板')).toHaveClass(
@@ -1034,6 +1038,12 @@ describe('React application routes', () => {
     );
     expect(screen.queryByText('NEBULENS / LIBRARY')).not.toBeInTheDocument();
     expect(screen.getByRole('searchbox', { name: '搜索创作模板' })).toBeInTheDocument();
+    const scrollRegion = templatesPage.querySelector('[data-template-scroll-region]');
+    expect(scrollRegion).toContainElement(templatesPage.querySelector('.template-gallery'));
+    expect(scrollRegion).not.toContainElement(templatesTitle.closest('header'));
+    expect(scrollRegion).not.toContainElement(
+      screen.getByRole('searchbox', { name: '搜索创作模板' }).closest('.template-toolbar'),
+    );
     expect(screen.getAllByRole('article')).toHaveLength(24);
     while (screen.queryByRole('button', { name: '加载更多' })) {
       await user.click(screen.getByRole('button', { name: '加载更多' }));
@@ -1089,7 +1099,11 @@ describe('React application routes', () => {
 
   it('keeps history and admin routes', async () => {
     const history = renderRoute('/history');
-    expect(await screen.findByRole('region', { name: '个人资产' })).toHaveClass('workspace-page');
+    const assetsPage = await screen.findByRole('region', { name: '个人资产' });
+    expect(assetsPage).toHaveClass('workspace-page');
+    expect(assetsPage.closest('.app-workspace')).toHaveClass('app-workspace--assets');
+    expect(assetsPage.closest('.app-main')).toHaveClass('app-main--assets');
+    expect(assetsPage.closest('.app-shell')).toHaveClass('app-shell--assets');
     expect(screen.getByRole('heading', { level: 1, name: '资产' }).closest('header')).toHaveClass(
       'operational-page-header',
     );

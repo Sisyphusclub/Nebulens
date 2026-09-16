@@ -22,6 +22,8 @@ describe('ImageDetailModal media framing', () => {
     ['square', 1024, 1024],
     ['landscape', 1792, 1024],
     ['portrait', 1024, 1792],
+    ['ultra-landscape', 3072, 1024],
+    ['ultra-portrait', 1024, 3072],
   ])('passes %s source dimensions to the intrinsic media layout', (_label, width, height) => {
     const entry: HistoryEntry = {
       ...baseEntry,
@@ -35,7 +37,18 @@ describe('ImageDetailModal media framing', () => {
     const image = media?.querySelector('img');
 
     expect(dialog).toHaveStyle(`--image-detail-image-ratio: ${width / height}`);
-    expect(media).toHaveClass('image-detail__media');
+    expect(media).toHaveClass(
+      'image-detail__media',
+      'w-auto',
+      'h-full',
+      'items-center',
+      'justify-center',
+    );
+    expect(image).toHaveClass(
+      'h-full',
+      'w-auto',
+      'object-contain',
+    );
     expect(image).toHaveAttribute('width', String(width));
     expect(image).toHaveAttribute('height', String(height));
   });

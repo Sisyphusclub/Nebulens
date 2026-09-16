@@ -56,14 +56,11 @@ describe('TwoApiImageProvider', () => {
     );
   });
 
-  it('validates a 2K/4K credential against the high-resolution provider', async () => {
+  it('validates a 2K/4K credential against the shared provider', async () => {
     const fetchMock = vi.fn<typeof globalThis.fetch>(async () =>
       jsonResponse({ object: 'list', data: [{ id: 'high-res-image', object: 'model' }] }),
     );
-    const provider = new TwoApiImageProvider(
-      { ...baseConfig, highResBaseUrl: 'https://high-res.example.com' },
-      fetchMock,
-    );
+    const provider = new TwoApiImageProvider(baseConfig, fetchMock);
 
     await provider.validateCredential({
       credential: 'sk-high-res-personal',
@@ -71,7 +68,7 @@ describe('TwoApiImageProvider', () => {
       model: 'high-res-image',
     });
 
-    expect(fetchMock.mock.calls[0]![0]).toBe('https://high-res.example.com/v1/models');
+    expect(fetchMock.mock.calls[0]![0]).toBe('https://api.example.com/v1/models');
   });
 
   it('rejects invalid credentials and groups without the configured image model', async () => {
@@ -121,8 +118,8 @@ describe('TwoApiImageProvider', () => {
     expect(out.aspectRatio).toBe('1:1');
     expect(out.images).toHaveLength(4);
     for (const image of out.images) {
-      expect(image.width).toBe(1024);
-      expect(image.height).toBe(1024);
+      expect(image.width).toBe(1);
+      expect(image.height).toBe(1);
       expect(image.outputPath).toMatch(/\.png$/);
     }
 
@@ -144,10 +141,16 @@ describe('TwoApiImageProvider', () => {
       jsonResponse({ data: [{ b64_json: TINY_PNG_B64 }] }),
     );
     const provider = new TwoApiImageProvider(baseConfig, fetchMock);
-    await provider.generate({ prompt: 'wide', count: 1, aspectRatio: '16:9' });
+    await provider.generate({
+      prompt: 'cinematic wide',
+      model: 'gpt-image-2.5-flare',
+      count: 1,
+      aspectRatio: '3:1',
+    });
     const init = fetchMock.mock.calls[0]![1] as RequestInit;
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
-    expect(body['size']).toBe('1792x1024');
+    expect(body['model']).toBe('gpt-image-2.5-flare');
+    expect(body['size']).toBe('2304x768');
   });
 
   it('calls Gemini generateContent and stores inline image data', async () => {
@@ -225,6 +228,81 @@ describe('TwoApiImageProvider', () => {
     });
   });
 
+  it('calls Gemini generateContent and stores inline image data', async () => {
+    const fetchMock = vi.fn<typeof globalThis.fetch>(async () =>
+      jsonResponse({
+        candidates: [
+          {
+            content: {
+              parts: [{ inlineData: { mimeType: 'image/jpeg', data: TINY_PNG_B64 } }],
+            },
+          },
+        ],
+      }),
+    );
+    const provider = new TwoApiImageProvider(
+      { ...baseConfig, modelApiKeys: { 'gemini-3.1-flash-image': 'sk-gemini' } },
+      fetchMock,
+    );
+
+    const out = await provider.generate({
+      prompt: 'a red cube',
+      model: 'gemini-3.1-flash-image',
+      aspectRatio: '16:9',
+      resolution: '2k',
+    });
+
+    expect(out.images).toHaveLength(1);
+    expect(out.images[0]?.outputPath).toMatch(/\.jpeg$/);
+    const [calledUrl, init] = fetchMock.mock.calls[0]!;
+    expect(calledUrl).toBe(
+      'https://api.example.com/v1beta/models/gemini-3.1-flash-image:generateContent',
+    );
+    expect((init as RequestInit).headers).toMatchObject({ Authorization: 'Bearer sk-gemini' });
+    const body = JSON.parse((init as RequestInit).body as string) as {
+      contents: Array<{ parts: Array<Record<string, unknown>> }>;
+      generationConfig: Record<string, unknown>;
+    };
+    expect(body.contents[0]!.parts).toEqual([{ text: 'a red cube' }]);
+    expect(body.generationConfig).toEqual({
+      responseModalities: ['IMAGE'],
+      imageConfig: { aspectRatio: '16:9', imageSize: '2K' },
+    });
+  });
+
+  it('sends each reference image as Gemini inlineData and repeats requests for count', async () => {
+    const refBytes = Buffer.from(TINY_PNG_B64, 'base64');
+    const refPath = await seedUpload('cccccccc-cccc-cccc-cccc-cccccccccccc.png', refBytes);
+    const fetchMock = vi.fn<typeof globalThis.fetch>(async () =>
+      jsonResponse({
+        candidates: [{ content: { parts: [{ inlineData: { data: TINY_PNG_B64 } }] } }],
+      }),
+    );
+    const provider = new TwoApiImageProvider(
+      { ...baseConfig, modelApiKeys: { 'gemini-3.1-flash-image': 'sk-gemini' } },
+      fetchMock,
+    );
+
+    const out = await provider.generate({
+      prompt: 'edit this',
+      model: 'gemini-3.1-flash-image',
+      referencePath: refPath,
+      count: 2,
+    });
+
+    expect(out.images).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const body = JSON.parse(fetchMock.mock.calls[0]![1]!.body as string) as {
+      contents: Array<{ parts: Array<Record<string, unknown>> }>;
+    };
+    expect(body.contents[0]!.parts).toHaveLength(2);
+    expect(body.contents[0]!.parts[0]).toEqual({ text: 'edit this' });
+    expect(body.contents[0]!.parts[1]!.inlineData).toEqual({
+      mimeType: 'image/png',
+      data: TINY_PNG_B64,
+    });
+  });
+
   it('maps 2k resolution to provider size payload', async () => {
     const fetchMock = vi.fn<typeof globalThis.fetch>(async () =>
       jsonResponse({ data: [{ b64_json: TINY_PNG_B64 }] }),
@@ -238,20 +316,17 @@ describe('TwoApiImageProvider', () => {
       resolution: '2k',
     });
 
-    expect(out.images[0]).toMatchObject({ width: 1360, height: 2048 });
+    expect(out.images[0]).toMatchObject({ width: 1, height: 1 });
     const init = fetchMock.mock.calls[0]![1] as RequestInit;
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
     expect(body['size']).toBe('1360x2048');
   });
 
-  it('routes high-resolution text-to-image calls to the configured high-res base URL', async () => {
+  it('routes high-resolution text-to-image calls to the standard base URL', async () => {
     const fetchMock = vi.fn<typeof globalThis.fetch>(async () =>
       jsonResponse({ data: [{ b64_json: TINY_PNG_B64 }] }),
     );
-    const provider = new TwoApiImageProvider(
-      { ...baseConfig, highResBaseUrl: 'https://codex.example.com' },
-      fetchMock,
-    );
+    const provider = new TwoApiImageProvider(baseConfig, fetchMock);
 
     await provider.generate({
       prompt: '2k square',
@@ -260,7 +335,7 @@ describe('TwoApiImageProvider', () => {
     });
 
     const [calledUrl] = fetchMock.mock.calls[0]!;
-    expect(calledUrl).toBe('https://codex.example.com/v1/images/generations');
+    expect(calledUrl).toBe('https://api.example.com/v1/images/generations');
   });
 
   it('uses the base API key for standard requests even when a high-res key is configured', async () => {
@@ -290,7 +365,6 @@ describe('TwoApiImageProvider', () => {
     const provider = new TwoApiImageProvider(
       {
         ...baseConfig,
-        highResBaseUrl: 'https://codex.example.com',
         highResApiKey: 'sk-high-res',
       },
       fetchMock,
@@ -319,7 +393,6 @@ describe('TwoApiImageProvider', () => {
     const provider = new TwoApiImageProvider(
       {
         ...baseConfig,
-        highResBaseUrl: 'https://codex.example.com',
         highResApiKey: 'sk-high-res',
       },
       fetchMock,
@@ -332,7 +405,7 @@ describe('TwoApiImageProvider', () => {
     });
 
     const [calledUrl, init] = fetchMock.mock.calls[0]!;
-    expect(calledUrl).toBe('https://codex.example.com/v1/images/generations');
+    expect(calledUrl).toBe('https://api.example.com/v1/images/generations');
     const headers = (init as RequestInit).headers as Record<string, string>;
     expect(headers['Authorization']).toBe('Bearer sk-high-res');
   });
@@ -344,7 +417,6 @@ describe('TwoApiImageProvider', () => {
     const provider = new TwoApiImageProvider(
       {
         ...baseConfig,
-        highResBaseUrl: 'https://high-res.example.com',
         highResApiKey: 'sk-high-res',
         modelApiKeys: { 'gpt-image-2': 'sk-server-model' },
       },
@@ -358,40 +430,16 @@ describe('TwoApiImageProvider', () => {
       providerCredentialGroup: 'high-res',
     });
 
-    expect(fetchMock.mock.calls[0]![0]).toBe('https://high-res.example.com/v1/images/generations');
+    expect(fetchMock.mock.calls[0]![0]).toBe('https://api.example.com/v1/images/generations');
     const headers = fetchMock.mock.calls[0]![1]!.headers as Record<string, string>;
     expect(headers['Authorization']).toBe('Bearer sk-personal-high-res');
-  });
-
-  it('uses the configured high-res model when the app sends the default model', async () => {
-    const fetchMock = vi.fn<typeof globalThis.fetch>(async () =>
-      jsonResponse({ data: [{ b64_json: TINY_PNG_B64 }] }),
-    );
-    const provider = new TwoApiImageProvider(
-      { ...baseConfig, highResModel: 'codex-gpt-image-2' },
-      fetchMock,
-    );
-
-    await provider.generate({
-      prompt: '4k wide',
-      model: 'gpt-image-2',
-      aspectRatio: '16:9',
-      resolution: '4k',
-    });
-
-    const init = fetchMock.mock.calls[0]![1] as RequestInit;
-    const body = JSON.parse(init.body as string) as Record<string, unknown>;
-    expect(body['model']).toBe('codex-gpt-image-2');
   });
 
   it('maps 4k resolution to provider size payload', async () => {
     const fetchMock = vi.fn<typeof globalThis.fetch>(async () =>
       jsonResponse({ data: [{ b64_json: TINY_PNG_B64 }] }),
     );
-    const provider = new TwoApiImageProvider(
-      { ...baseConfig, highResBaseUrl: 'https://codex.example.com///' },
-      fetchMock,
-    );
+    const provider = new TwoApiImageProvider(baseConfig, fetchMock);
 
     const out = await provider.generate({
       prompt: '4k wide',
@@ -400,10 +448,10 @@ describe('TwoApiImageProvider', () => {
       resolution: '4k',
     });
 
-    expect(out.images[0]).toMatchObject({ width: 3840, height: 2160 });
+    expect(out.images[0]).toMatchObject({ width: 1, height: 1 });
     const init = fetchMock.mock.calls[0]![1] as RequestInit;
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
-    expect(body['size']).toBe('3840x2160');
+    expect(body['size']).toBe('4096x2304');
   });
 
   it('supports 4k square requests before provider IO', async () => {
@@ -418,7 +466,7 @@ describe('TwoApiImageProvider', () => {
       resolution: '4k',
     });
 
-    expect(out.images[0]).toMatchObject({ width: 4096, height: 4096 });
+    expect(out.images[0]).toMatchObject({ width: 1, height: 1 });
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
@@ -472,10 +520,7 @@ describe('TwoApiImageProvider', () => {
     const fetchMock = vi.fn<typeof globalThis.fetch>(async () =>
       jsonResponse({ data: [{ b64_json: TINY_PNG_B64 }] }),
     );
-    const provider = new TwoApiImageProvider(
-      { ...baseConfig, highResBaseUrl: 'https://codex.example.com' },
-      fetchMock,
-    );
+    const provider = new TwoApiImageProvider(baseConfig, fetchMock);
 
     const out = await provider.generate({
       prompt: 'upscale edit',
@@ -485,11 +530,11 @@ describe('TwoApiImageProvider', () => {
       resolution: '4k',
     });
 
-    expect(out.images[0]).toMatchObject({ width: 2160, height: 3840 });
+    expect(out.images[0]).toMatchObject({ width: 1, height: 1 });
     const [calledUrl, init] = fetchMock.mock.calls[0]!;
-    expect(calledUrl).toBe('https://codex.example.com/v1/images/edits');
+    expect(calledUrl).toBe('https://api.example.com/v1/images/edits');
     const form = (init as RequestInit).body as FormData;
-    expect(form.get('size')).toBe('2160x3840');
+    expect(form.get('size')).toBe('2304x4096');
   });
 
   it('maps prompt rejection upstream statuses to PROVIDER_PROMPT_REJECTED 422', async () => {

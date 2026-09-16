@@ -420,8 +420,8 @@ describe('POST /api/images/generate', () => {
     expect(res.status).toBe(200);
     expect(res.body.aspectRatio).toBe('16:9');
     expect(res.body.images[0]).toMatchObject({
-      width: 3840,
-      height: 2160,
+      width: 4096,
+      height: 2304,
     });
     const call = (provider.generate as ReturnType<typeof vi.fn>).mock.calls[0]![0] as GenerateInput;
     expect(call.resolution).toBe('4k');
@@ -433,8 +433,8 @@ describe('POST /api/images/generate', () => {
     const history = await request(app).get('/api/history');
     expect(history.body.records[0]).toMatchObject({
       prompt: '登录用户生成 4K 宽屏图',
-      width: 3840,
-      height: 2160,
+      width: 4096,
+      height: 2304,
       count: 1,
       resolution: '4k',
       isPublic: true,
@@ -506,6 +506,30 @@ describe('POST /api/images/generate', () => {
       .send({ prompt: '签到积分仍可生成 1K' });
     expect(standard.status).toBe(200);
     expect((await request(app).get('/api/images/quota')).body.remaining).toBe(4);
+  });
+
+  it('lets a non-admin use the saved 2K/4K credential without consuming site quota', async () => {
+    const { provider } = fakeProvider();
+    const userId = createDbUser({ userId: `high-res-key-${randomUUID()}` });
+    const userImageApiKeys = createUserImageApiKeyService();
+    userImageApiKeys.save(userId, 'sk-high-res-user-4444', 'high-res');
+    const app = createApp({
+      provider,
+      authMiddleware: stubAuth(userId, false),
+      userImageApiKeys,
+      demoGenerationDelayMs: 0,
+    });
+
+    const res = await request(app).post('/api/images/generate/high-res').send({
+      prompt: '用户 Key 生成 2K',
+      resolution: '2k',
+    });
+
+    expect(res.status).toBe(200);
+    const call = (provider.generate as ReturnType<typeof vi.fn>).mock.calls[0]![0] as GenerateInput;
+    expect(call.providerCredential).toBe('sk-high-res-user-4444');
+    expect(call.resolution).toBe('2k');
+    expect((await request(app).get('/api/images/quota')).body.remaining).toBe(20);
   });
 
   it('lets a non-admin use the saved 2K/4K credential without consuming site quota', async () => {
@@ -887,7 +911,7 @@ describe('POST /api/images/generate', () => {
 
     const res = await request(app)
       .post('/api/images/generate')
-      .send({ prompt: 'p', aspectRatio: '5:4' });
+      .send({ prompt: 'p', aspectRatio: '7:5' });
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('BAD_REQUEST');
   });

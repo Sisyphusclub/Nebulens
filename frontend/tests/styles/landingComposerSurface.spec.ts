@@ -6,6 +6,12 @@ import { describe, expect, it } from 'vitest';
 const baseStyles = readFileSync(resolve(process.cwd(), 'src/styles/base.css'), 'utf8');
 
 describe('landing composer surface contract', () => {
+  it('resets browser focus chrome on editable surfaces globally', () => {
+    expect(baseStyles).toMatch(
+      /\[contenteditable='true'\]\s*\{[^}]*border:\s*0 !important;[^}]*outline:\s*0 !important;[^}]*box-shadow:\s*none !important;[^}]*background:\s*transparent !important;/s,
+    );
+  });
+
   it('keeps pasted unbroken prompts inside the composer width', () => {
     const editorRule = baseStyles.match(/\.agent-chat-input__textarea\s*\{([^}]+)\}/)?.[1] ?? '';
 
@@ -17,6 +23,30 @@ describe('landing composer surface contract', () => {
     expect(editorRule).toContain('word-break: break-word;');
     expect(baseStyles).not.toMatch(
       /\.landing-composer-dock:not\(\.is-expanded\)\s+\.agent-chat-input__textarea\s*\{[^}]*white-space:\s*nowrap;/s,
+    );
+  });
+
+  it('keeps the editable prompt surface borderless when focused', () => {
+    const editorRule = baseStyles.match(/\.agent-chat-input__textarea\s*\{([^}]+)\}/)?.[1] ?? '';
+    const focusRule =
+      baseStyles.match(
+        /\.agent-chat-input__textarea\[contenteditable='true'\]:focus,\s*\.agent-chat-input__textarea\[contenteditable='true'\]:focus-visible\s*\{([^}]+)\}/,
+      )?.[1] ?? '';
+
+    expect(editorRule).toContain('border: 0 !important;');
+    expect(editorRule).toContain('outline: 0 !important;');
+    expect(editorRule).toContain('box-shadow: none !important;');
+    expect(editorRule).toContain('background: transparent !important;');
+    expect(focusRule).toContain('border: 0 !important;');
+    expect(focusRule).toContain('outline: 0 !important;');
+    expect(focusRule).toContain('box-shadow: none !important;');
+    expect(focusRule).toContain('background: transparent !important;');
+    expect(focusRule).toContain('appearance: none;');
+    expect(baseStyles).toMatch(
+      /\.generation-composer \.agent-chat-input__textarea,\s*\.generation-composer \.agent-chat-input__textarea:focus,\s*\.generation-composer \.agent-chat-input__textarea:focus-visible,\s*\.generation-composer \[role='textbox'\]:focus,\s*\.generation-composer \[role='textbox'\]:focus-visible\s*\{[^}]*border:\s*0 !important;[^}]*outline:\s*0 !important;[^}]*box-shadow:\s*none !important;[^}]*background:\s*transparent !important;/s,
+    );
+    expect(baseStyles).toMatch(
+      /\.generation-composer\.agent-chat-input:focus-within\s*\{[^}]*border-color:\s*color-mix\(in oklch, var\(--border-strong\) 76%, transparent\);/s,
     );
   });
 

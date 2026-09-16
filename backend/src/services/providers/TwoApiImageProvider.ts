@@ -18,6 +18,7 @@ import {
   type ImageResolution,
   type ImageQuality,
 } from '../../types/image.js';
+import { readImageDimensions } from '../../utils/imageDimensions.js';
 
 import type {
   ImageGenerationProvider,
@@ -26,12 +27,10 @@ import type {
 
 export interface TwoApiConfig {
   baseUrl: string;
-  highResBaseUrl?: string;
   apiKey: string;
   modelApiKeys?: Readonly<Record<string, string>>;
   highResApiKey?: string;
   defaultModel: string;
-  highResModel?: string;
   timeoutMs: number;
 }
 
@@ -65,10 +64,9 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
     const timeoutSignal = AbortSignal.timeout(this.config.timeoutMs);
     const signal =
       input.signal === undefined ? timeoutSignal : AbortSignal.any([input.signal, timeoutSignal]);
-    const baseUrl =
-      input.credentialGroup === 'high-res'
-        ? (this.config.highResBaseUrl ?? this.config.baseUrl)
-        : this.config.baseUrl;
+    // Standard and high-resolution credentials are validated against the same
+    // upstream; only the bearer key differs between the two credential groups.
+    const baseUrl = this.config.baseUrl;
     let response: Response;
     try {
       response = await this.fetchImpl(buildUrl(baseUrl, 'v1/models'), {
@@ -161,8 +159,8 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
   async generate(input: GenerateInput): Promise<GenerateOutput> {
     const aspectRatio: AspectRatio = input.aspectRatio ?? DEFAULT_ASPECT_RATIO;
     const resolution: ImageResolution = input.resolution ?? DEFAULT_IMAGE_RESOLUTION;
-    const model = this.modelForResolution(resolution, input.model);
-    const baseUrl = this.baseUrlForRequest(model, resolution, input.providerCredentialGroup);
+    const model = input.model ?? this.config.defaultModel;
+    const baseUrl = this.config.baseUrl;
     const apiKey = this.apiKeyForRequest(
       model,
       resolution,
@@ -361,12 +359,17 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       for (const item of imageData) {
         requestSignal.throwIfAborted();
         const buffer = Buffer.from(item.data, 'base64');
+        const dimensions = readImageDimensions(buffer) ?? sizing;
         const saved = await saveOutput(buffer, extensionForMime(item.mimeType));
         if (requestSignal.aborted) {
           await removeOutput(saved.absolutePath);
           requestSignal.throwIfAborted();
         }
-        images.push({ outputPath: saved.absolutePath, width: sizing.width, height: sizing.height });
+        images.push({
+          outputPath: saved.absolutePath,
+          width: dimensions.width,
+          height: dimensions.height,
+        });
       }
     } catch (err) {
       await Promise.all(images.map((image) => removeOutput(image.outputPath)));
@@ -390,26 +393,13 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
         outputCount: images.length,
         aspectRatio,
         resolution,
-        highResProvider: baseUrl !== this.config.baseUrl,
+        highResRequest: resolution !== DEFAULT_IMAGE_RESOLUTION,
         hasReference,
       },
       'image generation: provider success',
     );
 
     return { images, aspectRatio, model };
-  }
-
-  private baseUrlForRequest(
-    model: string,
-    resolution: ImageResolution,
-    providerCredentialGroup: 'standard' | 'high-res' | undefined,
-  ): string {
-    if (providerCredentialGroup === 'high-res') {
-      return this.config.highResBaseUrl ?? this.config.baseUrl;
-    }
-    if (this.config.modelApiKeys?.[model] !== undefined) return this.config.baseUrl;
-    if (resolution === DEFAULT_IMAGE_RESOLUTION) return this.config.baseUrl;
-    return this.config.highResBaseUrl ?? this.config.baseUrl;
   }
 
   private apiKeyForRequest(
@@ -430,20 +420,6 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       return this.config.apiKey;
     }
     return this.config.highResApiKey ?? this.config.apiKey;
-  }
-
-  private modelForResolution(
-    resolution: ImageResolution,
-    requestedModel: string | undefined,
-  ): string {
-    if (
-      resolution !== DEFAULT_IMAGE_RESOLUTION &&
-      this.config.highResModel !== undefined &&
-      (requestedModel === undefined || requestedModel === this.config.defaultModel)
-    ) {
-      return this.config.highResModel;
-    }
-    return requestedModel ?? this.config.defaultModel;
   }
 
   private async callGeminiGenerations(

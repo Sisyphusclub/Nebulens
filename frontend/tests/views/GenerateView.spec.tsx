@@ -368,7 +368,20 @@ it('shows the requested custom aspect ratios in order and preserves a selection'
     within(aspectGroup)
       .getAllByRole('menuitemradio')
       .map((option) => option.textContent),
-  ).toEqual(['智能', '1:1', '3:4', '4:3', '16:9', '9:16', '2:3', '3:2']);
+  ).toEqual([
+    '智能',
+    '1:1',
+    '3:4',
+    '4:3',
+    '16:9',
+    '9:16',
+    '2:3',
+    '3:2',
+    '1:3',
+    '3:1',
+    '4:5',
+    '5:4',
+  ]);
 
   await user.click(within(aspectGroup).getByRole('menuitemradio', { name: '4:3' }));
   await user.keyboard('{Escape}');
@@ -1088,6 +1101,8 @@ it('reveals a completed image only after its load event', async () => {
 
   expect(batch).not.toBeNull();
   expect(batch).toHaveAttribute('data-count', '1');
+  expect(within(batch!).getByRole('status')).toHaveTextContent('生成完成');
+  expect(screen.queryByText('图片生成完成。')).not.toBeInTheDocument();
   expect(batch?.querySelector('.session-batch__prompt')).toHaveTextContent('雨夜建筑');
   const batchActions = within(batch!).getByRole('toolbar', { name: '整组操作' });
   expect(within(batchActions).getByRole('button', { name: '复用完整设置' })).toBeInTheDocument();
@@ -1105,8 +1120,13 @@ it('reveals a completed image only after its load event', async () => {
   expect(preview).toHaveStyle({ aspectRatio: '1792 / 1024' });
   expect(preview).not.toHaveClass('is-loaded');
   expect(preview.querySelector('.session-result__loading')).toBeInTheDocument();
+  Object.defineProperties(image, {
+    naturalWidth: { configurable: true, value: 3840 },
+    naturalHeight: { configurable: true, value: 2304 },
+  });
   fireEvent.load(image);
   expect(preview).toHaveClass('is-loaded');
+  expect(preview).toHaveStyle({ aspectRatio: '3840 / 2304' });
   await user.click(preview);
   expect(screen.getByRole('dialog', { name: '图片详情' })).toBeInTheDocument();
 });
@@ -1340,6 +1360,7 @@ it('replaces pending skeletons with a retryable error card on failure', async ()
   expect(container.querySelector('.generation-skeleton')).not.toBeInTheDocument();
   expect(errorCard).toHaveStyle({ aspectRatio: '2 / 3' });
   expect(errorCard).toHaveTextContent('上游生成失败');
+  expect(container.querySelector('.toast')).not.toBeInTheDocument();
   expect(within(errorCard).getByRole('button', { name: '重试' })).toBeEnabled();
 });
 

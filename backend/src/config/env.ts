@@ -4,14 +4,12 @@ export interface Env {
   PORT: number;
   APP_VERSION: string;
   IMAGE_API_BASE_URL: string;
-  HIGH_RES_IMAGE_API_BASE_URL: string | undefined;
   IMAGE_API_KEY: string;
   GEMINI_IMAGE_API_KEY: string;
   USER_API_KEY_ENCRYPTION_KEY: string;
   HIGH_RES_IMAGE_API_KEY: string | undefined;
   OPENAI_COMPAT_API_KEY: string;
   IMAGE_MODEL: string;
-  HIGH_RES_IMAGE_MODEL: string | undefined;
   IMAGE_API_TIMEOUT_MS: number;
   UPLOAD_DIR: string;
   UPLOAD_MAX_BYTES: number;
@@ -121,14 +119,12 @@ function loadEnv(): Env {
     PORT: readInt('PORT', 3000),
     APP_VERSION: readString('APP_VERSION', '0.0.0'),
     IMAGE_API_BASE_URL: readString('IMAGE_API_BASE_URL'),
-    HIGH_RES_IMAGE_API_BASE_URL: readOptionalString('HIGH_RES_IMAGE_API_BASE_URL'),
     IMAGE_API_KEY: readString('IMAGE_API_KEY'),
     GEMINI_IMAGE_API_KEY: readString('GEMINI_IMAGE_API_KEY'),
     USER_API_KEY_ENCRYPTION_KEY: readBase64Key('USER_API_KEY_ENCRYPTION_KEY'),
     HIGH_RES_IMAGE_API_KEY: readOptionalString('HIGH_RES_IMAGE_API_KEY'),
     OPENAI_COMPAT_API_KEY: readString('OPENAI_COMPAT_API_KEY'),
     IMAGE_MODEL: readString('IMAGE_MODEL', 'gpt-image-2'),
-    HIGH_RES_IMAGE_MODEL: readOptionalString('HIGH_RES_IMAGE_MODEL'),
     IMAGE_API_TIMEOUT_MS: readInt('IMAGE_API_TIMEOUT_MS', 300_000),
     UPLOAD_DIR: readString('UPLOAD_DIR', './tmp/uploads'),
     UPLOAD_MAX_BYTES: readInt('UPLOAD_MAX_BYTES', 10_485_760),

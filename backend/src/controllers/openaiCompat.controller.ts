@@ -14,6 +14,8 @@ import {
 import type { ImageGenerationProvider } from '../services/providers/ImageGenerationProvider.js';
 import { readOutput, saveUpload } from '../storage/localStorage.js';
 import {
+  ASPECT_RATIOS,
+  ASPECT_SIZE_MAP,
   DEFAULT_ASPECT_RATIO,
   DEFAULT_COUNT,
   MAX_COUNT,
@@ -40,14 +42,10 @@ const OPENAI_COMPAT_MODEL_IDS = [
   'gpt-5-mini',
 ] as const;
 
-const SIZE_TO_ASPECT_RATIO: Record<string, AspectRatio> = {
-  auto: DEFAULT_ASPECT_RATIO,
-  '1024x1024': '1:1',
-  '1536x1024': '3:2',
-  '1024x1536': '2:3',
-  '1792x1024': '16:9',
-  '1024x1792': '9:16',
-};
+const SIZE_TO_ASPECT_RATIO: Record<string, AspectRatio> = Object.fromEntries([
+  ['auto', DEFAULT_ASPECT_RATIO],
+  ...ASPECT_RATIOS.map((ratio) => [ASPECT_SIZE_MAP[ratio].size, ratio] as const),
+]);
 
 const imageResponseFormatSchema = z.enum(['b64_json', 'url']);
 type ImageResponseFormat = z.infer<typeof imageResponseFormatSchema>;

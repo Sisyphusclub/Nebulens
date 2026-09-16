@@ -5,6 +5,7 @@ import { AppError } from '../errors/AppError.js';
 
 const ONE_MINUTE_MS = 60_000;
 const FIFTEEN_MINUTES_MS = 15 * ONE_MINUTE_MS;
+const AUTH_READ_PATHS = new Set(['/get-session', '/me', '/providers']);
 
 export interface AppRateLimiters {
   auth: RequestHandler;
@@ -17,12 +18,13 @@ export interface AppRateLimiters {
 
 export function createAppRateLimiters(): AppRateLimiters {
   return {
-    // Provider metadata is public, idempotent, and fetched on every app mount.
-    // It must not consume the same budget as credential/OAuth mutations.
+    // Session/profile reads happen on every app mount and must not consume the
+    // same budget as credential and OAuth mutations.
     auth: createLimiter({
       windowMs: FIFTEEN_MINUTES_MS,
       limit: 20,
-      skip: (req) => req.path === '/providers',
+      skip: (req) =>
+        (req.method === 'GET' || req.method === 'HEAD') && AUTH_READ_PATHS.has(req.path),
     }),
     signUp: createLimiter({ windowMs: FIFTEEN_MINUTES_MS, limit: 5 }),
     upload: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 30, preferUserId: true }),

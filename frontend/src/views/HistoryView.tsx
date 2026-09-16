@@ -497,205 +497,208 @@ export function HistoryView() {
             ) : null}
           </div>
 
-          {history.hydrateError ? (
-            <div className="inline-error" role="alert">
-              <span>{history.hydrateError.message}</span>
-              <Button
-                type="button"
-                variant="secondary"
-                size="compact"
-                disabled={history.isHydrating}
-                onClick={() => void history.refresh()}
-              >
-                {history.isHydrating ? '重试中' : '重新加载'}
-              </Button>
-            </div>
-          ) : null}
+          <div className="asset-page-scroll" data-asset-scroll-region>
+            {history.hydrateError ? (
+              <div className="inline-error" role="alert">
+                <span>{history.hydrateError.message}</span>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="compact"
+                  disabled={history.isHydrating}
+                  onClick={() => void history.refresh()}
+                >
+                  {history.isHydrating ? '重试中' : '重新加载'}
+                </Button>
+              </div>
+            ) : null}
 
-          <section
-            className="asset-library"
-            aria-label="个人资产列表"
-            aria-busy={history.isHydrating}
-          >
-            {history.isHydrating && !history.entries.length ? (
-              <div className="asset-loading" role="status" aria-label="正在同步资产">
-                {Array.from({ length: 8 }, (_, index) => (
-                  <span key={index} />
-                ))}
-              </div>
-            ) : history.hydrateError && !history.entries.length ? null : !history.entries.length ? (
-              <EmptyStateArchive onAction={() => void navigate('/generate')} />
-            ) : !filtered.length ? (
-              <div className="empty-state">
-                <p>暂无符合条件的资产。</p>
-              </div>
-            ) : view === 'grid' ? (
-              <ImageGrid
-                entries={filtered}
-                selectedIds={selectedIds}
-                onSelect={setSelected}
-                onToggleSelection={toggleSelection}
-                onToggleFavorite={(entry) =>
-                  void updateEntry(entry, { isFavorite: !entry.record.isFavorite })
-                }
-                onCopyPrompt={(entry) => void copyPrompt(entry)}
-                onReuse={reuse}
-                onDownload={(entry) => void downloadUrl(entry.imageUrl, entry.record.id)}
-                onToggleVisibility={(entry) =>
-                  void updateEntry(entry, { isPublic: !entry.record.isPublic })
-                }
-                onRemove={(entry) => setDeleteTarget({ kind: 'entry', entry })}
-              />
-            ) : (
-              <div className="asset-list" role="table" aria-label="资产紧凑列表">
-                <div className="asset-list__head" role="row">
-                  <span role="columnheader">选择</span>
-                  <span role="columnheader">图片</span>
-                  <span role="columnheader">提示词</span>
-                  <span role="columnheader">模型与尺寸</span>
-                  <span role="columnheader">可见范围</span>
-                  <span role="columnheader">收藏集</span>
-                  <span role="columnheader">时间</span>
-                  <span role="columnheader">操作</span>
+            <section
+              className="asset-library"
+              aria-label="个人资产列表"
+              aria-busy={history.isHydrating}
+            >
+              {history.isHydrating && !history.entries.length ? (
+                <div className="asset-loading" role="status" aria-label="正在同步资产">
+                  {Array.from({ length: 8 }, (_, index) => (
+                    <span key={index} />
+                  ))}
                 </div>
-                {filtered.map((entry) => (
-                  <div className="asset-list__row" role="row" key={entry.record.id}>
-                    <span role="cell" data-label="选择">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="asset-row-select"
-                        aria-label={
-                          selectedIds.has(entry.record.id)
-                            ? `取消选择 ${entry.record.id}`
-                            : `选择 ${entry.record.id}`
-                        }
-                        aria-pressed={selectedIds.has(entry.record.id)}
-                        onClick={() => toggleSelection(entry)}
-                      >
-                        {selectedIds.has(entry.record.id) ? <Check aria-hidden="true" /> : null}
-                      </Button>
-                    </span>
-                    <span role="cell" data-label="图片">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="asset-list__preview"
-                        aria-label={`查看图片：${entry.record.prompt}`}
-                        onClick={() => setSelected(entry)}
-                      >
-                        <img src={entry.imageUrl} alt="" loading="lazy" />
-                      </Button>
-                    </span>
-                    <span role="cell" className="asset-list__prompt" data-label="提示词">
-                      {entry.record.prompt}
-                    </span>
-                    <span role="cell" data-label="模型与尺寸">
-                      {imageModelLabel(entry.record.model)}
-                      <small>
-                        {entry.record.width} × {entry.record.height} ·{' '}
-                        {entry.record.aspectRatio ?? '1:1'}
-                      </small>
-                    </span>
-                    <span role="cell" className="asset-visibility" data-label="可见范围">
-                      {entry.record.isPublic ? (
-                        <Globe2 aria-hidden="true" />
-                      ) : (
-                        <Lock aria-hidden="true" />
-                      )}
-                      {getImageVisibilityLabel(entry.record.isPublic)}
-                    </span>
-                    <span role="cell" data-label="收藏集">
-                      {entry.record.collection ?? '未分类'}
-                    </span>
-                    <span role="cell" data-label="时间">
-                      {formatDateTime(entry.record.createdAt)}
-                    </span>
-                    <span role="cell" className="asset-list__actions" data-label="操作">
-                      <IconTooltip label={entry.record.isFavorite ? '取消收藏' : '收藏'}>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={entry.record.isFavorite ? '取消收藏' : '收藏'}
-                          onClick={() =>
-                            void updateEntry(entry, { isFavorite: !entry.record.isFavorite })
-                          }
-                        >
-                          <Heart
-                            aria-hidden="true"
-                            fill={entry.record.isFavorite ? 'currentColor' : 'none'}
-                          />
-                        </Button>
-                      </IconTooltip>
-                      <IconTooltip label="复制提示词">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label="复制提示词"
-                          onClick={() => void copyPrompt(entry)}
-                        >
-                          <Copy aria-hidden="true" />
-                        </Button>
-                      </IconTooltip>
-                      <IconTooltip label="复用设置">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label="复用设置"
-                          onClick={() => reuse(entry)}
-                        >
-                          <RefreshCw aria-hidden="true" />
-                        </Button>
-                      </IconTooltip>
-                      <IconTooltip label={getImageVisibilityActionLabel(entry.record.isPublic)}>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={getImageVisibilityActionLabel(entry.record.isPublic)}
-                          onClick={() =>
-                            void updateEntry(entry, { isPublic: !entry.record.isPublic })
-                          }
-                        >
-                          {entry.record.isPublic ? (
-                            <EyeOff aria-hidden="true" />
-                          ) : (
-                            <Globe2 aria-hidden="true" />
-                          )}
-                        </Button>
-                      </IconTooltip>
-                      <IconTooltip label="下载图片">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label="下载图片"
-                          onClick={() => void downloadUrl(entry.imageUrl, entry.record.id)}
-                        >
-                          <Download aria-hidden="true" />
-                        </Button>
-                      </IconTooltip>
-                      <IconTooltip label="删除图片">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label="删除图片"
-                          onClick={() => setDeleteTarget({ kind: 'entry', entry })}
-                        >
-                          <Trash2 aria-hidden="true" />
-                        </Button>
-                      </IconTooltip>
-                    </span>
+              ) : history.hydrateError && !history.entries.length ? null : !history.entries
+                  .length ? (
+                <EmptyStateArchive onAction={() => void navigate('/generate')} />
+              ) : !filtered.length ? (
+                <div className="empty-state">
+                  <p>暂无符合条件的资产。</p>
+                </div>
+              ) : view === 'grid' ? (
+                <ImageGrid
+                  entries={filtered}
+                  selectedIds={selectedIds}
+                  onSelect={setSelected}
+                  onToggleSelection={toggleSelection}
+                  onToggleFavorite={(entry) =>
+                    void updateEntry(entry, { isFavorite: !entry.record.isFavorite })
+                  }
+                  onCopyPrompt={(entry) => void copyPrompt(entry)}
+                  onReuse={reuse}
+                  onDownload={(entry) => void downloadUrl(entry.imageUrl, entry.record.id)}
+                  onToggleVisibility={(entry) =>
+                    void updateEntry(entry, { isPublic: !entry.record.isPublic })
+                  }
+                  onRemove={(entry) => setDeleteTarget({ kind: 'entry', entry })}
+                />
+              ) : (
+                <div className="asset-list" role="table" aria-label="资产紧凑列表">
+                  <div className="asset-list__head" role="row">
+                    <span role="columnheader">选择</span>
+                    <span role="columnheader">图片</span>
+                    <span role="columnheader">提示词</span>
+                    <span role="columnheader">模型与尺寸</span>
+                    <span role="columnheader">可见范围</span>
+                    <span role="columnheader">收藏集</span>
+                    <span role="columnheader">时间</span>
+                    <span role="columnheader">操作</span>
                   </div>
-                ))}
-              </div>
-            )}
-          </section>
+                  {filtered.map((entry) => (
+                    <div className="asset-list__row" role="row" key={entry.record.id}>
+                      <span role="cell" data-label="选择">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="asset-row-select"
+                          aria-label={
+                            selectedIds.has(entry.record.id)
+                              ? `取消选择 ${entry.record.id}`
+                              : `选择 ${entry.record.id}`
+                          }
+                          aria-pressed={selectedIds.has(entry.record.id)}
+                          onClick={() => toggleSelection(entry)}
+                        >
+                          {selectedIds.has(entry.record.id) ? <Check aria-hidden="true" /> : null}
+                        </Button>
+                      </span>
+                      <span role="cell" data-label="图片">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="asset-list__preview"
+                          aria-label={`查看图片：${entry.record.prompt}`}
+                          onClick={() => setSelected(entry)}
+                        >
+                          <img src={entry.imageUrl} alt="" loading="lazy" />
+                        </Button>
+                      </span>
+                      <span role="cell" className="asset-list__prompt" data-label="提示词">
+                        {entry.record.prompt}
+                      </span>
+                      <span role="cell" data-label="模型与尺寸">
+                        {imageModelLabel(entry.record.model)}
+                        <small>
+                          {entry.record.width} × {entry.record.height} ·{' '}
+                          {entry.record.aspectRatio ?? '1:1'}
+                        </small>
+                      </span>
+                      <span role="cell" className="asset-visibility" data-label="可见范围">
+                        {entry.record.isPublic ? (
+                          <Globe2 aria-hidden="true" />
+                        ) : (
+                          <Lock aria-hidden="true" />
+                        )}
+                        {getImageVisibilityLabel(entry.record.isPublic)}
+                      </span>
+                      <span role="cell" data-label="收藏集">
+                        {entry.record.collection ?? '未分类'}
+                      </span>
+                      <span role="cell" data-label="时间">
+                        {formatDateTime(entry.record.createdAt)}
+                      </span>
+                      <span role="cell" className="asset-list__actions" data-label="操作">
+                        <IconTooltip label={entry.record.isFavorite ? '取消收藏' : '收藏'}>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={entry.record.isFavorite ? '取消收藏' : '收藏'}
+                            onClick={() =>
+                              void updateEntry(entry, { isFavorite: !entry.record.isFavorite })
+                            }
+                          >
+                            <Heart
+                              aria-hidden="true"
+                              fill={entry.record.isFavorite ? 'currentColor' : 'none'}
+                            />
+                          </Button>
+                        </IconTooltip>
+                        <IconTooltip label="复制提示词">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="复制提示词"
+                            onClick={() => void copyPrompt(entry)}
+                          >
+                            <Copy aria-hidden="true" />
+                          </Button>
+                        </IconTooltip>
+                        <IconTooltip label="复用设置">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="复用设置"
+                            onClick={() => reuse(entry)}
+                          >
+                            <RefreshCw aria-hidden="true" />
+                          </Button>
+                        </IconTooltip>
+                        <IconTooltip label={getImageVisibilityActionLabel(entry.record.isPublic)}>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={getImageVisibilityActionLabel(entry.record.isPublic)}
+                            onClick={() =>
+                              void updateEntry(entry, { isPublic: !entry.record.isPublic })
+                            }
+                          >
+                            {entry.record.isPublic ? (
+                              <EyeOff aria-hidden="true" />
+                            ) : (
+                              <Globe2 aria-hidden="true" />
+                            )}
+                          </Button>
+                        </IconTooltip>
+                        <IconTooltip label="下载图片">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="下载图片"
+                            onClick={() => void downloadUrl(entry.imageUrl, entry.record.id)}
+                          >
+                            <Download aria-hidden="true" />
+                          </Button>
+                        </IconTooltip>
+                        <IconTooltip label="删除图片">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="删除图片"
+                            onClick={() => setDeleteTarget({ kind: 'entry', entry })}
+                          >
+                            <Trash2 aria-hidden="true" />
+                          </Button>
+                        </IconTooltip>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
         </>
       )}
 

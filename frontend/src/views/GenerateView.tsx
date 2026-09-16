@@ -2,6 +2,7 @@ import {
   ArrowDown,
   ArrowDownToLine,
   CircleAlert,
+  CircleCheck,
   Copy,
   Download,
   EyeOff,
@@ -247,6 +248,8 @@ interface SessionResultPreviewProps {
 
 function SessionResultPreview({ entry, onOpen }: SessionResultPreviewProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null);
+  const displaySize = naturalSize ?? entry.record;
 
   return (
     <MorphicCard id={entry.record.id} className="session-result__morph">
@@ -255,7 +258,7 @@ function SessionResultPreview({ entry, onOpen }: SessionResultPreviewProps) {
         variant="ghost"
         className={`session-result__preview${imageLoaded ? ' is-loaded' : ''}`}
         style={{
-          aspectRatio: `${entry.record.width} / ${entry.record.height}`,
+          aspectRatio: `${displaySize.width} / ${displaySize.height}`,
         }}
         aria-label={`查看图片：${entry.record.prompt}`}
         onClick={onOpen}
@@ -266,7 +269,17 @@ function SessionResultPreview({ entry, onOpen }: SessionResultPreviewProps) {
           className="session-result__loading"
           fill
         />
-        <img src={entry.imageUrl} alt={entry.record.prompt} onLoad={() => setImageLoaded(true)} />
+        <img
+          src={entry.imageUrl}
+          alt={entry.record.prompt}
+          onLoad={(event) => {
+            const { naturalWidth, naturalHeight } = event.currentTarget;
+            if (naturalWidth > 0 && naturalHeight > 0) {
+              setNaturalSize({ width: naturalWidth, height: naturalHeight });
+            }
+            setImageLoaded(true);
+          }}
+        />
       </Button>
     </MorphicCard>
   );
@@ -454,6 +467,7 @@ export function GenerateView() {
     readReferenceIds(searchParams),
   );
   const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [completedBatchId, setCompletedBatchId] = useState<string | null>(null);
   const feedBySession = useRef(new Map<string, FeedItem[]>());
   const feedSessionId = useRef<string | null>(null);
   const latestFeed = useRef(feed);
@@ -764,6 +778,7 @@ export function GenerateView() {
       notify('请先描述你想生成的图片。', 'error');
       return;
     }
+    setCompletedBatchId(null);
     let generationSession = sessions.find((session) => session.id === activeSessionId);
     let generationSessionId = generationSession?.id;
     if (!generationSessionId) {
@@ -875,6 +890,7 @@ export function GenerateView() {
       removeGenerationTask(generationSessionId, pendingId);
       replaceGenerationBatch(generationSessionId, pendingId, result.batchId);
       setActiveHistoryBatchId(result.batchId);
+      setCompletedBatchId(result.batchId);
       let replacementCleanupFailed = false;
       if (replaceItem) {
         try {
@@ -891,8 +907,6 @@ export function GenerateView() {
       await refreshQuota();
       if (replacementCleanupFailed) {
         notify('新结果已生成，但旧记录暂未清理，请稍后删除。', 'error');
-      } else {
-        notify(replaceItem ? '已重新生成并替换原结果。' : '图片生成完成。');
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : '生成失败，请稍后重试。';
@@ -912,7 +926,7 @@ export function GenerateView() {
         upsertGenerationTask(generationSessionId, persistedTaskFromFeedItem(failedItem));
         setFeed((current) => current.map((item) => (item.id === pendingId ? failedItem : item)));
       }
-      notify(userMessage, 'error');
+      if (replaceItem) notify(userMessage, 'error');
     }
   };
 
@@ -1420,6 +1434,12 @@ export function GenerateView() {
               }}
             >
               <header className="session-batch__header">
+                {completedBatchId === item.id ? (
+                  <span className="session-batch__completion" role="status">
+                    <CircleCheck aria-hidden="true" />
+                    生成完成
+                  </span>
+                ) : null}
                 <EditablePromptBubble
                   item={item}
                   disabled={generation.isLoading || mutatingId === item.id}
@@ -1619,9 +1639,8 @@ export function GenerateView() {
           if (item) reuseSettings(item.settings);
           setSelected(null);
         }}
-        onUseAsReference={async (entry) => {
-          await addAsReference(entry);
-          setSelected(null);
+        onUseAsReference={(entry) => {
+          void addAsReference(entry).then(() => setSelected(null));
         }}
         onToggleVisibility={(entry) => void toggleVisibility(entry)}
         onDelete={(entry) => {

@@ -914,7 +914,7 @@ export function GenerateView() {
         upsertGenerationTask(generationSessionId, persistedTaskFromFeedItem(failedItem));
         setFeed((current) => current.map((item) => (item.id === pendingId ? failedItem : item)));
       }
-      notify(userMessage, 'error');
+      if (replaceItem) notify(userMessage, 'error');
     }
   };
 

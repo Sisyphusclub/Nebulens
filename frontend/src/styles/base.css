@@ -2149,8 +2149,10 @@ video {
 .toast-region {
   position: fixed;
   top: 20px;
-  right: 20px;
+  right: auto;
+  left: 50%;
   z-index: 200;
+  transform: translateX(-50%);
 }
 .toast {
   min-width: 260px;
@@ -8388,10 +8390,11 @@ video {
 }
 .toast-region {
   top: 16px;
-  right: 16px;
-  left: auto;
+  right: auto;
+  left: 50%;
   width: min(calc(100vw - 32px), 360px);
   pointer-events: none;
+  transform: translateX(-50%);
 }
 .toast {
   width: 100%;
@@ -8460,6 +8463,7 @@ video {
     right: 16px;
     left: 16px;
     width: auto;
+    transform: none;
   }
   .toast {
     max-width: none;

@@ -41,21 +41,13 @@ import {
   forgetRememberedGenerationSession,
   getRememberedGenerationSession,
   rememberGenerationSession,
-  removeGenerationBatch,
-  removeGenerationTask,
-  replaceGenerationBatch,
-  upsertGenerationTask,
   useGenerationSessions,
 } from '@/hooks/useGenerationSessions';
 import { useImageGeneration } from '@/hooks/useImageGeneration';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { useImageHistory, type GroupedBatch } from '@/hooks/useImageHistory';
-import {
-  readCount,
-  readReferenceIds,
-  readResolution,
-  useGenerationSettings,
-} from '@/hooks/useGenerationSettings';
+import { useGenerationFeed } from '@/hooks/useGenerationFeed';
+import { readReferenceIds, useGenerationSettings } from '@/hooks/useGenerationSettings';
 import { useImageQuota } from '@/hooks/useImageQuota';
 import {
   LATEST_BATCH_COMPOSER_GAP,
@@ -65,42 +57,20 @@ import { addPublicRecord, removePublicRecord } from '@/hooks/usePublicGallery';
 import { fetchOutputBlob } from '@/services/api/imagesApi';
 import {
   DEFAULT_ASPECT_RATIO,
-  DEFAULT_IMAGE_MODEL,
   DEFAULT_IMAGE_RESOLUTION,
-  isAspectRatio,
   MAX_REFERENCE_IMAGES,
   type AspectRatio,
   type GenerationSettingsSnapshot,
   type HistoryEntry,
 } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
-import {
-  buildSessionFeed,
-  feedItemFromBatch,
-  persistedTaskFromFeedItem,
-  sameFeed,
-  type FeedItem,
-} from '@/utils/generationFeed';
+import { feedItemFromBatch, splitGenerationError, type FeedItem } from '@/utils/generationFeed';
 import {
   getImageVisibilityActionLabel,
   getImageVisibilityUpdateMessage,
 } from '@/utils/imageVisibility';
 
 type DeleteTarget = { kind: 'entry'; entry: HistoryEntry } | { kind: 'batch'; item: FeedItem };
-
-interface GenerationErrorCopy {
-  message: string;
-  requestId: string | null;
-}
-
-function splitGenerationError(message: string): GenerationErrorCopy {
-  const requestSuffix = message.match(/[（(]\s*请求编号[:：]\s*([^）)]+)\s*[）)]\s*$/);
-  if (!requestSuffix) return { message, requestId: null };
-  return {
-    message: message.slice(0, requestSuffix.index).trim(),
-    requestId: requestSuffix[1]?.trim() || null,
-  };
-}
 
 function scrollToGenerationBatch(
   batchId: string,
@@ -367,18 +337,11 @@ export function GenerateView() {
   const [reusedReferenceIds, setReusedReferenceIds] = useState<string[]>(() =>
     readReferenceIds(searchParams),
   );
-  const [feed, setFeed] = useState<FeedItem[]>([]);
-  const feedBySession = useRef(new Map<string, FeedItem[]>());
-  const feedSessionId = useRef<string | null>(null);
-  const latestFeed = useRef(feed);
-  const pendingScrollId = useRef<string | null>(null);
   const initialLatestScrollSession = useRef<string | null>(null);
   const composerRef = useRef<HTMLDivElement>(null);
   const sessionFeedRef = useRef<HTMLElement>(null);
   const latestBatchRef = useRef<HTMLElement>(null);
-  latestFeed.current = feed;
   const [selected, setSelected] = useState<HistoryEntry | null>(null);
-  const [activeHistoryBatchId, setActiveHistoryBatchId] = useState<string | null>(null);
   const [hoveredBatchId, setHoveredBatchId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
@@ -403,10 +366,39 @@ export function GenerateView() {
     resolution === DEFAULT_IMAGE_RESOLUTION
       ? quota?.total
       : (quota?.permanentTotal ?? quota?.total);
-  const currentUserIdRef = useRef(currentUserId);
-  useLayoutEffect(() => {
-    currentUserIdRef.current = currentUserId;
-  }, [currentUserId]);
+  const {
+    feed,
+    setFeed,
+    activeHistoryBatchId,
+    setActiveHistoryBatchId,
+    pendingScrollId,
+    performGeneration,
+  } = useGenerationFeed({
+    activeSessionId,
+    searchParams,
+    currentUserId,
+    sessions,
+    createSession,
+    historyBatches: history.batches,
+    removeHistoryBatch: history.removeBatch,
+    generation,
+    refreshQuota,
+    notify,
+    onSessionCreated: (sessionId) => {
+      previousSessionId.current = sessionId;
+    },
+    onItemReplaced: (item) =>
+      setSelected((current) =>
+        current && item.entries.some((entry) => entry.record.id === current.record.id)
+          ? null
+          : current,
+      ),
+    onComposerSubmitted: (submittedPrompt) => {
+      setPrompt((current) => (current.trim() === submittedPrompt ? '' : current));
+      upload.clear();
+      setReusedReferenceIds([]);
+    },
+  });
 
   useEffect(() => {
     if (authLoading || currentUserId === null || !activeSessionId) return;
@@ -426,59 +418,14 @@ export function GenerateView() {
     setActiveHistoryBatchId(null);
     clearUpload();
     setReusedReferenceIds([]);
-  }, [activeSessionId, clearUpload, searchParams]);
-
-  useEffect(() => {
-    if (!activeSessionId) {
-      if (feedSessionId.current) {
-        feedBySession.current.set(feedSessionId.current, latestFeed.current);
-        feedSessionId.current = null;
-        setFeed([]);
-      }
-      return;
-    }
-    const session = sessions.find((candidate) => candidate.id === activeSessionId);
-    if (!session) {
-      feedSessionId.current = null;
-      setFeed([]);
-      return;
-    }
-    const previousFeedSessionId = feedSessionId.current;
-    if (previousFeedSessionId && previousFeedSessionId !== activeSessionId) {
-      feedBySession.current.set(previousFeedSessionId, latestFeed.current);
-    }
-    const queryAspect = searchParams.get('aspect');
-    const { feed: next, legacyPendingTasks } = buildSessionFeed({
-      session,
-      historyBatches: history.batches,
-      inMemoryItems: [...(feedBySession.current.get(activeSessionId) ?? []), ...latestFeed.current],
-      legacySettings: (pendingSession) => ({
-        prompt: searchParams.get('prompt')?.trim() || pendingSession.title,
-        model: DEFAULT_IMAGE_MODEL,
-        count: readCount(searchParams),
-        aspectRatio: isAspectRatio(queryAspect) ? queryAspect : DEFAULT_ASPECT_RATIO,
-        resolution: readResolution(searchParams),
-        isPublic: searchParams.get('isPublic') === 'true',
-        referenceIds: [],
-      }),
-    });
-    legacyPendingTasks.forEach((task) => upsertGenerationTask(session.id, task));
-    feedSessionId.current = activeSessionId;
-    feedBySession.current.set(activeSessionId, next);
-    setFeed((current) => (sameFeed(current, next) ? current : next));
-  }, [activeSessionId, history.batches, searchParams, sessions]);
-
-  useEffect(() => {
-    if (!feedSessionId.current) return;
-    feedBySession.current.set(feedSessionId.current, feed);
-  }, [feed]);
+  }, [activeSessionId, clearUpload, searchParams, setActiveHistoryBatchId]);
 
   useLayoutEffect(() => {
     const pendingId = pendingScrollId.current;
     if (!pendingId) return;
     pendingScrollId.current = null;
     scrollToGenerationBatch(pendingId);
-  }, [feed]);
+  }, [feed, pendingScrollId]);
 
   useEffect(() => {
     const queryPrompt = searchParams.get('prompt');
@@ -536,171 +483,6 @@ export function GenerateView() {
     composerRef,
     feedRef: sessionFeedRef,
   });
-
-  const performGeneration = async (
-    settings: GenerationSettingsSnapshot,
-    referenceFiles: readonly File[] = [],
-    clearComposer = false,
-    replaceItem?: FeedItem,
-  ): Promise<void> => {
-    const generationUserId = currentUserIdRef.current;
-    if (generation.isLoading) return;
-    const generationSettings = settings;
-    if (!generationSettings.prompt) {
-      notify('请先描述你想生成的图片。', 'error');
-      return;
-    }
-    let generationSession = sessions.find((session) => session.id === activeSessionId);
-    let generationSessionId = generationSession?.id;
-    if (!generationSessionId) {
-      const session = createSession();
-      generationSession = session;
-      generationSessionId = session.id;
-      previousSessionId.current = session.id;
-      const nextSearch = new URLSearchParams({
-        session: session.id,
-        model: generationSettings.model,
-        aspect: generationSettings.aspectRatio,
-        count: String(generationSettings.count),
-        resolution: generationSettings.resolution,
-        isPublic: String(generationSettings.isPublic),
-      });
-      if (generationSettings.quality !== undefined) {
-        nextSearch.set('quality', generationSettings.quality);
-      }
-      void navigate(`/generate?${nextSearch.toString()}`, { replace: true });
-    }
-    if (generationUserId !== null) {
-      rememberGenerationSession(generationUserId, generationSessionId);
-    }
-    const generationSessionBatchIds = generationSession?.batchIds ?? [];
-    const pendingId = `pending-${crypto.randomUUID()}`;
-    const pendingItem: FeedItem = {
-      id: pendingId,
-      createdAt: new Date().toISOString(),
-      entries: [],
-      settings: generationSettings,
-    };
-    if (replaceItem) {
-      removeGenerationTask(generationSessionId, replaceItem.id);
-      if (generationSessionBatchIds.includes(replaceItem.id)) {
-        replaceGenerationBatch(generationSessionId, replaceItem.id, pendingId);
-      } else {
-        attachGenerationBatch(generationSessionId, pendingId, generationSettings.prompt);
-      }
-      setFeed((current) =>
-        current.map((item) => (item.id === replaceItem.id ? pendingItem : item)),
-      );
-      setSelected((current) =>
-        current && replaceItem.entries.some((entry) => entry.record.id === current.record.id)
-          ? null
-          : current,
-      );
-      if (activeHistoryBatchId === replaceItem.id) setActiveHistoryBatchId(null);
-    } else {
-      attachGenerationBatch(generationSessionId, pendingId, generationSettings.prompt);
-      pendingScrollId.current = pendingId;
-      setFeed((current) => [...current, pendingItem]);
-    }
-    upsertGenerationTask(generationSessionId, persistedTaskFromFeedItem(pendingItem));
-
-    const restoreReplacedItem = (): void => {
-      if (!replaceItem) return;
-      removeGenerationTask(generationSessionId, pendingId);
-      replaceGenerationBatch(generationSessionId, pendingId, replaceItem.id);
-      if (replaceItem.error) {
-        upsertGenerationTask(generationSessionId, persistedTaskFromFeedItem(replaceItem));
-      }
-      setFeed((current) => current.map((item) => (item.id === pendingId ? replaceItem : item)));
-      setActiveHistoryBatchId(replaceItem.id);
-    };
-
-    try {
-      const result = await generation.generate({
-        prompt: generationSettings.prompt,
-        model: generationSettings.model,
-        count: generationSettings.count,
-        aspectRatio: generationSettings.aspectRatio,
-        resolution: generationSettings.resolution,
-        ...(generationSettings.quality === undefined
-          ? {}
-          : { quality: generationSettings.quality }),
-        isPublic: generationSettings.isPublic,
-        referenceIds: [...generationSettings.referenceIds],
-        ...(referenceFiles.length ? { referenceFiles: [...referenceFiles] } : {}),
-      });
-      if (generationUserId === null || currentUserIdRef.current !== generationUserId) {
-        throw new Error('生成已停止。');
-      }
-      result.entries.forEach((entry) => {
-        if (entry.record.isPublic) addPublicRecord(entry.record);
-      });
-      const persistedReferenceIds = [
-        ...new Set(
-          result.entries.flatMap(
-            (entry) =>
-              entry.record.referenceIds ??
-              (entry.record.referenceId ? [entry.record.referenceId] : []),
-          ),
-        ),
-      ];
-      const completedSettings: GenerationSettingsSnapshot = {
-        ...generationSettings,
-        aspectRatio: result.aspectRatio,
-        referenceIds: persistedReferenceIds.length
-          ? persistedReferenceIds
-          : generationSettings.referenceIds,
-      };
-      setFeed((current) =>
-        current.map((item) =>
-          item.id === pendingId
-            ? { ...item, id: result.batchId, entries: result.entries, settings: completedSettings }
-            : item,
-        ),
-      );
-      removeGenerationTask(generationSessionId, pendingId);
-      replaceGenerationBatch(generationSessionId, pendingId, result.batchId);
-      setActiveHistoryBatchId(result.batchId);
-      let replacementCleanupFailed = false;
-      if (replaceItem) {
-        try {
-          await history.removeBatch(replaceItem.id);
-        } catch {
-          replacementCleanupFailed = true;
-        }
-      }
-      if (clearComposer) {
-        setPrompt((current) => (current.trim() === generationSettings.prompt ? '' : current));
-        upload.clear();
-        setReusedReferenceIds([]);
-      }
-      await refreshQuota();
-      if (replacementCleanupFailed) {
-        notify('新结果已生成，但旧记录暂未清理，请稍后删除。', 'error');
-      } else {
-        notify(replaceItem ? '已重新生成并替换原结果。' : '图片生成完成。');
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : '生成失败，请稍后重试。';
-      const userMessage = splitGenerationError(message).message;
-      if (message === '生成已停止。') {
-        if (replaceItem) restoreReplacedItem();
-        else {
-          removeGenerationBatch(generationSessionId, pendingId);
-          setFeed((current) => current.filter((item) => item.id !== pendingId));
-        }
-        notify(message);
-        return;
-      }
-      if (replaceItem) restoreReplacedItem();
-      else {
-        const failedItem = { ...pendingItem, error: message };
-        upsertGenerationTask(generationSessionId, persistedTaskFromFeedItem(failedItem));
-        setFeed((current) => current.map((item) => (item.id === pendingId ? failedItem : item)));
-      }
-      notify(userMessage, 'error');
-    }
-  };
 
   const regenerateReplacingBatch = (item: FeedItem, promptValue: string): void => {
     const settings: GenerationSettingsSnapshot = {
@@ -991,7 +773,14 @@ export function GenerateView() {
     // may have shifted the layout.
     pendingScrollId.current = latestId;
     setActiveHistoryBatchId(null);
-  }, [activeSessionId, feed, generation.isLoading, history.isHydrated]);
+  }, [
+    activeSessionId,
+    feed,
+    generation.isLoading,
+    history.isHydrated,
+    pendingScrollId,
+    setActiveHistoryBatchId,
+  ]);
 
   return (
     <section

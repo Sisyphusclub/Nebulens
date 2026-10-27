@@ -55,6 +55,21 @@ export function sameFeed(left: readonly FeedItem[], right: readonly FeedItem[]):
   );
 }
 
+export interface GenerationErrorCopy {
+  message: string;
+  requestId: string | null;
+}
+
+/** Splits a trailing "（请求编号：…）" suffix off a generation error message. */
+export function splitGenerationError(message: string): GenerationErrorCopy {
+  const requestSuffix = message.match(/[（(]\s*请求编号[:：]\s*([^）)]+)\s*[）)]\s*$/);
+  if (!requestSuffix) return { message, requestId: null };
+  return {
+    message: message.slice(0, requestSuffix.index).trim(),
+    requestId: requestSuffix[1]?.trim() || null,
+  };
+}
+
 export const LEGACY_PENDING_TASK_ERROR = '上一条生成任务未能完成，请重试。';
 
 interface BuildSessionFeedInput {

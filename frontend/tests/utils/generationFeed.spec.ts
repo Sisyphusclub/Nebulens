@@ -165,6 +165,32 @@ describe('buildSessionFeed', () => {
     ]);
   });
 
+  it('leaves out batches that are hidden while being replaced', () => {
+    const { feed } = buildSessionFeed({
+      session: session({ batchIds: ['pending-new', 'pending-failed'] }),
+      historyBatches: [historyBatch('batch-old', '2026-07-01T00:00:00.000Z')],
+      inMemoryItems: [
+        {
+          id: 'pending-new',
+          createdAt: '2026-07-03T00:00:00.000Z',
+          entries: [],
+          settings: settings('n'),
+        },
+        {
+          id: 'pending-failed',
+          createdAt: '2026-07-02T00:00:00.000Z',
+          entries: [],
+          settings: settings('f'),
+          error: 'x',
+        },
+      ],
+      hiddenBatchIds: new Set(['batch-old', 'pending-failed']),
+      legacySettings,
+    });
+
+    expect(feed.map((item) => item.id)).toEqual(['pending-new']);
+  });
+
   it('keeps session order for items created at the same time', () => {
     const createdAt = '2026-07-02T00:00:00.000Z';
     const { feed } = buildSessionFeed({

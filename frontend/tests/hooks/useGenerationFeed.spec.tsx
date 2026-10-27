@@ -161,6 +161,81 @@ describe('useGenerationFeed', () => {
     expect(hook.current.activeHistoryBatchId).toBe(original.id);
   });
 
+  describe('regenerating a saved batch', () => {
+    const oldBatch: GroupedBatch = {
+      batchId: 'batch-old',
+      createdAt: '2026-07-29T08:00:00.000Z',
+      prompt: settings.prompt,
+      model: settings.model,
+      entries: result('batch-old').entries,
+      settings,
+    };
+    const oldItem: FeedItem = {
+      id: oldBatch.batchId,
+      createdAt: oldBatch.createdAt,
+      entries: [...oldBatch.entries],
+      settings,
+    };
+    const OLD_HISTORY = [oldBatch];
+
+    async function regenerate(outcome: 'success' | 'failure') {
+      const session = createGenerationSession('会话');
+      attachGenerationBatch(session.id, oldBatch.batchId, settings.prompt);
+      const harness = setup(session);
+      harness.rerender({ currentUserId: 'user-a', historyBatches: OLD_HISTORY });
+      await waitFor(() =>
+        expect(harness.result.current.feed.map((item) => item.id)).toEqual(['batch-old']),
+      );
+      let settle!: () => void;
+      harness.generate.mockReturnValue(
+        new Promise<GeneratedBatchResult>((resolve, reject) => {
+          settle = () =>
+            outcome === 'failure' ? reject(new Error('再次失败')) : resolve(result('batch-new'));
+        }),
+      );
+      harness.removeHistoryBatch.mockImplementation(() => {
+        harness.rerender({ currentUserId: 'user-a', historyBatches: NO_HISTORY });
+        return Promise.resolve();
+      });
+
+      const snapshotsBefore = harness.feedSnapshots.length;
+      let pending!: Promise<void>;
+      act(() => {
+        pending = harness.result.current.performGeneration(settings, [], false, oldItem);
+      });
+      // Let the session-store update rebuild the feed while the request is in flight.
+      await waitFor(() =>
+        expect(harness.feedSnapshots.length).toBeGreaterThan(snapshotsBefore + 1),
+      );
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+      const inFlight = harness.feedSnapshots.slice(snapshotsBefore);
+      await act(async () => {
+        settle();
+        await pending;
+      });
+      return { ...harness, inFlight };
+    }
+
+    it('hides the old batch while the replacement is pending', async () => {
+      const { result: hook, inFlight, removeHistoryBatch } = await regenerate('success');
+
+      expect(inFlight.filter((ids) => ids.includes('batch-old'))).toEqual([]);
+      expect(inFlight.at(-1)).toEqual([expect.stringMatching(/^pending-/)]);
+      expect(removeHistoryBatch).toHaveBeenCalledWith('batch-old');
+      expect(hook.current.feed.map((item) => item.id)).toEqual(['batch-new']);
+    });
+
+    it('brings the old batch back when the replacement fails', async () => {
+      const { result: hook, inFlight, removeHistoryBatch } = await regenerate('failure');
+
+      expect(inFlight.filter((ids) => ids.includes('batch-old'))).toEqual([]);
+      expect(removeHistoryBatch).not.toHaveBeenCalled();
+      await waitFor(() => expect(hook.current.feed.map((item) => item.id)).toEqual(['batch-old']));
+    });
+  });
+
   it('replaces a failed item without deleting a server batch that never existed', async () => {
     const session = createGenerationSession('会话');
     const failed: FeedItem = {

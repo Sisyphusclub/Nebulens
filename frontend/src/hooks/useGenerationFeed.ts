@@ -30,6 +30,7 @@ import {
 } from '@/utils/generationFeed';
 
 const GENERATION_STOPPED_MESSAGE = '生成已停止。';
+const NO_BATCH_IDS: ReadonlySet<string> = new Set();
 
 interface UseGenerationFeedOptions {
   activeSessionId: string | null;
@@ -80,6 +81,7 @@ export function useGenerationFeed({
   // The history snapshot `feed` was last rebuilt from. Until it matches the current
   // history, `feed` may still hold only locally persisted tasks.
   const [syncedHistory, setSyncedHistory] = useState<readonly GroupedBatch[] | null>(null);
+  const [replacingBatchIds, setReplacingBatchIds] = useState<ReadonlySet<string>>(NO_BATCH_IDS);
   const feedBySession = useRef(new Map<string, FeedItem[]>());
   const feedSessionId = useRef<string | null>(null);
   const latestFeed = useRef(feed);
@@ -115,6 +117,7 @@ export function useGenerationFeed({
       session,
       historyBatches,
       inMemoryItems: [...(feedBySession.current.get(activeSessionId) ?? []), ...latestFeed.current],
+      hiddenBatchIds: replacingBatchIds,
       legacySettings: (pendingSession) => ({
         prompt: searchParams.get('prompt')?.trim() || pendingSession.title,
         model: DEFAULT_IMAGE_MODEL,
@@ -130,12 +133,22 @@ export function useGenerationFeed({
     feedBySession.current.set(activeSessionId, next);
     setFeed((current) => (sameFeed(current, next) ? current : next));
     setSyncedHistory(historyBatches);
-  }, [activeSessionId, historyBatches, searchParams, sessions]);
+  }, [activeSessionId, historyBatches, replacingBatchIds, searchParams, sessions]);
 
   useEffect(() => {
     if (!feedSessionId.current) return;
     feedBySession.current.set(feedSessionId.current, feed);
   }, [feed]);
+
+  const setReplacing = (batchId: string, replacing: boolean): void => {
+    setReplacingBatchIds((current) => {
+      if (current.has(batchId) === replacing) return current;
+      const next = new Set(current);
+      if (replacing) next.add(batchId);
+      else next.delete(batchId);
+      return next;
+    });
+  };
 
   const performGeneration = async (
     settings: GenerationSettingsSnapshot,
@@ -181,15 +194,17 @@ export function useGenerationFeed({
       settings,
     };
     if (replaceItem) {
+      // Results stay in time order: the replacement is queued as the newest item and the
+      // old batch is hidden (not deleted) until the new one is saved.
+      setReplacing(replaceItem.id, true);
       removeGenerationTask(generationSessionId, replaceItem.id);
       if (generationSessionBatchIds.includes(replaceItem.id)) {
         replaceGenerationBatch(generationSessionId, replaceItem.id, pendingId);
       } else {
         attachGenerationBatch(generationSessionId, pendingId, settings.prompt);
       }
-      setFeed((current) =>
-        current.map((item) => (item.id === replaceItem.id ? pendingItem : item)),
-      );
+      pendingScrollId.current = pendingId;
+      setFeed((current) => [...current.filter((item) => item.id !== replaceItem.id), pendingItem]);
       onItemReplaced(replaceItem);
       if (activeHistoryBatchId === replaceItem.id) setActiveHistoryBatchId(null);
     } else {
@@ -201,6 +216,7 @@ export function useGenerationFeed({
 
     const restoreReplacedItem = (): void => {
       if (!replaceItem) return;
+      setReplacing(replaceItem.id, false);
       removeGenerationTask(generationSessionId, pendingId);
       replaceGenerationBatch(generationSessionId, pendingId, replaceItem.id);
       if (replaceItem.error) {
@@ -266,6 +282,9 @@ export function useGenerationFeed({
           replacementCleanupFailed = true;
         }
       }
+      // Once deleted the old batch is gone from history; if deletion failed it reappears
+      // so the user can remove it, as the notice below asks.
+      if (replaceItem) setReplacing(replaceItem.id, false);
       if (fromComposer) onComposerSubmitted(settings.prompt);
       await refreshQuota();
       if (replacementCleanupFailed) {

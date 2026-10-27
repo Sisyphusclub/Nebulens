@@ -77,6 +77,8 @@ interface BuildSessionFeedInput {
   historyBatches: readonly GroupedBatch[];
   /** Feed items still held in memory for this session (cached feed, then the live feed). */
   inMemoryItems: readonly FeedItem[];
+  /** Batches currently being regenerated; their pending replacement stands in for them. */
+  hiddenBatchIds?: ReadonlySet<string>;
   /** Settings used to describe `pending-*` batch ids left behind without a persisted task. */
   legacySettings: (session: GenerationSession) => GenerationSettingsSnapshot;
 }
@@ -95,6 +97,7 @@ export function buildSessionFeed({
   session,
   historyBatches,
   inMemoryItems,
+  hiddenBatchIds,
   legacySettings,
 }: BuildSessionFeedInput): BuildSessionFeedResult {
   const persisted = new Map(
@@ -131,7 +134,7 @@ export function buildSessionFeed({
   const orderIndex = new Map(orderedBatchIds.map((batchId, index) => [batchId, index]));
   const feed = orderedBatchIds
     .map((batchId) => transient.get(batchId) ?? persisted.get(batchId))
-    .filter((item): item is FeedItem => item !== undefined)
+    .filter((item): item is FeedItem => item !== undefined && !hiddenBatchIds?.has(item.id))
     .sort((left, right) => {
       const byCreatedAt = left.createdAt.localeCompare(right.createdAt);
       if (byCreatedAt !== 0) return byCreatedAt;

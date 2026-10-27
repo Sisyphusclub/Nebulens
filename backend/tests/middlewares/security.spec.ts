@@ -41,4 +41,30 @@ describe('application security middleware', () => {
     expect(response?.body.error.requestId).toEqual(expect.any(String));
     expect(response?.headers['ratelimit']).toEqual(expect.any(String));
   });
+
+  it('does not count session lookups against the auth rate limit', async () => {
+    const app = createApp({ provider });
+    for (let index = 0; index < 25; index += 1) {
+      const response = await request(app).get('/api/auth/get-session');
+      expect(response.status).not.toBe(429);
+    }
+
+    // Credential endpoints still share the remaining auth budget.
+    const signIn = await request(app)
+      .post('/api/auth/sign-in/username')
+      .send({ username: 'nobody', password: 'wrong-password' });
+    expect(signIn.status).not.toBe(429);
+  });
+
+  it('still rate limits repeated credential attempts', async () => {
+    const app = createApp({ provider });
+    let response: request.Response | undefined;
+    for (let index = 0; index < 21; index += 1) {
+      response = await request(app)
+        .post('/api/auth/sign-in/username')
+        .send({ username: 'nobody', password: 'wrong-password' });
+    }
+
+    expect(response?.status).toBe(429);
+  });
 });

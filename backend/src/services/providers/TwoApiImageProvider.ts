@@ -18,6 +18,7 @@ import {
   type ImageResolution,
   type ImageQuality,
 } from '../../types/image.js';
+import { isRecord } from '../../utils/narrowing.js';
 
 import type {
   ImageGenerationProvider,
@@ -624,10 +625,6 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       signal,
     });
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function normalizeReferencePaths(input: GenerateInput): string[] {

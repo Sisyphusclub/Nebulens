@@ -20,6 +20,7 @@ import {
   MIN_COUNT,
   type AspectRatio,
 } from '../types/image.js';
+import { isRecord } from '../utils/narrowing.js';
 
 import '../types/express.js';
 
@@ -642,10 +643,6 @@ function buildResponseTool(
     ...(selection?.model !== undefined ? { model: selection.model } : {}),
     ...(selection?.size !== undefined ? { size: selection.size } : {}),
   };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function readStringProperty(record: Record<string, unknown>, key: string): string | undefined {

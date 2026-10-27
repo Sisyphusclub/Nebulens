@@ -9,6 +9,7 @@ import {
 import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_COUNT,
+  DEFAULT_IMAGE_MODEL,
   DEFAULT_IMAGE_RESOLUTION,
   supportsImageQuality,
   type AspectRatio,
@@ -161,7 +162,7 @@ export function useImageGeneration() {
         setStatusMessage(
           referenceIds.length ? '正在结合参考图生成图片。' : '正在根据提示词生成图片。',
         );
-        const model = options.model?.trim() || 'gpt-image-2';
+        const model = options.model?.trim() || DEFAULT_IMAGE_MODEL;
         const quality = supportsImageQuality(model) ? options.quality : undefined;
         const startedAt = Date.now();
         const generated = await generateImage(

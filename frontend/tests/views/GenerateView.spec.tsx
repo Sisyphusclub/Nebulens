@@ -262,13 +262,14 @@ it('offers the default model and all upstream models', async () => {
   );
 
   const trigger = screen.getByRole('button', { name: '选择模型' });
-  expect(trigger).toHaveTextContent('gpt-image-2');
+  expect(trigger).toHaveTextContent('gpt-image-2.5-flare');
 
   await user.click(trigger);
-  expect(screen.getByRole('menuitemradio', { name: 'gpt-image-2' })).toHaveAttribute(
+  expect(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-flare' })).toHaveAttribute(
     'data-state',
     'checked',
   );
+  expect(screen.getByRole('menuitemradio', { name: 'gpt-image-2' })).toBeInTheDocument();
   expect(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-flare' })).toBeInTheDocument();
   expect(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-sunburst' })).toBeInTheDocument();
   expect(screen.getByRole('menuitemradio', { name: 'Nano Banana Pro' })).toBeInTheDocument();

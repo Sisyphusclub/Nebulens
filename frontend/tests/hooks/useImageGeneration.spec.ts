@@ -155,4 +155,23 @@ describe('useImageGeneration', () => {
       ).rejects.toThrow('未配置 2K/4K 分组 Key，且当前永久积分不足。');
     });
   });
+
+  it('surfaces the daily quota-exhausted message for standard-resolution generation', async () => {
+    api.generateImage.mockRejectedValueOnce(
+      Object.assign(new ImageApiError(429, 'QUOTA_EXHAUSTED', 'quota exhausted'), {
+        status: 429,
+        code: 'QUOTA_EXHAUSTED',
+        details: { quotaScope: 'daily' },
+      }),
+    );
+    const { result } = renderHook(() => useImageGeneration());
+
+    await act(async () => {
+      await expect(result.current.generate({ prompt: 'standard resolution' })).rejects.toThrow(
+        'GPT 号池剩余额度不足，请稍后补充额度后再试。',
+      );
+    });
+
+    expect(result.current.isLoading).toBe(false);
+  });
 });

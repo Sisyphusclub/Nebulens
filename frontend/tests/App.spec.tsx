@@ -353,7 +353,7 @@ describe('React application routes', () => {
     await user.click(modelTrigger);
     const customTrigger = screen.getByRole('button', { name: '自定义生成参数' });
     expect(customTrigger).toHaveTextContent('自定义');
-    expect(customTrigger).toHaveTextContent('智能 · 1K · 1张');
+    expect(customTrigger).toHaveTextContent('智能 · 1K · medium · 1张');
     expect(screen.queryByRole('group', { name: '画面比例' })).not.toBeInTheDocument();
     await user.click(customTrigger);
     const customPanel = screen.getByRole('menu', { name: '自定义生成参数' });
@@ -361,11 +361,11 @@ describe('React application routes', () => {
     expect(customPanel).toHaveAttribute('data-side', 'bottom');
     expect(within(customPanel).getByText('生成偏好')).toBeInTheDocument();
     expect(within(customPanel).queryByText('其他设置')).not.toBeInTheDocument();
-    expect(within(customPanel).getByText('智能 · 1K · 1张')).toBeInTheDocument();
+    expect(within(customPanel).getByText('智能 · 1K · medium · 1张')).toBeInTheDocument();
     expect(screen.getByRole('group', { name: '画面比例' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: '生成张数' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: '清晰度' })).toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: '质量' })).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: '质量' })).toBeInTheDocument();
     expect(
       within(screen.getByRole('group', { name: '画面比例' }))
         .getByRole('menuitemradio', { name: '16:9' })

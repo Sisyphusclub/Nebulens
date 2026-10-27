@@ -68,16 +68,23 @@ function setup(session: GenerationSession, userId: string | null = 'user-a') {
   const onItemReplaced = vi.fn();
   const onComposerSubmitted = vi.fn();
   const params = new URLSearchParams({ session: session.id });
+  const feedSnapshots: string[][] = [];
   const hook = renderHook(
-    ({ currentUserId }: { currentUserId: string | null }) => {
+    ({
+      currentUserId,
+      historyBatches,
+    }: {
+      currentUserId: string | null;
+      historyBatches: readonly GroupedBatch[];
+    }) => {
       const { sessions, create } = useGenerationSessions();
-      return useGenerationFeed({
+      const feed = useGenerationFeed({
         activeSessionId: session.id,
         searchParams: params,
         currentUserId,
         sessions,
         createSession: () => create(),
-        historyBatches: NO_HISTORY,
+        historyBatches,
         removeHistoryBatch,
         generation: { isLoading: false, generate },
         refreshQuota: vi.fn().mockResolvedValue(undefined),
@@ -86,10 +93,20 @@ function setup(session: GenerationSession, userId: string | null = 'user-a') {
         onItemReplaced,
         onComposerSubmitted,
       });
+      feedSnapshots.push(feed.feed.map((item) => item.id));
+      return feed;
     },
-    { wrapper, initialProps: { currentUserId: userId } },
+    { wrapper, initialProps: { currentUserId: userId, historyBatches: NO_HISTORY } },
   );
-  return { ...hook, generate, notify, removeHistoryBatch, onItemReplaced, onComposerSubmitted };
+  return {
+    ...hook,
+    generate,
+    notify,
+    removeHistoryBatch,
+    onItemReplaced,
+    onComposerSubmitted,
+    feedSnapshots,
+  };
 }
 
 beforeEach(() => {
@@ -155,7 +172,7 @@ describe('useGenerationFeed', () => {
       pending = hook.current.performGeneration(settings);
     });
     await waitFor(() => expect(hook.current.feed).toHaveLength(1));
-    rerender({ currentUserId: 'user-b' });
+    rerender({ currentUserId: 'user-b', historyBatches: NO_HISTORY });
     await act(async () => {
       resolve(result('batch-2'));
       await pending;
@@ -163,6 +180,32 @@ describe('useGenerationFeed', () => {
 
     expect(hook.current.feed).toEqual([]);
     expect(notify).toHaveBeenLastCalledWith('生成已停止。');
+  });
+
+  it('never renders the generated batch twice when history learns about it first', async () => {
+    const session = createGenerationSession('会话');
+    const { result: hook, generate, rerender, feedSnapshots } = setup(session);
+    const generated = result('batch-1');
+    // useImageGeneration records the new images in the history store before it resolves.
+    generate.mockImplementation(async () => {
+      const historyBatch: GroupedBatch = {
+        batchId: generated.batchId,
+        createdAt: '2026-07-30T08:00:00.000Z',
+        prompt: settings.prompt,
+        model: settings.model,
+        entries: generated.entries,
+        settings,
+      };
+      rerender({ currentUserId: 'user-a', historyBatches: [historyBatch] });
+      await Promise.resolve();
+      return generated;
+    });
+
+    await act(() => hook.current.performGeneration(settings, [], true));
+
+    const duplicated = feedSnapshots.filter((ids) => new Set(ids).size !== ids.length);
+    expect(duplicated).toEqual([]);
+    expect(hook.current.feed.map((item) => item.id)).toEqual(['batch-1']);
   });
 
   it('rejects an empty prompt without touching the feed', async () => {

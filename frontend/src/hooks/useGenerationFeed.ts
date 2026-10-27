@@ -242,12 +242,17 @@ export function useGenerationFeed({
         aspectRatio: result.aspectRatio,
         referenceIds: persistedReferenceIds.length ? persistedReferenceIds : settings.referenceIds,
       };
+      // The history store may already have surfaced this batch in the feed while the
+      // request was resolving; the pending item takes its place instead of duplicating it.
       setFeed((current) =>
-        current.map((item) =>
-          item.id === pendingId
-            ? { ...item, id: result.batchId, entries: result.entries, settings: completedSettings }
-            : item,
-        ),
+        current.flatMap((item) => {
+          if (item.id === pendingId) {
+            return [
+              { ...item, id: result.batchId, entries: result.entries, settings: completedSettings },
+            ];
+          }
+          return item.id === result.batchId ? [] : [item];
+        }),
       );
       removeGenerationTask(generationSessionId, pendingId);
       replaceGenerationBatch(generationSessionId, pendingId, result.batchId);

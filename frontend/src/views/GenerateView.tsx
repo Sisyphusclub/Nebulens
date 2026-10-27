@@ -53,6 +53,10 @@ import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { useImageHistory } from '@/hooks/useImageHistory';
 import type { GroupedBatch } from '@/hooks/useImageHistory';
 import { useImageQuota } from '@/hooks/useImageQuota';
+import {
+  LATEST_BATCH_COMPOSER_GAP,
+  useLatestBatchVisibility,
+} from '@/hooks/useLatestBatchVisibility';
 import { addPublicRecord, removePublicRecord } from '@/hooks/usePublicGallery';
 import { fetchOutputBlob } from '@/services/api/imagesApi';
 import {
@@ -146,8 +150,6 @@ interface GenerationErrorCopy {
   message: string;
   requestId: string | null;
 }
-
-const LATEST_BATCH_COMPOSER_GAP = 24;
 
 function splitGenerationError(message: string): GenerationErrorCopy {
   const requestSuffix = message.match(/[（(]\s*请求编号[:：]\s*([^）)]+)\s*[）)]\s*$/);
@@ -466,7 +468,6 @@ export function GenerateView() {
   const [selected, setSelected] = useState<HistoryEntry | null>(null);
   const [activeHistoryBatchId, setActiveHistoryBatchId] = useState<string | null>(null);
   const [hoveredBatchId, setHoveredBatchId] = useState<string | null>(null);
-  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
   const [imageApiKeySettingsOpen, setImageApiKeySettingsOpen] = useState(false);
@@ -663,62 +664,12 @@ export function GenerateView() {
     ? `${latestBatch.id}:${latestBatch.entries.length}:${latestBatch.error ? 'error' : 'ready'}`
     : null;
 
-  useEffect(() => {
-    if (!latestBatchVisibilityKey) {
-      setShowJumpToLatest(false);
-      return undefined;
-    }
-
-    const updateVisibility = () => {
-      const batchElement = latestBatchRef.current;
-      const composerElement = composerRef.current;
-      if (!batchElement || !composerElement) {
-        setShowJumpToLatest(false);
-        return;
-      }
-
-      const batchRect = batchElement.getBoundingClientRect();
-      const composerRect = composerElement.getBoundingClientRect();
-      if (batchRect.width === 0 && batchRect.height === 0) {
-        setShowJumpToLatest(false);
-        return;
-      }
-
-      const composerBoundary =
-        composerRect.height > 0 && composerRect.top > 0
-          ? Math.min(
-              window.innerHeight - LATEST_BATCH_COMPOSER_GAP,
-              composerRect.top - LATEST_BATCH_COMPOSER_GAP,
-            )
-          : window.innerHeight - LATEST_BATCH_COMPOSER_GAP;
-      const visibleHeight = Math.max(
-        0,
-        Math.min(batchRect.bottom, composerBoundary) - Math.max(batchRect.top, 0),
-      );
-      const requiredVisibleHeight = Math.min(
-        batchRect.height,
-        Math.max(0, composerBoundary),
-        Math.max(160, Math.min(280, composerBoundary * 0.4)),
-      );
-      const isFullyAboveComposer = batchRect.bottom <= composerBoundary;
-      setShowJumpToLatest(!isFullyAboveComposer || visibleHeight < requiredVisibleHeight);
-    };
-
-    updateVisibility();
-    window.addEventListener('scroll', updateVisibility, { passive: true });
-    window.addEventListener('resize', updateVisibility);
-    const resizeObserver =
-      typeof ResizeObserver === 'function' ? new ResizeObserver(updateVisibility) : null;
-    if (latestBatchRef.current) resizeObserver?.observe(latestBatchRef.current);
-    if (composerRef.current) resizeObserver?.observe(composerRef.current);
-    if (sessionFeedRef.current) resizeObserver?.observe(sessionFeedRef.current);
-
-    return () => {
-      window.removeEventListener('scroll', updateVisibility);
-      window.removeEventListener('resize', updateVisibility);
-      resizeObserver?.disconnect();
-    };
-  }, [latestBatchVisibilityKey]);
+  const showJumpToLatest = useLatestBatchVisibility({
+    visibilityKey: latestBatchVisibilityKey,
+    latestBatchRef,
+    composerRef,
+    feedRef: sessionFeedRef,
+  });
 
   const currentSettings = async (
     promptValue = prompt,

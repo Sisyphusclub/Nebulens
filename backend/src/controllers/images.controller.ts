@@ -22,7 +22,10 @@ import type { ImageGenerationProvider } from '../services/providers/ImageGenerat
 import type { DailyCheckInResult, QuotaSnapshot } from '../services/quota.service.js';
 import { recordReferenceUpload } from '../services/referenceUpload.service.js';
 import type { UserQuotaService } from '../services/userQuota.service.js';
-import type { UserImageApiKeyService } from '../services/userImageApiKey.service.js';
+import type {
+  UserImageApiKeyGroup,
+  UserImageApiKeyService,
+} from '../services/userImageApiKey.service.js';
 import { removeOutput, removeUpload, saveUpload } from '../storage/localStorage.js';
 import {
   ASPECT_RATIOS,
@@ -163,196 +166,166 @@ export function buildImagesController(deps: ImagesControllerDeps): {
       }
     },
 
-    async generate(req, res, next) {
-      const requestAbort = createRequestAbortSignal(req, res);
-      try {
-        const user = requireUser(req);
-        const parsed = parseGenerateBody(generateBodySchema, req.body);
-        assertQualitySupported(parsed.model ?? env.IMAGE_MODEL, parsed.quality);
+    generate: abortableHandler(async (req, res, signal) => {
+      const user = requireUser(req);
+      const parsed = parseGenerateBody(generateBodySchema, req.body);
+      const request = buildGenerationRequest(req, user.id, parsed, DEFAULT_IMAGE_RESOLUTION);
 
-        const referenceIds = normalizeReferenceIds(parsed.referenceIds, parsed.referenceId);
-        if (parsed.demoPresetId !== undefined) {
-          if (!isUserAdmin(user.id)) {
-            throw new AppError('FORBIDDEN', '需要管理员权限。', 403);
-          }
-          if (referenceIds.length > 0) {
-            throw new AppError('BAD_REQUEST', '演示模式不支持参考图。', 400);
-          }
+      if (parsed.demoPresetId !== undefined) {
+        if (!isUserAdmin(user.id)) {
+          throw new AppError('FORBIDDEN', '需要管理员权限。', 403);
+        }
+        if (request.referenceIds.length > 0) {
+          throw new AppError('BAD_REQUEST', '演示模式不支持参考图。', 400);
+        }
 
-          const result = await generateDemoImage({
-            presetId: parsed.demoPresetId,
-            signal: requestAbort.signal,
-            ...(deps.demoGenerationDelayMs !== undefined
-              ? { delayMs: deps.demoGenerationDelayMs }
-              : {}),
-          });
-          if (requestAbort.signal.aborted) {
-            await discardAbortedResult(result, requestAbort.signal);
-          }
-          await persistGeneratedImages({
-            result,
-            userId: user.id,
-            prompt: parsed.prompt,
-            ...(parsed.model !== undefined ? { requestedModel: parsed.model } : {}),
-            referenceIds,
-            count: parsed.count ?? DEFAULT_COUNT,
-            resolution: DEFAULT_IMAGE_RESOLUTION,
-            ...(parsed.quality !== undefined ? { quality: parsed.quality } : {}),
-            isPublic: parsed.isPublic ?? false,
-            requestId: req.requestId,
-          });
-          res.status(200).json(responseFromGeneratedResult(result));
+        const result = await generateDemoImage({
+          presetId: parsed.demoPresetId,
+          signal,
+          ...(deps.demoGenerationDelayMs !== undefined
+            ? { delayMs: deps.demoGenerationDelayMs }
+            : {}),
+        });
+        await persistAndRespond(request, result, res, signal);
+        return;
+      }
+
+      const hasReferenceContext = request.referenceIds.length > 0;
+      if (hasReferenceContext) {
+        await assertReferenceImagesOwnedByUser(request.referenceIds, user.id, signal);
+      }
+      const promptCacheHit =
+        deps.demoPromptCache !== undefined && parsed.quality === undefined
+          ? findDemoPromptCacheHit(parsed.prompt, deps.demoPromptCache)
+          : null;
+      if (promptCacheHit !== null && deps.demoPromptCache !== undefined) {
+        const cachedResult = await readCachedDemoPromptImage(
+          promptCacheHit,
+          deps.demoPromptCache,
+          hasReferenceContext ? 'image-to-image' : undefined,
+          signal,
+        );
+        if (cachedResult !== null) {
+          await persistAndRespond(request, cachedResult, res, signal);
           return;
         }
-
-        const hasReferenceContext = referenceIds.length > 0;
-        if (hasReferenceContext) {
-          await assertReferenceImagesOwnedByUser(referenceIds, user.id, requestAbort.signal);
-        }
-        const promptCacheHit =
-          deps.demoPromptCache !== undefined && parsed.quality === undefined
-            ? findDemoPromptCacheHit(parsed.prompt, deps.demoPromptCache)
-            : null;
-        if (promptCacheHit !== null && deps.demoPromptCache !== undefined) {
-          const cachedResult = await readCachedDemoPromptImage(
-            promptCacheHit,
-            deps.demoPromptCache,
-            hasReferenceContext ? 'image-to-image' : undefined,
-            requestAbort.signal,
-          );
-          if (cachedResult !== null) {
-            if (requestAbort.signal.aborted) {
-              await discardAbortedResult(cachedResult, requestAbort.signal);
-            }
-            await persistGeneratedImages({
-              result: cachedResult,
-              userId: user.id,
-              prompt: parsed.prompt,
-              ...(parsed.model !== undefined ? { requestedModel: parsed.model } : {}),
-              referenceIds,
-              count: parsed.count ?? DEFAULT_COUNT,
-              resolution: DEFAULT_IMAGE_RESOLUTION,
-              ...(parsed.quality !== undefined ? { quality: parsed.quality } : {}),
-              isPublic: parsed.isPublic ?? false,
-              requestId: req.requestId,
-            });
-            res.status(200).json(responseFromGeneratedResult(cachedResult));
-            return;
-          }
-        }
-
-        const providerCredential = deps.userImageApiKeys.getProviderCredentialForGroup(
-          user.id,
-          'standard',
-        );
-        const quotaPool =
-          providerCredential === undefined ? deps.userQuota.forUser(user.id) : undefined;
-        const result = await generateImage(
-          {
-            prompt: parsed.prompt,
-            count: parsed.count ?? DEFAULT_COUNT,
-            ...(referenceIds.length > 0 ? { referenceIds } : {}),
-            model: parsed.model ?? env.IMAGE_MODEL,
-            ...(parsed.aspectRatio !== undefined ? { aspectRatio: parsed.aspectRatio } : {}),
-            ...(parsed.quality !== undefined ? { quality: parsed.quality } : {}),
-            userId: user.id,
-            requestId: req.requestId,
-            signal: requestAbort.signal,
-            ...(providerCredential === undefined ? {} : { providerCredential }),
-          },
-          {
-            provider: deps.provider,
-            ...(quotaPool === undefined ? {} : { quotaPool }),
-          },
-        );
-        if (requestAbort.signal.aborted) {
-          await discardAbortedResult(result, requestAbort.signal);
-        }
-        await persistGeneratedImages({
-          result,
-          userId: user.id,
-          prompt: parsed.prompt,
-          ...(parsed.model !== undefined ? { requestedModel: parsed.model } : {}),
-          referenceIds,
-          count: parsed.count ?? DEFAULT_COUNT,
-          resolution: DEFAULT_IMAGE_RESOLUTION,
-          ...(parsed.quality !== undefined ? { quality: parsed.quality } : {}),
-          isPublic: parsed.isPublic ?? false,
-          requestId: req.requestId,
-        });
-        res.status(200).json(responseFromGeneratedResult(result));
-        if (promptCacheHit !== null && !hasReferenceContext) {
-          void writeDemoPromptCache(promptCacheHit, result, requestAbort.signal).catch(
-            (cacheError: unknown) => {
-              logger.warn(
-                { requestId: req.requestId, batchId: result.batchId, err: cacheError },
-                'images.generate: failed to write optional demo prompt cache',
-              );
-            },
-          );
-        }
-      } catch (err) {
-        if (!requestAbort.signal.aborted || (!res.destroyed && !res.writableEnded)) next(err);
-      } finally {
-        requestAbort.dispose();
       }
-    },
 
-    async generateHighRes(req, res, next) {
-      const requestAbort = createRequestAbortSignal(req, res);
-      try {
-        const user = requireUser(req);
-        const parsed = parseGenerateBody(highResGenerateBodySchema, req.body);
-        assertQualitySupported(parsed.model ?? env.IMAGE_MODEL, parsed.quality);
-        const referenceIds = normalizeReferenceIds(parsed.referenceIds, parsed.referenceId);
-        const providerCredential = deps.userImageApiKeys.getProviderCredentialForGroup(
-          user.id,
-          'high-res',
-        );
-        const quotaPool =
-          providerCredential === undefined ? deps.userQuota.forUser(user.id) : undefined;
-        const result = await generateImage(
-          {
-            prompt: parsed.prompt,
-            count: parsed.count ?? DEFAULT_COUNT,
-            ...(referenceIds.length > 0 ? { referenceIds } : {}),
-            model: parsed.model ?? env.IMAGE_MODEL,
-            ...(parsed.aspectRatio !== undefined ? { aspectRatio: parsed.aspectRatio } : {}),
-            resolution: parsed.resolution,
-            ...(parsed.quality !== undefined ? { quality: parsed.quality } : {}),
-            userId: user.id,
-            requestId: req.requestId,
-            signal: requestAbort.signal,
-            ...(providerCredential === undefined ? {} : { providerCredential }),
-            ...(providerCredential === undefined
-              ? {}
-              : { providerCredentialGroup: 'high-res' as const }),
-          },
-          { provider: deps.provider, ...(quotaPool === undefined ? {} : { quotaPool }) },
-        );
-
-        if (requestAbort.signal.aborted) {
-          await discardAbortedResult(result, requestAbort.signal);
-        }
-        await persistGeneratedImages({
-          result,
-          userId: user.id,
-          prompt: parsed.prompt,
-          ...(parsed.model !== undefined ? { requestedModel: parsed.model } : {}),
-          referenceIds,
-          count: parsed.count ?? DEFAULT_COUNT,
-          resolution: parsed.resolution,
-          ...(parsed.quality !== undefined ? { quality: parsed.quality } : {}),
-          isPublic: parsed.isPublic ?? false,
-          requestId: req.requestId,
+      const result = await generateWithProvider(request, 'standard', signal);
+      await persistAndRespond(request, result, res, signal);
+      if (promptCacheHit !== null && !hasReferenceContext) {
+        void writeDemoPromptCache(promptCacheHit, result, signal).catch((cacheError: unknown) => {
+          logger.warn(
+            { requestId: req.requestId, batchId: result.batchId, err: cacheError },
+            'images.generate: failed to write optional demo prompt cache',
+          );
         });
-        res.status(200).json(responseFromGeneratedResult(result));
-      } catch (err) {
-        if (!requestAbort.signal.aborted || (!res.destroyed && !res.writableEnded)) next(err);
-      } finally {
-        requestAbort.dispose();
       }
-    },
+    }),
+
+    generateHighRes: abortableHandler(async (req, res, signal) => {
+      const user = requireUser(req);
+      const parsed = parseGenerateBody(highResGenerateBodySchema, req.body);
+      const request = buildGenerationRequest(req, user.id, parsed, parsed.resolution);
+      const result = await generateWithProvider(request, 'high-res', signal);
+      await persistAndRespond(request, result, res, signal);
+    }),
+  };
+
+  async function generateWithProvider(
+    request: GenerationRequest,
+    group: UserImageApiKeyGroup,
+    signal: AbortSignal,
+  ): Promise<GenerateImageOutput> {
+    const { body, userId, referenceIds } = request;
+    const providerCredential = deps.userImageApiKeys.getProviderCredentialForGroup(userId, group);
+    const quotaPool = providerCredential === undefined ? deps.userQuota.forUser(userId) : undefined;
+    return generateImage(
+      {
+        prompt: body.prompt,
+        count: body.count ?? DEFAULT_COUNT,
+        ...(referenceIds.length > 0 ? { referenceIds } : {}),
+        model: body.model ?? env.IMAGE_MODEL,
+        ...(body.aspectRatio !== undefined ? { aspectRatio: body.aspectRatio } : {}),
+        // The standard endpoint leaves resolution to the service default.
+        ...(group === 'high-res' ? { resolution: request.resolution } : {}),
+        ...(body.quality !== undefined ? { quality: body.quality } : {}),
+        userId,
+        requestId: request.requestId,
+        signal,
+        ...(providerCredential === undefined ? {} : { providerCredential }),
+        ...(providerCredential !== undefined && group === 'high-res'
+          ? { providerCredentialGroup: 'high-res' as const }
+          : {}),
+      },
+      { provider: deps.provider, ...(quotaPool === undefined ? {} : { quotaPool }) },
+    );
+  }
+}
+
+type GenerateBaseBody = z.infer<typeof generateBaseBodySchema>;
+
+interface GenerationRequest {
+  body: GenerateBaseBody;
+  userId: string;
+  requestId: string;
+  referenceIds: string[];
+  resolution: ImageResolution;
+}
+
+function buildGenerationRequest(
+  req: Request,
+  userId: string,
+  body: GenerateBaseBody,
+  resolution: ImageResolution,
+): GenerationRequest {
+  assertQualitySupported(body.model ?? env.IMAGE_MODEL, body.quality);
+  return {
+    body,
+    userId,
+    requestId: req.requestId,
+    referenceIds: normalizeReferenceIds(body.referenceIds, body.referenceId),
+    resolution,
+  };
+}
+
+async function persistAndRespond(
+  request: GenerationRequest,
+  result: GenerateImageOutput,
+  res: Response,
+  signal: AbortSignal,
+): Promise<void> {
+  if (signal.aborted) {
+    await discardAbortedResult(result, signal);
+  }
+  const { body } = request;
+  await persistGeneratedImages({
+    result,
+    userId: request.userId,
+    prompt: body.prompt,
+    ...(body.model !== undefined ? { requestedModel: body.model } : {}),
+    referenceIds: request.referenceIds,
+    count: body.count ?? DEFAULT_COUNT,
+    resolution: request.resolution,
+    ...(body.quality !== undefined ? { quality: body.quality } : {}),
+    isPublic: body.isPublic ?? false,
+    requestId: request.requestId,
+  });
+  res.status(200).json(responseFromGeneratedResult(result));
+}
+
+function abortableHandler(
+  handle: (req: Request, res: Response, signal: AbortSignal) => Promise<void>,
+): (req: Request, res: Response, next: NextFunction) => Promise<void> {
+  return async (req, res, next) => {
+    const requestAbort = createRequestAbortSignal(req, res);
+    try {
+      await handle(req, res, requestAbort.signal);
+    } catch (err) {
+      if (!requestAbort.signal.aborted || (!res.destroyed && !res.writableEnded)) next(err);
+    } finally {
+      requestAbort.dispose();
+    }
   };
 }
 

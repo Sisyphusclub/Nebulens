@@ -9876,7 +9876,10 @@ video {
   border: 1px solid var(--border-strong);
   border-radius: 6px;
 }
-.assets-page .asset-row-select svg { width: 15px; height: 15px; }
+.assets-page .asset-row-select svg {
+  width: 15px;
+  height: 15px;
+}
 .assets-page .asset-list__row:hover {
   background: color-mix(in oklch, var(--muted) 48%, transparent);
 }

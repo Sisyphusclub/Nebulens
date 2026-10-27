@@ -139,11 +139,15 @@ export interface ImageRecordAccess {
 }
 
 export function findImageRecordAccess(filename: string): ImageRecordAccess | null {
+  // `id` is the primary key and is always inserted equal to `filename`
+  // (see persistGeneratedImages). Matching on the primary key lets this
+  // lookup — run on every served image — hit the PK index instead of
+  // scanning the table, which has no index on `filename`.
   return (
     db
       .select({ userId: imageRecords.userId, isPublic: imageRecords.isPublic })
       .from(imageRecords)
-      .where(eq(imageRecords.filename, filename))
+      .where(eq(imageRecords.id, filename))
       .get() ?? null
   );
 }

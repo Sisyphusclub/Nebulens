@@ -69,6 +69,7 @@ const historyMocks = vi.hoisted(() => ({
       referenceIds: string[];
     };
   }>,
+  isHydrated: true,
   removeBatch: vi.fn(),
   remove: vi.fn(),
   update: vi.fn(),
@@ -112,7 +113,7 @@ vi.mock('@/hooks/useImageGeneration', () => ({
 vi.mock('@/hooks/useImageHistory', () => ({
   useImageHistory: () => ({
     batches: historyMocks.batches,
-    isHydrated: true,
+    isHydrated: historyMocks.isHydrated,
     isHydrating: false,
     hydrateError: null,
     removeBatch: historyMocks.removeBatch,
@@ -152,6 +153,7 @@ beforeEach(() => {
   historyMocks.removeBatch.mockResolvedValue(undefined);
   historyMocks.remove.mockResolvedValue(undefined);
   historyMocks.batches = [];
+  historyMocks.isHydrated = true;
   generation.error = null;
   generation.isLoading = false;
   imageApiKeyMocks.status = { configured: false };
@@ -1610,6 +1612,96 @@ it('centres the latest batch once when entering a session with history', async (
     await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'center' });
     expect(new Set(scrolledBatchIds)).toEqual(new Set(['newer-batch']));
+  } finally {
+    delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+  }
+});
+
+it('centres the newest history batch after a refresh restores a session with failed tasks', async () => {
+  const scrolledBatchIds: Array<string | undefined> = [];
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+    configurable: true,
+    value: vi.fn(function (this: HTMLElement) {
+      scrolledBatchIds.push(this.dataset.generationBatch);
+    }),
+  });
+  const session = createGenerationSession('海边灯塔');
+  attachGenerationBatch(session.id, 'older-batch', '山间木屋');
+  attachGenerationBatch(session.id, 'pending-failed', '失败任务');
+  attachGenerationBatch(session.id, 'newer-batch', '海边灯塔');
+  upsertGenerationTask(session.id, {
+    id: 'pending-failed',
+    createdAt: '2026-07-29T12:00:00.000Z',
+    settings: {
+      prompt: '失败任务',
+      model: 'gpt-image-2',
+      count: 1,
+      aspectRatio: '16:9',
+      resolution: 'standard',
+      isPublic: false,
+      referenceIds: [],
+    },
+    error: '上游失败',
+  });
+  // Before history hydrates, only the locally persisted failed task is known.
+  historyMocks.isHydrated = false;
+  const view = () => (
+    <MemoryRouter initialEntries={[`/generate?session=${session.id}`]}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>
+  );
+
+  try {
+    const { rerender } = render(view());
+    await waitFor(() =>
+      expect(document.querySelector('[data-generation-batch="pending-failed"]')).not.toBeNull(),
+    );
+    expect(scrolledBatchIds).toEqual([]);
+
+    const batch = (batchId: string, prompt: string, createdAt: string) => ({
+      batchId,
+      createdAt,
+      prompt,
+      model: 'gpt-image-2',
+      entries: [
+        {
+          record: {
+            id: `${batchId}.png`,
+            batchId,
+            createdAt,
+            prompt,
+            model: 'gpt-image-2',
+            aspectRatio: '16:9' as const,
+            width: 1792,
+            height: 1024,
+            count: 1,
+            resolution: 'standard' as const,
+            isPublic: false,
+          },
+          imageUrl: `/${batchId}.png`,
+        },
+      ],
+      settings: {
+        prompt,
+        model: 'gpt-image-2',
+        count: 1,
+        aspectRatio: '16:9' as const,
+        resolution: 'standard' as const,
+        isPublic: false,
+        referenceIds: [],
+      },
+    });
+    historyMocks.batches = [
+      batch('newer-batch', '海边灯塔', '2026-07-30T08:00:00.000Z'),
+      batch('older-batch', '山间木屋', '2026-07-29T08:00:00.000Z'),
+    ];
+    historyMocks.isHydrated = true;
+    rerender(view());
+
+    await waitFor(() => expect(scrolledBatchIds).toContain('newer-batch'));
+    expect(scrolledBatchIds).toEqual(['newer-batch']);
   } finally {
     delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
   }

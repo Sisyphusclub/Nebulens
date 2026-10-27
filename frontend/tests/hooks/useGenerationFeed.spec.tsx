@@ -13,6 +13,7 @@ import {
   useGenerationSessions,
   type GenerationSession,
 } from '@/hooks/useGenerationSessions';
+import type { GroupedBatch } from '@/hooks/useImageHistory';
 import type { GeneratedBatchResult, GenerationSettingsSnapshot } from '@/types/image';
 import type { FeedItem } from '@/utils/generationFeed';
 
@@ -53,6 +54,9 @@ function result(batchId: string): GeneratedBatchResult {
   };
 }
 
+// Stable reference, as useImageHistory memoises its batches.
+const NO_HISTORY: GroupedBatch[] = [];
+
 function wrapper({ children }: { children: ReactNode }) {
   return <MemoryRouter>{children}</MemoryRouter>;
 }
@@ -73,7 +77,7 @@ function setup(session: GenerationSession, userId: string | null = 'user-a') {
         currentUserId,
         sessions,
         createSession: () => create(),
-        historyBatches: [],
+        historyBatches: NO_HISTORY,
         removeHistoryBatch,
         generation: { isLoading: false, generate },
         refreshQuota: vi.fn().mockResolvedValue(undefined),

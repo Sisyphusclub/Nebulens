@@ -37,6 +37,7 @@ interface UseGenerationFeedOptions {
   currentUserId: string | null;
   sessions: readonly GenerationSession[];
   createSession: () => GenerationSession;
+  /** Must be referentially stable between renders (useImageHistory memoises it). */
   historyBatches: readonly GroupedBatch[];
   removeHistoryBatch: (batchId: string) => Promise<void>;
   generation: {
@@ -76,6 +77,9 @@ export function useGenerationFeed({
   const navigate = useNavigate();
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [activeHistoryBatchId, setActiveHistoryBatchId] = useState<string | null>(null);
+  // The history snapshot `feed` was last rebuilt from. Until it matches the current
+  // history, `feed` may still hold only locally persisted tasks.
+  const [syncedHistory, setSyncedHistory] = useState<readonly GroupedBatch[] | null>(null);
   const feedBySession = useRef(new Map<string, FeedItem[]>());
   const feedSessionId = useRef<string | null>(null);
   const latestFeed = useRef(feed);
@@ -125,6 +129,7 @@ export function useGenerationFeed({
     feedSessionId.current = activeSessionId;
     feedBySession.current.set(activeSessionId, next);
     setFeed((current) => (sameFeed(current, next) ? current : next));
+    setSyncedHistory(historyBatches);
   }, [activeSessionId, historyBatches, searchParams, sessions]);
 
   useEffect(() => {
@@ -285,6 +290,8 @@ export function useGenerationFeed({
 
   return {
     feed,
+    /** True once `feed` reflects the current history rather than an earlier snapshot. */
+    isFeedSynced: syncedHistory === historyBatches,
     setFeed,
     activeHistoryBatchId,
     setActiveHistoryBatchId,

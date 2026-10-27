@@ -368,6 +368,7 @@ export function GenerateView() {
       : (quota?.permanentTotal ?? quota?.total);
   const {
     feed,
+    isFeedSynced,
     setFeed,
     activeHistoryBatchId,
     setActiveHistoryBatchId,
@@ -760,6 +761,7 @@ export function GenerateView() {
     if (
       !activeSessionId ||
       !history.isHydrated ||
+      !isFeedSynced ||
       generation.isLoading ||
       feed.length === 0 ||
       initialLatestScrollSession.current === activeSessionId
@@ -769,16 +771,13 @@ export function GenerateView() {
     const latestId = feed[feed.length - 1]?.id;
     if (!latestId || !scrollToGenerationBatch(latestId, 'auto')) return;
     initialLatestScrollSession.current = activeSessionId;
-    // Re-centre once more after the next feed update, when late-loading images
-    // may have shifted the layout.
-    pendingScrollId.current = latestId;
     setActiveHistoryBatchId(null);
   }, [
     activeSessionId,
     feed,
     generation.isLoading,
     history.isHydrated,
-    pendingScrollId,
+    isFeedSynced,
     setActiveHistoryBatchId,
   ]);
 

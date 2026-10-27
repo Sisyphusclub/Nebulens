@@ -50,6 +50,12 @@ import {
 import { useImageGeneration } from '@/hooks/useImageGeneration';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { useImageHistory, type GroupedBatch } from '@/hooks/useImageHistory';
+import {
+  readCount,
+  readReferenceIds,
+  readResolution,
+  useGenerationSettings,
+} from '@/hooks/useGenerationSettings';
 import { useImageQuota } from '@/hooks/useImageQuota';
 import {
   LATEST_BATCH_COMPOSER_GAP,
@@ -59,28 +65,13 @@ import { addPublicRecord, removePublicRecord } from '@/hooks/usePublicGallery';
 import { fetchOutputBlob } from '@/services/api/imagesApi';
 import {
   DEFAULT_ASPECT_RATIO,
-  DEFAULT_ASPECT_CHOICE,
-  DEFAULT_COUNT,
   DEFAULT_IMAGE_MODEL,
-  DEFAULT_IMAGE_QUALITY,
   DEFAULT_IMAGE_RESOLUTION,
-  isAspectChoice,
   isAspectRatio,
-  isImageResolution,
-  MAX_COUNT,
   MAX_REFERENCE_IMAGES,
-  MIN_COUNT,
-  normalizeAspectChoiceForResolution,
-  normalizeImageQuality,
-  normalizeImageModel,
-  supportsImageQuality,
-  type AspectChoice,
   type AspectRatio,
   type GenerationSettingsSnapshot,
   type HistoryEntry,
-  type ImageModel,
-  type ImageQuality,
-  type ImageResolution,
 } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
 import {
@@ -90,7 +81,6 @@ import {
   sameFeed,
   type FeedItem,
 } from '@/utils/generationFeed';
-import { resolveAspectChoice } from '@/utils/imageAspect';
 import {
   getImageVisibilityActionLabel,
   getImageVisibilityUpdateMessage,
@@ -132,39 +122,6 @@ function prefersReducedMotion(): boolean {
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
-}
-
-function readCount(searchParams: URLSearchParams): number {
-  const value = Number(searchParams.get('count'));
-  return Number.isInteger(value) && value >= MIN_COUNT && value <= MAX_COUNT
-    ? value
-    : DEFAULT_COUNT;
-}
-
-function readAspectChoice(searchParams: URLSearchParams): AspectChoice {
-  const value = searchParams.get('aspect');
-  return isAspectChoice(value) ? value : DEFAULT_ASPECT_CHOICE;
-}
-
-function readResolution(searchParams: URLSearchParams): ImageResolution {
-  const value = searchParams.get('resolution');
-  return isImageResolution(value) ? value : DEFAULT_IMAGE_RESOLUTION;
-}
-
-function readQuality(searchParams: URLSearchParams): ImageQuality {
-  return normalizeImageQuality(searchParams.get('quality'));
-}
-
-function readReferenceIds(searchParams: URLSearchParams): string[] {
-  return [
-    ...new Set(
-      searchParams
-        .getAll('referenceId')
-        .map((value) => value.trim())
-        .filter(Boolean)
-        .slice(0, 4),
-    ),
-  ];
 }
 
 function requestsAutoGeneration(state: unknown): boolean {
@@ -391,19 +348,22 @@ export function GenerateView() {
   const autoGenerationHandled = useRef(false);
   const bareRouteRestoreHandled = useRef(false);
   const [prompt, setPrompt] = useState(searchParams.get('prompt') ?? '');
-  const [model, setModel] = useState<ImageModel>(() =>
-    normalizeImageModel(searchParams.get('model')),
-  );
-  const [count, setCount] = useState(() => readCount(searchParams));
-  const [resolution, setResolution] = useState<ImageResolution>(() => readResolution(searchParams));
-  const [quality, setQuality] = useState<ImageQuality>(() => readQuality(searchParams));
-  const [aspect, setAspect] = useState<AspectChoice>(() =>
-    normalizeAspectChoiceForResolution(
-      readAspectChoice(searchParams),
-      readResolution(searchParams),
-    ),
-  );
-  const [isPublic, setIsPublic] = useState(() => searchParams.get('isPublic') === 'true');
+  const {
+    model,
+    setModel,
+    count,
+    setCount,
+    resolution,
+    updateResolution,
+    quality,
+    setQuality,
+    aspect,
+    setAspect,
+    isPublic,
+    setIsPublic,
+    applySnapshot,
+    buildSnapshot,
+  } = useGenerationSettings(searchParams);
   const [reusedReferenceIds, setReusedReferenceIds] = useState<string[]>(() =>
     readReferenceIds(searchParams),
   );
@@ -523,14 +483,6 @@ export function GenerateView() {
   useEffect(() => {
     const queryPrompt = searchParams.get('prompt');
     if (queryPrompt !== null) setPrompt(queryPrompt);
-    setModel(normalizeImageModel(searchParams.get('model')));
-    const queryResolution = readResolution(searchParams);
-    setResolution(queryResolution);
-    setQuality(readQuality(searchParams));
-    setAspect(normalizeAspectChoiceForResolution(readAspectChoice(searchParams), queryResolution));
-    setCount(readCount(searchParams));
-    const queryPublic = searchParams.get('isPublic');
-    if (queryPublic === 'true' || queryPublic === 'false') setIsPublic(queryPublic === 'true');
     const queryReferenceIds = readReferenceIds(searchParams);
     if (queryReferenceIds.length) {
       setReusedReferenceIds(queryReferenceIds);
@@ -583,20 +535,6 @@ export function GenerateView() {
     latestBatchRef,
     composerRef,
     feedRef: sessionFeedRef,
-  });
-
-  const currentSettings = async (
-    promptValue = prompt,
-    referenceFiles: readonly File[] = [],
-  ): Promise<GenerationSettingsSnapshot> => ({
-    prompt: promptValue.trim(),
-    model,
-    count,
-    aspectRatio: await resolveAspectChoice(aspect, referenceFiles),
-    resolution,
-    ...(supportsImageQuality(model) ? { quality } : {}),
-    isPublic,
-    referenceIds: reusedReferenceIds,
   });
 
   const performGeneration = async (
@@ -780,7 +718,7 @@ export function GenerateView() {
   const submitCurrent = (promptValue = prompt, initialReferenceFiles?: readonly File[]): void => {
     const files = initialReferenceFiles ?? upload.selectedFiles.map((item) => item.file);
     const generateCurrent = async (): Promise<void> => {
-      const settings = await currentSettings(promptValue, files);
+      const settings = await buildSnapshot(promptValue, reusedReferenceIds, files);
       await performGeneration(settings, files, true);
     };
     if (authLoading) return;
@@ -903,20 +841,10 @@ export function GenerateView() {
 
   const reuseSettings = (settings: GenerationSettingsSnapshot): void => {
     setPrompt(settings.prompt);
-    setModel(normalizeImageModel(settings.model));
-    setCount(settings.count);
-    setResolution(settings.resolution);
-    setQuality(settings.quality ?? DEFAULT_IMAGE_QUALITY);
-    setAspect(normalizeAspectChoiceForResolution(settings.aspectRatio, settings.resolution));
-    setIsPublic(settings.isPublic);
+    applySnapshot(settings);
     setReusedReferenceIds([...settings.referenceIds]);
     upload.clear();
     notify('完整设置已恢复。');
-  };
-
-  const updateResolution = (next: ImageResolution): void => {
-    setResolution(next);
-    setAspect((current) => normalizeAspectChoiceForResolution(current, next));
   };
 
   const addAsReference = async (entry: HistoryEntry): Promise<void> => {

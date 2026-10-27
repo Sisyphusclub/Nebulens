@@ -1346,6 +1346,42 @@ it('replaces pending skeletons with a retryable error card on failure', async ()
   expect(within(errorCard).getByRole('button', { name: '重试' })).toBeEnabled();
 });
 
+it('retries a failed generation in place of its error card', async () => {
+  generation.generate.mockRejectedValueOnce(new Error('上游生成失败'));
+  const user = userEvent.setup();
+  const { container } = render(
+    <MemoryRouter initialEntries={['/generate?prompt=%E6%99%A8%E9%9B%BE']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await user.click(screen.getByRole('button', { name: '生成图片' }));
+  const errorCard = await waitFor(() => {
+    const card = container.querySelector<HTMLElement>('.generation-error-card');
+    expect(card).toBeInTheDocument();
+    return card!;
+  });
+  const failedBatchId =
+    errorCard.closest<HTMLElement>('[data-generation-batch]')?.dataset.generationBatch;
+
+  await user.click(within(errorCard).getByRole('button', { name: '重试' }));
+
+  await waitFor(() =>
+    expect(container.querySelector('.generation-error-card')).not.toBeInTheDocument(),
+  );
+  const batchIds = Array.from(
+    container.querySelectorAll<HTMLElement>('[data-generation-batch]'),
+    (element) => element.dataset.generationBatch,
+  );
+  expect(batchIds).toEqual(['batch-one']);
+  expect(batchIds).not.toContain(failedBatchId);
+  expect(generation.generate).toHaveBeenCalledTimes(2);
+  expect(historyMocks.removeBatch).not.toHaveBeenCalled();
+  expect(await screen.findByText('已重新生成并替换原结果。')).toBeInTheDocument();
+});
+
 it('preserves and submits every ratio at 4K resolution', async () => {
   const user = userEvent.setup();
   render(

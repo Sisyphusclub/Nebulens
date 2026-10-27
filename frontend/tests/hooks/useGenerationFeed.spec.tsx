@@ -161,6 +161,29 @@ describe('useGenerationFeed', () => {
     expect(hook.current.activeHistoryBatchId).toBe(original.id);
   });
 
+  it('replaces a failed item without deleting a server batch that never existed', async () => {
+    const session = createGenerationSession('会话');
+    const failed: FeedItem = {
+      id: 'pending-failed',
+      createdAt: '2026-07-29T08:00:00.000Z',
+      entries: [],
+      settings,
+      error: '上游失败',
+    };
+    attachGenerationBatch(session.id, failed.id, settings.prompt);
+    const { result: hook, generate, notify, removeHistoryBatch } = setup(session);
+    act(() => hook.current.setFeed([failed]));
+    generate.mockResolvedValue(result('batch-ok'));
+
+    await act(() => hook.current.performGeneration(settings, [], false, failed));
+
+    expect(removeHistoryBatch).not.toHaveBeenCalled();
+    expect(hook.current.feed.map((item) => [item.id, item.error])).toEqual([
+      ['batch-ok', undefined],
+    ]);
+    expect(notify).toHaveBeenLastCalledWith('已重新生成并替换原结果。');
+  });
+
   it('drops the result when the signed-in user changes mid-generation', async () => {
     const session = createGenerationSession('会话');
     const { result: hook, generate, notify, rerender } = setup(session);

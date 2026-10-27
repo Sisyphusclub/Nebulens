@@ -258,7 +258,8 @@ export function useGenerationFeed({
       replaceGenerationBatch(generationSessionId, pendingId, result.batchId);
       setActiveHistoryBatchId(result.batchId);
       let replacementCleanupFailed = false;
-      if (replaceItem) {
+      // Failed items only ever lived in the local session; there is no server batch to delete.
+      if (replaceItem && replaceItem.entries.length > 0) {
         try {
           await removeHistoryBatch(replaceItem.id);
         } catch {

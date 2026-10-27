@@ -1025,7 +1025,7 @@ export function GenerateView() {
                         variant="secondary"
                         size="compact"
                         disabled={generation.isLoading}
-                        onClick={() => void performGeneration(item.settings)}
+                        onClick={() => void performGeneration(item.settings, [], false, item)}
                       >
                         <RefreshCw aria-hidden="true" />
                         重试

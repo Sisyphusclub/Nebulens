@@ -1547,3 +1547,70 @@ it('keeps a failed batch confirmation open and supports retry', async () => {
   await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
   expect(screen.getByRole('region', { name: '图像生成工作区' })).toHaveClass('is-empty');
 });
+
+it('centres the latest batch once when entering a session with history', async () => {
+  const scrolledBatchIds: Array<string | undefined> = [];
+  const scrollIntoView = vi.fn(function (this: HTMLElement) {
+    scrolledBatchIds.push(this.dataset.generationBatch);
+  });
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+    configurable: true,
+    value: scrollIntoView,
+  });
+  const batch = (batchId: string, prompt: string, createdAt: string) => ({
+    batchId,
+    createdAt,
+    prompt,
+    model: 'gpt-image-2',
+    entries: [
+      {
+        record: {
+          id: `${batchId}.png`,
+          batchId,
+          createdAt,
+          prompt,
+          model: 'gpt-image-2',
+          aspectRatio: '16:9' as const,
+          width: 1792,
+          height: 1024,
+          count: 1,
+          resolution: 'standard' as const,
+          isPublic: false,
+        },
+        imageUrl: `/${batchId}.png`,
+      },
+    ],
+    settings: {
+      prompt,
+      model: 'gpt-image-2',
+      count: 1,
+      aspectRatio: '16:9' as const,
+      resolution: 'standard' as const,
+      isPublic: false,
+      referenceIds: [],
+    },
+  });
+  historyMocks.batches = [
+    batch('newer-batch', '海边灯塔', '2026-07-30T08:00:00.000Z'),
+    batch('older-batch', '山间木屋', '2026-07-29T08:00:00.000Z'),
+  ];
+  const session = createGenerationSession('海边灯塔');
+  attachGenerationBatch(session.id, 'older-batch', '山间木屋');
+  attachGenerationBatch(session.id, 'newer-batch', '海边灯塔');
+
+  try {
+    render(
+      <MemoryRouter initialEntries={[`/generate?session=${session.id}`]}>
+        <ToastProvider>
+          <GenerateView />
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'center' });
+    expect(new Set(scrolledBatchIds)).toEqual(new Set(['newer-batch']));
+  } finally {
+    delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+  }
+});

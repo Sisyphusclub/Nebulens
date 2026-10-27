@@ -462,7 +462,6 @@ export function GenerateView() {
   const composerRef = useRef<HTMLDivElement>(null);
   const sessionFeedRef = useRef<HTMLElement>(null);
   const latestBatchRef = useRef<HTMLElement>(null);
-  const initialLatestScrollSessionRef = useRef<string | null>(null);
   latestFeed.current = feed;
   const [selected, setSelected] = useState<HistoryEntry | null>(null);
   const [activeHistoryBatchId, setActiveHistoryBatchId] = useState<string | null>(null);
@@ -593,22 +592,6 @@ export function GenerateView() {
     feedBySession.current.set(activeSessionId, next);
     setFeed((current) => (sameFeed(current, next) ? current : next));
   }, [activeSessionId, history.batches, searchParams, sessions]);
-
-  useLayoutEffect(() => {
-    if (
-      !activeSessionId ||
-      !feed.length ||
-      initialLatestScrollSessionRef.current === activeSessionId
-    ) {
-      return;
-    }
-    initialLatestScrollSessionRef.current = activeSessionId;
-    const latestId = feed[feed.length - 1]?.id;
-    if (latestId) {
-      pendingScrollId.current = latestId;
-      scrollToGenerationBatch(latestId);
-    }
-  }, [activeSessionId, feed]);
 
   useEffect(() => {
     if (!feedSessionId.current) return;
@@ -1036,7 +1019,7 @@ export function GenerateView() {
     );
     if (added.length) {
       const result = upload.selectFiles(added);
-      if (result.skipped) notify('最多添加 4 张参考图。', 'error');
+      if (result.skipped) notify(`最多添加 ${MAX_REFERENCE_IMAGES} 张参考图。`, 'error');
       setReusedReferenceIds([]);
     }
   };
@@ -1049,7 +1032,7 @@ export function GenerateView() {
     if (!files.length) return;
     event.preventDefault();
     const result = upload.selectFiles(files);
-    if (result.skipped) notify('最多添加 4 张参考图。', 'error');
+    if (result.skipped) notify(`最多添加 ${MAX_REFERENCE_IMAGES} 张参考图。`, 'error');
     setReusedReferenceIds([]);
   };
 
@@ -1080,7 +1063,7 @@ export function GenerateView() {
         type: blob.type || 'image/png',
       });
       const result = upload.selectFile(file);
-      if (result.skipped) throw new Error('参考图已达到 4 张上限。');
+      if (result.skipped) throw new Error(`参考图已达到 ${MAX_REFERENCE_IMAGES} 张上限。`);
       setReusedReferenceIds([]);
       notify('图片已加入参考图。');
     } catch (error) {
@@ -1211,6 +1194,9 @@ export function GenerateView() {
     const latestId = feed[feed.length - 1]?.id;
     if (!latestId || !scrollToGenerationBatch(latestId, 'auto')) return;
     initialLatestScrollSession.current = activeSessionId;
+    // Re-centre once more after the next feed update, when late-loading images
+    // may have shifted the layout.
+    pendingScrollId.current = latestId;
     setActiveHistoryBatchId(null);
   }, [activeSessionId, feed, generation.isLoading, history.isHydrated]);
 

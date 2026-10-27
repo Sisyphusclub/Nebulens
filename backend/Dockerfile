@@ -6,14 +6,14 @@ WORKDIR /app/backend
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
-COPY backend/package*.json ./
+COPY backend/package*.json backend/.npmrc ./
 RUN npm ci
 
 FROM node:22-bookworm-slim AS build
 ENV HUSKY=0
 WORKDIR /app/backend
 COPY --from=deps /app/backend/node_modules ./node_modules
-COPY backend/package*.json ./
+COPY backend/package*.json backend/.npmrc ./
 COPY backend/tsconfig*.json ./
 COPY backend/drizzle.config.ts ./
 COPY backend/src ./src

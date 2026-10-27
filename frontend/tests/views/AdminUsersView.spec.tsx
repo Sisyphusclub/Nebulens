@@ -139,11 +139,11 @@ describe('AdminUsersView workbench', () => {
     expect(createTrigger).toHaveAttribute('aria-expanded', 'true');
     await user.type(within(form).getByLabelText('用户名'), 'new_member');
     await user.type(within(form).getByLabelText('初始密码'), 'password-123');
-    await user.clear(within(form).getByLabelText('每日额度'));
-    await user.type(within(form).getByLabelText('每日额度'), '10001');
+    await user.clear(within(form).getByLabelText('永久额度'));
+    await user.type(within(form).getByLabelText('永久额度'), '10001');
     expect(within(form).getByRole('button', { name: '确认创建' })).toBeDisabled();
-    await user.clear(within(form).getByLabelText('每日额度'));
-    await user.type(within(form).getByLabelText('每日额度'), '35');
+    await user.clear(within(form).getByLabelText('永久额度'));
+    await user.type(within(form).getByLabelText('永久额度'), '35');
     await user.click(within(form).getByRole('button', { name: '确认创建' }));
 
     await waitFor(() =>
@@ -196,7 +196,7 @@ describe('AdminUsersView workbench', () => {
     await user.clear(screen.getByRole('searchbox', { name: '搜索用户' }));
     const memberRow = screen.getByText('member1').closest('[role="row"]');
     expect(memberRow).not.toBeNull();
-    const quotaInput = within(memberRow as HTMLElement).getByLabelText('设置 member1 的每日额度');
+    const quotaInput = within(memberRow as HTMLElement).getByLabelText('设置 member1 的永久额度');
     await user.clear(quotaInput);
     await user.type(quotaInput, '42');
     await user.click(within(memberRow as HTMLElement).getByRole('button', { name: '保存额度' }));
@@ -208,7 +208,7 @@ describe('AdminUsersView workbench', () => {
     const adminRow = screen.getByText('member0').closest('[role="row"]');
     expect(adminRow).not.toBeNull();
     const adminQuotaInput = within(adminRow as HTMLElement).getByLabelText(
-      '设置 member0 的每日额度',
+      '设置 member0 的永久额度',
     );
     await user.clear(adminQuotaInput);
     await user.type(adminQuotaInput, '1000');
@@ -226,7 +226,7 @@ describe('AdminUsersView workbench', () => {
 
     const memberRow = screen.getByText('member1').closest('[role="row"]');
     expect(memberRow).not.toBeNull();
-    const quotaInput = within(memberRow as HTMLElement).getByLabelText('设置 member1 的每日额度');
+    const quotaInput = within(memberRow as HTMLElement).getByLabelText('设置 member1 的永久额度');
     await user.clear(quotaInput);
     await user.type(quotaInput, '42');
     await user.click(within(memberRow as HTMLElement).getByRole('button', { name: '保存额度' }));
@@ -267,7 +267,7 @@ describe('AdminUsersView workbench', () => {
     authMocks.user = { id: 'user-9', name: 'Member', email: 'member@example.com', isAdmin: false };
     const forbidden = renderView();
 
-    expect(screen.getByRole('status')).toHaveTextContent('无权访问');
+    expect(screen.getByRole('heading', { name: '无权访问' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '创建用户' })).not.toBeInTheDocument();
     expect(adminMocks.refresh).not.toHaveBeenCalled();
 

@@ -1305,6 +1305,7 @@ export function GenerateView() {
               type="button"
               variant="ghost"
               size="compact"
+              aria-label="清除历史参考图"
               onClick={() => setReusedReferenceIds([])}
             >
               清除
@@ -1619,10 +1620,7 @@ export function GenerateView() {
           if (item) reuseSettings(item.settings);
           setSelected(null);
         }}
-        onUseAsReference={async (entry) => {
-          await addAsReference(entry);
-          setSelected(null);
-        }}
+        onUseAsReference={(entry) => void addAsReference(entry).then(() => setSelected(null))}
         onToggleVisibility={(entry) => void toggleVisibility(entry)}
         onDelete={(entry) => {
           setSelected(null);

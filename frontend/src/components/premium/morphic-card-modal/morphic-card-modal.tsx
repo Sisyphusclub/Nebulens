@@ -146,6 +146,7 @@ export function MorphicCardModal({
         <>
           <motion.div
             key={`backdrop-${id}`}
+            aria-hidden="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{

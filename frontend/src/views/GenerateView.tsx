@@ -46,12 +46,10 @@ import {
   replaceGenerationBatch,
   upsertGenerationTask,
   useGenerationSessions,
-  type PersistedGenerationTask,
 } from '@/hooks/useGenerationSessions';
 import { useImageGeneration } from '@/hooks/useImageGeneration';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
-import { useImageHistory } from '@/hooks/useImageHistory';
-import type { GroupedBatch } from '@/hooks/useImageHistory';
+import { useImageHistory, type GroupedBatch } from '@/hooks/useImageHistory';
 import { useImageQuota } from '@/hooks/useImageQuota';
 import {
   LATEST_BATCH_COMPOSER_GAP,
@@ -85,64 +83,18 @@ import {
   type ImageResolution,
 } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
+import {
+  buildSessionFeed,
+  feedItemFromBatch,
+  persistedTaskFromFeedItem,
+  sameFeed,
+  type FeedItem,
+} from '@/utils/generationFeed';
 import { resolveAspectChoice } from '@/utils/imageAspect';
 import {
   getImageVisibilityActionLabel,
   getImageVisibilityUpdateMessage,
 } from '@/utils/imageVisibility';
-
-interface FeedItem {
-  id: string;
-  createdAt: string;
-  entries: HistoryEntry[];
-  settings: GenerationSettingsSnapshot;
-  error?: string;
-}
-
-function feedItemFromBatch(batch: GroupedBatch): FeedItem {
-  return {
-    id: batch.batchId,
-    createdAt: batch.createdAt,
-    entries: [...batch.entries],
-    settings: batch.settings,
-  };
-}
-
-function feedItemFromPersistedTask(task: PersistedGenerationTask): FeedItem {
-  return {
-    id: task.id,
-    createdAt: task.createdAt,
-    entries: [],
-    settings: task.settings,
-    ...(task.error === undefined ? {} : { error: task.error }),
-  };
-}
-
-function persistedTaskFromFeedItem(item: FeedItem): PersistedGenerationTask {
-  return {
-    id: item.id,
-    createdAt: item.createdAt,
-    settings: item.settings,
-    ...(item.error === undefined ? {} : { error: item.error }),
-  };
-}
-
-function sameFeed(left: readonly FeedItem[], right: readonly FeedItem[]): boolean {
-  return (
-    left.length === right.length &&
-    left.every((item, index) => {
-      const candidate = right[index];
-      return (
-        candidate?.id === item.id &&
-        candidate.error === item.error &&
-        candidate.entries.length === item.entries.length &&
-        candidate.entries.every(
-          (entry, entryIndex) => entry.record === item.entries[entryIndex]?.record,
-        )
-      );
-    })
-  );
-}
 
 type DeleteTarget = { kind: 'entry'; entry: HistoryEntry } | { kind: 'batch'; item: FeedItem };
 
@@ -535,60 +487,22 @@ export function GenerateView() {
     if (previousFeedSessionId && previousFeedSessionId !== activeSessionId) {
       feedBySession.current.set(previousFeedSessionId, latestFeed.current);
     }
-    const persisted = new Map(
-      history.batches.map((batch) => [batch.batchId, feedItemFromBatch(batch)]),
-    );
-    const persistedTransient = new Map(
-      session.transientTasks.map((task) => [task.id, feedItemFromPersistedTask(task)]),
-    );
     const queryAspect = searchParams.get('aspect');
-    const legacyPendingTasks = session.batchIds
-      .filter(
-        (batchId) =>
-          batchId.startsWith('pending-') &&
-          !persisted.has(batchId) &&
-          !persistedTransient.has(batchId),
-      )
-      .map<PersistedGenerationTask>((batchId) => ({
-        id: batchId,
-        createdAt: session.updatedAt,
-        settings: {
-          prompt: searchParams.get('prompt')?.trim() || session.title,
-          model: DEFAULT_IMAGE_MODEL,
-          count: readCount(searchParams),
-          aspectRatio: isAspectRatio(queryAspect) ? queryAspect : DEFAULT_ASPECT_RATIO,
-          resolution: readResolution(searchParams),
-          isPublic: searchParams.get('isPublic') === 'true',
-          referenceIds: [],
-        },
-        error: '上一条生成任务未能完成，请重试。',
-      }));
-    legacyPendingTasks.forEach((task) => {
-      persistedTransient.set(task.id, feedItemFromPersistedTask(task));
-      upsertGenerationTask(session.id, task);
+    const { feed: next, legacyPendingTasks } = buildSessionFeed({
+      session,
+      historyBatches: history.batches,
+      inMemoryItems: [...(feedBySession.current.get(activeSessionId) ?? []), ...latestFeed.current],
+      legacySettings: (pendingSession) => ({
+        prompt: searchParams.get('prompt')?.trim() || pendingSession.title,
+        model: DEFAULT_IMAGE_MODEL,
+        count: readCount(searchParams),
+        aspectRatio: isAspectRatio(queryAspect) ? queryAspect : DEFAULT_ASPECT_RATIO,
+        resolution: readResolution(searchParams),
+        isPublic: searchParams.get('isPublic') === 'true',
+        referenceIds: [],
+      }),
     });
-    const transient = new Map(
-      [
-        ...persistedTransient.values(),
-        ...(feedBySession.current.get(activeSessionId) ?? []),
-        ...latestFeed.current,
-      ]
-        .filter((item) => session.batchIds.includes(item.id) && !persisted.has(item.id))
-        .map((item) => [item.id, item]),
-    );
-    const orderedBatchIds = [
-      ...history.batches.map((batch) => batch.batchId),
-      ...session.batchIds.filter((batchId) => !persisted.has(batchId)),
-    ];
-    const orderIndex = new Map(orderedBatchIds.map((batchId, index) => [batchId, index]));
-    const next = orderedBatchIds
-      .map((batchId) => transient.get(batchId) ?? persisted.get(batchId))
-      .filter((item): item is FeedItem => item !== undefined)
-      .sort((left, right) => {
-        const byCreatedAt = left.createdAt.localeCompare(right.createdAt);
-        if (byCreatedAt !== 0) return byCreatedAt;
-        return (orderIndex.get(left.id) ?? 0) - (orderIndex.get(right.id) ?? 0);
-      });
+    legacyPendingTasks.forEach((task) => upsertGenerationTask(session.id, task));
     feedSessionId.current = activeSessionId;
     feedBySession.current.set(activeSessionId, next);
     setFeed((current) => (sameFeed(current, next) ? current : next));

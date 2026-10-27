@@ -73,6 +73,20 @@ describe('buildSessionFeed', () => {
     expect(legacyPendingTasks).toEqual([]);
   });
 
+  it('leaves out history batches that belong to other sessions', () => {
+    const { feed } = buildSessionFeed({
+      session: session({ batchIds: ['batch-mine'] }),
+      historyBatches: [
+        historyBatch('batch-other', '2026-07-03T00:00:00.000Z'),
+        historyBatch('batch-mine', '2026-07-02T00:00:00.000Z'),
+      ],
+      inMemoryItems: [],
+      legacySettings,
+    });
+
+    expect(feed.map((item) => item.id)).toEqual(['batch-mine']);
+  });
+
   it('ignores history batches that are not part of the session', () => {
     const { feed } = buildSessionFeed({
       session: session({ batchIds: ['pending-x'] }),

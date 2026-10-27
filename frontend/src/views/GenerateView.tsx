@@ -64,7 +64,7 @@ import {
   type HistoryEntry,
 } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
-import { feedItemFromBatch, splitGenerationError, type FeedItem } from '@/utils/generationFeed';
+import { splitGenerationError, type FeedItem } from '@/utils/generationFeed';
 import {
   getImageVisibilityActionLabel,
   getImageVisibilityUpdateMessage,
@@ -338,6 +338,8 @@ export function GenerateView() {
     readReferenceIds(searchParams),
   );
   const initialLatestScrollSession = useRef<string | null>(null);
+  /** Batch to land on, instead of the latest one, when a history jump opens its session. */
+  const sessionEntryFocus = useRef<{ sessionId: string; batchId: string } | null>(null);
   const composerRef = useRef<HTMLDivElement>(null);
   const sessionFeedRef = useRef<HTMLElement>(null);
   const latestBatchRef = useRef<HTMLElement>(null);
@@ -569,6 +571,8 @@ export function GenerateView() {
     restoredSession ??= sessions.find((session) =>
       session.batchIds.some((batchId) => historyBatchIds.has(batchId)),
     );
+    // Only reached when no local session owns any history batch, so every batch collected
+    // here is unowned; batches that belong to a session are never copied into another.
     if (!restoredSession && history.batches.length > 0) {
       const recoveredSession = createSession(history.batches[0]?.prompt);
       restoredSession = recoveredSession;
@@ -729,17 +733,29 @@ export function GenerateView() {
   };
 
   const loadHistoryBatch = (batch: GroupedBatch): void => {
+    setSelected(null);
     if (scrollToGenerationBatch(batch.batchId)) {
-      setSelected(null);
       setActiveHistoryBatchId(batch.batchId);
       return;
     }
-    const item = feedItemFromBatch(batch);
+    const openSessionFocusedOn = (sessionId: string): void => {
+      sessionEntryFocus.current = { sessionId, batchId: batch.batchId };
+      void navigate(`/generate?${new URLSearchParams({ session: sessionId }).toString()}`);
+    };
+    const owningSession = sessions.find((session) => session.batchIds.includes(batch.batchId));
+    if (owningSession && owningSession.id !== activeSessionId) {
+      openSessionFocusedOn(owningSession.id);
+      return;
+    }
+    // A batch no session owns is brought into the one being viewed.
+    if (!activeSessionId) {
+      const session = createSession(batch.prompt);
+      attachGenerationBatch(session.id, batch.batchId, batch.prompt);
+      openSessionFocusedOn(session.id);
+      return;
+    }
     pendingScrollId.current = batch.batchId;
-    setFeed((current) =>
-      current.some((candidate) => candidate.id === batch.batchId) ? current : [...current, item],
-    );
-    setSelected(null);
+    attachGenerationBatch(activeSessionId, batch.batchId, batch.prompt);
     setActiveHistoryBatchId(batch.batchId);
   };
 
@@ -768,10 +784,13 @@ export function GenerateView() {
     ) {
       return;
     }
-    const latestId = feed[feed.length - 1]?.id;
-    if (!latestId || !scrollToGenerationBatch(latestId, 'auto')) return;
+    const entryFocus =
+      sessionEntryFocus.current?.sessionId === activeSessionId ? sessionEntryFocus.current : null;
+    const targetId = entryFocus?.batchId ?? feed[feed.length - 1]?.id;
+    if (!targetId || !scrollToGenerationBatch(targetId, 'auto')) return;
     initialLatestScrollSession.current = activeSessionId;
-    setActiveHistoryBatchId(null);
+    sessionEntryFocus.current = null;
+    setActiveHistoryBatchId(entryFocus?.batchId ?? null);
   }, [
     activeSessionId,
     feed,

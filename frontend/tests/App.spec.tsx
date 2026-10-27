@@ -950,7 +950,8 @@ describe('React application routes', () => {
       expect(screen.getByLabelText('当前路由').textContent).toMatch(/^\/generate\?session=/),
     );
     expect(screen.getByLabelText('当前路由')).not.toHaveTextContent(session.id);
-    expect(screen.getByRole('button', { name: '查看图片：旧会话' })).toBeInTheDocument();
+    // The new session only shows its own batches; the old one stays in history.
+    expect(screen.queryByRole('button', { name: '查看图片：旧会话' })).not.toBeInTheDocument();
   });
 
   it('does not restore a remembered session for a state-only automatic entry', async () => {

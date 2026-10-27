@@ -100,8 +100,12 @@ export function buildSessionFeed({
   hiddenBatchIds,
   legacySettings,
 }: BuildSessionFeedInput): BuildSessionFeedResult {
+  // A session only shows the batches registered to it; the rest of the user's history
+  // stays in the history panel.
+  const sessionBatchIds = new Set(session.batchIds);
+  const sessionHistory = historyBatches.filter((batch) => sessionBatchIds.has(batch.batchId));
   const persisted = new Map(
-    historyBatches.map((batch) => [batch.batchId, feedItemFromBatch(batch)]),
+    sessionHistory.map((batch) => [batch.batchId, feedItemFromBatch(batch)]),
   );
   const persistedTransient = new Map(
     session.transientTasks.map((task) => [task.id, feedItemFromPersistedTask(task)]),
@@ -128,7 +132,7 @@ export function buildSessionFeed({
       .map((item) => [item.id, item]),
   );
   const orderedBatchIds = [
-    ...historyBatches.map((batch) => batch.batchId),
+    ...sessionHistory.map((batch) => batch.batchId),
     ...session.batchIds.filter((batchId) => !persisted.has(batchId)),
   ];
   const orderIndex = new Map(orderedBatchIds.map((batchId, index) => [batchId, index]));

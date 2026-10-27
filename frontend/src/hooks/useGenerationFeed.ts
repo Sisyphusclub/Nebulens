@@ -78,9 +78,12 @@ export function useGenerationFeed({
   const navigate = useNavigate();
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [activeHistoryBatchId, setActiveHistoryBatchId] = useState<string | null>(null);
-  // The history snapshot `feed` was last rebuilt from. Until it matches the current
-  // history, `feed` may still hold only locally persisted tasks.
-  const [syncedHistory, setSyncedHistory] = useState<readonly GroupedBatch[] | null>(null);
+  // The session and history snapshot `feed` was last rebuilt from. Until both match,
+  // `feed` may still hold another session's items or only locally persisted tasks.
+  const [syncedSource, setSyncedSource] = useState<{
+    sessionId: string;
+    historyBatches: readonly GroupedBatch[];
+  } | null>(null);
   const [replacingBatchIds, setReplacingBatchIds] = useState<ReadonlySet<string>>(NO_BATCH_IDS);
   const feedBySession = useRef(new Map<string, FeedItem[]>());
   const feedSessionId = useRef<string | null>(null);
@@ -132,7 +135,7 @@ export function useGenerationFeed({
     feedSessionId.current = activeSessionId;
     feedBySession.current.set(activeSessionId, next);
     setFeed((current) => (sameFeed(current, next) ? current : next));
-    setSyncedHistory(historyBatches);
+    setSyncedSource({ sessionId: activeSessionId, historyBatches });
   }, [activeSessionId, historyBatches, replacingBatchIds, searchParams, sessions]);
 
   useEffect(() => {
@@ -316,7 +319,8 @@ export function useGenerationFeed({
   return {
     feed,
     /** True once `feed` reflects the current history rather than an earlier snapshot. */
-    isFeedSynced: syncedHistory === historyBatches,
+    isFeedSynced:
+      syncedSource?.sessionId === activeSessionId && syncedSource.historyBatches === historyBatches,
     setFeed,
     activeHistoryBatchId,
     setActiveHistoryBatchId,

@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 const generation = vi.hoisted(() => ({
@@ -956,7 +956,8 @@ it('opens the right history flyout, searches, and loads a selected batch', async
   );
   const generationResults = screen.getByRole('region', { name: '本次创作结果' });
   expect(generationResults).toHaveTextContent('海边灯塔');
-  expect(generationResults).toHaveTextContent('山间木屋');
+  // Batches outside this session stay in the history panel only.
+  expect(generationResults).not.toHaveTextContent('山间木屋');
   await user.click(rail);
   const panel = await screen.findByRole('complementary', { name: '生成历史' });
   expect(panel).toBeVisible();
@@ -1741,4 +1742,199 @@ it('centres the newest history batch after a refresh restores a session with fai
   } finally {
     delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
   }
+});
+
+function makeHistoryBatch(batchId: string, prompt: string, createdAt: string) {
+  return {
+    batchId,
+    createdAt,
+    prompt,
+    model: 'gpt-image-2',
+    entries: [
+      {
+        record: {
+          id: `${batchId}.png`,
+          batchId,
+          createdAt,
+          prompt,
+          model: 'gpt-image-2',
+          aspectRatio: '16:9' as const,
+          width: 1792,
+          height: 1024,
+          count: 1,
+          resolution: 'standard' as const,
+          isPublic: false,
+        },
+        imageUrl: `/${batchId}.png`,
+      },
+    ],
+    settings: {
+      prompt,
+      model: 'gpt-image-2',
+      count: 1,
+      aspectRatio: '16:9' as const,
+      resolution: 'standard' as const,
+      isPublic: false,
+      referenceIds: [],
+    },
+  };
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{location.search}</output>;
+}
+
+async function openHistoryBatch(prompt: string) {
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: '展开生成历史' }));
+  const panel = await screen.findByRole('complementary', { name: '生成历史' });
+  await user.click(within(panel).getByRole('button', { name: new RegExp(prompt) }));
+}
+
+it('switches to the owning session when a history batch from another session is opened', async () => {
+  const scrolledBatchIds: Array<string | undefined> = [];
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+    configurable: true,
+    value: vi.fn(function (this: HTMLElement) {
+      scrolledBatchIds.push(this.dataset.generationBatch);
+    }),
+  });
+  historyMocks.batches = [
+    makeHistoryBatch('other-batch', '雪山日出', '2026-07-30T08:00:00.000Z'),
+    makeHistoryBatch('mine-batch', '海边灯塔', '2026-07-29T08:00:00.000Z'),
+  ];
+  const otherSession = createGenerationSession('雪山日出');
+  attachGenerationBatch(otherSession.id, 'other-batch', '雪山日出');
+  const currentSession = createGenerationSession('海边灯塔');
+  attachGenerationBatch(currentSession.id, 'mine-batch', '海边灯塔');
+
+  try {
+    render(
+      <MemoryRouter initialEntries={[`/generate?session=${currentSession.id}`]}>
+        <ToastProvider>
+          <GenerateView />
+          <LocationProbe />
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+    const results = () => screen.getByRole('region', { name: '本次创作结果' });
+    await waitFor(() => expect(results()).toHaveTextContent('海边灯塔'));
+    expect(results()).not.toHaveTextContent('雪山日出');
+    scrolledBatchIds.length = 0;
+
+    await openHistoryBatch('雪山日出');
+
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(`session=${otherSession.id}`),
+    );
+    await waitFor(() => expect(results()).toHaveTextContent('雪山日出'));
+    expect(results()).not.toHaveTextContent('海边灯塔');
+    await waitFor(() => expect(scrolledBatchIds).toContain('other-batch'));
+    expect(scrolledBatchIds.every((batchId) => batchId === 'other-batch')).toBe(true);
+  } finally {
+    delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+  }
+});
+
+it('adds an orphan history batch to the current session when it is opened', async () => {
+  const scrolledBatchIds: Array<string | undefined> = [];
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+    configurable: true,
+    value: vi.fn(function (this: HTMLElement) {
+      scrolledBatchIds.push(this.dataset.generationBatch);
+    }),
+  });
+  historyMocks.batches = [
+    makeHistoryBatch('mine-batch', '海边灯塔', '2026-07-30T08:00:00.000Z'),
+    makeHistoryBatch('orphan-batch', '旧设备作品', '2026-07-01T08:00:00.000Z'),
+  ];
+  const currentSession = createGenerationSession('海边灯塔');
+  attachGenerationBatch(currentSession.id, 'mine-batch', '海边灯塔');
+
+  try {
+    render(
+      <MemoryRouter initialEntries={[`/generate?session=${currentSession.id}`]}>
+        <ToastProvider>
+          <GenerateView />
+          <LocationProbe />
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+    const results = () => screen.getByRole('region', { name: '本次创作结果' });
+    await waitFor(() => expect(results()).toHaveTextContent('海边灯塔'));
+    expect(results()).not.toHaveTextContent('旧设备作品');
+    scrolledBatchIds.length = 0;
+
+    await openHistoryBatch('旧设备作品');
+
+    await waitFor(() => expect(results()).toHaveTextContent('旧设备作品'));
+    expect(screen.getByTestId('location')).toHaveTextContent(`session=${currentSession.id}`);
+    const stored = JSON.parse(
+      window.localStorage.getItem('nebulens-generation-sessions-v1') ?? '[]',
+    ) as Array<{ id: string; batchIds: string[] }>;
+    expect(stored.find((item) => item.id === currentSession.id)?.batchIds).toContain(
+      'orphan-batch',
+    );
+    await waitFor(() => expect(scrolledBatchIds).toContain('orphan-batch'));
+  } finally {
+    delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+  }
+});
+
+it('restores an owning session on a bare visit without collecting unowned batches into it', async () => {
+  historyMocks.batches = [
+    makeHistoryBatch('owned-batch', '海边灯塔', '2026-07-30T08:00:00.000Z'),
+    makeHistoryBatch('orphan-batch', '旧设备作品', '2026-07-01T08:00:00.000Z'),
+  ];
+  const owningSession = createGenerationSession('海边灯塔');
+  attachGenerationBatch(owningSession.id, 'owned-batch', '海边灯塔');
+
+  render(
+    <MemoryRouter initialEntries={['/generate']}>
+      <ToastProvider>
+        <GenerateView />
+        <LocationProbe />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await waitFor(() =>
+    expect(screen.getByTestId('location')).toHaveTextContent(`session=${owningSession.id}`),
+  );
+  const results = screen.getByRole('region', { name: '本次创作结果' });
+  await waitFor(() => expect(results).toHaveTextContent('海边灯塔'));
+  expect(results).not.toHaveTextContent('旧设备作品');
+  const stored = JSON.parse(
+    window.localStorage.getItem('nebulens-generation-sessions-v1') ?? '[]',
+  ) as Array<{ id: string; batchIds: string[] }>;
+  expect(stored).toHaveLength(1);
+  expect(stored[0]?.batchIds).toEqual(['owned-batch']);
+});
+
+it('collects only unowned batches into a recovery session when none can be restored', async () => {
+  historyMocks.batches = [
+    makeHistoryBatch('orphan-new', '雪山日出', '2026-07-30T08:00:00.000Z'),
+    makeHistoryBatch('orphan-old', '旧设备作品', '2026-07-01T08:00:00.000Z'),
+  ];
+  // An unrelated session with no history batches cannot be restored.
+  createGenerationSession('空会话');
+
+  render(
+    <MemoryRouter initialEntries={['/generate']}>
+      <ToastProvider>
+        <GenerateView />
+        <LocationProbe />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('session='));
+  const stored = JSON.parse(
+    window.localStorage.getItem('nebulens-generation-sessions-v1') ?? '[]',
+  ) as Array<{ id: string; title: string; batchIds: string[] }>;
+  const recovered = stored.find((item) => item.batchIds.length > 0);
+  expect(recovered?.batchIds).toEqual(['orphan-old', 'orphan-new']);
+  expect(stored.find((item) => item.title === '空会话')?.batchIds).toEqual([]);
+  expect(screen.getByTestId('location')).toHaveTextContent(`session=${recovered?.id}`);
 });

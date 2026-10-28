@@ -220,3 +220,39 @@ describe('team access to shared image files', () => {
     expect((await request(anonymous).get(`/api/outputs/${sharedId}`)).status).toBe(404);
   });
 });
+
+describe('analysis after generation', () => {
+  it('queues every new image for analysis when analysis is configured', async () => {
+    const queue = { enqueue: vi.fn(), idle: vi.fn(async () => undefined) };
+    const app = createApp({
+      provider: fakeProvider(),
+      authMiddleware: stubAuth(`analysis-on-${randomUUID()}`),
+      imageAnalysis: queue,
+    });
+
+    const res = await request(app)
+      .post('/api/images/generate')
+      .send({ prompt: '海报写“新品上市”', count: 2 });
+
+    const ids = res.body.images.map((image: { id: string }) => image.id);
+    expect(queue.enqueue).toHaveBeenCalledWith(ids);
+    const history = await request(app).get('/api/history');
+    expect(
+      history.body.records
+        .filter((record: { id: string }) => ids.includes(record.id))
+        .map((record: { analysisStatus?: string }) => record.analysisStatus),
+    ).toEqual(['pending', 'pending']);
+  });
+
+  it('leaves records unanalyzed when analysis is not configured', async () => {
+    const app = createApp({
+      provider: fakeProvider(),
+      authMiddleware: stubAuth(`analysis-off-${randomUUID()}`),
+    });
+    const id = await generate(app, { prompt: '无分析' });
+    const history = await request(app).get('/api/history');
+    expect(
+      history.body.records.find((record: { id: string }) => record.id === id),
+    ).not.toHaveProperty('analysisStatus');
+  });
+});

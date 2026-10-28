@@ -18,6 +18,7 @@ import {
   generateImage,
   type GenerateImageOutput,
 } from '../services/imageGeneration.service.js';
+import type { AnalysisQueue } from '../services/imageAnalysis.service.js';
 import type { ImageGenerationProvider } from '../services/providers/ImageGenerationProvider.js';
 import type { DailyCheckInResult, QuotaSnapshot } from '../services/quota.service.js';
 import { recordReferenceUpload } from '../services/referenceUpload.service.js';
@@ -72,6 +73,8 @@ export interface ImagesControllerDeps {
   provider: ImageGenerationProvider;
   userQuota: UserQuotaService;
   userImageApiKeys: UserImageApiKeyService;
+  /** Analyzes new images in the background when a vision model is configured. */
+  imageAnalysis?: AnalysisQueue;
   demoGenerationDelayMs?: number;
   demoPromptCache?: DemoPromptCacheConfig;
 }
@@ -190,7 +193,7 @@ export function buildImagesController(deps: ImagesControllerDeps): {
             ? { delayMs: deps.demoGenerationDelayMs }
             : {}),
         });
-        await persistAndRespond(request, result, res, signal);
+        await persistAndRespond(request, result, res, signal, deps.imageAnalysis);
         return;
       }
 
@@ -210,13 +213,13 @@ export function buildImagesController(deps: ImagesControllerDeps): {
           signal,
         );
         if (cachedResult !== null) {
-          await persistAndRespond(request, cachedResult, res, signal);
+          await persistAndRespond(request, cachedResult, res, signal, deps.imageAnalysis);
           return;
         }
       }
 
       const result = await generateWithProvider(request, 'standard', signal);
-      await persistAndRespond(request, result, res, signal);
+      await persistAndRespond(request, result, res, signal, deps.imageAnalysis);
       if (promptCacheHit !== null && !hasReferenceContext) {
         void writeDemoPromptCache(promptCacheHit, result, signal).catch((cacheError: unknown) => {
           logger.warn(
@@ -232,7 +235,7 @@ export function buildImagesController(deps: ImagesControllerDeps): {
       const parsed = parseGenerateBody(highResGenerateBodySchema, req.body);
       const request = buildGenerationRequest(req, user.id, parsed, parsed.resolution);
       const result = await generateWithProvider(request, 'high-res', signal);
-      await persistAndRespond(request, result, res, signal);
+      await persistAndRespond(request, result, res, signal, deps.imageAnalysis);
     }),
   };
 
@@ -298,6 +301,7 @@ async function persistAndRespond(
   result: GenerateImageOutput,
   res: Response,
   signal: AbortSignal,
+  analysis: AnalysisQueue | undefined,
 ): Promise<void> {
   if (signal.aborted) {
     await discardAbortedResult(result, signal);
@@ -315,8 +319,10 @@ async function persistAndRespond(
     isPublic: body.isPublic ?? false,
     isShared: body.isShared ?? true,
     ...(body.category !== undefined ? { category: body.category } : {}),
+    analyze: analysis !== undefined,
     requestId: request.requestId,
   });
+  analysis?.enqueue(result.images.map((image) => image.filename));
   res.status(200).json(responseFromGeneratedResult(result));
 }
 
@@ -360,6 +366,7 @@ async function persistGeneratedImages(input: {
   isPublic: boolean;
   isShared: boolean;
   category?: ImageCategory;
+  analyze: boolean;
   requestId: string;
 }): Promise<void> {
   const createdAt = new Date();
@@ -383,6 +390,7 @@ async function persistGeneratedImages(input: {
     isPublic: input.isPublic,
     isShared: input.isShared,
     ...(input.category !== undefined ? { category: input.category } : {}),
+    ...(input.analyze ? { analysisStatus: 'pending' as const } : {}),
     createdAt,
   }));
   try {

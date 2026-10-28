@@ -15,6 +15,12 @@ export interface Env {
   IMAGE_API_TIMEOUT_MS: number;
   /** Append an exact-text checklist for quoted text before calling the image model. */
   TEXT_PROMPT_STRUCTURING: boolean;
+  /** OpenAI-compatible vision endpoint for tagging and text checks; defaults to the image gateway. */
+  VISION_API_BASE_URL: string;
+  /** Analysis runs only when both the key and the model are set. */
+  VISION_API_KEY: string | undefined;
+  VISION_MODEL: string | undefined;
+  VISION_API_TIMEOUT_MS: number;
   UPLOAD_DIR: string;
   UPLOAD_MAX_BYTES: number;
   OUTPUT_DIR: string;
@@ -133,6 +139,11 @@ function loadEnv(): Env {
     HIGH_RES_IMAGE_MODEL: readOptionalString('HIGH_RES_IMAGE_MODEL'),
     IMAGE_API_TIMEOUT_MS: readInt('IMAGE_API_TIMEOUT_MS', 300_000),
     TEXT_PROMPT_STRUCTURING: readBool('TEXT_PROMPT_STRUCTURING', true),
+    VISION_API_BASE_URL:
+      readOptionalString('VISION_API_BASE_URL') ?? readString('IMAGE_API_BASE_URL'),
+    VISION_API_KEY: readOptionalString('VISION_API_KEY'),
+    VISION_MODEL: readOptionalString('VISION_MODEL'),
+    VISION_API_TIMEOUT_MS: readInt('VISION_API_TIMEOUT_MS', 60_000),
     UPLOAD_DIR: readString('UPLOAD_DIR', './tmp/uploads'),
     UPLOAD_MAX_BYTES: readInt('UPLOAD_MAX_BYTES', 10_485_760),
     OUTPUT_DIR: readString('OUTPUT_DIR', './tmp/outputs'),

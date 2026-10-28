@@ -17,6 +17,7 @@ import { buildOpenAICompatRouter } from './routes/openaiCompat.js';
 import { buildOutputsRouter } from './routes/outputs.js';
 import { buildUserSettingsRouter } from './routes/userSettings.js';
 import type { DemoPromptCacheConfig } from './services/demoPromptCache.service.js';
+import type { AnalysisQueue } from './services/imageAnalysis.service.js';
 import type { ImageGenerationProvider } from './services/providers/ImageGenerationProvider.js';
 import {
   createUserImageApiKeyService,
@@ -28,6 +29,8 @@ export interface AppDeps {
   provider: ImageGenerationProvider;
   userQuota?: UserQuotaService;
   userImageApiKeys?: UserImageApiKeyService;
+  /** Background vision analysis of new images; omitted when no vision model is configured. */
+  imageAnalysis?: AnalysisQueue;
   /** Override the auth middleware. Tests can inject a stub that attaches `req.user` synchronously. */
   authMiddleware?: RequestHandler;
   /** Override the admin middleware. Tests can inject allow/deny behavior after auth. */
@@ -105,6 +108,7 @@ export function createApp(deps: AppDeps): Express {
       provider: deps.provider,
       userQuota,
       userImageApiKeys,
+      ...(deps.imageAnalysis !== undefined ? { imageAnalysis: deps.imageAnalysis } : {}),
       ...(deps.authMiddleware !== undefined ? { authMiddleware: deps.authMiddleware } : {}),
       ...(deps.demoGenerationDelayMs !== undefined
         ? { demoGenerationDelayMs: deps.demoGenerationDelayMs }

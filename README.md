@@ -178,24 +178,27 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 
 ## 配置参考
 
-| 变量                          | 必需 | 说明                                         |
-| ----------------------------- | ---- | -------------------------------------------- |
-| `IMAGE_API_BASE_URL`          | 是   | 标准图像生成上游                             |
-| `IMAGE_API_KEY`               | 是   | 标准图像生成密钥                             |
-| `GEMINI_IMAGE_API_KEY`        | 是   | Nano Banana Pro 上游密钥                     |
-| `USER_API_KEY_ENCRYPTION_KEY` | 是   | AES-256-GCM 用户 Key 加密主密钥              |
-| `OPENAI_COMPAT_API_KEY`       | 是   | OpenAI-compatible API 调用密钥               |
-| `BETTER_AUTH_SECRET`          | 是   | 会话签名密钥                                 |
-| `APP_VERSION`                 | 是   | 健康检查返回的版本号，填部署的标签或提交     |
-| `IMAGE_MODEL`                 | 否   | 后端默认模型，默认 `gpt-image-2`             |
-| `HIGH_RES_IMAGE_MODEL`        | 否   | 2K/4K 默认模型                               |
-| `IMAGE_API_TIMEOUT_MS`        | 否   | 生图请求超时，默认 300000ms                  |
-| `TEXT_PROMPT_STRUCTURING`     | 否   | 为引号文字追加逐字清单，默认 `true`          |
-| `UPLOAD_MAX_BYTES`            | 否   | 参考图上传上限，默认 10MiB                   |
-| `DAILY_USER_QUOTA`            | 否   | 新用户默认永久额度，默认 20                  |
-| `SEED_DEFAULT_ADMIN`          | 否   | 是否创建本地演示管理员，生产环境保持 `false` |
-| `GOOGLE_CLIENT_ID`            | 否   | Google OAuth Client ID                       |
-| `GOOGLE_CLIENT_SECRET`        | 否   | Google OAuth Client Secret                   |
+| 变量                          | 必需 | 说明                                                   |
+| ----------------------------- | ---- | ------------------------------------------------------ |
+| `IMAGE_API_BASE_URL`          | 是   | 标准图像生成上游                                       |
+| `IMAGE_API_KEY`               | 是   | 标准图像生成密钥                                       |
+| `GEMINI_IMAGE_API_KEY`        | 是   | Nano Banana Pro 上游密钥                               |
+| `USER_API_KEY_ENCRYPTION_KEY` | 是   | AES-256-GCM 用户 Key 加密主密钥                        |
+| `OPENAI_COMPAT_API_KEY`       | 是   | OpenAI-compatible API 调用密钥                         |
+| `BETTER_AUTH_SECRET`          | 是   | 会话签名密钥                                           |
+| `APP_VERSION`                 | 是   | 健康检查返回的版本号，填部署的标签或提交               |
+| `IMAGE_MODEL`                 | 否   | 后端默认模型，默认 `gpt-image-2`                       |
+| `HIGH_RES_IMAGE_MODEL`        | 否   | 2K/4K 默认模型                                         |
+| `IMAGE_API_TIMEOUT_MS`        | 否   | 生图请求超时，默认 300000ms                            |
+| `TEXT_PROMPT_STRUCTURING`     | 否   | 为引号文字追加逐字清单，默认 `true`                    |
+| `VISION_API_KEY`              | 否   | 视觉模型密钥，与 `VISION_MODEL` 同时配置才启用作品分析 |
+| `VISION_MODEL`                | 否   | 视觉模型名，用于打标签、判断用途和核对文字             |
+| `VISION_API_BASE_URL`         | 否   | 视觉模型接口地址，默认同 `IMAGE_API_BASE_URL`          |
+| `UPLOAD_MAX_BYTES`            | 否   | 参考图上传上限，默认 10MiB                             |
+| `DAILY_USER_QUOTA`            | 否   | 新用户默认永久额度，默认 20                            |
+| `SEED_DEFAULT_ADMIN`          | 否   | 是否创建本地演示管理员，生产环境保持 `false`           |
+| `GOOGLE_CLIENT_ID`            | 否   | Google OAuth Client ID                                 |
+| `GOOGLE_CLIENT_SECRET`        | 否   | Google OAuth Client Secret                             |
 
 ## 数据与备份
 

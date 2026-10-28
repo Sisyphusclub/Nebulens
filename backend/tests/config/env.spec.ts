@@ -26,6 +26,10 @@ describe('config/env', () => {
     delete process.env.PORT;
     delete process.env.IMAGE_API_TIMEOUT_MS;
     delete process.env.TEXT_PROMPT_STRUCTURING;
+    delete process.env.VISION_API_BASE_URL;
+    delete process.env.VISION_API_KEY;
+    delete process.env.VISION_MODEL;
+    delete process.env.VISION_API_TIMEOUT_MS;
     delete process.env.UPLOAD_DIR;
     delete process.env.OUTPUT_DIR;
     delete process.env.LOG_LEVEL;
@@ -55,6 +59,10 @@ describe('config/env', () => {
     expect(env.PORT).toBe(3000);
     expect(env.IMAGE_API_TIMEOUT_MS).toBe(300_000);
     expect(env.TEXT_PROMPT_STRUCTURING).toBe(true);
+    expect(env.VISION_API_BASE_URL).toBe('https://api.example.com');
+    expect(env.VISION_API_KEY).toBeUndefined();
+    expect(env.VISION_MODEL).toBeUndefined();
+    expect(env.VISION_API_TIMEOUT_MS).toBe(60_000);
     expect(env.UPLOAD_DIR).toBe('./tmp/uploads');
     expect(env.OUTPUT_DIR).toBe('./tmp/outputs');
     expect(env.LOG_LEVEL).toBe('info');

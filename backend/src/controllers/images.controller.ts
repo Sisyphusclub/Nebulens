@@ -40,6 +40,7 @@ import {
   type ImageQuality,
   type ImageResolution,
 } from '../types/image.js';
+import { IMAGE_CATEGORIES, type ImageCategory } from '../types/imageCategory.js';
 
 import '../types/express.js';
 
@@ -52,6 +53,9 @@ const generateBaseBodySchema = z.object({
   aspectRatio: z.enum(ASPECT_RATIOS).optional(),
   quality: z.enum(IMAGE_QUALITIES).optional(),
   isPublic: z.boolean().optional(),
+  /** Team visibility; new images are shared unless the requester opts out. */
+  isShared: z.boolean().optional(),
+  category: z.enum(IMAGE_CATEGORIES).optional(),
 });
 
 const generateBodySchema = generateBaseBodySchema.extend({
@@ -309,6 +313,8 @@ async function persistAndRespond(
     resolution: request.resolution,
     ...(body.quality !== undefined ? { quality: body.quality } : {}),
     isPublic: body.isPublic ?? false,
+    isShared: body.isShared ?? true,
+    ...(body.category !== undefined ? { category: body.category } : {}),
     requestId: request.requestId,
   });
   res.status(200).json(responseFromGeneratedResult(result));
@@ -352,6 +358,8 @@ async function persistGeneratedImages(input: {
   resolution: ImageResolution;
   quality?: ImageQuality;
   isPublic: boolean;
+  isShared: boolean;
+  category?: ImageCategory;
   requestId: string;
 }): Promise<void> {
   const createdAt = new Date();
@@ -373,6 +381,8 @@ async function persistGeneratedImages(input: {
     resolution: input.resolution,
     ...(input.quality !== undefined ? { quality: input.quality } : {}),
     isPublic: input.isPublic,
+    isShared: input.isShared,
+    ...(input.category !== undefined ? { category: input.category } : {}),
     createdAt,
   }));
   try {

@@ -177,10 +177,28 @@ export const imageRecords = sqliteTable(
     isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(false),
     isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
     collection: text('collection'),
+    /** Usage category (see IMAGE_CATEGORIES); null until chosen or inferred. */
+    category: text('category'),
+    /** 'user' when the owner chose the category, 'ai' when analysis inferred it. */
+    categorySource: text('category_source'),
+    /** Visible to every signed-in teammate. Existing rows stay private. */
+    isShared: integer('is_shared', { mode: 'boolean' }).notNull().default(false),
+    description: text('description'),
+    /** JSON array of short tags. */
+    tags: text('tags'),
+    /** JSON result of checking the rendered quoted text. */
+    textCheck: text('text_check'),
+    /** 'pending' | 'done' | 'failed'; null when no analysis was requested. */
+    analysisStatus: text('analysis_status'),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   },
   (t) => ({
     byUserCreatedAt: index('image_records_user_created_idx').on(t.userId, t.createdAt),
+    bySharedCreatedId: index('image_records_shared_created_id_idx').on(
+      t.isShared,
+      t.createdAt,
+      t.id,
+    ),
     byBatch: index('image_records_batch_idx').on(t.batchId),
     byPublicCreatedId: index('image_records_public_created_id_idx').on(
       t.isPublic,

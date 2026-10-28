@@ -99,6 +99,13 @@
       "when": 1793148250169,
       "tag": "0013_better-auth-drop-account-issuer",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1793200160709,
+      "tag": "0014_team_sharing",
+      "breakpoints": true
     }
   ]
 }

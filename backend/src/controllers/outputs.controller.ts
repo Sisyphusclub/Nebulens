@@ -59,6 +59,8 @@ export async function getOutput(req: Request, res: Response, next: NextFunction)
 function authorizeOutput(req: Request, filename: string): void {
   const access = findImageRecordAccess(filename);
   if (access?.isPublic === true) return;
+  // Shared images are visible to every signed-in teammate.
+  if (access?.isShared === true && req.user !== undefined) return;
   if (access !== null && (req.user?.id === access.userId || req.user?.isAdmin === true)) return;
   if (
     isValidSignedOutputRequest({

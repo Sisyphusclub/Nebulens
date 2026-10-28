@@ -32,6 +32,11 @@ export function buildHistoryRouter(deps: HistoryRouterDeps = {}): Router {
 
   router.use(deps.authMiddleware ?? requireAuth);
 
+  // GET /api/history/team → teammates' shared images, newest first, optionally by category.
+  router.get('/team', (req, res, next) => {
+    controller.listTeam(req, res, next);
+  });
+
   // GET /api/history → list current user's image records, newest first.
   router.get('/', (req, res, next) => {
     controller.list(req, res, next);

@@ -1,16 +1,4 @@
-import {
-  ArrowDown,
-  ArrowDownToLine,
-  CircleAlert,
-  Copy,
-  Download,
-  EyeOff,
-  Globe2,
-  ImagePlus,
-  RefreshCw,
-  Sparkles,
-  Trash2,
-} from 'lucide-react';
+import { ArrowDown, ImagePlus, Sparkles } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -18,10 +6,8 @@ import { ConfirmActionModal } from '@/components/common/ConfirmActionModal';
 import { useToast } from '@/components/common/ToastProvider';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
 import { GenerationHistoryFlyout } from '@/components/generation/GenerationHistoryFlyout';
-import { ImageGenerationPlaceholder } from '@/components/generation/ImageGenerationPlaceholder';
 import { GenerationComposerControls } from '@/components/generation/GenerationComposerControls';
-import { EditablePromptBubble } from '@/components/generation/EditablePromptBubble';
-import { SessionResultPreview } from '@/components/generation/SessionResultPreview';
+import { GenerationBatch } from '@/components/generation/GenerationBatch';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { LandingSidebar } from '@/components/landing/LandingSidebar';
@@ -56,16 +42,12 @@ import { fetchOutputBlob } from '@/services/api/imagesApi';
 import {
   DEFAULT_IMAGE_RESOLUTION,
   MAX_REFERENCE_IMAGES,
-  type AspectRatio,
   type GenerationSettingsSnapshot,
   type HistoryEntry,
 } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
-import { splitGenerationError, type FeedItem } from '@/utils/generationFeed';
-import {
-  getImageVisibilityActionLabel,
-  getImageVisibilityUpdateMessage,
-} from '@/utils/imageVisibility';
+import type { FeedItem } from '@/utils/generationFeed';
+import { getImageVisibilityUpdateMessage } from '@/utils/imageVisibility';
 
 type DeleteTarget = { kind: 'entry'; entry: HistoryEntry } | { kind: 'batch'; item: FeedItem };
 
@@ -112,10 +94,6 @@ function readInitialReferenceFiles(state: unknown): File[] {
     if (file instanceof File) files.push(file);
   }
   return files.slice(0, MAX_REFERENCE_IMAGES);
-}
-
-function cssAspectRatio(aspectRatio: AspectRatio): string {
-  return aspectRatio.replace(':', ' / ');
 }
 
 export function GenerateView() {
@@ -792,206 +770,30 @@ export function GenerateView() {
           aria-busy={generation.isLoading}
         >
           {feed.map((item, index) => (
-            <article
-              ref={index === feed.length - 1 ? latestBatchRef : undefined}
-              className={`session-batch${!item.entries.length && !item.error ? ' is-generating' : ''}`}
+            <GenerationBatch
               key={item.id}
-              data-generation-batch={item.id}
-              data-state={!item.entries.length && !item.error ? 'generating' : undefined}
-              data-count={item.entries.length || item.settings.count}
-              onMouseEnter={() => setHoveredBatchId(item.id)}
-              onMouseLeave={() =>
-                setHoveredBatchId((current) => (current === item.id ? null : current))
+              item={item}
+              articleRef={index === feed.length - 1 ? latestBatchRef : undefined}
+              isGenerating={generation.isLoading}
+              statusMessage={generation.statusMessage}
+              mutatingId={mutatingId}
+              openEntryId={selected?.record.id ?? null}
+              onHoverChange={(hovered) =>
+                setHoveredBatchId((current) =>
+                  hovered ? item.id : current === item.id ? null : current,
+                )
               }
-              onFocusCapture={() => setHoveredBatchId(item.id)}
-              onBlurCapture={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget)) {
-                  setHoveredBatchId((current) => (current === item.id ? null : current));
-                }
-              }}
-            >
-              <header className="session-batch__header">
-                <EditablePromptBubble
-                  item={item}
-                  disabled={generation.isLoading || mutatingId === item.id}
-                  onRegenerate={(promptValue) => regenerateReplacingBatch(item, promptValue)}
-                />
-              </header>
-              {item.error ? (
-                <div className="generation-error-grid">
-                  <div
-                    className="generation-error-card"
-                    style={{ aspectRatio: cssAspectRatio(item.settings.aspectRatio) }}
-                    role="alert"
-                  >
-                    <span className="generation-error-card__content">
-                      {(() => {
-                        const errorCopy = splitGenerationError(item.error);
-                        return (
-                          <>
-                            <CircleAlert aria-hidden="true" />
-                            <strong>生成失败</strong>
-                            <span>{errorCopy.message}</span>
-                            {errorCopy.requestId ? (
-                              <small
-                                className="generation-error-card__request"
-                                title={`请求编号：${errorCopy.requestId}`}
-                              >
-                                请求编号 {errorCopy.requestId}
-                              </small>
-                            ) : null}
-                          </>
-                        );
-                      })()}
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="compact"
-                        disabled={generation.isLoading}
-                        onClick={() => void performGeneration(item.settings, [], false, item)}
-                      >
-                        <RefreshCw aria-hidden="true" />
-                        重试
-                      </Button>
-                    </span>
-                  </div>
-                </div>
-              ) : item.entries.length ? (
-                <div className="session-result-grid">
-                  {item.entries.map((entry) => (
-                    <article
-                      className={`session-result${selected?.record.id === entry.record.id ? ' is-detail-open' : ''}`}
-                      key={entry.record.id}
-                    >
-                      <SessionResultPreview entry={entry} onOpen={() => setSelected(entry)} />
-                      <div className="session-result__actions">
-                        <IconTooltip label="用作参考图">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label="用作参考图"
-                            onClick={() => void addAsReference(entry)}
-                          >
-                            <ImagePlus aria-hidden="true" />
-                          </Button>
-                        </IconTooltip>
-                        <IconTooltip label="下载图片">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label="下载图片"
-                            onClick={() => void downloadUrl(entry.imageUrl, entry.record.id)}
-                          >
-                            <Download aria-hidden="true" />
-                          </Button>
-                        </IconTooltip>
-                        <IconTooltip label={getImageVisibilityActionLabel(entry.record.isPublic)}>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label={getImageVisibilityActionLabel(entry.record.isPublic)}
-                            disabled={mutatingId === entry.record.id}
-                            onClick={() => void toggleVisibility(entry)}
-                          >
-                            {entry.record.isPublic ? (
-                              <EyeOff aria-hidden="true" />
-                            ) : (
-                              <Globe2 aria-hidden="true" />
-                            )}
-                          </Button>
-                        </IconTooltip>
-                        <IconTooltip label="删除图片">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label="删除图片"
-                            disabled={mutatingId === entry.record.id}
-                            onClick={() => setDeleteTarget({ kind: 'entry', entry })}
-                          >
-                            <Trash2 aria-hidden="true" />
-                          </Button>
-                        </IconTooltip>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <div className="generation-pending">
-                  <div
-                    className="generation-skeleton"
-                    role="status"
-                    aria-label={generation.statusMessage}
-                  >
-                    {Array.from({ length: item.settings.count }, (_, index) => (
-                      <ImageGenerationPlaceholder
-                        key={`${item.id}-${index}`}
-                        aspectRatio={item.settings.aspectRatio}
-                        resolution={item.settings.resolution}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-              {item.entries.length ? (
-                <div className="session-batch__actions" role="toolbar" aria-label="整组操作">
-                  <IconTooltip label="复用完整设置">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label="复用完整设置"
-                      onClick={() => reuseSettings(item.settings)}
-                    >
-                      <Copy aria-hidden="true" />
-                    </Button>
-                  </IconTooltip>
-                  <IconTooltip label="再次生成">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label="再次生成"
-                      disabled={generation.isLoading}
-                      onClick={() => void performGeneration(item.settings)}
-                    >
-                      <RefreshCw aria-hidden="true" />
-                    </Button>
-                  </IconTooltip>
-                  {item.entries.length > 1 ? (
-                    <>
-                      <IconTooltip label="下载整组图片">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label="下载整组图片"
-                          onClick={() => void downloadBatch(item)}
-                        >
-                          <ArrowDownToLine aria-hidden="true" />
-                        </Button>
-                      </IconTooltip>
-                      <IconTooltip label="删除整组">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="session-delete"
-                          aria-label="删除整组"
-                          disabled={mutatingId === item.id}
-                          onClick={() => setDeleteTarget({ kind: 'batch', item })}
-                        >
-                          <Trash2 aria-hidden="true" />
-                        </Button>
-                      </IconTooltip>
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
-            </article>
+              onRegenerate={(promptValue) => regenerateReplacingBatch(item, promptValue)}
+              onRetry={() => void performGeneration(item.settings, [], false, item)}
+              onGenerateAgain={() => void performGeneration(item.settings)}
+              onReuseSettings={() => reuseSettings(item.settings)}
+              onDownloadBatch={() => void downloadBatch(item)}
+              onDeleteBatch={() => setDeleteTarget({ kind: 'batch', item })}
+              onOpenEntry={setSelected}
+              onUseAsReference={(entry) => void addAsReference(entry)}
+              onToggleVisibility={(entry) => void toggleVisibility(entry)}
+              onDeleteEntry={(entry) => setDeleteTarget({ kind: 'entry', entry })}
+            />
           ))}
         </section>
       ) : null}

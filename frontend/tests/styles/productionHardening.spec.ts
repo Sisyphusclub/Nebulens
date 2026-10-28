@@ -23,7 +23,7 @@ describe('production frontend hardening', () => {
       /^\s*add_header Content-Security-Policy .+ always;$/gm,
     );
 
-    expect(contentSecurityPolicies).toHaveLength(5);
+    expect(contentSecurityPolicies).toHaveLength(4);
     for (const policy of contentSecurityPolicies ?? []) {
       expect(policy).toContain("default-src 'self'");
       expect(policy).toContain("script-src 'self'");

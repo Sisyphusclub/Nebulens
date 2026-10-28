@@ -13,7 +13,6 @@ import { buildUsernameAuthRouter } from './routes/auth.js';
 import { healthRouter } from './routes/health.js';
 import { buildHistoryRouter } from './routes/history.js';
 import { buildImagesRouter } from './routes/images.js';
-import { mediaRouter } from './routes/media.js';
 import { buildOpenAICompatRouter } from './routes/openaiCompat.js';
 import { buildOutputsRouter } from './routes/outputs.js';
 import { buildUserSettingsRouter } from './routes/userSettings.js';
@@ -84,7 +83,6 @@ export function createApp(deps: AppDeps): Express {
   );
 
   app.use('/api', healthRouter);
-  app.use('/api/media', mediaRouter);
   app.use(
     '/api/settings',
     buildUserSettingsRouter({

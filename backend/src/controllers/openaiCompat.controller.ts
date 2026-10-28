@@ -4,12 +4,7 @@ import type { NextFunction, Request, Response } from 'express';
 
 import { env } from '../config/env.js';
 import { AppError } from '../errors/AppError.js';
-import { createSignedOutputPath } from '../services/outputAccess.service.js';
-import {
-  generateImage,
-  type GenerateImageInput,
-  type GenerateImageOutput,
-} from '../services/imageGeneration.service.js';
+import { generateImage, type GenerateImageInput } from '../services/imageGeneration.service.js';
 import type { ImageGenerationProvider } from '../services/providers/ImageGenerationProvider.js';
 import { readOutput, saveUpload } from '../storage/localStorage.js';
 import { DEFAULT_COUNT } from '../types/image.js';
@@ -17,7 +12,6 @@ import { DEFAULT_COUNT } from '../types/image.js';
 import {
   MODEL_CREATED_AT,
   OPENAI_COMPAT_MODEL_IDS,
-  type ImageResponseFormat,
   generationBodySchema,
   editsBodySchema,
   chatBodySchema,
@@ -32,17 +26,13 @@ import {
   selectImageGenerationTool,
   buildResponseTool,
 } from './openaiCompat.scenes.js';
+import {
+  buildImagesResponse,
+  absoluteOutputUrl,
+  unixSeconds,
+  formatGeneratedLinks,
+} from './openaiCompat.responses.js';
 import '../types/express.js';
-
-interface OpenAIImageItem {
-  b64_json?: string;
-  url?: string;
-}
-
-interface OpenAIImagesResponse {
-  created: number;
-  data: OpenAIImageItem[];
-}
 
 interface OpenAICompatControllerDeps {
   provider: ImageGenerationProvider;
@@ -270,42 +260,4 @@ export function buildOpenAICompatController(deps: OpenAICompatControllerDeps): {
 
 function buildGenerateInput(input: GenerateImageInput): GenerateImageInput {
   return input;
-}
-
-async function buildImagesResponse(
-  req: Request,
-  result: GenerateImageOutput,
-  responseFormat: ImageResponseFormat,
-): Promise<OpenAIImagesResponse> {
-  const data: OpenAIImageItem[] = [];
-  for (const image of result.images) {
-    if (responseFormat === 'url') {
-      data.push({ url: absoluteOutputUrl(req, image.filename) });
-    } else {
-      data.push({ b64_json: (await readOutput(image.filename)).toString('base64') });
-    }
-  }
-  return { created: unixSeconds(), data };
-}
-
-function absoluteOutputUrl(req: Request, filename: string): string {
-  const protocol = firstHeaderSegment(req.get('x-forwarded-proto')) ?? req.protocol ?? 'http';
-  const host = req.get('host') ?? `localhost:${env.PORT}`;
-  return `${protocol}://${host}${createSignedOutputPath(filename)}`;
-}
-
-function firstHeaderSegment(value: string | undefined): string | undefined {
-  if (value === undefined) return undefined;
-  const first = value.split(',')[0]?.trim();
-  return first && first.length > 0 ? first : undefined;
-}
-
-function unixSeconds(): number {
-  return Math.floor(Date.now() / 1000);
-}
-
-function formatGeneratedLinks(urls: string[]): string {
-  const noun = urls.length === 1 ? 'image' : 'images';
-  const links = urls.map((url, index) => `![image ${index + 1}](${url})`).join('\n');
-  return `Generated ${urls.length} ${noun}:\n\n${links}`;
 }

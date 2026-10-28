@@ -190,7 +190,7 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 | `IMAGE_MODEL`                 | 否   | 后端默认模型，默认 `gpt-image-2`             |
 | `HIGH_RES_IMAGE_MODEL`        | 否   | 2K/4K 默认模型                               |
 | `IMAGE_API_TIMEOUT_MS`        | 否   | 生图请求超时，默认 300000ms                  |
-| `TEXT_PROMPT_STRUCTURING`     | 否   | 为引号文字追加逐字清单，默认 `false`         |
+| `TEXT_PROMPT_STRUCTURING`     | 否   | 为引号文字追加逐字清单，默认 `true`          |
 | `UPLOAD_MAX_BYTES`            | 否   | 参考图上传上限，默认 10MiB                   |
 | `DAILY_USER_QUOTA`            | 否   | 新用户默认永久额度，默认 20                  |
 | `SEED_DEFAULT_ADMIN`          | 否   | 是否创建本地演示管理员，生产环境保持 `false` |

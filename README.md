@@ -54,6 +54,7 @@ GEMINI_IMAGE_API_KEY=replace-me
 USER_API_KEY_ENCRYPTION_KEY=replace-with-a-base64-encoded-32-byte-key
 OPENAI_COMPAT_API_KEY=replace-me
 BETTER_AUTH_SECRET=replace-with-a-random-secret
+APP_VERSION=0.0.0
 ```
 
 生成用户 Key 加密主密钥：
@@ -185,6 +186,7 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 | `USER_API_KEY_ENCRYPTION_KEY` | 是   | AES-256-GCM 用户 Key 加密主密钥              |
 | `OPENAI_COMPAT_API_KEY`       | 是   | OpenAI-compatible API 调用密钥               |
 | `BETTER_AUTH_SECRET`          | 是   | 会话签名密钥                                 |
+| `APP_VERSION`                 | 是   | 健康检查返回的版本号，填部署的标签或提交     |
 | `IMAGE_MODEL`                 | 否   | 后端默认模型，默认 `gpt-image-2`             |
 | `HIGH_RES_IMAGE_MODEL`        | 否   | 2K/4K 默认模型                               |
 | `IMAGE_API_TIMEOUT_MS`        | 否   | 生图请求超时，默认 300000ms                  |

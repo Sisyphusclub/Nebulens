@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
-import { LandingHeroBackdrop } from '@/components/landing/LandingHeroBackdrop';
+import { LandingArtworkWall } from '@/components/landing/LandingArtworkWall';
 import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { LandingGenerationControls } from '@/components/landing/LandingGenerationControls';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
@@ -341,7 +341,7 @@ export function LandingView() {
   return (
     <div className="landing-page">
       <section className="landing-hero" data-layout="media-stage" aria-labelledby="landing-title">
-        <LandingHeroBackdrop reducedMotion={reducedMotion} />
+        <LandingArtworkWall />
         <div className="landing-hero__overlay" aria-hidden="true" />
         <LandingSidebar
           accountImage={user?.image}

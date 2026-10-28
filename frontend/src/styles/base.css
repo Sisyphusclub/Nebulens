@@ -485,23 +485,6 @@ video {
   min-height: 760px;
   overflow: hidden;
   background: var(--background);
-  --landing-video-x-shift: 64px;
-}
-.landing-hero__video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 50%;
-  opacity: 1;
-  transform: translate3d(var(--landing-video-x-shift), 0, 0) scale(1.04);
-  transform-origin: center center;
-}
-@media (min-width: 861px) {
-  .landing-hero__video {
-    object-position: 50% 52%;
-  }
 }
 .landing-hero__overlay {
   position: absolute;
@@ -3097,9 +3080,6 @@ video {
     top: calc(50% - 96px);
     right: 16px;
     height: min(420px, calc(100svh - 360px));
-  }
-  .landing-hero {
-    --landing-video-x-shift: 0px;
   }
   .landing-navigation-shell {
     position: static;
@@ -11260,5 +11240,118 @@ video {
 @media (max-width: 640px) {
   .assets-page .image-grid {
     column-count: 1;
+  }
+}
+
+/* Landing hero: tilted artwork wall drifting behind the composer */
+.artwork-wall {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #05060a;
+  perspective: 1600px;
+}
+.artwork-wall__plane {
+  position: absolute;
+  top: -30%;
+  left: -18%;
+  width: 136%;
+  height: 170%;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 16px;
+  transform: rotateX(24deg) rotateZ(-9deg);
+  transform-origin: 50% 40%;
+  opacity: 0.5;
+}
+.artwork-wall__column {
+  overflow: hidden;
+}
+.artwork-wall__track {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  will-change: transform;
+  animation: artwork-wall-rise 90s linear infinite;
+}
+.artwork-wall__column[data-column='1'] .artwork-wall__track,
+.artwork-wall__column[data-column='3'] .artwork-wall__track,
+.artwork-wall__column[data-column='5'] .artwork-wall__track,
+.artwork-wall__column[data-column='7'] .artwork-wall__track {
+  animation-name: artwork-wall-fall;
+  animation-duration: 110s;
+}
+.artwork-wall__column[data-column='2'] .artwork-wall__track,
+.artwork-wall__column[data-column='6'] .artwork-wall__track {
+  animation-duration: 75s;
+}
+.artwork-wall__tile {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.45);
+}
+.artwork-wall__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      60% 46% at 50% 38%,
+      rgb(5 6 10 / 0.82) 0%,
+      rgb(5 6 10 / 0.55) 55%,
+      transparent 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(5 6 10 / 0.55) 0%,
+      transparent 22%,
+      transparent 48%,
+      rgb(5 6 10 / 0.85) 72%,
+      #05060a 88%
+    );
+}
+.artwork-wall[data-paused='true'] .artwork-wall__track {
+  animation-play-state: paused;
+}
+@keyframes artwork-wall-rise {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, calc(-50% - 8px), 0);
+  }
+}
+@keyframes artwork-wall-fall {
+  from {
+    transform: translate3d(0, calc(-50% - 8px), 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+@media (max-width: 1199px) {
+  .artwork-wall__plane {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .artwork-wall__column:nth-child(n + 7) {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .artwork-wall__plane {
+    left: -40%;
+    width: 180%;
+    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .artwork-wall__column:nth-child(n + 5) {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .artwork-wall__track {
+    animation: none;
   }
 }

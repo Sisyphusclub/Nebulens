@@ -10,6 +10,7 @@ const auth = vi.hoisted(() => ({
   signUpWithUsername: vi.fn(),
   complete: vi.fn(),
   close: vi.fn(),
+  isOpen: true,
 }));
 
 vi.mock('@/hooks/useAuth', () => ({
@@ -25,7 +26,7 @@ vi.mock('@/hooks/useAuth', () => ({
 
 vi.mock('@/hooks/useAuthModal', () => ({
   useAuthModal: () => ({
-    isOpen: true,
+    isOpen: auth.isOpen,
     close: auth.close,
     complete: auth.complete,
   }),
@@ -37,6 +38,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   auth.isGoogleEnabled = true;
   auth.isGoogleLoading = false;
+  auth.isOpen = true;
 });
 
 describe('LoginModal', () => {
@@ -114,6 +116,33 @@ describe('LoginModal', () => {
       });
       expect(auth.complete).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('opens fresh after a successful sign-up closed it', async () => {
+    const user = userEvent.setup();
+    auth.signUpWithUsername.mockResolvedValue(undefined);
+    // Completing closes the modal without unmounting it, as useAuthModal does.
+    auth.complete.mockImplementation(() => {
+      auth.isOpen = false;
+      return Promise.resolve();
+    });
+    const view = render(<LoginModal />);
+
+    await user.click(screen.getByRole('tab', { name: '注册' }));
+    await user.type(screen.getByLabelText('用户名'), 'studio_user');
+    await user.type(screen.getByLabelText('密码'), 'password123');
+    await user.click(screen.getByRole('button', { name: '创建账户' }));
+    await waitFor(() => expect(auth.complete).toHaveBeenCalledTimes(1));
+    view.rerender(<LoginModal />);
+    expect(screen.queryByLabelText('用户名')).not.toBeInTheDocument();
+
+    auth.isOpen = true;
+    view.rerender(<LoginModal />);
+
+    expect(screen.getByRole('tab', { name: '登录' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByLabelText('用户名')).toHaveValue('');
+    expect(screen.getByLabelText('密码')).toHaveValue('');
+    expect(screen.getByRole('button', { name: '登录' })).toBeEnabled();
   });
 
   it('keeps authentication failures inside the dialog as an accessible alert', async () => {

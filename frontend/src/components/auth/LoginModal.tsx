@@ -53,15 +53,21 @@ export function LoginModal() {
     };
   }, [hasSubmitted, password, username]);
 
-  const resetAndClose = useCallback((): void => {
+  // The modal stays mounted while closed, so every way out must leave a clean form behind.
+  const resetForm = useCallback((): void => {
+    setMode('signin');
     setUsername('');
     setPassword('');
     setShowPassword(false);
     setError(null);
     setPending(false);
     setHasSubmitted(false);
+  }, []);
+
+  const resetAndClose = useCallback((): void => {
+    resetForm();
     close();
-  }, [close]);
+  }, [close, resetForm]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -90,6 +96,7 @@ export function LoginModal() {
       } else {
         await signUpWithUsername({ username: normalizedUsername, password });
       }
+      resetForm();
       await complete();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : '操作失败，请稍后重试。');
@@ -101,6 +108,7 @@ export function LoginModal() {
     setError(null);
     try {
       await signInWithGoogle();
+      resetForm();
       await complete();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Google 登录暂不可用。');

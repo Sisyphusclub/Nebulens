@@ -11,6 +11,10 @@ import { createApp } from '../../src/app.js';
 import { db } from '../../src/db/drizzle.js';
 import { imageRecords, user, userQuota } from '../../src/db/schema.js';
 import { AppError } from '../../src/errors/AppError.js';
+import {
+  findDemoPromptCacheHit,
+  hasDemoPromptCache,
+} from '../../src/services/demoPromptCache.service.js';
 import type { ImageGenerationProvider } from '../../src/services/providers/ImageGenerationProvider.js';
 import { createUserImageApiKeyService } from '../../src/services/userImageApiKey.service.js';
 import { saveOutput } from '../../src/storage/localStorage.js';
@@ -81,6 +85,14 @@ function stubAuth(userId = `test-${randomUUID()}`, isAdmin = false): RequestHand
     req.user = { id: userId, email: `${userId}@test.local`, isAdmin };
     next();
   };
+}
+
+// The demo prompt cache is written after the response is sent, so wait for it
+// instead of racing the next request against the background write.
+async function waitForDemoPromptCache(prompt: string): Promise<void> {
+  const hit = findDemoPromptCacheHit(prompt, { prompts: [prompt], delayMs: 0 });
+  expect(hit).not.toBeNull();
+  await vi.waitFor(async () => expect(await hasDemoPromptCache(hit!)).toBe(true));
 }
 
 function buildApp(
@@ -676,7 +688,7 @@ describe('POST /api/images/generate', () => {
 
     expect(first.status).toBe(200);
     expect(provider.generate).toHaveBeenCalledOnce();
-    await new Promise((resolve) => setTimeout(resolve, 25));
+    await waitForDemoPromptCache('演示提示词 A');
 
     const afterFirstQuota = await request(app).get('/api/images/quota');
     expect(afterFirstQuota.body.remaining).toBe(19);
@@ -729,6 +741,7 @@ describe('POST /api/images/generate', () => {
     });
     expect(first.status).toBe(200);
     expect(provider.generate).toHaveBeenCalledOnce();
+    await waitForDemoPromptCache(demoPrompt);
 
     const upload = await request(app)
       .post('/api/images/upload')

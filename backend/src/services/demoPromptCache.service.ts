@@ -84,6 +84,12 @@ export async function readCachedDemoPromptImage(
   };
 }
 
+/** Cache writes run after the response is sent; callers can poll this to observe completion. */
+export async function hasDemoPromptCache(hit: DemoPromptCacheHit): Promise<boolean> {
+  if ((await readCacheMeta(hit.key)) === null) return false;
+  return internalOutputFileExists(cacheImageFilename(hit.key));
+}
+
 export async function writeDemoPromptCache(
   hit: DemoPromptCacheHit,
   result: GenerateImageOutput,

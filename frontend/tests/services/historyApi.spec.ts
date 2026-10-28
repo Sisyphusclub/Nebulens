@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   deleteHistoryRecords,
+  fetchHistory,
   updateHistoryRecord,
   updateHistoryRecords,
 } from '@/services/api/historyApi';
@@ -83,5 +84,55 @@ describe('history metadata API', () => {
         body: JSON.stringify({ ids: [record.id] }),
       }),
     );
+  });
+});
+
+describe('history record analysis fields', () => {
+  it('keeps well-formed analysis fields and drops malformed ones without rejecting the record', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          Response.json({
+            records: [
+              {
+                id: 'a.png',
+                createdAt: '2026-10-28T00:00:00.000Z',
+                prompt: '海报',
+                model: 'gpt-image-2',
+                width: 1024,
+                height: 1024,
+                isPublic: false,
+                isShared: true,
+                category: 'poster',
+                tags: ['海报'],
+                textCheck: { status: 'passed', segments: [] },
+                analysisStatus: 'done',
+              },
+              {
+                id: 'b.png',
+                createdAt: '2026-10-28T00:00:00.000Z',
+                prompt: '坏数据',
+                model: 'gpt-image-2',
+                width: 1024,
+                height: 1024,
+                isPublic: false,
+                category: 'banner',
+                textCheck: { status: 'unknown' },
+              },
+            ],
+          }),
+        ),
+      ),
+    );
+    try {
+      const [good, malformed] = await fetchHistory();
+      expect(good).toMatchObject({ isShared: true, category: 'poster', analysisStatus: 'done' });
+      expect(malformed).toMatchObject({ id: 'b.png' });
+      expect(malformed).not.toHaveProperty('category');
+      expect(malformed).not.toHaveProperty('textCheck');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

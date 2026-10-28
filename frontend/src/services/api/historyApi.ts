@@ -7,6 +7,8 @@ import {
   type ImageRecord,
   type ImageResolution,
   type ImageQuality,
+  type TextCheckResult,
+  isImageCategory,
 } from '@/types/image';
 import { isNumber, isRecord, readNumber, readString } from '@/utils/narrowing';
 
@@ -149,8 +151,45 @@ function isImageRecord(value: unknown): value is ImageRecord {
     (quality === undefined || isImageQuality(quality)) &&
     (isFavorite === undefined || typeof isFavorite === 'boolean') &&
     (collection === undefined || typeof collection === 'string') &&
-    typeof isPublic === 'boolean'
+    typeof isPublic === 'boolean' &&
+    dropMalformedAnalysisFields(value)
   );
+}
+
+function isTextCheck(value: unknown): value is TextCheckResult {
+  return (
+    isRecord(value) &&
+    (value.status === 'passed' || value.status === 'issues') &&
+    Array.isArray(value.segments) &&
+    value.segments.every(
+      (segment) =>
+        isRecord(segment) &&
+        typeof segment.text === 'string' &&
+        (segment.found === null || typeof segment.found === 'string') &&
+        typeof segment.ok === 'boolean',
+    )
+  );
+}
+
+const ANALYSIS_FIELD_CHECKS: Record<string, (value: unknown) => boolean> = {
+  isShared: (value) => typeof value === 'boolean',
+  category: isImageCategory,
+  categorySource: (value) => value === 'user' || value === 'ai',
+  description: (value) => typeof value === 'string',
+  tags: isStringArray,
+  textCheck: isTextCheck,
+  analysisStatus: (value) => value === 'pending' || value === 'done' || value === 'failed',
+};
+
+/**
+ * Sharing and analysis fields are optional extras: a malformed one is dropped so the
+ * record, and the rest of the history list, still loads.
+ */
+function dropMalformedAnalysisFields(value: Record<string, unknown>): true {
+  for (const [field, isValid] of Object.entries(ANALYSIS_FIELD_CHECKS)) {
+    if (value[field] !== undefined && !isValid(value[field])) delete value[field];
+  }
+  return true;
 }
 
 function isRecordResponse(value: unknown): value is { record: ImageRecord } {

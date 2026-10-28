@@ -139,6 +139,59 @@ export interface ImageRecord {
   isPublic: boolean;
   isFavorite?: boolean;
   collection?: string;
+  /** Visible to every signed-in teammate. */
+  isShared?: boolean;
+  category?: ImageCategory;
+  categorySource?: 'user' | 'ai';
+  description?: string;
+  tags?: readonly string[];
+  textCheck?: TextCheckResult;
+  analysisStatus?: AnalysisStatus;
+}
+
+export const IMAGE_CATEGORIES = [
+  'poster',
+  'ecommerce',
+  'social',
+  'infographic',
+  'product',
+  'logo',
+  'illustration',
+  'photo',
+  'ui',
+  'other',
+] as const;
+export type ImageCategory = (typeof IMAGE_CATEGORIES)[number];
+
+export const IMAGE_CATEGORY_LABELS: Readonly<Record<ImageCategory, string>> = {
+  poster: '海报',
+  ecommerce: '电商主图',
+  social: '社媒封面',
+  infographic: '信息图表',
+  product: '产品渲染',
+  logo: '品牌 Logo',
+  illustration: '插画',
+  photo: '摄影写实',
+  ui: 'UI 设计',
+  other: '其他',
+};
+
+export function isImageCategory(value: unknown): value is ImageCategory {
+  return typeof value === 'string' && (IMAGE_CATEGORIES as readonly string[]).includes(value);
+}
+
+export type AnalysisStatus = 'pending' | 'done' | 'failed';
+
+/** One quoted text segment and what the vision model read in its place. */
+export interface TextCheckSegment {
+  text: string;
+  found: string | null;
+  ok: boolean;
+}
+
+export interface TextCheckResult {
+  status: 'passed' | 'issues';
+  segments: readonly TextCheckSegment[];
 }
 
 export interface GenerationSettingsSnapshot {

@@ -51,6 +51,10 @@ const historyMocks = vi.hoisted(() => ({
         count: number;
         resolution: 'standard';
         isPublic: boolean;
+        textCheck?: {
+          status: 'passed' | 'issues';
+          segments: Array<{ text: string; found: string | null; ok: boolean }>;
+        };
       };
       imageUrl: string;
     }>;
@@ -1957,4 +1961,82 @@ it('collects only unowned batches into a recovery session when none can be resto
   expect(recovered?.batchIds).toEqual(['orphan-old', 'orphan-new']);
   expect(stored.find((item) => item.title === '空会话')?.batchIds).toEqual([]);
   expect(screen.getByTestId('location')).toHaveTextContent(`session=${recovered?.id}`);
+});
+
+it('fixes wrong text by regenerating from the image with an edit prompt', async () => {
+  const user = userEvent.setup();
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() =>
+      Promise.resolve(new Response(new Blob(['png'], { type: 'image/png' }), { status: 200 })),
+    ),
+  );
+  try {
+    const prompt = '奶茶价目牌，写“中杯16元”';
+    historyMocks.batches = [
+      {
+        batchId: 'text-batch',
+        createdAt: '2026-10-28T08:00:00.000Z',
+        prompt,
+        model: 'gpt-image-2',
+        entries: [
+          {
+            record: {
+              id: 'text-result.png',
+              batchId: 'text-batch',
+              createdAt: '2026-10-28T08:00:00.000Z',
+              prompt,
+              model: 'gpt-image-2',
+              aspectRatio: '16:9',
+              width: 1792,
+              height: 1024,
+              count: 1,
+              resolution: 'standard',
+              isPublic: false,
+              textCheck: {
+                status: 'issues',
+                segments: [{ text: '中杯16元', found: '中杯15元', ok: false }],
+              },
+            },
+            imageUrl: '/text-result.png',
+          },
+        ],
+        settings: {
+          prompt,
+          model: 'gpt-image-2',
+          count: 1,
+          aspectRatio: '16:9',
+          resolution: 'standard',
+          isPublic: false,
+          referenceIds: [],
+        },
+      },
+    ];
+    const session = createGenerationSession('文字修正');
+    attachGenerationBatch(session.id, 'text-batch', prompt);
+    render(
+      <MemoryRouter initialEntries={[`/generate?session=${session.id}`]}>
+        <ToastProvider>
+          <GenerateView />
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('“中杯16元”被写成了“中杯15元”')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '修正文字' }));
+
+    await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
+    const request = generation.generate.mock.calls[0]?.[0] as {
+      prompt: string;
+      count: number;
+      aspectRatio: string;
+      model: string;
+      referenceFiles?: File[];
+    };
+    expect(request.prompt).toContain('把“中杯15元”改为“中杯16元”');
+    expect(request).toMatchObject({ count: 1, aspectRatio: '16:9', model: 'gpt-image-2' });
+    expect(request.referenceFiles).toHaveLength(1);
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

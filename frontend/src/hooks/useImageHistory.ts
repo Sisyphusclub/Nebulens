@@ -48,11 +48,54 @@ const store = createExternalStore<HistoryState>({
 let hydratedUserId: string | null = null;
 let requestGeneration = 0;
 
+const ANALYSIS_POLL_MS = 5_000;
+/** Images older than this are not waited on; their analysis can be fetched on the next visit. */
+const ANALYSIS_POLL_WINDOW_MS = 5 * 60_000;
+let analysisPollTimer: ReturnType<typeof setTimeout> | null = null;
+
+function awaitsAnalysis(record: ImageRecord, now: number): boolean {
+  return (
+    record.analysisStatus === 'pending' &&
+    now - Date.parse(record.createdAt) < ANALYSIS_POLL_WINDOW_MS
+  );
+}
+
+function stopAnalysisPoll(): void {
+  if (analysisPollTimer !== null) clearTimeout(analysisPollTimer);
+  analysisPollTimer = null;
+}
+
+/**
+ * Re-fetches history in the background while recent images wait for analysis, so their
+ * text checks and tags appear without a reload. Never shows the loading state.
+ */
+function scheduleAnalysisPoll(): void {
+  const userId = store.getSnapshot().ownerUserId;
+  if (userId === null || analysisPollTimer !== null) return;
+  analysisPollTimer = setTimeout(() => {
+    analysisPollTimer = null;
+    const currentRequest = requestGeneration;
+    void fetchHistory()
+      .then((remote) => {
+        if (currentRequest !== requestGeneration || store.getSnapshot().ownerUserId !== userId) {
+          return;
+        }
+        store.set((state) => ({
+          ...state,
+          records: [...remote].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+        }));
+        if (remote.some((record) => awaitsAnalysis(record, Date.now()))) scheduleAnalysisPoll();
+      })
+      .catch(() => undefined);
+  }, ANALYSIS_POLL_MS);
+}
+
 function imageUrlFor(record: ImageRecord): string {
   return buildApiUrl(`/api/outputs/${record.id}`);
 }
 
 function resetForUser(userId: string | null): void {
+  stopAnalysisPoll();
   requestGeneration += 1;
   hydratedUserId = null;
   store.set({ ownerUserId: userId, records: [], isHydrating: false, hydrateError: null });
@@ -76,6 +119,7 @@ async function hydrate(userId: string): Promise<void> {
       isHydrating: false,
       hydrateError: null,
     });
+    if (remote.some((record) => awaitsAnalysis(record, Date.now()))) scheduleAnalysisPoll();
   } catch (error) {
     if (currentRequest !== requestGeneration || store.getSnapshot().ownerUserId !== userId) {
       return;
@@ -100,6 +144,8 @@ export function addImageRecord(record: ImageRecord): HistoryEntry {
     ...state,
     records: [record, ...state.records.filter((item) => item.id !== record.id)],
   }));
+  // The server decides whether a new image is analyzed; one quiet re-fetch finds out.
+  scheduleAnalysisPoll();
   return { record, imageUrl: imageUrlFor(record) };
 }
 
@@ -289,6 +335,7 @@ export function useImageHistory() {
 }
 
 export function resetImageHistoryForTests(): void {
+  stopAnalysisPoll();
   requestGeneration += 1;
   hydratedUserId = null;
   store.set({ ownerUserId: null, records: [], isHydrating: false, hydrateError: null });

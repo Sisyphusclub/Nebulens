@@ -45,6 +45,7 @@ import {
   type HistoryEntry,
 } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
+import { buildTextFixPrompt } from '@/utils/textCheck';
 import type { FeedItem } from '@/utils/generationFeed';
 import { readInitialReferenceFiles, requestsAutoGeneration } from '@/utils/generationRouteState';
 import { prefersReducedMotion, scrollToGenerationBatch } from '@/utils/generationScroll';
@@ -386,6 +387,24 @@ export function GenerateView() {
     }
   };
 
+  /** Regenerates one image from itself with an edit prompt that rewrites only the wrong text. */
+  const fixText = async (item: FeedItem, entry: HistoryEntry): Promise<void> => {
+    const check = entry.record.textCheck;
+    if (check === undefined) return;
+    try {
+      const blob = await fetchOutputBlob(entry.imageUrl);
+      const file = new File([blob], `text-fix-${entry.record.id}`, {
+        type: blob.type || 'image/png',
+      });
+      await performGeneration(
+        { ...item.settings, prompt: buildTextFixPrompt(check), count: 1, referenceIds: [] },
+        [file],
+      );
+    } catch (error) {
+      notify(error instanceof Error ? error.message : '无法修正文字，请稍后重试。', 'error');
+    }
+  };
+
   const deleteBatch = async (item: FeedItem): Promise<void> => {
     setMutatingId(item.id);
     try {
@@ -720,6 +739,7 @@ export function GenerateView() {
               onDeleteBatch={() => setDeleteTarget({ kind: 'batch', item })}
               onOpenEntry={setSelected}
               onUseAsReference={(entry) => void addAsReference(entry)}
+              onFixText={(entry) => void fixText(item, entry)}
               onDeleteEntry={(entry) => setDeleteTarget({ kind: 'entry', entry })}
             />
           ))}

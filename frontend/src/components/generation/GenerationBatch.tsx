@@ -12,6 +12,7 @@ import type { Ref } from 'react';
 import { EditablePromptBubble } from '@/components/generation/EditablePromptBubble';
 import { ImageGenerationPlaceholder } from '@/components/generation/ImageGenerationPlaceholder';
 import { SessionResultPreview } from '@/components/generation/SessionResultPreview';
+import { TextCheckNotice } from '@/components/generation/TextCheckNotice';
 import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
 import type { AspectRatio, HistoryEntry } from '@/types/image';
@@ -40,6 +41,7 @@ interface GenerationBatchProps {
   onDeleteBatch: () => void;
   onOpenEntry: (entry: HistoryEntry) => void;
   onUseAsReference: (entry: HistoryEntry) => void;
+  onFixText: (entry: HistoryEntry) => void;
   onDeleteEntry: (entry: HistoryEntry) => void;
 }
 
@@ -60,6 +62,7 @@ export function GenerationBatch({
   onDeleteBatch,
   onOpenEntry,
   onUseAsReference,
+  onFixText,
   onDeleteEntry,
 }: GenerationBatchProps) {
   return (
@@ -132,6 +135,13 @@ export function GenerationBatch({
               key={entry.record.id}
             >
               <SessionResultPreview entry={entry} onOpen={() => onOpenEntry(entry)} />
+              {entry.record.textCheck ? (
+                <TextCheckNotice
+                  check={entry.record.textCheck}
+                  disabled={isGenerating}
+                  onFix={() => onFixText(entry)}
+                />
+              ) : null}
               <div className="session-result__actions">
                 <IconTooltip label="用作参考图">
                   <Button

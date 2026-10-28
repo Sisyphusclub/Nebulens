@@ -28,6 +28,12 @@ import {
   type FetchImpl,
   type ProviderImageRequest,
 } from './twoApiRequests.js';
+import {
+  extensionForMime,
+  extractImageData,
+  throwForFailedResponse,
+  type ProviderImageData,
+} from './twoApiResponses.js';
 
 export interface TwoApiConfig {
   baseUrl: string;
@@ -38,21 +44,6 @@ export interface TwoApiConfig {
   defaultModel: string;
   highResModel?: string;
   timeoutMs: number;
-}
-
-interface OpenAIImageResponse {
-  created?: number;
-  data?: Array<{ b64_json?: string; revised_prompt?: string }>;
-}
-
-interface GeminiImageResponse {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{
-        inlineData?: { data?: string; mimeType?: string };
-      }>;
-    };
-  }>;
 }
 
 export class TwoApiImageProvider implements ImageGenerationProvider {
@@ -225,77 +216,14 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       throw new AppError('PROVIDER_ERROR', 'Failed to reach image generation provider', 502, err);
     }
 
-    const response = responses.find((candidate) => !candidate.ok) ?? responses[0];
-    if (response === undefined) {
-      throw new AppError('PROVIDER_EMPTY_RESULT', 'Provider returned no response', 502);
-    }
-    if (response.status === 429) {
-      const summary = await summarizeBody(response);
-      logger.warn(
-        { upstreamStatus: 429, summary, hasReference },
-        'image generation: provider rate-limited',
-      );
-      throw new AppError(
-        'PROVIDER_RATE_LIMITED',
-        'Image generation provider rate-limited (429)',
-        429,
-        undefined,
-        { upstreamStatus: 429 },
-      );
-    }
+    await throwForFailedResponse(responses, {
+      hasReference,
+      usesSavedCredential: input.providerCredential !== undefined,
+    });
 
-    if (!response.ok) {
-      const summary = await summarizeBody(response);
-      logger.warn(
-        { upstreamStatus: response.status, summary, hasReference },
-        'image generation: provider non-2xx',
-      );
-      if (
-        input.providerCredential !== undefined &&
-        (response.status === 401 || response.status === 403)
-      ) {
-        throw new AppError(
-          'PROVIDER_KEY_INVALID',
-          'The saved image generation API Key was rejected',
-          400,
-          undefined,
-          { upstreamStatus: response.status },
-        );
-      }
-      if (isPromptRejectionStatus(response.status)) {
-        throw new AppError(
-          'PROVIDER_PROMPT_REJECTED',
-          'Image generation provider rejected the prompt or reference image',
-          422,
-          undefined,
-          { upstreamStatus: response.status, reason: 'prompt_rejected' },
-        );
-      }
-      throw new AppError(
-        'PROVIDER_ERROR',
-        `Image generation provider returned ${response.status}`,
-        502,
-        undefined,
-        { upstreamStatus: response.status, reason: 'provider_http_error' },
-      );
-    }
-
-    const imageData: Array<{ data: string; mimeType?: string }> = [];
+    let imageData: ProviderImageData[];
     try {
-      for (const candidate of responses) {
-        const parsed = (await candidate.json()) as OpenAIImageResponse | GeminiImageResponse;
-        if (isGemini) {
-          imageData.push(...extractGeminiImageData(parsed as GeminiImageResponse));
-        } else {
-          imageData.push(
-            ...((parsed as OpenAIImageResponse).data ?? []).flatMap((item) =>
-              typeof item.b64_json === 'string' && item.b64_json.length > 0
-                ? [{ data: item.b64_json }]
-                : [],
-            ),
-          );
-        }
-      }
+      imageData = await extractImageData(responses, isGemini);
     } catch (err) {
       if (input.signal?.aborted === true) {
         throw new AppError('REQUEST_ABORTED', 'Image generation request was cancelled', 499, err);
@@ -417,44 +345,7 @@ function normalizeReferencePaths(input: GenerateInput): string[] {
   return Array.from(new Set(raw.filter((item) => item.length > 0)));
 }
 
-function extractGeminiImageData(
-  response: GeminiImageResponse,
-): Array<{ data: string; mimeType?: string }> {
-  return (response.candidates ?? []).flatMap((candidate) =>
-    (candidate.content?.parts ?? []).flatMap((part) => {
-      const inlineData = part.inlineData;
-      return inlineData?.data
-        ? [
-            {
-              data: inlineData.data,
-              ...(inlineData.mimeType ? { mimeType: inlineData.mimeType } : {}),
-            },
-          ]
-        : [];
-    }),
-  );
-}
-
-function extensionForMime(mimeType: string | undefined): 'png' | 'jpeg' | 'webp' {
-  if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') return 'jpeg';
-  if (mimeType === 'image/webp') return 'webp';
-  return 'png';
-}
-
 function isTimeoutLike(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   return err.name === 'AbortError' || err.name === 'TimeoutError';
-}
-
-function isPromptRejectionStatus(status: number): boolean {
-  return status === 400 || status === 422;
-}
-
-async function summarizeBody(response: Response): Promise<string> {
-  try {
-    const text = await response.text();
-    return text.slice(0, 200);
-  } catch {
-    return '<no body>';
-  }
 }

@@ -7,6 +7,8 @@ import {
   type ImageRecord,
   type ImageResolution,
   type ImageQuality,
+  type ImageCategory,
+  type TeamHistoryPage,
   type TextCheckResult,
   isImageCategory,
 } from '@/types/image';
@@ -33,6 +35,27 @@ export async function fetchHistory(): Promise<ImageRecord[]> {
     throw new ImageApiError(response.status, 'INVALID_RESPONSE', '历史接口返回了无法识别的响应。');
   }
   return payload.records;
+}
+
+/** Teammates' shared images, newest first; pass the previous page's cursor for the next one. */
+export async function fetchTeamHistory(
+  input: { category?: ImageCategory; cursor?: string } = {},
+): Promise<TeamHistoryPage> {
+  const query = new URLSearchParams();
+  if (input.category !== undefined) query.set('category', input.category);
+  if (input.cursor !== undefined) query.set('cursor', input.cursor);
+  const suffix = query.size > 0 ? `?${query.toString()}` : '';
+  const response = await authedFetch(buildApiUrl(`/api/history/team${suffix}`));
+  const payload = await parseJsonResponse(response);
+  if (!response.ok) throw buildApiError(response.status, payload);
+  if (!isTeamHistoryPage(payload)) {
+    throw new ImageApiError(
+      response.status,
+      'INVALID_RESPONSE',
+      '团队作品接口返回了无法识别的响应。',
+    );
+  }
+  return payload;
 }
 
 export async function deleteHistoryRecord(id: string): Promise<void> {
@@ -198,6 +221,17 @@ function isRecordResponse(value: unknown): value is { record: ImageRecord } {
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+function isTeamHistoryPage(value: unknown): value is TeamHistoryPage {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.records) &&
+    value.records.every(
+      (record) => isImageRecord(record) && isRecord(record) && typeof record.ownerName === 'string',
+    ) &&
+    (value.nextCursor === undefined || typeof value.nextCursor === 'string')
+  );
 }
 
 function isHistoryListResponse(value: unknown): value is HistoryListResponse {

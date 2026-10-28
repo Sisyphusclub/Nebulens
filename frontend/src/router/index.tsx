@@ -13,6 +13,9 @@ const TemplatesView = lazy(() =>
 const HistoryView = lazy(() =>
   import('@/views/HistoryView').then((module) => ({ default: module.HistoryView })),
 );
+const TeamView = lazy(() =>
+  import('@/views/TeamView').then((module) => ({ default: module.TeamView })),
+);
 const AdminUsersView = lazy(() =>
   import('@/views/AdminUsersView').then((module) => ({ default: module.AdminUsersView })),
 );
@@ -25,6 +28,7 @@ export function AppRoutes() {
         <Route path="/generate" element={<GenerateView />} />
         <Route path="/templates" element={<TemplatesView />} />
         <Route path="/history" element={<HistoryView />} />
+        <Route path="/team" element={<TeamView />} />
         <Route path="/admin/users" element={<AdminUsersView />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   deleteHistoryRecords,
   fetchHistory,
+  fetchTeamHistory,
   updateHistoryRecord,
   updateHistoryRecords,
 } from '@/services/api/historyApi';
@@ -131,6 +132,41 @@ describe('history record analysis fields', () => {
       expect(malformed).toMatchObject({ id: 'b.png' });
       expect(malformed).not.toHaveProperty('category');
       expect(malformed).not.toHaveProperty('textCheck');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
+describe('fetchTeamHistory', () => {
+  it('requests one usage category and page, and keeps each author name', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(
+        Response.json({
+          records: [
+            {
+              id: 't.png',
+              createdAt: '2026-10-28T00:00:00.000Z',
+              prompt: '团队海报',
+              model: 'gpt-image-2',
+              width: 1024,
+              height: 1024,
+              isPublic: false,
+              isShared: true,
+              ownerName: 'alice',
+            },
+          ],
+          nextCursor: 'next',
+        }),
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      const page = await fetchTeamHistory({ category: 'poster', cursor: 'abc' });
+      expect(String((fetchMock.mock.calls[0] as unknown as [string])[0])).toContain(
+        '/api/history/team?category=poster&cursor=abc',
+      );
+      expect(page).toMatchObject({ nextCursor: 'next', records: [{ ownerName: 'alice' }] });
     } finally {
       vi.unstubAllGlobals();
     }

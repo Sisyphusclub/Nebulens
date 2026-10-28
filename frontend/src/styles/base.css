@@ -10945,3 +10945,10 @@ video {
     animation: none;
   }
 }
+
+/* Team works: load-more sits under the shared asset grid. */
+.team-page__more {
+  display: flex;
+  justify-content: center;
+  padding-block: 8px 32px;
+}

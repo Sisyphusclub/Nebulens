@@ -194,6 +194,16 @@ export interface TextCheckResult {
   segments: readonly TextCheckSegment[];
 }
 
+/** A teammate's shared image, with who made it. */
+export interface TeamImageRecord extends ImageRecord {
+  ownerName: string;
+}
+
+export interface TeamHistoryPage {
+  records: TeamImageRecord[];
+  nextCursor?: string;
+}
+
 export interface GenerationSettingsSnapshot {
   prompt: string;
   model: string;

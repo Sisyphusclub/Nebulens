@@ -1,0 +1,377 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "short-01",
+      "category": "short",
+      "aspectRatio": "3:4",
+      "prompt": "清新绿色调的奶茶新品海报，正中大标题写“新品上市”，背景是冰块和柚子",
+      "texts": ["新品上市"]
+    },
+    {
+      "id": "short-02",
+      "category": "short",
+      "aspectRatio": "3:4",
+      "prompt": "红金配色的门店开业海报，醒目大字“开业大吉”，两侧是花篮与彩带",
+      "texts": ["开业大吉"]
+    },
+    {
+      "id": "short-03",
+      "category": "short",
+      "aspectRatio": "3:4",
+      "prompt": "电商促销横幅，橙色渐变背景，主标题“限时特惠”，配购物袋插画",
+      "texts": ["限时特惠"]
+    },
+    {
+      "id": "short-04",
+      "category": "short",
+      "aspectRatio": "3:4",
+      "prompt": "小红书风格封面，草地野餐布和水果篮，左上角手写体标题“春日野餐”",
+      "texts": ["春日野餐"]
+    },
+    {
+      "id": "short-05",
+      "category": "short",
+      "aspectRatio": "3:4",
+      "prompt": "国风茶饮品牌招牌，水墨山峦背景，书法字体写“山川茶事”",
+      "texts": ["山川茶事"]
+    },
+    {
+      "id": "short-06",
+      "category": "short",
+      "aspectRatio": "3:4",
+      "prompt": "运动风海报，深色背景和霓虹描边，粗体标题“健身打卡”",
+      "texts": ["健身打卡"]
+    },
+    {
+      "id": "short-07",
+      "category": "short",
+      "aspectRatio": "3:4",
+      "prompt": "复古报纸质感的活动海报，标题“周末书市”，配书堆与街灯插画",
+      "texts": ["周末书市"]
+    },
+    {
+      "id": "short-08",
+      "category": "short",
+      "aspectRatio": "3:4",
+      "prompt": "黑金色年会主视觉，舞台灯光，居中金属质感大字“年终盛典”",
+      "texts": ["年终盛典"]
+    },
+    {
+      "id": "short-09",
+      "category": "short",
+      "aspectRatio": "3:4",
+      "prompt": "极简家居海报，晨光中的扶手椅和绿植，细体标题“静享慢时光”",
+      "texts": ["静享慢时光"]
+    },
+    {
+      "id": "short-10",
+      "category": "short",
+      "aspectRatio": "3:4",
+      "prompt": "蓝白清凉风饮品海报，水花飞溅，圆润字体写“夏日冰饮”",
+      "texts": ["夏日冰饮"]
+    },
+    {
+      "id": "medium-01",
+      "category": "medium",
+      "aspectRatio": "3:4",
+      "prompt": "冷泡茶饮海报，玻璃杯中漂着西柚片，标题下方写一句文案“一口清醒，半城入夏”",
+      "texts": ["一口清醒，半城入夏"]
+    },
+    {
+      "id": "medium-02",
+      "category": "medium",
+      "aspectRatio": "3:4",
+      "prompt": "温暖色调的家常菜餐厅海报，热气腾腾的饭菜，正中写“好好吃饭，就是好好生活”",
+      "texts": ["好好吃饭，就是好好生活"]
+    },
+    {
+      "id": "medium-03",
+      "category": "medium",
+      "aspectRatio": "3:4",
+      "prompt": "公路旅行主题海报，夕阳下的越野车，上方写“每一次出发，都是新的开始”",
+      "texts": ["每一次出发，都是新的开始"]
+    },
+    {
+      "id": "medium-04",
+      "category": "medium",
+      "aspectRatio": "3:4",
+      "prompt": "环保公益海报，水滴与地球插画，主标语“让每一滴水都更有价值”",
+      "texts": ["让每一滴水都更有价值"]
+    },
+    {
+      "id": "medium-05",
+      "category": "medium",
+      "aspectRatio": "3:4",
+      "prompt": "图书馆宣传海报，木质书架和阅读灯，书法字写“读书使人充实，思考使人深刻”",
+      "texts": ["读书使人充实，思考使人深刻"]
+    },
+    {
+      "id": "medium-06",
+      "category": "medium",
+      "aspectRatio": "3:4",
+      "prompt": "儿童公益海报，柔和水彩风，孩子在草地上奔跑，标题“守护每一个孩子的笑容”",
+      "texts": ["守护每一个孩子的笑容"]
+    },
+    {
+      "id": "medium-07",
+      "category": "medium",
+      "aspectRatio": "3:4",
+      "prompt": "科技展会主视觉，蓝色光线与芯片纹理，主标题“科技改变生活，创新引领未来”",
+      "texts": ["科技改变生活，创新引领未来"]
+    },
+    {
+      "id": "medium-08",
+      "category": "medium",
+      "aspectRatio": "3:4",
+      "prompt": "大闸蟹促销海报，金黄色蟹与稻穗，毛笔字标题“秋风起，蟹正肥”",
+      "texts": ["秋风起，蟹正肥"]
+    },
+    {
+      "id": "medium-09",
+      "category": "medium",
+      "aspectRatio": "3:4",
+      "prompt": "文艺风手账封面，咖啡杯和钢笔，手写体写“慢慢来，比较快”",
+      "texts": ["慢慢来，比较快"]
+    },
+    {
+      "id": "medium-10",
+      "category": "medium",
+      "aspectRatio": "3:4",
+      "prompt": "摄影比赛征稿海报，城市夜景与相机剪影，大标题“城市之光摄影大赛”",
+      "texts": ["城市之光摄影大赛"]
+    },
+    {
+      "id": "long-01",
+      "category": "long",
+      "aspectRatio": "3:4",
+      "prompt": "茶饮新品介绍海报，左侧产品图，右侧排版两段文字：标题“山柚观音冷泡系列”，正文“选用高山铁观音茶底，搭配新鲜西柚果肉，冷萃十二小时，入口清爽回甘，适合夏日午后的一杯好心情。”",
+      "texts": [
+        "山柚观音冷泡系列",
+        "选用高山铁观音茶底，搭配新鲜西柚果肉，冷萃十二小时，入口清爽回甘，适合夏日午后的一杯好心情。"
+      ]
+    },
+    {
+      "id": "long-02",
+      "category": "long",
+      "aspectRatio": "3:4",
+      "prompt": "净水壶产品说明卡，白底简洁排版，标题“使用说明”，下方三行步骤“第一步：将滤芯对准卡槽轻轻按下。第二步：顺时针旋转至听到咔哒声。第三步：注水后静置五分钟再饮用。”",
+      "texts": [
+        "使用说明",
+        "第一步：将滤芯对准卡槽轻轻按下。第二步：顺时针旋转至听到咔哒声。第三步：注水后静置五分钟再饮用。"
+      ]
+    },
+    {
+      "id": "long-03",
+      "category": "long",
+      "aspectRatio": "3:4",
+      "prompt": "品牌官网关于页的配图，工作台上的皮具与工具，图中排版文字：标题“关于我们”，正文“我们是一家专注于手工皮具的独立工作室，坚持选用意大利植鞣革，每一件作品都由匠人手工缝制完成。”",
+      "texts": [
+        "关于我们",
+        "我们是一家专注于手工皮具的独立工作室，坚持选用意大利植鞣革，每一件作品都由匠人手工缝制完成。"
+      ]
+    },
+    {
+      "id": "long-04",
+      "category": "long",
+      "aspectRatio": "3:4",
+      "prompt": "商场抽奖活动海报下半部分的规则区，标题“活动规则”，正文“活动期间单笔消费满两百元即可参与抽奖，每位会员每天限参与一次，奖品以门店实际发放为准。”",
+      "texts": [
+        "活动规则",
+        "活动期间单笔消费满两百元即可参与抽奖，每位会员每天限参与一次，奖品以门店实际发放为准。"
+      ]
+    },
+    {
+      "id": "long-05",
+      "category": "long",
+      "aspectRatio": "2:3",
+      "prompt": "竖版国风书法作品，月夜与窗棂背景，标题“静夜思”，正文为四句诗“床前明月光，疑是地上霜。举头望明月，低头思故乡。”",
+      "texts": ["静夜思", "床前明月光，疑是地上霜。举头望明月，低头思故乡。"]
+    },
+    {
+      "id": "long-06",
+      "category": "long",
+      "aspectRatio": "3:4",
+      "prompt": "企业招聘海报，蓝白配色，大字“招聘”，职位“高级视觉设计师”，要求“三年以上品牌设计经验，熟练使用主流设计软件，有电商或快消行业经验者优先。”",
+      "texts": [
+        "招聘",
+        "高级视觉设计师",
+        "三年以上品牌设计经验，熟练使用主流设计软件，有电商或快消行业经验者优先。"
+      ]
+    },
+    {
+      "id": "long-07",
+      "category": "long",
+      "aspectRatio": "3:4",
+      "prompt": "黑板风格的食堂菜单，粉笔字排版：标题“今日菜单”，菜品逐行写“红烧排骨”“清炒时蔬”“番茄蛋汤”，底部写“米饭任意添加”",
+      "texts": ["今日菜单", "红烧排骨", "清炒时蔬", "番茄蛋汤", "米饭任意添加"]
+    },
+    {
+      "id": "long-08",
+      "category": "long",
+      "aspectRatio": "3:4",
+      "prompt": "电梯内的安全告示牌，黄黑警示配色，标题“安全提示”，正文“电梯运行中请勿倚靠门体，儿童乘梯须有成人陪同，发生故障时请按下紧急呼叫按钮并耐心等待救援。”",
+      "texts": [
+        "安全提示",
+        "电梯运行中请勿倚靠门体，儿童乘梯须有成人陪同，发生故障时请按下紧急呼叫按钮并耐心等待救援。"
+      ]
+    },
+    {
+      "id": "long-09",
+      "category": "long",
+      "aspectRatio": "3:4",
+      "prompt": "家电详情页卖点图，产品居中，四周排列卖点：标题“产品亮点”，四条卖点“一键智能除螨”“四重过滤系统”“超静音设计”“续航长达九十分钟”",
+      "texts": ["产品亮点", "一键智能除螨", "四重过滤系统", "超静音设计", "续航长达九十分钟"]
+    },
+    {
+      "id": "long-10",
+      "category": "long",
+      "aspectRatio": "3:4",
+      "prompt": "纪念日贺卡，粉色花卉边框，标题“致亲爱的你”，正文“谢谢你一直以来的陪伴，愿往后的日子里，我们依旧可以一起看日出日落，一起走过四季。”",
+      "texts": [
+        "致亲爱的你",
+        "谢谢你一直以来的陪伴，愿往后的日子里，我们依旧可以一起看日出日落，一起走过四季。"
+      ]
+    },
+    {
+      "id": "mixed-01",
+      "category": "mixed",
+      "aspectRatio": "1:1",
+      "prompt": "茶饮品牌 Logo 设计，中文“山川茶事”下方配英文“SHANCHUAN TEA”",
+      "texts": ["山川茶事", "SHANCHUAN TEA"]
+    },
+    {
+      "id": "mixed-02",
+      "category": "mixed",
+      "aspectRatio": "3:4",
+      "prompt": "咖啡店开业海报，英文大标题“Grand Opening”，下方中文“盛大开业”",
+      "texts": ["Grand Opening", "盛大开业"]
+    },
+    {
+      "id": "mixed-03",
+      "category": "mixed",
+      "aspectRatio": "16:9",
+      "prompt": "科技会议主视觉，主标题“AI Summit 2026”，副标题“人工智能峰会”",
+      "texts": ["AI Summit 2026", "人工智能峰会"]
+    },
+    {
+      "id": "mixed-04",
+      "category": "mixed",
+      "aspectRatio": "3:4",
+      "prompt": "夏日清新海报，菠萝和海浪，手写体“Hello Summer”，下面小字“你好，夏天”",
+      "texts": ["Hello Summer", "你好，夏天"]
+    },
+    {
+      "id": "mixed-05",
+      "category": "mixed",
+      "aspectRatio": "16:9",
+      "prompt": "制造业品牌广告，金属齿轮背景，标语“Made in China”和“匠心制造”",
+      "texts": ["Made in China", "匠心制造"]
+    },
+    {
+      "id": "mixed-06",
+      "category": "mixed",
+      "aspectRatio": "16:9",
+      "prompt": "书店咖啡馆门头招牌设计，英文“COFFEE & BOOKS”，中文“咖啡与书”",
+      "texts": ["COFFEE & BOOKS", "咖啡与书"]
+    },
+    {
+      "id": "mixed-07",
+      "category": "mixed",
+      "aspectRatio": "3:4",
+      "prompt": "黑色星期五促销海报，黑底红字，“Black Friday”和“全场五折起”",
+      "texts": ["Black Friday", "全场五折起"]
+    },
+    {
+      "id": "mixed-08",
+      "category": "mixed",
+      "aspectRatio": "3:4",
+      "prompt": "开发者活动海报，代码背景，标题“Open Source Day”，副标题“开源日”",
+      "texts": ["Open Source Day", "开源日"]
+    },
+    {
+      "id": "mixed-09",
+      "category": "mixed",
+      "aspectRatio": "3:4",
+      "prompt": "圣诞贺卡，雪花与圣诞树，花体英文“Merry Christmas”，中文“圣诞快乐”",
+      "texts": ["Merry Christmas", "圣诞快乐"]
+    },
+    {
+      "id": "mixed-10",
+      "category": "mixed",
+      "aspectRatio": "3:4",
+      "prompt": "极简主义设计展海报，大量留白，标题“Less is More”，副标题“少即是多”",
+      "texts": ["Less is More", "少即是多"]
+    },
+    {
+      "id": "numbers-01",
+      "category": "numbers",
+      "aspectRatio": "3:4",
+      "prompt": "奶茶价目牌，两行价格“中杯16元”“大杯19元”",
+      "texts": ["中杯16元", "大杯19元"]
+    },
+    {
+      "id": "numbers-02",
+      "category": "numbers",
+      "aspectRatio": "1:1",
+      "prompt": "电商主图，产品耳机居中，大号价格“¥299”，旁边划线价“原价¥499”",
+      "texts": ["¥299", "原价¥499"]
+    },
+    {
+      "id": "numbers-03",
+      "category": "numbers",
+      "aspectRatio": "16:9",
+      "prompt": "活动时间横幅，写“4月20日至5月10日”",
+      "texts": ["4月20日至5月10日"]
+    },
+    {
+      "id": "numbers-04",
+      "category": "numbers",
+      "aspectRatio": "16:9",
+      "prompt": "优惠券设计，红色券面，大字“满200减30”",
+      "texts": ["满200减30"]
+    },
+    {
+      "id": "numbers-05",
+      "category": "numbers",
+      "aspectRatio": "16:9",
+      "prompt": "客服热线卡片，电话号码“400-820-8820”",
+      "texts": ["400-820-8820"]
+    },
+    {
+      "id": "numbers-06",
+      "category": "numbers",
+      "aspectRatio": "3:4",
+      "prompt": "企业年报封面，几何图形背景，标题“2026年度报告”",
+      "texts": ["2026年度报告"]
+    },
+    {
+      "id": "numbers-07",
+      "category": "numbers",
+      "aspectRatio": "3:4",
+      "prompt": "马拉松赛事海报，标题“第3届”“城市马拉松”，副标题“42.195公里”",
+      "texts": ["第3届", "城市马拉松", "42.195公里"]
+    },
+    {
+      "id": "numbers-08",
+      "category": "numbers",
+      "aspectRatio": "16:9",
+      "prompt": "数据看板风格的营销图，大号数字标语“销量增长128%”",
+      "texts": ["销量增长128%"]
+    },
+    {
+      "id": "numbers-09",
+      "category": "numbers",
+      "aspectRatio": "3:4",
+      "prompt": "品牌荣誉海报，奖杯图案，“NO.1”和“连续5年销量领先”",
+      "texts": ["NO.1", "连续5年销量领先"]
+    },
+    {
+      "id": "numbers-10",
+      "category": "numbers",
+      "aspectRatio": "3:4",
+      "prompt": "门店周年庆海报，蛋糕与气球，“开业3周年”，下方“第二杯半价”",
+      "texts": ["开业3周年", "第二杯半价"]
+    }
+  ]
+}

@@ -5,25 +5,12 @@ import { env } from './config/env.js';
 import { runMigrations } from './db/drizzle.js';
 import { logger } from './logger.js';
 import { seedDefaultAdminIfEnabled } from './services/defaultAdminSeed.service.js';
-import { TwoApiImageProvider } from './services/providers/TwoApiImageProvider.js';
+import { createProviderFromEnv } from './services/providers/createProviderFromEnv.js';
 
 runMigrations();
 await seedDefaultAdminIfEnabled();
 
-const provider = new TwoApiImageProvider({
-  baseUrl: env.IMAGE_API_BASE_URL,
-  ...(env.HIGH_RES_IMAGE_API_BASE_URL !== undefined
-    ? { highResBaseUrl: env.HIGH_RES_IMAGE_API_BASE_URL }
-    : {}),
-  apiKey: env.IMAGE_API_KEY,
-  modelApiKeys: { 'gemini-3-pro-image': env.GEMINI_IMAGE_API_KEY },
-  ...(env.HIGH_RES_IMAGE_API_KEY !== undefined
-    ? { highResApiKey: env.HIGH_RES_IMAGE_API_KEY }
-    : {}),
-  defaultModel: env.IMAGE_MODEL,
-  ...(env.HIGH_RES_IMAGE_MODEL !== undefined ? { highResModel: env.HIGH_RES_IMAGE_MODEL } : {}),
-  timeoutMs: env.IMAGE_API_TIMEOUT_MS,
-});
+const provider = createProviderFromEnv();
 
 const app = createApp({ provider });
 

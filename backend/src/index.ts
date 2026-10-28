@@ -6,11 +6,15 @@ import { runMigrations } from './db/drizzle.js';
 import { logger } from './logger.js';
 import { seedDefaultAdminIfEnabled } from './services/defaultAdminSeed.service.js';
 import { createProviderFromEnv } from './services/providers/createProviderFromEnv.js';
+import { withStructuredVisibleText } from './services/providers/withStructuredVisibleText.js';
 
 runMigrations();
 await seedDefaultAdminIfEnabled();
 
-const provider = createProviderFromEnv();
+const baseProvider = createProviderFromEnv();
+const provider = env.TEXT_PROMPT_STRUCTURING
+  ? withStructuredVisibleText(baseProvider)
+  : baseProvider;
 
 const app = createApp({ provider });
 

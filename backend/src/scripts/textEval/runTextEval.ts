@@ -1,7 +1,8 @@
 /**
  * Measures how accurately a model renders the quoted text of each evaluation case.
  *
- * Each case is generated once per variant, read back with macOS Vision OCR and scored
+ * Each case is generated once per variant (the prompt as written, and with the exact-text
+ * checklist from TEXT_PROMPT_STRUCTURING), read back with macOS Vision OCR and scored
  * per character. Generation calls the real image API with the server key and costs credits;
  * pass --dry-run to list the work without calling it.
  *
@@ -23,7 +24,7 @@ import {
   type AspectRatio,
   type ImageResolution,
 } from '../../types/image.js';
-import { scoreVisibleText } from '../../utils/visibleText.js';
+import { scoreVisibleText, structureVisibleTextPrompt } from '../../utils/visibleText.js';
 
 import evalCases from './cases.json' with { type: 'json' };
 import { formatTextEvalReport, type TextEvalCase, type TextEvalResult } from './textEvalReport.js';
@@ -36,7 +37,10 @@ interface Variant {
   buildPrompt: (testCase: TextEvalCase) => string;
 }
 
-const VARIANTS: Variant[] = [{ name: 'raw', buildPrompt: (testCase) => testCase.prompt }];
+const VARIANTS: Variant[] = [
+  { name: 'raw', buildPrompt: (testCase) => testCase.prompt },
+  { name: 'structured', buildPrompt: (testCase) => structureVisibleTextPrompt(testCase.prompt) },
+];
 
 const { values: args } = parseArgs({
   options: {

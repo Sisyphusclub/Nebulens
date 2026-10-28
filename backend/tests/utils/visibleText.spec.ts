@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractVisibleTexts, scoreVisibleText } from '../../src/utils/visibleText.js';
+import {
+  extractVisibleTexts,
+  scoreVisibleText,
+  structureVisibleTextPrompt,
+} from '../../src/utils/visibleText.js';
 
 describe('extractVisibleTexts', () => {
   it('collects quoted text in Chinese, corner and ASCII double quotes in order', () => {
@@ -65,5 +69,36 @@ describe('text rendering evaluation cases', () => {
         texts: testCase.texts,
       });
     }
+  });
+});
+
+describe('structureVisibleTextPrompt', () => {
+  it('leaves prompts without quoted text unchanged', () => {
+    const prompt = '雨后的未来都市街道，霓虹倒影，电影级广角构图';
+    expect(structureVisibleTextPrompt(prompt)).toBe(prompt);
+  });
+
+  it('appends a numbered exact-text checklist in Chinese for Chinese prompts', () => {
+    const structured = structureVisibleTextPrompt('奶茶海报，标题“新品上市”，价格“中杯16元”');
+
+    expect(structured.startsWith('奶茶海报，标题“新品上市”，价格“中杯16元”\n\n')).toBe(true);
+    expect(structured).toContain('逐字一致');
+    expect(structured).toContain('1. “新品上市”');
+    expect(structured).toContain('2. “中杯16元”');
+    expect(structured).not.toContain('较长');
+  });
+
+  it('marks long segments so the model may wrap at punctuation without splitting words', () => {
+    const body = '选用高山铁观音茶底，搭配新鲜西柚果肉，冷萃十二小时，入口清爽回甘。';
+    expect(structureVisibleTextPrompt(`说明卡，正文“${body}”`)).toContain(
+      `1. “${body}”（较长，可在标点处换行，不要拆开词语）`,
+    );
+  });
+
+  it('writes the checklist in English for prompts without Chinese characters', () => {
+    const structured = structureVisibleTextPrompt('A coffee shop poster that says "Grand Opening"');
+
+    expect(structured).toContain('exactly as written');
+    expect(structured).toContain('1. "Grand Opening"');
   });
 });

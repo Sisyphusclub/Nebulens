@@ -92,3 +92,31 @@ export function scoreVisibleText(
     segments,
   };
 }
+
+/** Segments longer than this many characters may wrap; the model is told where it may break. */
+const LONG_SEGMENT_LENGTH = 24;
+const CJK_RE = /\p{Script=Han}/u;
+
+/**
+ * Appends an exact-text checklist for the prompt's quoted text, leaving the user's wording intact.
+ * Prompts without quoted text are returned unchanged.
+ */
+export function structureVisibleTextPrompt(prompt: string): string {
+  const texts = extractVisibleTexts(prompt);
+  if (texts.length === 0) return prompt;
+  const chinese = CJK_RE.test(prompt);
+  const lines = texts.map((text, index) => {
+    const quoted = chinese ? `“${text}”` : `"${text}"`;
+    const isLong = Array.from(text).length > LONG_SEGMENT_LENGTH;
+    const note = !isLong
+      ? ''
+      : chinese
+        ? '（较长，可在标点处换行，不要拆开词语）'
+        : ' (long: you may wrap at punctuation, never inside a word)';
+    return `${index + 1}. ${quoted}${note}`;
+  });
+  const instruction = chinese
+    ? '画面文字要求：图中出现的文字必须与下列内容逐字一致，不增字、不漏字、不改字，不用形近字或繁体字替换，引号本身不要画出来。'
+    : 'Text requirements: render each line below exactly as written, letter for letter, with no added, missing or substituted characters. Do not draw the quotation marks.';
+  return `${prompt}\n\n${instruction}\n${lines.join('\n')}`;
+}

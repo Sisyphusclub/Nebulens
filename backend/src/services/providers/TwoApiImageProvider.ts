@@ -34,6 +34,7 @@ import {
   throwForFailedResponse,
   type ProviderImageData,
 } from './twoApiResponses.js';
+import { resolveApiKey, resolveBaseUrl, resolveModel } from './twoApiRouting.js';
 
 export interface TwoApiConfig {
   baseUrl: string;
@@ -155,9 +156,10 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
   async generate(input: GenerateInput): Promise<GenerateOutput> {
     const aspectRatio: AspectRatio = input.aspectRatio ?? DEFAULT_ASPECT_RATIO;
     const resolution: ImageResolution = input.resolution ?? DEFAULT_IMAGE_RESOLUTION;
-    const model = this.modelForResolution(resolution, input.model);
-    const baseUrl = this.baseUrlForRequest(model, resolution, input.providerCredentialGroup);
-    const apiKey = this.apiKeyForRequest(
+    const model = resolveModel(this.config, resolution, input.model);
+    const baseUrl = resolveBaseUrl(this.config, model, resolution, input.providerCredentialGroup);
+    const apiKey = resolveApiKey(
+      this.config,
       model,
       resolution,
       input.providerCredential,
@@ -290,53 +292,6 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
     );
 
     return { images, aspectRatio, model };
-  }
-
-  private baseUrlForRequest(
-    model: string,
-    resolution: ImageResolution,
-    providerCredentialGroup: 'standard' | 'high-res' | undefined,
-  ): string {
-    if (providerCredentialGroup === 'high-res') {
-      return this.config.highResBaseUrl ?? this.config.baseUrl;
-    }
-    if (this.config.modelApiKeys?.[model] !== undefined) return this.config.baseUrl;
-    if (resolution === DEFAULT_IMAGE_RESOLUTION) return this.config.baseUrl;
-    return this.config.highResBaseUrl ?? this.config.baseUrl;
-  }
-
-  private apiKeyForRequest(
-    model: string,
-    resolution: ImageResolution,
-    providerCredential: string | undefined,
-    providerCredentialGroup: 'standard' | 'high-res' | undefined,
-  ): string {
-    if (
-      providerCredential !== undefined &&
-      (resolution === DEFAULT_IMAGE_RESOLUTION || providerCredentialGroup === 'high-res')
-    ) {
-      return providerCredential;
-    }
-    const modelApiKey = this.config.modelApiKeys?.[model];
-    if (modelApiKey !== undefined) return modelApiKey;
-    if (resolution === DEFAULT_IMAGE_RESOLUTION) {
-      return this.config.apiKey;
-    }
-    return this.config.highResApiKey ?? this.config.apiKey;
-  }
-
-  private modelForResolution(
-    resolution: ImageResolution,
-    requestedModel: string | undefined,
-  ): string {
-    if (
-      resolution !== DEFAULT_IMAGE_RESOLUTION &&
-      this.config.highResModel !== undefined &&
-      (requestedModel === undefined || requestedModel === this.config.defaultModel)
-    ) {
-      return this.config.highResModel;
-    }
-    return requestedModel ?? this.config.defaultModel;
   }
 }
 

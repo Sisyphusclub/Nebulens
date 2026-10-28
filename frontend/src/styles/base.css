@@ -10717,6 +10717,58 @@ video {
   }
 }
 
+/* Landing hero: the signed-in user's latest sessions, one tap from resuming */
+.landing-recent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 940px;
+  margin-top: 14px;
+}
+.landing-recent__label {
+  color: rgb(242 244 247 / 0.56);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.landing-recent .landing-recent__item {
+  height: 36px;
+  max-width: 220px;
+  gap: 8px;
+  border: 1px solid rgb(242 244 247 / 0.12);
+  border-radius: 10px;
+  background: rgb(10 12 18 / 0.5);
+  color: rgb(242 244 247 / 0.86);
+  padding: 0 12px 0 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.landing-recent .landing-recent__item:hover,
+.landing-recent .landing-recent__item:focus-visible {
+  border-color: rgb(242 244 247 / 0.3);
+  background: rgb(22 26 36 / 0.76);
+}
+.landing-recent__item img {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 7px;
+  object-fit: cover;
+}
+.landing-recent__item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .landing-recent .landing-recent__item {
+    max-width: 100%;
+  }
+}
+
 /* Landing hero: tilted artwork wall drifting behind the composer */
 .artwork-wall {
   position: absolute;

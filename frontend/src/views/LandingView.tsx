@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
@@ -6,6 +6,7 @@ import { LandingArtworkWall } from '@/components/landing/LandingArtworkWall';
 import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { LandingGenerationControls } from '@/components/landing/LandingGenerationControls';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
+import { LandingRecentCreations } from '@/components/landing/LandingRecentCreations';
 import { LandingSceneShortcuts } from '@/components/landing/LandingSceneShortcuts';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
@@ -17,6 +18,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { useImageQuota } from '@/hooks/useImageQuota';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
+import { attachGenerationBatch, useGenerationSessions } from '@/hooks/useGenerationSessions';
+import { useImageHistory } from '@/hooks/useImageHistory';
 import { getAppNavigation } from '@/config/navigation';
 import type { AspectChoice, ImageModel, ImageQuality, ImageResolution } from '@/types/image';
 import {
@@ -29,6 +32,7 @@ import {
   normalizeAspectChoiceForResolution,
   supportsImageQuality,
 } from '@/types/image';
+import { recentCreations, type RecentCreation } from '@/utils/recentCreations';
 
 const HERO_SHINY_GRADIENT_STYLE: CSSProperties = {
   backgroundImage:
@@ -45,6 +49,12 @@ export function LandingView() {
   const { quota, isLoading: quotaLoading, checkIn } = useImageQuota();
   const imageApiKey = useImageApiKey();
   const { notify } = useToast();
+  const { batches: historyBatches } = useImageHistory();
+  const { sessions, create: createSession } = useGenerationSessions();
+  const recent = useMemo(
+    () => recentCreations(historyBatches, sessions),
+    [historyBatches, sessions],
+  );
   const [prompt, setPrompt] = useState('');
   const [attachments, setAttachments] = useState<AgentChatAttachment[]>([]);
   const [model, setModel] = useState<ImageModel>(DEFAULT_IMAGE_MODEL);
@@ -86,6 +96,14 @@ export function LandingView() {
   const updateResolution = (next: ImageResolution): void => {
     setResolution(next);
     setAspect((current) => normalizeAspectChoiceForResolution(current, next));
+  };
+  const openRecent = (creation: RecentCreation): void => {
+    let sessionId = creation.sessionId;
+    if (sessionId === null) {
+      sessionId = createSession(creation.batch.prompt).id;
+      attachGenerationBatch(sessionId, creation.batch.batchId, creation.batch.prompt);
+    }
+    void navigate(`/generate?${new URLSearchParams({ session: sessionId }).toString()}`);
   };
   const selectScene = (scene: LandingScene): void => {
     setPrompt(scene.prompt);
@@ -216,6 +234,7 @@ export function LandingView() {
             </div>
           </div>
           <LandingSceneShortcuts onSelect={selectScene} />
+          <LandingRecentCreations creations={recent} onOpen={openRecent} />
         </div>
       </section>
     </div>

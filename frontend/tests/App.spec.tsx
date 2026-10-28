@@ -261,6 +261,29 @@ describe('React application routes', () => {
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('1:1');
   });
 
+  it('resumes a recent creation from the homepage in its own session', async () => {
+    const user = userEvent.setup();
+    const session = createGenerationSession('雾中的未来车站');
+    attachGenerationBatch(session.id, 'recent-batch', '雾中的未来车站');
+    historyMocks.batches = [mockHistoryBatch('recent-batch', '雾中的未来车站')];
+    renderRoute('/');
+
+    const recent = await screen.findByRole('navigation', { name: '继续上次创作' });
+    await user.click(within(recent).getByRole('button', { name: '继续创作：雾中的未来车站' }));
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('当前路由')).toHaveTextContent(
+        `/generate?session=${session.id}`,
+      ),
+    );
+  });
+
+  it('hides recent creations when there is no history', async () => {
+    renderRoute('/');
+    await screen.findByRole('group', { name: '从场景开始' });
+    expect(screen.queryByRole('navigation', { name: '继续上次创作' })).not.toBeInTheDocument();
+  });
+
   it('shows the functional homepage model selector', async () => {
     const user = userEvent.setup();
     renderRoute('/');

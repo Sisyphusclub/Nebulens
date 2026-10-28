@@ -54,9 +54,11 @@ export function ImageDetailModal({
   const id = useRef(Symbol('image-detail'));
   const { openImageDetailModal, closeImageDetailModal } = useImageDetailModalState();
 
+  // Track only open/closed: callers may pass a new entry object on every render.
+  const isOpen = entry !== null;
   useEffect(() => {
     const currentId = id.current;
-    if (!entry) {
+    if (!isOpen) {
       closeImageDetailModal(currentId);
       return;
     }
@@ -64,7 +66,7 @@ export function ImageDetailModal({
     return () => {
       closeImageDetailModal(currentId);
     };
-  }, [closeImageDetailModal, entry, openImageDetailModal]);
+  }, [closeImageDetailModal, isOpen, openImageDetailModal]);
 
   if (!entry) return null;
   const filename = entry.record.id.includes('.') ? entry.record.id : `${entry.record.id}.png`;

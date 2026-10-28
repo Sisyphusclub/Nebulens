@@ -10,6 +10,7 @@ vi.mock('@/hooks/useAuth', () => ({ useAuth: () => authMocks }));
 vi.mock('@/services/api/historyApi', () => api);
 
 import { ToastProvider } from '@/components/common/ToastProvider';
+import { useImageDetailModalState } from '@/hooks/useImageDetailModalState';
 import { TeamView } from '@/views/TeamView';
 
 function teamRecord(id: string, prompt: string, category: string) {
@@ -118,4 +119,31 @@ it('asks signed-out visitors to sign in', () => {
   renderView();
   expect(screen.getByRole('heading', { name: '登录后查看团队作品' })).toBeInTheDocument();
   expect(api.fetchTeamHistory).not.toHaveBeenCalled();
+});
+
+/** Like the app shell, re-renders the page whenever a detail modal opens or closes. */
+function ShellWithTeamView() {
+  const { isImageDetailModalOpen } = useImageDetailModalState();
+  return (
+    <div data-modal-open={isImageDetailModalOpen}>
+      <TeamView />
+    </div>
+  );
+}
+
+it('keeps the detail modal stable when the app shell re-renders around it', async () => {
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter initialEntries={['/team']}>
+      <ToastProvider>
+        <Routes>
+          <Route path="/team" element={<ShellWithTeamView />} />
+        </Routes>
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await user.click(await screen.findByRole('button', { name: '查看图片：周年庆海报' }));
+
+  expect(await screen.findByRole('dialog', { name: '图片详情' })).toBeInTheDocument();
 });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { OperationalPageHeader } from '@/components/common/OperationalPageHeader';
@@ -43,6 +43,7 @@ export function TeamView() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<TeamImageRecord | null>(null);
   const requestId = useRef(0);
+  const selectedEntry = useMemo(() => (selected === null ? null : toEntry(selected)), [selected]);
 
   const load = useCallback(
     async (cursor?: string): Promise<void> => {
@@ -167,7 +168,7 @@ export function TeamView() {
         </>
       )}
       <ImageDetailModal
-        entry={selected === null ? null : toEntry(selected)}
+        entry={selectedEntry}
         {...(selected === null ? {} : { ownerName: selected.ownerName })}
         onClose={() => setSelected(null)}
         onCopyPrompt={(entry) => void copyPrompt(entry)}

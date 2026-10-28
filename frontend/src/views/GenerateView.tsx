@@ -47,54 +47,11 @@ import {
 } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
 import type { FeedItem } from '@/utils/generationFeed';
+import { readInitialReferenceFiles, requestsAutoGeneration } from '@/utils/generationRouteState';
+import { prefersReducedMotion, scrollToGenerationBatch } from '@/utils/generationScroll';
 import { getImageVisibilityUpdateMessage } from '@/utils/imageVisibility';
 
 type DeleteTarget = { kind: 'entry'; entry: HistoryEntry } | { kind: 'batch'; item: FeedItem };
-
-function scrollToGenerationBatch(
-  batchId: string,
-  behavior: ScrollBehavior = prefersReducedMotion() ? 'auto' : 'smooth',
-): boolean {
-  const target = Array.from(document.querySelectorAll<HTMLElement>('[data-generation-batch]')).find(
-    (element) => element.dataset.generationBatch === batchId,
-  );
-  if (!target || typeof target.scrollIntoView !== 'function') return false;
-  target.scrollIntoView({
-    behavior,
-    block: 'center',
-  });
-  return true;
-}
-
-function prefersReducedMotion(): boolean {
-  return (
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
-}
-
-function requestsAutoGeneration(state: unknown): boolean {
-  return (
-    typeof state === 'object' &&
-    state !== null &&
-    'autoGenerate' in state &&
-    state.autoGenerate === true
-  );
-}
-
-function readInitialReferenceFiles(state: unknown): File[] {
-  if (typeof File === 'undefined' || typeof state !== 'object' || state === null) return [];
-  const candidateAttachments: unknown = (state as Record<string, unknown>)['attachments'];
-  if (!Array.isArray(candidateAttachments)) return [];
-
-  const files: File[] = [];
-  for (const attachment of candidateAttachments as unknown[]) {
-    if (typeof attachment !== 'object' || attachment === null) continue;
-    const file: unknown = (attachment as Record<string, unknown>)['file'];
-    if (file instanceof File) files.push(file);
-  }
-  return files.slice(0, MAX_REFERENCE_IMAGES);
-}
 
 export function GenerateView() {
   const [searchParams] = useSearchParams();

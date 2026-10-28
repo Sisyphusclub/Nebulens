@@ -6,11 +6,13 @@ import { LandingArtworkWall } from '@/components/landing/LandingArtworkWall';
 import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { LandingGenerationControls } from '@/components/landing/LandingGenerationControls';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
+import { LandingSceneShortcuts } from '@/components/landing/LandingSceneShortcuts';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
 import { AgentChatInput } from '@/components/premium/agent-chat-input/agent-chat-input';
 import type { AgentChatAttachment } from '@/components/premium/agent-chat-input/types';
 import { IMAGE_PROMPT_EXAMPLES } from '@/data/imagePromptExamples';
+import type { LandingScene } from '@/data/landingScenes';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { useImageQuota } from '@/hooks/useImageQuota';
@@ -84,6 +86,10 @@ export function LandingView() {
   const updateResolution = (next: ImageResolution): void => {
     setResolution(next);
     setAspect((current) => normalizeAspectChoiceForResolution(current, next));
+  };
+  const selectScene = (scene: LandingScene): void => {
+    setPrompt(scene.prompt);
+    setAspect(normalizeAspectChoiceForResolution(scene.aspect, resolution));
   };
   const submitPrompt = (
     value: string,
@@ -209,6 +215,7 @@ export function LandingView() {
               </div>
             </div>
           </div>
+          <LandingSceneShortcuts onSelect={selectScene} />
         </div>
       </section>
     </div>

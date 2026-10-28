@@ -10678,6 +10678,45 @@ video {
   }
 }
 
+/* Landing hero: scene shortcuts that start the composer from a ready-made brief */
+.landing-scenes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 940px;
+  margin-top: 18px;
+}
+.landing-scenes .landing-scenes__item {
+  height: 32px;
+  border: 1px solid rgb(242 244 247 / 0.14);
+  border-radius: var(--radius-full);
+  background: rgb(10 12 18 / 0.46);
+  color: rgb(242 244 247 / 0.78);
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+  backdrop-filter: none;
+}
+.landing-scenes .landing-scenes__item:hover,
+.landing-scenes .landing-scenes__item:focus-visible {
+  border-color: rgb(242 244 247 / 0.32);
+  background: rgb(22 26 36 / 0.72);
+  color: rgb(242 244 247 / 0.96);
+}
+@media (max-width: 760px) {
+  .landing-scenes {
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .landing-scenes .landing-scenes__item {
+    height: 30px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+}
+
 /* Landing hero: tilted artwork wall drifting behind the composer */
 .artwork-wall {
   position: absolute;

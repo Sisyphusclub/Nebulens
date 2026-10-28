@@ -251,6 +251,16 @@ describe('React application routes', () => {
     expect(container.querySelector(".landing-sidebar [data-sidebar='separator']")).toBeNull();
   });
 
+  it('fills the homepage composer from a scene shortcut', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+
+    await user.click(await screen.findByRole('button', { name: '电商主图' }));
+
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('限时特惠');
+    expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('1:1');
+  });
+
   it('shows the functional homepage model selector', async () => {
     const user = userEvent.setup();
     renderRoute('/');

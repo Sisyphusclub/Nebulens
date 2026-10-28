@@ -669,6 +669,36 @@ it('adds a dropped reference image to the next generation', async () => {
   );
 });
 
+it('adds a pasted image to the next generation exactly once', async () => {
+  const user = userEvent.setup();
+  const file = new File(['pasted-image'], 'pasted-reference.png', { type: 'image/png' });
+  render(
+    <MemoryRouter initialEntries={['/generate?prompt=粘贴参考图']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  fireEvent.paste(screen.getByRole('textbox', { name: '图像提示词' }), {
+    clipboardData: {
+      files: [file],
+      items: [{ kind: 'file', type: 'image/png', getAsFile: () => file }],
+      types: ['Files'],
+      getData: vi.fn(() => ''),
+    },
+  });
+
+  expect(await screen.findAllByText('pasted-reference.png')).toHaveLength(1);
+  await user.click(screen.getByRole('button', { name: '生成图片' }));
+
+  await waitFor(() =>
+    expect(generation.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ referenceFiles: [file] }),
+    ),
+  );
+});
+
 it('uses the compact beUI stop action while generation is pending', async () => {
   generation.isLoading = true;
   const user = userEvent.setup();

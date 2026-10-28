@@ -13,7 +13,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { ClipboardEvent } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ConfirmActionModal } from '@/components/common/ConfirmActionModal';
@@ -614,18 +613,6 @@ export function GenerateView() {
     }
   };
 
-  const paste = (event: ClipboardEvent<HTMLElement>): void => {
-    const files = Array.from(event.clipboardData.items)
-      .filter((item) => item.kind === 'file')
-      .map((item) => item.getAsFile())
-      .filter((file): file is File => file !== null);
-    if (!files.length) return;
-    event.preventDefault();
-    const result = upload.selectFiles(files);
-    if (result.skipped) notify(`最多添加 ${MAX_REFERENCE_IMAGES} 张参考图。`, 'error');
-    setReusedReferenceIds([]);
-  };
-
   const reuseSettings = (settings: GenerationSettingsSnapshot): void => {
     setPrompt(settings.prompt);
     applySnapshot(settings);
@@ -867,7 +854,7 @@ export function GenerateView() {
           <p>在下方输入描述，或提供参考图，让 AI 帮你生成想象中的画面</p>
         </div>
       ) : null}
-      <div ref={composerRef} className="studio-create-bar" onPaste={paste}>
+      <div ref={composerRef} className="studio-create-bar">
         {showJumpToLatest ? (
           <div className="generation-jump-latest">
             <IconTooltip label="回到最新图片">

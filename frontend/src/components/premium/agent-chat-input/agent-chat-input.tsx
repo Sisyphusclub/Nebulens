@@ -17,6 +17,7 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   type ChangeEvent,
+  type ClipboardEvent,
   type DragEvent,
   type ReactNode,
   useEffect,
@@ -77,6 +78,14 @@ function matchesAcceptedFileType(file: File, acceptedFileTypes: string): boolean
     if (pattern.endsWith('/*')) return type.startsWith(pattern.slice(0, -1));
     return type === pattern;
   });
+}
+
+function pastedFiles(clipboardData: DataTransfer): File[] {
+  if (clipboardData.files.length > 0) return Array.from(clipboardData.files);
+  return Array.from(clipboardData.items)
+    .filter((item) => item.kind === 'file')
+    .map((item) => item.getAsFile())
+    .filter((file): file is File => file !== null);
 }
 
 function hasFileTransfer(dataTransfer: DataTransfer | null | undefined): boolean {
@@ -688,6 +697,15 @@ export function AgentChatInput({
     addFiles(Array.from(event.dataTransfer.files));
   }
 
+  function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
+    const files = pastedFiles(event.clipboardData);
+    if (files.length === 0) return;
+    // Pasted images belong in the attachment tray, never inline in the text editor.
+    event.preventDefault();
+    if (!allowFileUpload || disabled) return;
+    addFiles(files);
+  }
+
   function removeAttachment(id: string) {
     setCurrentAttachments(currentAttachments.filter((attachment) => attachment.id !== id));
     if (previewAttachmentId === id) setPreviewAttachmentId(null);
@@ -734,6 +752,7 @@ export function AgentChatInput({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onPaste={handlePaste}
       >
         {streamingPlaceholders.length ? (
           <StreamingPlaceholder

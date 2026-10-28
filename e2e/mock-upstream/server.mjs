@@ -2,6 +2,7 @@
 // No dependencies, so it runs on a bare Node image inside docker compose.
 //
 //   POST /v1/images/generations, /v1/images/edits  -> solid-colour PNGs (b64_json)
+//   POST /v1/chat/completions                       -> image analysis JSON (see analysisAnswer)
 //   GET  /v1/models                                 -> a minimal model list
 //   GET  /__fail?on=1 | /__fail?on=0                -> toggle upstream failures
 //   GET  /__state                                   -> { fail, calls }
@@ -87,6 +88,31 @@ function imageRequest(req, body) {
   }
 }
 
+/**
+ * Answers the vision analysis prompt. Quoted text containing "错字" is reported as
+ * misspelled ("措字") so tests can exercise the text check; everything else matches.
+ */
+function analysisAnswer(body) {
+  const payload = JSON.parse(body.toString('utf8') || '{}');
+  const content = payload.messages?.[0]?.content;
+  const instructions = Array.isArray(content)
+    ? (content.find((part) => part.type === 'text')?.text ?? '')
+    : String(content ?? '');
+  const expected = instructions
+    .split('\n')
+    .map((line) => /^\d+\. (.+)$/.exec(line)?.[1])
+    .filter((text) => text !== undefined);
+  return JSON.stringify({
+    category: 'poster',
+    description: '模拟分析：一张测试海报',
+    tags: ['测试', '海报'],
+    texts: expected.map((text) => ({
+      expected: text,
+      found: text.includes('错字') ? text.replace('错字', '措字') : text,
+    })),
+  });
+}
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', 'http://mock');
   if (req.method === 'GET' && url.pathname === '/health') return sendJson(res, 200, { ok: true });
@@ -97,6 +123,10 @@ const server = createServer(async (req, res) => {
   }
   if (req.method === 'GET' && url.pathname === '/v1/models') {
     return sendJson(res, 200, { data: [{ id: 'gpt-image-2' }] });
+  }
+  if (req.method === 'POST' && url.pathname === '/v1/chat/completions') {
+    const answer = analysisAnswer(await readBody(req));
+    return sendJson(res, 200, { choices: [{ message: { role: 'assistant', content: answer } }] });
   }
   if (req.method === 'POST' && url.pathname.startsWith('/v1/images/')) {
     const body = await readBody(req);

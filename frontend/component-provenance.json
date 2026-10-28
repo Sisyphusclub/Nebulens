@@ -94,7 +94,10 @@
       "module": "@/components/generation/ImageGenerationPlaceholder",
       "file": "src/components/generation/ImageGenerationPlaceholder.tsx",
       "source": "AICSS Image Generation",
-      "allowedConsumers": ["src/views/GenerateView.tsx"],
+      "allowedConsumers": [
+        "src/components/generation/GenerationBatch.tsx",
+        "src/components/generation/SessionResultPreview.tsx"
+      ],
       "rationale": "Documented generation-state visual adapted to the product's square, landscape, and portrait output geometry; it does not replace a semantic beUI control."
     }
   ]

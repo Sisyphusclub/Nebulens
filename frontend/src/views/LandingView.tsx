@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
+import { LandingHeroBackdrop } from '@/components/landing/LandingHeroBackdrop';
 import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { LandingGenerationControls } from '@/components/landing/LandingGenerationControls';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
@@ -28,7 +29,6 @@ import {
   orderTemplatesWithAnimeLast,
   templateToHistoryEntry,
 } from '@/data/creationTemplates';
-import { buildApiUrl } from '@/services/api/imagesApi';
 import type {
   AspectChoice,
   HistoryEntry,
@@ -47,7 +47,6 @@ import {
   supportsImageQuality,
 } from '@/types/image';
 
-const HERO_VIDEO = buildApiUrl('/api/media/liquid-glass.mp4');
 const HERO_SHINY_GRADIENT_STYLE: CSSProperties = {
   backgroundImage:
     'linear-gradient(110deg, #3D81E3, 20%, #AE9AE6, 40%, #F8D8D5, 60%, #FEEFDB, 80%, #3D81E3)',
@@ -182,7 +181,6 @@ export function LandingView() {
   } = usePublicGallery();
   const composerAnchorRef = useRef<HTMLDivElement>(null);
   const composerDockedRef = useRef(false);
-  const [videoFailed, setVideoFailed] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [attachments, setAttachments] = useState<AgentChatAttachment[]>([]);
   const [model, setModel] = useState<ImageModel>(DEFAULT_IMAGE_MODEL);
@@ -343,20 +341,7 @@ export function LandingView() {
   return (
     <div className="landing-page">
       <section className="landing-hero" data-layout="media-stage" aria-labelledby="landing-title">
-        {!videoFailed ? (
-          <video
-            className="landing-hero__video"
-            src={HERO_VIDEO}
-            autoPlay={!reducedMotion}
-            muted
-            loop={!reducedMotion}
-            playsInline
-            preload="auto"
-            aria-hidden="true"
-            tabIndex={-1}
-            onError={() => setVideoFailed(true)}
-          />
-        ) : null}
+        <LandingHeroBackdrop reducedMotion={reducedMotion} />
         <div className="landing-hero__overlay" aria-hidden="true" />
         <LandingSidebar
           accountImage={user?.image}

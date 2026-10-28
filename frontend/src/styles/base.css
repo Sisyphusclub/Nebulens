@@ -494,8 +494,7 @@ video {
   height: 100%;
   object-fit: cover;
   object-position: 50% 50%;
-  opacity: 0.94;
-  filter: saturate(1.02) contrast(1.03) brightness(1.08);
+  opacity: 1;
   transform: translate3d(var(--landing-video-x-shift), 0, 0) scale(1.04);
   transform-origin: center center;
 }

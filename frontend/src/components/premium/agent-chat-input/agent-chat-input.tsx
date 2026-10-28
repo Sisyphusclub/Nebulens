@@ -483,19 +483,15 @@ function StreamingPlaceholder({ active, examples, reduce }: StreamingPlaceholder
   }, [active, reduce, signature]);
 
   return (
-    <button
-      type="button"
+    // Decorative only: clicks fall through to the prompt editor underneath.
+    <span
       className="agent-chat-input__streaming-placeholder"
       data-active={active ? 'true' : undefined}
-      aria-label="复制当前提示词示例"
-      onClick={() => {
-        const prompt = textRef.current?.textContent?.trim();
-        if (prompt) void navigator.clipboard.writeText(prompt);
-      }}
+      aria-hidden="true"
     >
       <span ref={textRef} className="agent-chat-input__streaming-placeholder-text" />
       <span className="agent-chat-input__streaming-placeholder-caret" />
-    </button>
+    </span>
   );
 }
 

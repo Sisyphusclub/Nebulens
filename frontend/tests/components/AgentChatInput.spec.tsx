@@ -135,3 +135,25 @@ describe('AgentChatInput text paste', () => {
     expect(parentPaste).toHaveReturnedWith(false);
   });
 });
+
+describe('AgentChatInput streaming placeholder', () => {
+  it('renders example prompts as passive placeholder text, not a control', () => {
+    const { container, queryByRole } = render(
+      <AgentChatInput
+        ariaLabel="图像提示词"
+        models={[]}
+        reasoningLevels={[]}
+        speedModes={[]}
+        agents={[]}
+        skills={[]}
+        streamingPlaceholders={['银色礼服舞者悬浮在深海中']}
+      />,
+    );
+    const placeholder = container.querySelector('.agent-chat-input__streaming-placeholder');
+
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder?.tagName).not.toBe('BUTTON');
+    expect(placeholder).toHaveAttribute('aria-hidden', 'true');
+    expect(queryByRole('button', { name: '复制当前提示词示例' })).not.toBeInTheDocument();
+  });
+});

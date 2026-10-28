@@ -2,7 +2,7 @@ import type { Request } from 'express';
 
 import { env } from '../config/env.js';
 import { createSignedOutputPath } from '../services/outputAccess.service.js';
-import { type GenerateImageOutput } from '../services/imageGeneration.service.js';
+import type { GenerateImageOutput } from '../services/imageGeneration.service.js';
 import { readOutput } from '../storage/localStorage.js';
 
 import type { ImageResponseFormat } from './openaiCompat.schemas.js';

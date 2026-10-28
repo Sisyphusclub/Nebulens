@@ -200,18 +200,21 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 
 Docker Compose 使用以下持久化 volume：
 
-| Volume                        | 内容           |
-| ----------------------------- | -------------- |
-| `bellpicture_backend-data`    | SQLite 数据库  |
-| `bellpicture_backend-uploads` | 参考图上传文件 |
-| `bellpicture_backend-outputs` | 生成结果文件   |
+| Volume                     | 内容           |
+| -------------------------- | -------------- |
+| `nebulens_backend-data`    | SQLite 数据库  |
+| `nebulens_backend-uploads` | 参考图上传文件 |
+| `nebulens_backend-outputs` | 生成结果文件   |
 
-备份前先执行 SQLite checkpoint，再同时备份数据库卷和输出卷：
+从旧版本升级的主机上可能还留有 `bellpicture_*` 数据卷，首次启动新版前需按 `docker-compose.yml` 末尾的说明迁移。
+
+备份前先执行 SQLite checkpoint，再同时备份数据库卷、上传卷和输出卷：
 
 ```bash
 docker compose exec backend node -e "const Database=require('better-sqlite3'); const db=new Database('/app/data/app.sqlite'); db.pragma('wal_checkpoint(TRUNCATE)'); db.close()"
-docker run --rm -v bellpicture_backend-data:/source -v "$PWD/backups:/backup" alpine tar czf /backup/backend-data.tgz -C /source .
-docker run --rm -v bellpicture_backend-outputs:/source -v "$PWD/backups:/backup" alpine tar czf /backup/backend-outputs.tgz -C /source .
+docker run --rm -v nebulens_backend-data:/source -v "$PWD/backups:/backup" alpine tar czf /backup/backend-data.tgz -C /source .
+docker run --rm -v nebulens_backend-uploads:/source -v "$PWD/backups:/backup" alpine tar czf /backup/backend-uploads.tgz -C /source .
+docker run --rm -v nebulens_backend-outputs:/source -v "$PWD/backups:/backup" alpine tar czf /backup/backend-outputs.tgz -C /source .
 ```
 
 生产环境只公开前端 nginx 或上层反向代理，后端 `3000` 端口保持在容器网络内。`USER_API_KEY_ENCRYPTION_KEY` 必须独立备份，丢失后已保存的用户 Key 无法解密。

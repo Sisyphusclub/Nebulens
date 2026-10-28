@@ -1,4 +1,4 @@
-import { Check, Copy, Download, Heart, RefreshCw, Square, Trash2 } from 'lucide-react';
+import { Check, Copy, Download, Heart, Lock, RefreshCw, Square, Trash2, Users } from 'lucide-react';
 
 import { MorphicCard } from '@/components/premium/morphic-card-modal';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ interface ImageGridProps {
   onCopyPrompt?: (entry: HistoryEntry) => void;
   onReuse?: (entry: HistoryEntry) => void;
   onDownload?: (entry: HistoryEntry) => void;
+  onToggleShared?: (entry: HistoryEntry) => void;
   onRemove?: (entry: HistoryEntry) => void;
 }
 
@@ -29,6 +30,7 @@ export function ImageGrid({
   onCopyPrompt,
   onReuse,
   onDownload,
+  onToggleShared,
   onRemove,
 }: ImageGridProps) {
   if (!entries.length) {
@@ -97,6 +99,23 @@ export function ImageGrid({
                       onClick={() => onDownload(entry)}
                     >
                       <Download aria-hidden="true" />
+                    </Button>
+                  </IconTooltip>
+                ) : null}
+                {onToggleShared && entry.record.isShared !== undefined ? (
+                  <IconTooltip label={entry.record.isShared ? '设为仅自己' : '共享给团队'}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="icon"
+                      aria-label={entry.record.isShared ? '设为仅自己' : '共享给团队'}
+                      onClick={() => onToggleShared(entry)}
+                    >
+                      {entry.record.isShared ? (
+                        <Users aria-hidden="true" />
+                      ) : (
+                        <Lock aria-hidden="true" />
+                      )}
                     </Button>
                   </IconTooltip>
                 ) : null}

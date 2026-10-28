@@ -1,11 +1,18 @@
-import { Copy, Download, ImagePlus, Trash2, X } from 'lucide-react';
+import { Copy, Download, ImagePlus, Lock, Trash2, Users, X } from 'lucide-react';
 import { useEffect, useRef, type CSSProperties } from 'react';
 
 import { MorphicCardModal } from '@/components/premium/morphic-card-modal';
 import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
+import { SelectMenu } from '@/components/ui/select-menu';
 import { useImageDetailModalState } from '@/hooks/useImageDetailModalState';
-import { imageModelLabel, type HistoryEntry } from '@/types/image';
+import {
+  IMAGE_CATEGORIES,
+  IMAGE_CATEGORY_LABELS,
+  imageModelLabel,
+  type HistoryEntry,
+  type ImageCategory,
+} from '@/types/image';
 import { downloadUrl } from '@/utils/download';
 import { formatDateTime } from '@/utils/format';
 
@@ -18,7 +25,18 @@ interface ImageDetailModalProps {
   onReuse?: (entry: HistoryEntry) => void;
   onUseAsReference?: (entry: HistoryEntry) => void;
   onDelete?: (entry: HistoryEntry) => void;
+  /** Owner only: file the image under another usage, or clear it with null. */
+  onCategoryChange?: (entry: HistoryEntry, category: ImageCategory | null) => void;
+  /** Owner only: share the image with the team or keep it private. */
+  onToggleShared?: (entry: HistoryEntry) => void;
+  /** Shown for a teammate's image. */
+  ownerName?: string;
 }
+
+const CATEGORY_OPTIONS: readonly { value: ImageCategory | 'none'; label: string }[] = [
+  { value: 'none', label: '未分类' },
+  ...IMAGE_CATEGORIES.map((value) => ({ value, label: IMAGE_CATEGORY_LABELS[value] })),
+];
 
 export function ImageDetailModal({
   entry,
@@ -29,6 +47,9 @@ export function ImageDetailModal({
   onReuse,
   onUseAsReference,
   onDelete,
+  onCategoryChange,
+  onToggleShared,
+  ownerName,
 }: ImageDetailModalProps) {
   const id = useRef(Symbol('image-detail'));
   const { openImageDetailModal, closeImageDetailModal } = useImageDetailModalState();
@@ -113,7 +134,48 @@ export function ImageDetailModal({
               <dt>时间</dt>
               <dd>{formatDateTime(entry.record.createdAt)}</dd>
             </div>
+            {ownerName ? (
+              <div>
+                <dt>作者</dt>
+                <dd>{ownerName}</dd>
+              </div>
+            ) : null}
+            <div>
+              <dt>用途</dt>
+              <dd>
+                {onCategoryChange ? (
+                  <SelectMenu
+                    label="修改用途"
+                    value={entry.record.category ?? 'none'}
+                    options={CATEGORY_OPTIONS}
+                    onValueChange={(value) =>
+                      onCategoryChange(entry, value === 'none' ? null : value)
+                    }
+                  />
+                ) : entry.record.category ? (
+                  IMAGE_CATEGORY_LABELS[entry.record.category]
+                ) : (
+                  '未分类'
+                )}
+              </dd>
+            </div>
+            {entry.record.isShared !== undefined ? (
+              <div>
+                <dt>共享</dt>
+                <dd>{entry.record.isShared ? '团队可见' : '仅自己'}</dd>
+              </div>
+            ) : null}
           </dl>
+          {entry.record.description ? (
+            <p className="image-detail__description">{entry.record.description}</p>
+          ) : null}
+          {entry.record.tags?.length ? (
+            <ul className="image-detail__tags" aria-label="标签">
+              {entry.record.tags.map((tag) => (
+                <li key={tag}>{tag}</li>
+              ))}
+            </ul>
+          ) : null}
           <div className="detail-actions">
             <Button type="button" onClick={() => void downloadUrl(entry.imageUrl, filename)}>
               <Download aria-hidden="true" />
@@ -135,6 +197,12 @@ export function ImageDetailModal({
               <Button type="button" variant="secondary" onClick={() => onUseAsReference(entry)}>
                 <ImagePlus aria-hidden="true" />
                 用作参考图
+              </Button>
+            ) : null}
+            {onToggleShared ? (
+              <Button type="button" variant="ghost" onClick={() => onToggleShared(entry)}>
+                {entry.record.isShared ? <Lock aria-hidden="true" /> : <Users aria-hidden="true" />}
+                {entry.record.isShared ? '设为仅自己' : '共享给团队'}
               </Button>
             ) : null}
             {canDelete && onDelete ? (

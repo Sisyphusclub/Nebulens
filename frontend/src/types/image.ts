@@ -208,6 +208,8 @@ export interface GenerationSettingsSnapshot {
 export interface ImageMetadataUpdate {
   isFavorite?: boolean;
   isPublic?: boolean;
+  isShared?: boolean;
+  category?: ImageCategory | null;
   collection?: string | null;
 }
 

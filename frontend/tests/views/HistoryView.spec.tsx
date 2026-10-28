@@ -384,3 +384,47 @@ describe('HistoryView asset workflows', () => {
     expect(screen.queryByRole('toolbar', { name: '已选资产操作' })).not.toBeInTheDocument();
   });
 });
+
+describe('HistoryView team sharing', () => {
+  const categorized: HistoryEntry[] = [
+    { ...entries[0]!, record: { ...entries[0]!.record, category: 'poster', isShared: true } },
+    { ...entries[1]!, record: { ...entries[1]!.record, category: 'logo', isShared: false } },
+  ];
+
+  it('filters assets by usage category', async () => {
+    const user = userEvent.setup();
+    historyMocks.entries = categorized;
+    renderView();
+
+    await user.click(screen.getByRole('button', { name: '用途筛选' }));
+    await user.click(screen.getByRole('menuitemradio', { name: '品牌 Logo' }));
+
+    expect(screen.getByLabelText('当前显示 1 项，共 2 项')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '查看图片：森林建筑' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '查看图片：雨夜城市' })).not.toBeInTheDocument();
+  });
+
+  it('toggles team sharing from an asset card', async () => {
+    const user = userEvent.setup();
+    historyMocks.entries = categorized;
+    renderView();
+
+    await user.click(screen.getAllByRole('button', { name: '设为仅自己' })[0]!);
+    expect(historyMocks.update).toHaveBeenCalledWith('image-one.png', { isShared: false });
+
+    await user.click(screen.getByRole('button', { name: '共享给团队' }));
+    expect(historyMocks.update).toHaveBeenCalledWith('image-two.png', { isShared: true });
+  });
+
+  it('changes the usage category from the detail view', async () => {
+    const user = userEvent.setup();
+    historyMocks.entries = categorized;
+    renderView();
+
+    await user.click(screen.getByRole('button', { name: '查看图片：雨夜城市' }));
+    await user.click(await screen.findByRole('button', { name: '修改用途' }));
+    await user.click(screen.getByRole('menuitemradio', { name: '社媒封面' }));
+
+    expect(historyMocks.update).toHaveBeenCalledWith('image-one.png', { category: 'social' });
+  });
+});

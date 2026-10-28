@@ -1880,6 +1880,27 @@ video {
   font-size: 30px;
   font-weight: 400;
 }
+.image-detail__description {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+.image-detail__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.image-detail__tags li {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 1px 9px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
 .image-detail__prompt {
   min-width: 0;
   max-width: 100%;

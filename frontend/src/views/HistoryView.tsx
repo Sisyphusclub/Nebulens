@@ -30,8 +30,12 @@ import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_COUNT,
   DEFAULT_IMAGE_RESOLUTION,
+  IMAGE_CATEGORIES,
+  IMAGE_CATEGORY_LABELS,
   imageModelLabel,
   type HistoryEntry,
+  type ImageCategory,
+  type ImageMetadataUpdate,
 } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
 import { formatDateTime } from '@/utils/format';
@@ -53,6 +57,10 @@ const DATE_OPTIONS: readonly { value: DateFilter; label: string }[] = [
   { value: 'month', label: '最近 30 天' },
 ];
 const DEFAULT_COLLECTIONS = ['灵感库', '客户项目', '待筛选'] as const;
+const CATEGORY_FILTER_OPTIONS: readonly { value: ImageCategory | 'all'; label: string }[] = [
+  { value: 'all', label: '全部用途' },
+  ...IMAGE_CATEGORIES.map((value) => ({ value, label: IMAGE_CATEGORY_LABELS[value] })),
+];
 
 function matchesDate(createdAt: string, filter: DateFilter): boolean {
   if (filter === 'all') return true;
@@ -77,6 +85,7 @@ export function HistoryView() {
   const [date, setDate] = useState<DateFilter>('all');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [model, setModel] = useState('all');
+  const [category, setCategory] = useState<ImageCategory | 'all'>('all');
   const models = useMemo(
     () => [...new Set(history.records.map((record) => record.model))],
     [history.records],
@@ -116,7 +125,7 @@ export function HistoryView() {
       const record = entry.record;
       if (
         normalized &&
-        !`${record.prompt} ${record.model} ${imageModelLabel(record.model)} ${record.id} ${record.collection ?? ''}`
+        !`${record.prompt} ${record.model} ${imageModelLabel(record.model)} ${record.id} ${record.collection ?? ''} ${record.category ? IMAGE_CATEGORY_LABELS[record.category] : ''} ${record.description ?? ''} ${record.tags?.join(' ') ?? ''}`
           .toLocaleLowerCase('zh-CN')
           .includes(normalized)
       ) {
@@ -127,6 +136,7 @@ export function HistoryView() {
       if (model !== 'all' && record.model !== model) {
         return false;
       }
+      if (category !== 'all' && record.category !== category) return false;
       return true;
     });
     return [...items].sort((a, b) => {
@@ -134,7 +144,7 @@ export function HistoryView() {
       if (sort === 'prompt') return a.record.prompt.localeCompare(b.record.prompt, 'zh-CN');
       return b.record.createdAt.localeCompare(a.record.createdAt);
     });
-  }, [model, date, favoritesOnly, history.entries, query, sort]);
+  }, [model, category, date, favoritesOnly, history.entries, query, sort]);
 
   useEffect(() => {
     const available = new Set(history.records.map((record) => record.id));
@@ -144,10 +154,7 @@ export function HistoryView() {
     });
   }, [history.records]);
 
-  const updateEntry = async (
-    entry: HistoryEntry,
-    updates: { isFavorite?: boolean; collection?: string | null },
-  ): Promise<void> => {
+  const updateEntry = async (entry: HistoryEntry, updates: ImageMetadataUpdate): Promise<void> => {
     setMutating(true);
     try {
       const record = await history.update(entry.record.id, updates);
@@ -331,6 +338,12 @@ export function HistoryView() {
                   onValueChange={setDate}
                 />
                 <SelectMenu
+                  label="用途筛选"
+                  value={category}
+                  options={CATEGORY_FILTER_OPTIONS}
+                  onValueChange={setCategory}
+                />
+                <SelectMenu
                   label="资产排序"
                   value={sort}
                   options={SORT_OPTIONS}
@@ -508,6 +521,9 @@ export function HistoryView() {
                 onCopyPrompt={(entry) => void copyPrompt(entry)}
                 onReuse={reuse}
                 onDownload={(entry) => void downloadUrl(entry.imageUrl, entry.record.id)}
+                onToggleShared={(entry) =>
+                  void updateEntry(entry, { isShared: !entry.record.isShared })
+                }
                 onRemove={(entry) => setDeleteTarget({ kind: 'entry', entry })}
               />
             ) : (
@@ -563,6 +579,9 @@ export function HistoryView() {
                     </span>
                     <span role="cell" data-label="收藏集">
                       {entry.record.collection ?? '未分类'}
+                      {entry.record.category ? (
+                        <small>{IMAGE_CATEGORY_LABELS[entry.record.category]}</small>
+                      ) : null}
                     </span>
                     <span role="cell" data-label="时间">
                       {formatDateTime(entry.record.createdAt)}
@@ -644,6 +663,8 @@ export function HistoryView() {
         onClose={() => setSelected(null)}
         onCopyPrompt={(entry) => void copyPrompt(entry)}
         onReuse={reuse}
+        onCategoryChange={(entry, next) => void updateEntry(entry, { category: next })}
+        onToggleShared={(entry) => void updateEntry(entry, { isShared: !entry.record.isShared })}
         onDelete={(entry) => {
           setSelected(null);
           setDeleteTarget({ kind: 'entry', entry });

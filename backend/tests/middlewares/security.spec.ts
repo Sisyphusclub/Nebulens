@@ -56,6 +56,14 @@ describe('application security middleware', () => {
     expect(signIn.status).not.toBe(429);
   });
 
+  it('does not count profile reads against the auth rate limit', async () => {
+    const app = createApp({ provider });
+    for (let index = 0; index < 25; index += 1) {
+      const response = await request(app).get('/api/auth/me');
+      expect(response.status).not.toBe(429);
+    }
+  });
+
   it('still rate limits repeated credential attempts', async () => {
     const app = createApp({ provider });
     let response: request.Response | undefined;

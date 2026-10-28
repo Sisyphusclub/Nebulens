@@ -17,14 +17,15 @@ export interface AppRateLimiters {
 
 export function createAppRateLimiters(): AppRateLimiters {
   return {
-    // Provider metadata and session lookups are idempotent reads fetched on every
-    // app mount. They must not consume the same budget as credential/OAuth
-    // mutations, or ordinary page refreshes start failing with 429.
+    // Provider metadata, session lookups and the profile read are idempotent reads
+    // fetched on every app mount. They must not consume the same budget as
+    // credential/OAuth mutations, or ordinary page refreshes start failing with 429.
     auth: createLimiter({
       windowMs: FIFTEEN_MINUTES_MS,
       limit: 20,
       skip: (req) =>
-        req.path === '/providers' || (req.method === 'GET' && req.path === '/get-session'),
+        req.path === '/providers' ||
+        (req.method === 'GET' && (req.path === '/get-session' || req.path === '/me')),
     }),
     signUp: createLimiter({ windowMs: FIFTEEN_MINUTES_MS, limit: 5 }),
     upload: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 30, preferUserId: true }),

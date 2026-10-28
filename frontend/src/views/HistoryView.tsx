@@ -2,12 +2,9 @@ import {
   Check,
   Copy,
   Download,
-  EyeOff,
-  Globe2,
   Grid2X2,
   Heart,
   List,
-  Lock,
   RefreshCw,
   Search,
   Trash2,
@@ -28,7 +25,6 @@ import { SelectMenu } from '@/components/ui/select-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { useImageHistory } from '@/hooks/useImageHistory';
-import { addPublicRecord, removePublicRecord } from '@/hooks/usePublicGallery';
 import { cn } from '@/lib/utils';
 import {
   DEFAULT_ASPECT_RATIO,
@@ -39,15 +35,9 @@ import {
 } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
 import { formatDateTime } from '@/utils/format';
-import {
-  getImageVisibilityActionLabel,
-  getImageVisibilityLabel,
-  getImageVisibilityUpdateMessage,
-} from '@/utils/imageVisibility';
 
 type AssetSort = 'newest' | 'oldest' | 'prompt';
 type DateFilter = 'all' | 'today' | 'week' | 'month';
-type VisibilityFilter = 'all' | 'public' | 'private';
 type AssetView = 'grid' | 'list';
 type DeleteTarget = { kind: 'entry'; entry: HistoryEntry } | { kind: 'bulk'; ids: string[] };
 
@@ -61,11 +51,6 @@ const DATE_OPTIONS: readonly { value: DateFilter; label: string }[] = [
   { value: 'today', label: '今天' },
   { value: 'week', label: '最近 7 天' },
   { value: 'month', label: '最近 30 天' },
-];
-const VISIBILITY_OPTIONS: readonly { value: VisibilityFilter; label: string }[] = [
-  { value: 'all', label: '全部范围' },
-  { value: 'public', label: '发现页可见' },
-  { value: 'private', label: '仅自己可见' },
 ];
 const DEFAULT_COLLECTIONS = ['灵感库', '客户项目', '待筛选'] as const;
 
@@ -90,7 +75,6 @@ export function HistoryView() {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<AssetSort>('newest');
   const [date, setDate] = useState<DateFilter>('all');
-  const [visibility, setVisibility] = useState<VisibilityFilter>('all');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [model, setModel] = useState('all');
   const models = useMemo(
@@ -139,8 +123,6 @@ export function HistoryView() {
         return false;
       }
       if (!matchesDate(record.createdAt, date)) return false;
-      if (visibility === 'public' && !record.isPublic) return false;
-      if (visibility === 'private' && record.isPublic) return false;
       if (favoritesOnly && !record.isFavorite) return false;
       if (model !== 'all' && record.model !== model) {
         return false;
@@ -152,7 +134,7 @@ export function HistoryView() {
       if (sort === 'prompt') return a.record.prompt.localeCompare(b.record.prompt, 'zh-CN');
       return b.record.createdAt.localeCompare(a.record.createdAt);
     });
-  }, [model, date, favoritesOnly, history.entries, query, sort, visibility]);
+  }, [model, date, favoritesOnly, history.entries, query, sort]);
 
   useEffect(() => {
     const available = new Set(history.records.map((record) => record.id));
@@ -164,21 +146,13 @@ export function HistoryView() {
 
   const updateEntry = async (
     entry: HistoryEntry,
-    updates: { isFavorite?: boolean; isPublic?: boolean; collection?: string | null },
+    updates: { isFavorite?: boolean; collection?: string | null },
   ): Promise<void> => {
     setMutating(true);
     try {
       const record = await history.update(entry.record.id, updates);
       if (selected?.record.id === record.id) setSelected({ ...entry, record });
-      if (updates.isPublic !== undefined) {
-        if (record.isPublic) addPublicRecord(record);
-        else removePublicRecord(record.id);
-      }
-      notify(
-        updates.isPublic === undefined
-          ? '资产已更新。'
-          : getImageVisibilityUpdateMessage(record.isPublic),
-      );
+      notify('资产已更新。');
     } catch (error) {
       notify(error instanceof Error ? error.message : '资产更新失败。', 'error');
     } finally {
@@ -215,7 +189,6 @@ export function HistoryView() {
       aspect: entry.record.aspectRatio ?? DEFAULT_ASPECT_RATIO,
       count: String(entry.record.count ?? DEFAULT_COUNT),
       resolution: entry.record.resolution ?? DEFAULT_IMAGE_RESOLUTION,
-      isPublic: String(entry.record.isPublic),
     });
     const referenceIds =
       entry.record.referenceIds ?? (entry.record.referenceId ? [entry.record.referenceId] : []);
@@ -356,12 +329,6 @@ export function HistoryView() {
                   value={date}
                   options={DATE_OPTIONS}
                   onValueChange={setDate}
-                />
-                <SelectMenu
-                  label="可见范围筛选"
-                  value={visibility}
-                  options={VISIBILITY_OPTIONS}
-                  onValueChange={setVisibility}
                 />
                 <SelectMenu
                   label="资产排序"
@@ -541,9 +508,6 @@ export function HistoryView() {
                 onCopyPrompt={(entry) => void copyPrompt(entry)}
                 onReuse={reuse}
                 onDownload={(entry) => void downloadUrl(entry.imageUrl, entry.record.id)}
-                onToggleVisibility={(entry) =>
-                  void updateEntry(entry, { isPublic: !entry.record.isPublic })
-                }
                 onRemove={(entry) => setDeleteTarget({ kind: 'entry', entry })}
               />
             ) : (
@@ -553,7 +517,6 @@ export function HistoryView() {
                   <span role="columnheader">图片</span>
                   <span role="columnheader">提示词</span>
                   <span role="columnheader">模型与尺寸</span>
-                  <span role="columnheader">可见范围</span>
                   <span role="columnheader">收藏集</span>
                   <span role="columnheader">时间</span>
                   <span role="columnheader">操作</span>
@@ -597,14 +560,6 @@ export function HistoryView() {
                         {entry.record.width} × {entry.record.height} ·{' '}
                         {entry.record.aspectRatio ?? '1:1'}
                       </small>
-                    </span>
-                    <span role="cell" className="asset-visibility" data-label="可见范围">
-                      {entry.record.isPublic ? (
-                        <Globe2 aria-hidden="true" />
-                      ) : (
-                        <Lock aria-hidden="true" />
-                      )}
-                      {getImageVisibilityLabel(entry.record.isPublic)}
                     </span>
                     <span role="cell" data-label="收藏集">
                       {entry.record.collection ?? '未分类'}
@@ -651,23 +606,6 @@ export function HistoryView() {
                           <RefreshCw aria-hidden="true" />
                         </Button>
                       </IconTooltip>
-                      <IconTooltip label={getImageVisibilityActionLabel(entry.record.isPublic)}>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={getImageVisibilityActionLabel(entry.record.isPublic)}
-                          onClick={() =>
-                            void updateEntry(entry, { isPublic: !entry.record.isPublic })
-                          }
-                        >
-                          {entry.record.isPublic ? (
-                            <EyeOff aria-hidden="true" />
-                          ) : (
-                            <Globe2 aria-hidden="true" />
-                          )}
-                        </Button>
-                      </IconTooltip>
                       <IconTooltip label="下载图片">
                         <Button
                           type="button"
@@ -706,9 +644,6 @@ export function HistoryView() {
         onClose={() => setSelected(null)}
         onCopyPrompt={(entry) => void copyPrompt(entry)}
         onReuse={reuse}
-        onToggleVisibility={(entry) =>
-          void updateEntry(entry, { isPublic: !entry.record.isPublic })
-        }
         onDelete={(entry) => {
           setSelected(null);
           setDeleteTarget({ kind: 'entry', entry });

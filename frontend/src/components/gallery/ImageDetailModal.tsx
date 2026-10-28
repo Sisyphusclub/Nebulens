@@ -1,4 +1,4 @@
-import { Copy, Download, EyeOff, Globe2, ImagePlus, Trash2, X } from 'lucide-react';
+import { Copy, Download, ImagePlus, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, type CSSProperties } from 'react';
 
 import { MorphicCardModal } from '@/components/premium/morphic-card-modal';
@@ -8,7 +8,6 @@ import { useImageDetailModalState } from '@/hooks/useImageDetailModalState';
 import { imageModelLabel, type HistoryEntry } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
 import { formatDateTime } from '@/utils/format';
-import { getImageVisibilityActionLabel, getImageVisibilityLabel } from '@/utils/imageVisibility';
 
 interface ImageDetailModalProps {
   entry: HistoryEntry | null;
@@ -18,7 +17,6 @@ interface ImageDetailModalProps {
   onCopyPrompt?: (entry: HistoryEntry) => void;
   onReuse?: (entry: HistoryEntry) => void;
   onUseAsReference?: (entry: HistoryEntry) => void;
-  onToggleVisibility?: (entry: HistoryEntry) => void;
   onDelete?: (entry: HistoryEntry) => void;
 }
 
@@ -30,7 +28,6 @@ export function ImageDetailModal({
   onCopyPrompt,
   onReuse,
   onUseAsReference,
-  onToggleVisibility,
   onDelete,
 }: ImageDetailModalProps) {
   const id = useRef(Symbol('image-detail'));
@@ -116,10 +113,6 @@ export function ImageDetailModal({
               <dt>时间</dt>
               <dd>{formatDateTime(entry.record.createdAt)}</dd>
             </div>
-            <div>
-              <dt>可见范围</dt>
-              <dd>{getImageVisibilityLabel(entry.record.isPublic)}</dd>
-            </div>
           </dl>
           <div className="detail-actions">
             <Button type="button" onClick={() => void downloadUrl(entry.imageUrl, filename)}>
@@ -142,16 +135,6 @@ export function ImageDetailModal({
               <Button type="button" variant="secondary" onClick={() => onUseAsReference(entry)}>
                 <ImagePlus aria-hidden="true" />
                 用作参考图
-              </Button>
-            ) : null}
-            {onToggleVisibility ? (
-              <Button type="button" variant="ghost" onClick={() => onToggleVisibility(entry)}>
-                {entry.record.isPublic ? (
-                  <EyeOff aria-hidden="true" />
-                ) : (
-                  <Globe2 aria-hidden="true" />
-                )}
-                {getImageVisibilityActionLabel(entry.record.isPublic)}
               </Button>
             ) : null}
             {canDelete && onDelete ? (

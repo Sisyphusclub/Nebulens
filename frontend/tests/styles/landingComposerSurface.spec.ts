@@ -67,7 +67,7 @@ describe('landing composer surface contract', () => {
 
   it('keeps the idle hero composer visible without painting a nested card', () => {
     const idleStart = baseStyles.indexOf(
-      '/* The hero and dock share the same beUI Agent Chat Input surface.',
+      '/* The hero composer uses the beUI Agent Chat Input surface;',
     );
     const idleContract = baseStyles.slice(
       idleStart,
@@ -90,10 +90,5 @@ describe('landing composer surface contract', () => {
       '.agent-chat-input.landing-composer.border-glow-card:focus-within',
     );
     expect(baseStyles).not.toContain('border-glow-liquid-glass');
-  });
-
-  it('keeps the complete gallery clear of the fixed composer without pagination', () => {
-    expect(baseStyles).not.toContain('.landing-gallery-pagination {');
-    expect(baseStyles).toContain('padding-bottom: calc(160px + env(safe-area-inset-bottom));');
   });
 });

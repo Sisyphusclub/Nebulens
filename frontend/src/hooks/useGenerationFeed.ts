@@ -13,7 +13,6 @@ import {
 import { readCount, readResolution } from '@/hooks/useGenerationSettings';
 import type { GenerateImageOptions } from '@/hooks/useImageGeneration';
 import type { GroupedBatch } from '@/hooks/useImageHistory';
-import { addPublicRecord } from '@/hooks/usePublicGallery';
 import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_IMAGE_MODEL,
@@ -127,7 +126,7 @@ export function useGenerationFeed({
         count: readCount(searchParams),
         aspectRatio: isAspectRatio(queryAspect) ? queryAspect : DEFAULT_ASPECT_RATIO,
         resolution: readResolution(searchParams),
-        isPublic: searchParams.get('isPublic') === 'true',
+        isPublic: false,
         referenceIds: [],
       }),
     });
@@ -178,7 +177,6 @@ export function useGenerationFeed({
         aspect: settings.aspectRatio,
         count: String(settings.count),
         resolution: settings.resolution,
-        isPublic: String(settings.isPublic),
       });
       if (settings.quality !== undefined) {
         nextSearch.set('quality', settings.quality);
@@ -237,16 +235,12 @@ export function useGenerationFeed({
         aspectRatio: settings.aspectRatio,
         resolution: settings.resolution,
         ...(settings.quality === undefined ? {} : { quality: settings.quality }),
-        isPublic: settings.isPublic,
         referenceIds: [...settings.referenceIds],
         ...(referenceFiles.length ? { referenceFiles: [...referenceFiles] } : {}),
       });
       if (generationUserId === null || currentUserIdRef.current !== generationUserId) {
         throw new Error(GENERATION_STOPPED_MESSAGE);
       }
-      result.entries.forEach((entry) => {
-        if (entry.record.isPublic) addPublicRecord(entry.record);
-      });
       const persistedReferenceIds = [
         ...new Set(
           result.entries.flatMap(

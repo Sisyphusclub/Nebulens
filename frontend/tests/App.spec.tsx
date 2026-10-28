@@ -44,13 +44,6 @@ const authMocks = vi.hoisted(
   }),
 );
 
-const publicGalleryMocks = vi.hoisted(() => ({
-  hasMore: false,
-  isHydrating: false,
-  hydrateError: null as Error | null,
-  loadMore: vi.fn(),
-}));
-
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
     user: authMocks.user,
@@ -112,21 +105,6 @@ vi.mock('@/hooks/useImageHistory', () => ({
     getEntry: vi.fn(),
     getBatch: vi.fn(),
   }),
-}));
-
-vi.mock('@/hooks/usePublicGallery', () => ({
-  usePublicGallery: () => ({
-    entries: [],
-    isHydrating: publicGalleryMocks.isHydrating,
-    hydrateError: publicGalleryMocks.hydrateError,
-    hasMore: publicGalleryMocks.hasMore,
-    refresh: vi.fn(),
-    loadMore: publicGalleryMocks.loadMore,
-    add: vi.fn(),
-    removeAsAdmin: vi.fn(),
-  }),
-  addPublicRecord: vi.fn(),
-  removePublicRecord: vi.fn(),
 }));
 
 vi.mock('@/hooks/useAdminUsers', () => ({
@@ -227,10 +205,6 @@ beforeEach(() => {
   authMocks.isAuthenticated = true;
   authMocks.isLoading = false;
   historyMocks.batches = [];
-  publicGalleryMocks.hasMore = false;
-  publicGalleryMocks.isHydrating = false;
-  publicGalleryMocks.hydrateError = null;
-  publicGalleryMocks.loadMore.mockResolvedValue(undefined);
   generation.generate.mockResolvedValue({
     batchId: 'landing-batch',
     aspectRatio: '16:9',
@@ -258,238 +232,9 @@ beforeEach(() => {
 });
 
 describe('React application routes', () => {
-  it('renders the complete GPT Image 2 gallery without pagination', async () => {
-    const user = userEvent.setup();
+  it('places creation templates between generation and assets in the landing navigation', async () => {
     const { container } = renderRoute('/');
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Turn your idea into images' }),
-    ).toBeInTheDocument();
-    const shinyHeadline = screen.getByText('into images');
-    expect(shinyHeadline).toHaveClass('animate-shiny');
-    expect(shinyHeadline.style.backgroundSize).toBe('200% auto');
-    expect(shinyHeadline.style.color).toBe('transparent');
-    expect(shinyHeadline.style.backgroundImage).toContain('linear-gradient(110deg');
-    expect(screen.queryByRole('heading', { level: 2, name: '今日创作' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 2, name: '画廊' })).not.toBeInTheDocument();
-    expect(container.querySelector('.artwork-wall')).toBeInTheDocument();
-    expect(container.querySelector('.landing-hero')).toHaveAttribute('data-layout', 'media-stage');
-    const initialCreationCards = container.querySelectorAll(
-      '.image-gallery-vertical__image-button',
-    );
-    const initialCreationImages = container.querySelectorAll(
-      '.landing-creations .image-gallery-vertical__columns img',
-    );
-    const animatedGalleryTracks = container.querySelectorAll(
-      '.landing-creations [style*="animation-name"]',
-    );
-    const desktopGallery = container.querySelector<HTMLElement>(
-      '.landing-creations [style*="--gallery-columns"]',
-    );
-    expect(desktopGallery?.style.getPropertyValue('--gallery-columns')).toBe('6');
-    expect(initialCreationCards).toHaveLength(169);
-    expect(initialCreationImages).toHaveLength(169);
-    expect(container.querySelectorAll('.image-gallery-vertical__columns')).toHaveLength(1);
-    expect(initialCreationCards[0]).toHaveAccessibleName(
-      '查看图片：雾中的混凝土运动场与奔跑者，冷灰建筑、湿润空气与柔和晨光',
-    );
-    expect(animatedGalleryTracks).toHaveLength(0);
-    expect(container.querySelector('.landing-creations style')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '加载更多' })).not.toBeInTheDocument();
-    const creationCards = container.querySelectorAll('.image-gallery-vertical__image-button');
-    const creationImages = container.querySelectorAll(
-      '.landing-creations .image-gallery-vertical__columns img',
-    );
-    const creationSources = new Set(
-      Array.from(creationCards).map((card) => card.querySelector('img')?.getAttribute('src')),
-    );
-    expect(creationSources).toHaveLength(169);
-    expect(creationImages).toHaveLength(169);
-    expect(Array.from(creationSources)).toEqual(
-      expect.arrayContaining([
-        '/media/hero-card-left.jpg',
-        '/media/hero-card-center.jpg',
-        '/media/hero-card-right.jpg',
-        '/media/hero-card-runner-detail.jpg',
-        '/media/hero-card-piano-detail.jpg',
-        '/media/hero-card-plants-detail.jpg',
-      ]),
-    );
-    const templateSources = Array.from(creationCards)
-      .slice(6)
-      .map((card) => card.querySelector('img')?.getAttribute('src'));
-    expect(templateSources.slice(0, 6).every((source) => !source?.includes('/anime-'))).toBe(true);
-    expect(templateSources.slice(-6).some((source) => source?.includes('/anime-'))).toBe(true);
-    expect(screen.queryByRole('button', { name: '上一张作品' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '下一张作品' })).not.toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toBeInTheDocument();
-    const landingAnchor = container.querySelector('.landing-composer-anchor');
-    const landingComposers = landingAnchor?.querySelectorAll('[data-slot="agent-chat-input"]');
-    const landingComposer = landingComposers?.item(0);
-    expect(landingAnchor).toBeInTheDocument();
-    expect(landingComposers).toHaveLength(1);
-    expect(landingAnchor?.querySelector('.landing-composer-layout')).not.toBeInTheDocument();
-    expect(
-      landingAnchor?.querySelectorAll(
-        ':scope > .landing-composer-hero > .landing-composer-content',
-      ),
-    ).toHaveLength(1);
-    expect(landingAnchor?.querySelector('.landing-liquidglass-target')).not.toBeInTheDocument();
-    expect(landingAnchor?.querySelector('.landing-liquidglass-backdrop')).not.toBeInTheDocument();
-    expect(landingAnchor?.querySelector('canvas')).not.toBeInTheDocument();
-    expect(landingComposer).not.toHaveAttribute('data-liquid-glass');
-    expect(
-      landingComposer?.querySelector('.border-glow-liquid-glass__effect'),
-    ).not.toBeInTheDocument();
-    expect(landingComposer?.querySelector('feDisplacementMap')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /选择智能体/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '添加参考图或技能' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /选择模型和推理强度/ })).not.toBeInTheDocument();
-    const modelTrigger = screen.getByRole('button', { name: '选择模型' });
-    expect(modelTrigger).toHaveTextContent('gpt-image-2');
-    await user.click(modelTrigger);
-    const modelPanel = document.querySelector('.generation-model-menu');
-    expect(modelPanel).toHaveClass('generation-control-panel', '!bg-popover');
-    expect(modelPanel).not.toHaveClass('!bg-background');
-    await user.click(modelTrigger);
-    const customTrigger = screen.getByRole('button', { name: '自定义生成参数' });
-    expect(customTrigger).toHaveTextContent('自定义');
-    expect(customTrigger).toHaveTextContent('智能 · 1K · medium · 1张');
-    expect(screen.queryByRole('group', { name: '画面比例' })).not.toBeInTheDocument();
-    await user.click(customTrigger);
-    const customPanel = screen.getByRole('menu', { name: '自定义生成参数' });
-    expect(customPanel).toHaveClass('generation-control-panel');
-    expect(customPanel).toHaveAttribute('data-side', 'bottom');
-    expect(within(customPanel).getByText('生成偏好')).toBeInTheDocument();
-    expect(within(customPanel).queryByText('其他设置')).not.toBeInTheDocument();
-    expect(within(customPanel).getByText('智能 · 1K · medium · 1张')).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: '画面比例' })).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: '生成张数' })).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: '清晰度' })).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: '质量' })).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('group', { name: '画面比例' }))
-        .getByRole('menuitemradio', { name: '16:9' })
-        .querySelector('.generation-custom-option__frame'),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: '发布到发现页' })).not.toBeChecked();
-    expect(screen.getByRole('status', { name: '剩余额度 16，总额度 20' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: '正在发生的想象' })).not.toBeInTheDocument();
-  });
-
-  it('automatically loads remaining public gallery pages without pagination', async () => {
-    publicGalleryMocks.hasMore = true;
-    renderRoute('/');
-
-    await screen.findByRole('textbox', { name: '首页创作提示词' });
-    await waitFor(() => expect(publicGalleryMocks.loadMore).toHaveBeenCalledTimes(1));
-    expect(screen.queryByRole('button', { name: '加载更多' })).not.toBeInTheDocument();
-  });
-
-  it('docks the landing composer while browsing the gallery and expands it on focus', async () => {
-    const user = userEvent.setup();
-    const { container } = renderRoute('/');
-    await screen.findByRole('textbox', { name: '首页创作提示词' });
-    const anchor = container.querySelector<HTMLElement>('.landing-composer-anchor');
-    expect(anchor).toHaveAttribute('data-docked', 'false');
-    expect(anchor).toHaveAttribute('data-expanded', 'false');
-
-    const scrollY = vi.spyOn(window, 'scrollY', 'get').mockReturnValue(520);
-    vi.spyOn(anchor!, 'getBoundingClientRect').mockReturnValue(new DOMRect(250, -220, 940, 137));
-    void act(() => window.dispatchEvent(new Event('scroll')));
-
-    await waitFor(() => expect(anchor).toHaveAttribute('data-docked', 'true'));
-    expect(anchor).toHaveAttribute('data-expanded', 'false');
-    expect(anchor?.querySelector('.landing-composer-hero')).toBeInTheDocument();
-    expect(anchor?.querySelector('.landing-composer-dock')).not.toBeInTheDocument();
-    await waitFor(() =>
-      expect(anchor?.querySelector('.landing-composer-dock')).toBeInTheDocument(),
-    );
-    expect(anchor?.querySelector('.landing-composer-hero')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('textbox', { name: '首页创作提示词' })).toHaveLength(1);
-
-    await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
-    expect(screen.getByRole('menu', { name: '自定义生成参数' })).toHaveAttribute(
-      'data-side',
-      'top',
-    );
-    await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
-
-    const promptInput = screen.getByRole('textbox', { name: '首页创作提示词' });
-    await user.click(promptInput);
-    expect(anchor).toHaveAttribute('data-expanded', 'true');
-    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toBe(promptInput);
-
-    act(() => promptInput.blur());
-    await waitFor(() => expect(anchor).toHaveAttribute('data-expanded', 'false'));
-
-    await user.click(promptInput);
-    expect(anchor).toHaveAttribute('data-expanded', 'true');
-
-    await user.type(promptInput, '冷白背景产品摄影');
-    expect(promptInput).toHaveTextContent('冷白背景产品摄影');
-    expect(anchor).toHaveAttribute('data-expanded', 'true');
-
-    await user.click(screen.getByRole('button', { name: '添加参考图或技能' }));
-    await user.click(screen.getByRole('menuitem', { name: '添加参考图' }));
-    const fileInput = container.querySelector<HTMLInputElement>('input[type="file"]');
-    await user.upload(
-      fileInput!,
-      new File(['transition-reference'], 'transition-reference.png', { type: 'image/png' }),
-    );
-    expect(screen.getByText('transition-reference.png')).toBeInTheDocument();
-
-    scrollY.mockReturnValue(80);
-    void act(() => window.dispatchEvent(new Event('scroll')));
-    await waitFor(() => expect(anchor).toHaveAttribute('data-docked', 'false'));
-    expect(anchor?.querySelector('.landing-composer-dock')).toBeInTheDocument();
-    expect(anchor?.querySelector('.landing-composer-hero')).not.toBeInTheDocument();
-    await waitFor(() =>
-      expect(anchor?.querySelector('.landing-composer-hero')).toBeInTheDocument(),
-    );
-    expect(anchor?.querySelector('.landing-composer-dock')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('textbox', { name: '首页创作提示词' })).toHaveLength(1);
-    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
-      '冷白背景产品摄影',
-    );
-    expect(screen.getByText('transition-reference.png')).toBeInTheDocument();
-  });
-
-  it('keeps dock focus and collapse behavior with reduced motion enabled', async () => {
-    vi.mocked(window.matchMedia).mockImplementation((query) => ({
-      matches: query === '(prefers-reduced-motion: reduce)',
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    }));
-    const user = userEvent.setup();
-    const { container } = renderRoute('/');
-    await screen.findByRole('textbox', { name: '首页创作提示词' });
-    const anchor = container.querySelector<HTMLElement>('.landing-composer-anchor');
-
-    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(520);
-    vi.spyOn(anchor!, 'getBoundingClientRect').mockReturnValue(new DOMRect(250, -220, 940, 137));
-    void act(() => window.dispatchEvent(new Event('scroll')));
-    await waitFor(() => expect(anchor).toHaveAttribute('data-docked', 'true'));
-    await waitFor(() =>
-      expect(anchor?.querySelector('.landing-composer-dock')).toBeInTheDocument(),
-    );
-
-    const promptInput = screen.getByRole('textbox', { name: '首页创作提示词' });
-    await user.click(promptInput);
-    expect(promptInput).toHaveFocus();
-    expect(anchor).toHaveAttribute('data-expanded', 'true');
-
-    act(() => promptInput.blur());
-    await waitFor(() => expect(anchor).toHaveAttribute('data-expanded', 'false'));
-  });
-
-  it('places creation templates between generation and assets in the landing navigation', () => {
-    const { container } = renderRoute('/');
-    const navigation = within(screen.getByRole('navigation', { name: '首页导航' }));
+    const navigation = within(await screen.findByRole('navigation', { name: '首页导航' }));
     const productLinks = navigation
       .getAllByRole('link')
       .map((link) => link.textContent)
@@ -634,7 +379,7 @@ describe('React application routes', () => {
         name: '2K',
       }),
     );
-    await user.click(screen.getByRole('switch', { name: '发布到发现页' }));
+    expect(screen.queryByRole('switch', { name: '发布到发现页' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '带着提示词开始创作' }));
 
     expect(await screen.findByRole('region', { name: '图像生成工作区' })).toBeInTheDocument();
@@ -647,10 +392,10 @@ describe('React application routes', () => {
         count: 2,
         resolution: '2k',
         quality: 'xhigh',
-        isPublic: true,
         referenceFiles: referenceFiles.slice(0, 4),
       }),
     );
+    expect(generation.generate.mock.calls[0]?.[0]).not.toHaveProperty('isPublic');
     expect(screen.getByRole('region', { name: '本次创作结果' })).toHaveTextContent(
       '雨夜的未来城市',
     );
@@ -658,7 +403,6 @@ describe('React application routes', () => {
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K');
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('xhigh');
     expect(screen.getByRole('status', { name: '2 张' })).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: '发布到发现页' })).toBeChecked();
   });
 
   it('opens and closes the shadcn mobile sidebar', async () => {
@@ -678,38 +422,6 @@ describe('React application routes', () => {
       expect(screen.queryByRole('navigation', { name: '首页导航' })).not.toBeInTheDocument();
     });
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
-  });
-
-  it('opens discover images with square, landscape, and portrait detail framing', async () => {
-    const user = userEvent.setup();
-    const { container } = renderRoute('/');
-    const creationCards = container.querySelectorAll<HTMLButtonElement>(
-      '.image-gallery-vertical__image-button',
-    );
-    expect(creationCards.length).toBeGreaterThanOrEqual(4);
-
-    for (const [index, ratio, width, height] of [
-      [0, 1024 / 1536, '1024', '1536'],
-      [1, 1536 / 1024, '1536', '1024'],
-      [3, 1, '1024', '1024'],
-    ] as const) {
-      await user.click(creationCards[index]!);
-
-      const dialog = screen.getByRole('dialog', { name: '图片详情' });
-      expect(dialog).toBeInTheDocument();
-      expect(dialog.querySelector(':scope > .image-detail__close')).toBeInTheDocument();
-      const media = dialog.querySelector<HTMLElement>(':scope > .image-detail__media');
-      expect(media).toBeInTheDocument();
-      expect(dialog).toHaveStyle(`--image-detail-image-ratio: ${ratio}`);
-      expect(media?.querySelector('img')).toHaveAttribute('width', width);
-      expect(media?.querySelector('img')).toHaveAttribute('height', height);
-      expect(dialog.querySelector(':scope > .image-detail__body')).toBeInTheDocument();
-
-      await user.click(screen.getByRole('button', { name: '关闭图片详情' }));
-      await waitFor(() => {
-        expect(screen.queryByRole('dialog', { name: '图片详情' })).not.toBeInTheDocument();
-      });
-    }
   });
 
   it('keeps the generation route and its operational controls', async () => {
@@ -1084,7 +796,7 @@ describe('React application routes', () => {
     );
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('16:9');
     expect(screen.getByRole('status', { name: '1 张' })).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: '发布到发现页' })).not.toBeChecked();
+    expect(screen.queryByRole('switch', { name: '发布到发现页' })).not.toBeInTheDocument();
     expect(generation.generate).not.toHaveBeenCalled();
   }, 10_000);
 

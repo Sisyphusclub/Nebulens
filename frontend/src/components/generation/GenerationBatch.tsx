@@ -3,8 +3,6 @@ import {
   CircleAlert,
   Copy,
   Download,
-  EyeOff,
-  Globe2,
   ImagePlus,
   RefreshCw,
   Trash2,
@@ -19,7 +17,6 @@ import { IconTooltip } from '@/components/ui/icon-tooltip';
 import type { AspectRatio, HistoryEntry } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
 import { splitGenerationError, type FeedItem } from '@/utils/generationFeed';
-import { getImageVisibilityActionLabel } from '@/utils/imageVisibility';
 
 function cssAspectRatio(aspectRatio: AspectRatio): string {
   return aspectRatio.replace(':', ' / ');
@@ -43,7 +40,6 @@ interface GenerationBatchProps {
   onDeleteBatch: () => void;
   onOpenEntry: (entry: HistoryEntry) => void;
   onUseAsReference: (entry: HistoryEntry) => void;
-  onToggleVisibility: (entry: HistoryEntry) => void;
   onDeleteEntry: (entry: HistoryEntry) => void;
 }
 
@@ -64,7 +60,6 @@ export function GenerationBatch({
   onDeleteBatch,
   onOpenEntry,
   onUseAsReference,
-  onToggleVisibility,
   onDeleteEntry,
 }: GenerationBatchProps) {
   return (
@@ -158,22 +153,6 @@ export function GenerationBatch({
                     onClick={() => void downloadUrl(entry.imageUrl, entry.record.id)}
                   >
                     <Download aria-hidden="true" />
-                  </Button>
-                </IconTooltip>
-                <IconTooltip label={getImageVisibilityActionLabel(entry.record.isPublic)}>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={getImageVisibilityActionLabel(entry.record.isPublic)}
-                    disabled={mutatingId === entry.record.id}
-                    onClick={() => onToggleVisibility(entry)}
-                  >
-                    {entry.record.isPublic ? (
-                      <EyeOff aria-hidden="true" />
-                    ) : (
-                      <Globe2 aria-hidden="true" />
-                    )}
                   </Button>
                 </IconTooltip>
                 <IconTooltip label="删除图片">

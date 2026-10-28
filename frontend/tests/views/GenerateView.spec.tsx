@@ -17,11 +17,6 @@ const authMocks = vi.hoisted(() => ({
   isAdmin: true,
 }));
 
-const publicGalleryMocks = vi.hoisted(() => ({
-  addPublicRecord: vi.fn(),
-  removePublicRecord: vi.fn(),
-}));
-
 const imageApiKeyMocks = vi.hoisted(
   (): {
     status: {
@@ -121,8 +116,6 @@ vi.mock('@/hooks/useImageHistory', () => ({
     update: historyMocks.update,
   }),
 }));
-
-vi.mock('@/hooks/usePublicGallery', () => publicGalleryMocks);
 
 import { ToastProvider } from '@/components/common/ToastProvider';
 import {
@@ -773,7 +766,6 @@ it('discards a completed response when the authenticated account changes', async
   });
 
   await waitFor(() => expect(container.querySelectorAll('.session-batch')).toHaveLength(0));
-  expect(publicGalleryMocks.addPublicRecord).not.toHaveBeenCalled();
 });
 
 it('keeps earlier batches above a newly submitted generation', async () => {
@@ -883,9 +875,9 @@ it('starts generation once when discovery navigation requests it', async () => {
       prompt: '雨夜城市',
       aspectRatio: '16:9',
       count: 2,
-      isPublic: true,
     }),
   );
+  expect(generation.generate.mock.calls[0]?.[0]).not.toHaveProperty('isPublic');
 });
 
 it('opens the right history flyout, searches, and loads a selected batch', async () => {
@@ -1133,7 +1125,7 @@ it('reveals a completed image only after its load event', async () => {
   expect(screen.queryByRole('button', { name: '查看图片' })).not.toBeInTheDocument();
   expect(within(batch!).getByRole('button', { name: '用作参考图' })).toBeInTheDocument();
   expect(within(batch!).getByRole('button', { name: '下载图片' })).toBeInTheDocument();
-  expect(within(batch!).getByRole('button', { name: '从发现页移除' })).toBeInTheDocument();
+  expect(within(batch!).queryByRole('button', { name: /发现页/ })).not.toBeInTheDocument();
   expect(within(batch!).getByRole('button', { name: '删除图片' })).toBeInTheDocument();
   expect(batch?.querySelector('.session-batch__header .session-batch__actions')).toBeNull();
   expect(preview).toHaveStyle({ aspectRatio: '1792 / 1024' });
@@ -1258,7 +1250,6 @@ it('edits a completed prompt and replaces the original generation batch', async 
       prompt: '霓虹雨夜建筑',
       aspectRatio: '16:9',
       count: 1,
-      isPublic: true,
       referenceIds: ['reference-one.png'],
     }),
   );
@@ -1488,7 +1479,6 @@ it('restores supported settings and preserves high-resolution snapshots', async 
       aspectRatio: '16:9',
       count: 2,
       resolution: '2k',
-      isPublic: true,
     }),
   );
 
@@ -1497,7 +1487,7 @@ it('restores supported settings and preserves high-resolution snapshots', async 
   expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('16:9');
   expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K');
   expect(screen.getByRole('status', { name: '2 张' })).toBeInTheDocument();
-  expect(screen.getByRole('switch', { name: '发布到发现页' })).toBeChecked();
+  expect(screen.queryByRole('switch', { name: '发布到发现页' })).not.toBeInTheDocument();
 });
 
 it('confirms single-image deletion with the beUI modal and supports cancel', async () => {

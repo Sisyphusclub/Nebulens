@@ -37,7 +37,6 @@ function templateSearchParams(template: CreationTemplate): string {
     aspect: template.settings.aspectRatio,
     count: String(template.settings.count),
     resolution: template.settings.resolution,
-    isPublic: String(template.settings.isPublic),
   }).toString();
 }
 

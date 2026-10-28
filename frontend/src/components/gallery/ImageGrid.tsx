@@ -2,8 +2,6 @@ import {
   Check,
   Copy,
   Download,
-  EyeOff,
-  Globe2,
   Heart,
   RefreshCw,
   Square,
@@ -15,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
 import { cn } from '@/lib/utils';
 import type { HistoryEntry } from '@/types/image';
-import { getImageVisibilityActionLabel } from '@/utils/imageVisibility';
 
 interface ImageGridProps {
   entries: readonly HistoryEntry[];
@@ -27,7 +24,6 @@ interface ImageGridProps {
   onCopyPrompt?: (entry: HistoryEntry) => void;
   onReuse?: (entry: HistoryEntry) => void;
   onDownload?: (entry: HistoryEntry) => void;
-  onToggleVisibility?: (entry: HistoryEntry) => void;
   onRemove?: (entry: HistoryEntry) => void;
 }
 
@@ -41,7 +37,6 @@ export function ImageGrid({
   onCopyPrompt,
   onReuse,
   onDownload,
-  onToggleVisibility,
   onRemove,
 }: ImageGridProps) {
   if (!entries.length) {
@@ -110,23 +105,6 @@ export function ImageGrid({
                       onClick={() => onDownload(entry)}
                     >
                       <Download aria-hidden="true" />
-                    </Button>
-                  </IconTooltip>
-                ) : null}
-                {onToggleVisibility ? (
-                  <IconTooltip label={getImageVisibilityActionLabel(entry.record.isPublic)}>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="icon"
-                      aria-label={getImageVisibilityActionLabel(entry.record.isPublic)}
-                      onClick={() => onToggleVisibility(entry)}
-                    >
-                      {entry.record.isPublic ? (
-                        <EyeOff aria-hidden="true" />
-                      ) : (
-                        <Globe2 aria-hidden="true" />
-                      )}
                     </Button>
                   </IconTooltip>
                 ) : null}

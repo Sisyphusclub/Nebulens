@@ -1,9 +1,4 @@
-import {
-  ASPECT_RATIOS,
-  type AspectRatio,
-  type ImageResolution,
-  type HistoryEntry,
-} from '@/types/image';
+import { ASPECT_RATIOS, type AspectRatio, type ImageResolution } from '@/types/image';
 
 import manifest from './creationTemplates.json';
 
@@ -76,22 +71,4 @@ export function orderTemplatesWithAnimeLast(
   }
 
   return [...general, ...anime];
-}
-
-export function templateToHistoryEntry(template: CreationTemplate): HistoryEntry {
-  return {
-    record: {
-      id: `nebulens-${template.id}`,
-      createdAt: '2026-08-26T00:00:00.000Z',
-      prompt: template.prompt,
-      model: 'gpt-image-2',
-      aspectRatio: template.settings.aspectRatio,
-      width: template.width,
-      height: template.height,
-      count: template.settings.count,
-      resolution: template.settings.resolution,
-      isPublic: true,
-    },
-    imageUrl: template.imageUrl,
-  };
 }

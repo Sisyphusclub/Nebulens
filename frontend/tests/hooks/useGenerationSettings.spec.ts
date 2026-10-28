@@ -16,7 +16,8 @@ describe('useGenerationSettings', () => {
     expect(result.current.count).toBe(1);
     expect(result.current.resolution).toBe('2k');
     expect(result.current.aspect).toBe('16:9');
-    expect(result.current.isPublic).toBe(true);
+    // Discover publishing is retired, so a legacy isPublic=true link has no effect.
+    expect(result.current).not.toHaveProperty('isPublic');
   });
 
   it('re-syncs when the search params change', () => {
@@ -57,7 +58,7 @@ describe('useGenerationSettings', () => {
       count: 2,
       aspectRatio: '3:2',
       resolution: '4k',
-      isPublic: true,
+      isPublic: false,
       referenceIds: ['ref-1'],
     });
   });

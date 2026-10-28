@@ -16,7 +16,6 @@ import {
   buildApiError,
   buildApiUrl,
   parseJsonResponse,
-  publicFetch,
 } from './httpClient';
 
 export interface HistoryListResponse {
@@ -34,37 +33,8 @@ export async function fetchHistory(): Promise<ImageRecord[]> {
   return payload.records;
 }
 
-export async function fetchPublicHistory(
-  input: {
-    cursor?: string;
-    limit?: number;
-  } = {},
-): Promise<HistoryListResponse> {
-  const query = new URLSearchParams();
-  if (input.cursor !== undefined) query.set('cursor', input.cursor);
-  if (input.limit !== undefined) query.set('limit', String(input.limit));
-  const suffix = query.size > 0 ? `?${query.toString()}` : '';
-  const response = await publicFetch(buildApiUrl(`/api/history/public${suffix}`));
-  const payload = await parseJsonResponse(response);
-  if (!response.ok) throw buildApiError(response.status, payload);
-  if (!isHistoryListResponse(payload)) {
-    throw new ImageApiError(response.status, 'INVALID_RESPONSE', '发现页返回了无法识别的响应。');
-  }
-  return payload;
-}
-
 export async function deleteHistoryRecord(id: string): Promise<void> {
   const response = await authedFetch(buildApiUrl(`/api/history/${encodeURIComponent(id)}`), {
-    method: 'DELETE',
-  });
-  if (!response.ok && response.status !== 204) {
-    const payload = await parseJsonResponse(response);
-    throw buildApiError(response.status, payload);
-  }
-}
-
-export async function deletePublicGalleryRecordAsAdmin(id: string): Promise<void> {
-  const response = await authedFetch(buildApiUrl(`/api/history/public/${encodeURIComponent(id)}`), {
     method: 'DELETE',
   });
   if (!response.ok && response.status !== 204) {

@@ -72,7 +72,6 @@ export function useGenerationSettings(searchParams: URLSearchParams) {
       readResolution(searchParams),
     ),
   );
-  const [isPublic, setIsPublic] = useState(() => searchParams.get('isPublic') === 'true');
 
   useEffect(() => {
     setModel(normalizeImageModel(searchParams.get('model')));
@@ -81,8 +80,6 @@ export function useGenerationSettings(searchParams: URLSearchParams) {
     setQuality(readQuality(searchParams));
     setAspect(normalizeAspectChoiceForResolution(readAspectChoice(searchParams), queryResolution));
     setCount(readCount(searchParams));
-    const queryPublic = searchParams.get('isPublic');
-    if (queryPublic === 'true' || queryPublic === 'false') setIsPublic(queryPublic === 'true');
   }, [searchParams]);
 
   const updateResolution = (next: ImageResolution): void => {
@@ -96,7 +93,6 @@ export function useGenerationSettings(searchParams: URLSearchParams) {
     setResolution(settings.resolution);
     setQuality(settings.quality ?? DEFAULT_IMAGE_QUALITY);
     setAspect(normalizeAspectChoiceForResolution(settings.aspectRatio, settings.resolution));
-    setIsPublic(settings.isPublic);
   };
 
   const buildSnapshot = async (
@@ -110,7 +106,8 @@ export function useGenerationSettings(searchParams: URLSearchParams) {
     aspectRatio: await resolveAspectChoice(aspect, referenceFiles),
     resolution,
     ...(supportsImageQuality(model) ? { quality } : {}),
-    isPublic,
+    // Publishing to Discover was retired; snapshots keep the field for stored sessions.
+    isPublic: false,
     referenceIds,
   });
 
@@ -125,8 +122,6 @@ export function useGenerationSettings(searchParams: URLSearchParams) {
     setQuality,
     aspect,
     setAspect,
-    isPublic,
-    setIsPublic,
     applySnapshot,
     buildSnapshot,
   };

@@ -37,7 +37,6 @@ import {
   LATEST_BATCH_COMPOSER_GAP,
   useLatestBatchVisibility,
 } from '@/hooks/useLatestBatchVisibility';
-import { addPublicRecord, removePublicRecord } from '@/hooks/usePublicGallery';
 import { fetchOutputBlob } from '@/services/api/imagesApi';
 import {
   DEFAULT_IMAGE_RESOLUTION,
@@ -49,7 +48,6 @@ import { downloadUrl } from '@/utils/download';
 import type { FeedItem } from '@/utils/generationFeed';
 import { readInitialReferenceFiles, requestsAutoGeneration } from '@/utils/generationRouteState';
 import { prefersReducedMotion, scrollToGenerationBatch } from '@/utils/generationScroll';
-import { getImageVisibilityUpdateMessage } from '@/utils/imageVisibility';
 
 type DeleteTarget = { kind: 'entry'; entry: HistoryEntry } | { kind: 'batch'; item: FeedItem };
 
@@ -80,8 +78,6 @@ export function GenerateView() {
     setQuality,
     aspect,
     setAspect,
-    isPublic,
-    setIsPublic,
     applySnapshot,
     buildSnapshot,
   } = useGenerationSettings(searchParams);
@@ -427,27 +423,6 @@ export function GenerateView() {
     }
   };
 
-  const toggleVisibility = async (entry: HistoryEntry): Promise<void> => {
-    setMutatingId(entry.record.id);
-    try {
-      const record = await history.update(entry.record.id, { isPublic: !entry.record.isPublic });
-      setFeed((current) =>
-        current.map((item) => ({
-          ...item,
-          entries: item.entries.map((candidate) =>
-            candidate.record.id === record.id ? { ...candidate, record } : candidate,
-          ),
-        })),
-      );
-      if (record.isPublic) addPublicRecord(record);
-      else removePublicRecord(record.id);
-      notify(getImageVisibilityUpdateMessage(record.isPublic));
-    } catch (error) {
-      notify(error instanceof Error ? error.message : '可见性更新失败。', 'error');
-    } finally {
-      setMutatingId(null);
-    }
-  };
 
   const downloadBatch = async (item: FeedItem): Promise<void> => {
     try {
@@ -667,7 +642,6 @@ export function GenerateView() {
               count={count}
               resolution={resolution}
               quality={quality}
-              isPublic={isPublic}
               disabled={generation.isLoading}
               customPanelSide="top"
               onModelChange={setModel}
@@ -675,7 +649,6 @@ export function GenerateView() {
               onCountChange={setCount}
               onResolutionChange={updateResolution}
               onQualityChange={setQuality}
-              onPublicChange={setIsPublic}
               trailingContent={
                 <span className="studio-toolbar-meta">
                   <span
@@ -748,7 +721,6 @@ export function GenerateView() {
               onDeleteBatch={() => setDeleteTarget({ kind: 'batch', item })}
               onOpenEntry={setSelected}
               onUseAsReference={(entry) => void addAsReference(entry)}
-              onToggleVisibility={(entry) => void toggleVisibility(entry)}
               onDeleteEntry={(entry) => setDeleteTarget({ kind: 'entry', entry })}
             />
           ))}
@@ -770,7 +742,6 @@ export function GenerateView() {
           setSelected(null);
         }}
         onUseAsReference={(entry) => void addAsReference(entry).then(() => setSelected(null))}
-        onToggleVisibility={(entry) => void toggleVisibility(entry)}
         onDelete={(entry) => {
           setSelected(null);
           setDeleteTarget({ kind: 'entry', entry });

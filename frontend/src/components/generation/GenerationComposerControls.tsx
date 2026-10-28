@@ -14,7 +14,6 @@ import {
 } from '@/components/premium/animated-dropdown';
 import { Button } from '@/components/ui/button';
 import { SelectMenu } from '@/components/ui/select-menu';
-import { Switch } from '@/components/ui/switch';
 import {
   ASPECT_CHOICES,
   DEFAULT_IMAGE_MODEL,
@@ -31,7 +30,6 @@ import {
   type ImageResolution,
   supportsImageQuality,
 } from '@/types/image';
-import { DISCOVERY_PUBLISH_LABEL } from '@/utils/imageVisibility';
 
 const MODEL_OPTIONS = IMAGE_MODELS.map((value) => ({ value, label: IMAGE_MODEL_LABELS[value] }));
 
@@ -45,7 +43,6 @@ interface GenerationComposerControlsProps {
   count: number;
   resolution: ImageResolution;
   quality: ImageQuality;
-  isPublic: boolean;
   disabled?: boolean;
   customPanelSide?: 'top' | 'bottom';
   trailingContent?: ReactNode;
@@ -54,7 +51,6 @@ interface GenerationComposerControlsProps {
   onCountChange: (count: number) => void;
   onResolutionChange: (resolution: ImageResolution) => void;
   onQualityChange: (quality: ImageQuality) => void;
-  onPublicChange: (isPublic: boolean) => void;
 }
 
 export function GenerationComposerControls({
@@ -63,7 +59,6 @@ export function GenerationComposerControls({
   count,
   resolution,
   quality,
-  isPublic,
   disabled = false,
   customPanelSide = 'bottom',
   trailingContent,
@@ -72,7 +67,6 @@ export function GenerationComposerControls({
   onCountChange,
   onResolutionChange,
   onQualityChange,
-  onPublicChange,
 }: GenerationComposerControlsProps) {
   const visibleAspect = aspect === 'auto' ? '智能' : aspect;
   const qualitySupported = supportsImageQuality(model);
@@ -249,17 +243,6 @@ export function GenerationComposerControls({
       <output className="sr-only" aria-label={`${count} 张`}>
         {count}
       </output>
-
-      <label className="generation-public-toggle" data-mode={isPublic ? 'public' : 'private'}>
-        <Switch
-          aria-label={DISCOVERY_PUBLISH_LABEL}
-          checked={isPublic}
-          disabled={disabled}
-          onCheckedChange={onPublicChange}
-        />
-        <span className="generation-public-toggle__track" aria-hidden="true" />
-        <span>{DISCOVERY_PUBLISH_LABEL}</span>
-      </label>
 
       {trailingContent ? <div className="generation-controls-tail">{trailingContent}</div> : null}
     </div>

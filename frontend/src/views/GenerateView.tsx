@@ -423,7 +423,6 @@ export function GenerateView() {
     }
   };
 
-
   const downloadBatch = async (item: FeedItem): Promise<void> => {
     try {
       for (const [index, entry] of item.entries.entries()) {

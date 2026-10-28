@@ -1,12 +1,4 @@
-import {
-  Check,
-  Copy,
-  Download,
-  Heart,
-  RefreshCw,
-  Square,
-  Trash2,
-} from 'lucide-react';
+import { Check, Copy, Download, Heart, RefreshCw, Square, Trash2 } from 'lucide-react';
 
 import { MorphicCard } from '@/components/premium/morphic-card-modal';
 import { Button } from '@/components/ui/button';

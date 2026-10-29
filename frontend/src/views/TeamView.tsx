@@ -153,7 +153,7 @@ export function TeamView() {
                   aria-label="描述你要找的作品"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="描述你要找的作品，AI 帮你在成果库里找，比如：奶茶新品海报"
+                  placeholder="描述你要找的作品，如：奶茶新品海报"
                 />
               </label>
             </div>

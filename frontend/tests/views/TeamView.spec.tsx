@@ -160,7 +160,10 @@ it('lets AI search the library by describing what is needed', async () => {
   renderView();
   await screen.findByRole('button', { name: '查看图片：周年庆海报' });
 
-  await user.type(screen.getByRole('searchbox', { name: '描述你要找的作品' }), '奶茶新品海报');
+  const searchbox = screen.getByRole('searchbox', { name: '描述你要找的作品' });
+  // Short enough to fit a phone-width field without cutting the example off.
+  expect(searchbox).toHaveAttribute('placeholder', '描述你要找的作品，如：奶茶新品海报');
+  await user.type(searchbox, '奶茶新品海报');
 
   expect(
     await screen.findByRole('button', { name: '查看图片：奶茶新品上市海报' }),

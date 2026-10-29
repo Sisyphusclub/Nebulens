@@ -186,7 +186,7 @@ describe('imageGeneration.service', () => {
         { provider, quotaPool },
       );
 
-      expect(quotaPool.reserve).toHaveBeenCalledWith(expectedCost, { scope: 'permanent' });
+      expect(quotaPool.reserve).toHaveBeenCalledWith(expectedCost, { scope: 'all' });
       expect(commit).toHaveBeenCalledWith(expectedCost);
       expect(release).not.toHaveBeenCalled();
     },

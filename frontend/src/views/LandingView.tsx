@@ -88,10 +88,10 @@ export function LandingView() {
   const [aspect, setAspect] = useState<AspectChoice>(DEFAULT_ASPECT_CHOICE);
   const [count, setCount] = useState(DEFAULT_COUNT);
   const [resolution, setResolution] = useState<ImageResolution>(DEFAULT_IMAGE_RESOLUTION);
-  /** 2K needs a 2K/4K key or enough permanent credits; without either the request is refused. */
+  /** 2K runs on a 2K/4K key, or on regular quota when enough credits remain for one image. */
   const canUse2k =
     imageApiKey.status?.highResConfigured === true ||
-    (quota?.permanentRemaining ?? 0) >= imageGenerationCreditCost('2k', model);
+    (quota?.remaining ?? 0) >= imageGenerationCreditCost('2k', model);
   const [quality, setQuality] = useState<ImageQuality>(DEFAULT_IMAGE_QUALITY);
   const [imageApiKeySettingsOpen, setImageApiKeySettingsOpen] = useState(false);
   const accountName = user?.username ?? user?.name ?? '账户';

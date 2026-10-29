@@ -91,10 +91,10 @@ export function GenerateView() {
     applySnapshot,
     buildSnapshot,
   } = useGenerationSettings(searchParams);
-  /** 2K needs a 2K/4K key or enough permanent credits; without either the request is refused. */
+  /** 2K runs on a 2K/4K key, or on regular quota when enough credits remain for one image. */
   const canUse2k =
     imageApiKey.status?.highResConfigured === true ||
-    (quota?.permanentRemaining ?? 0) >= imageGenerationCreditCost('2k', model);
+    (quota?.remaining ?? 0) >= imageGenerationCreditCost('2k', model);
   const [reusedReferenceIds, setReusedReferenceIds] = useState<string[]>(() =>
     readReferenceIds(searchParams),
   );
@@ -143,14 +143,9 @@ export function GenerateView() {
     resolution === DEFAULT_IMAGE_RESOLUTION
       ? imageApiKey.status?.keySuffix
       : imageApiKey.status?.highResKeySuffix;
-  const activeQuotaRemaining =
-    resolution === DEFAULT_IMAGE_RESOLUTION
-      ? quota?.remaining
-      : (quota?.permanentRemaining ?? quota?.remaining);
-  const activeQuotaTotal =
-    resolution === DEFAULT_IMAGE_RESOLUTION
-      ? quota?.total
-      : (quota?.permanentTotal ?? quota?.total);
+  // 2K/4K draw on the same quota as standard images.
+  const activeQuotaRemaining = quota?.remaining;
+  const activeQuotaTotal = quota?.total;
   const {
     feed,
     isFeedSynced,
@@ -735,11 +730,7 @@ export function GenerateView() {
                   <span
                     className="studio-toolbar-quota"
                     aria-label={
-                      activeImageApiKeyConfigured
-                        ? '当前使用个人 API Key'
-                        : resolution === DEFAULT_IMAGE_RESOLUTION
-                          ? '今日生成额度'
-                          : '2K/4K 永久积分'
+                      activeImageApiKeyConfigured ? '当前使用个人 API Key' : '今日生成额度'
                     }
                   >
                     {imageApiKey.isLoading
@@ -749,7 +740,7 @@ export function GenerateView() {
                         : quotaLoading
                           ? '额度：同步中'
                           : isAuthenticated
-                            ? `${resolution === DEFAULT_IMAGE_RESOLUTION ? '额度' : '永久积分'}：${activeQuotaRemaining ?? '—'} / ${activeQuotaTotal ?? '—'}`
+                            ? `额度：${activeQuotaRemaining ?? '—'} / ${activeQuotaTotal ?? '—'}`
                             : '额度：登录后查看'}
                   </span>
                 </span>

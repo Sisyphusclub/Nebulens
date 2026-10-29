@@ -237,7 +237,7 @@ it('uses the Key status for the currently selected resolution group', () => {
     </MemoryRouter>,
   );
 
-  expect(screen.getByLabelText('2K/4K 永久积分')).toHaveTextContent('永久积分：18 / 20');
+  expect(screen.getByLabelText('今日生成额度')).toHaveTextContent('额度：18 / 20');
 });
 
 it('keeps the generation workspace prompt plain and focused', () => {

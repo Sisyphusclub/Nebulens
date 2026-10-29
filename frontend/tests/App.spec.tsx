@@ -9,7 +9,6 @@ const generation = vi.hoisted(() => ({
 }));
 
 const quotaMocks = vi.hoisted(() => ({
-  permanentRemaining: 0,
   checkIn: vi.fn().mockResolvedValue({
     total: 25,
     remaining: 21,
@@ -66,7 +65,6 @@ vi.mock('@/hooks/useImageQuota', () => ({
       remaining: 16,
       checkedInToday: false,
       dailyCheckInReward: 5,
-      permanentRemaining: quotaMocks.permanentRemaining,
     },
     isLoading: false,
     error: null,
@@ -219,7 +217,6 @@ beforeEach(() => {
   authMocks.isLoading = false;
   historyMocks.batches = [];
   recommendationMocks.items = [];
-  quotaMocks.permanentRemaining = 0;
   generation.generate.mockResolvedValue({
     batchId: 'landing-batch',
     aspectRatio: '16:9',
@@ -332,7 +329,6 @@ describe('React application routes', () => {
 
   it('suggests 2K on the homepage when the scene brief has a lot of text', async () => {
     const user = userEvent.setup();
-    quotaMocks.permanentRemaining = 10;
     renderRoute('/');
 
     await user.click(await screen.findByRole('button', { name: '活动海报' }));

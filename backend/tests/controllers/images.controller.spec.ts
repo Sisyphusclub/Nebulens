@@ -490,7 +490,7 @@ describe('POST /api/images/generate', () => {
     expect(quota.body.remaining).toBe(17);
   });
 
-  it('rejects high-resolution generation when only check-in credits remain', async () => {
+  it('lets check-in credits pay for high-resolution generation', async () => {
     const { provider } = fakeProvider();
     const userId = `high-res-check-in-only-${randomUUID()}`;
     const app = buildApp(provider, stubAuth(userId));
@@ -503,21 +503,18 @@ describe('POST /api/images/generate', () => {
     expect(checkIn.body.remaining).toBe(5);
 
     const highResolution = await request(app).post('/api/images/generate/high-res').send({
-      prompt: '签到积分不能生成 2K',
+      prompt: '签到积分也能生成 2K',
       resolution: '2k',
     });
-    expect(highResolution.status).toBe(429);
-    expect(highResolution.body.error).toMatchObject({
-      code: 'QUOTA_EXHAUSTED',
-      details: { requested: 3, remaining: 0, quotaScope: 'permanent' },
-    });
-    expect(provider.generate).not.toHaveBeenCalled();
+    expect(highResolution.status).toBe(200);
+    expect(provider.generate).toHaveBeenCalledWith(expect.objectContaining({ resolution: '2k' }));
+    expect((await request(app).get('/api/images/quota')).body.remaining).toBe(2);
 
     const standard = await request(app)
       .post('/api/images/generate')
-      .send({ prompt: '签到积分仍可生成 1K' });
+      .send({ prompt: '剩余积分继续生成 1K' });
     expect(standard.status).toBe(200);
-    expect((await request(app).get('/api/images/quota')).body.remaining).toBe(4);
+    expect((await request(app).get('/api/images/quota')).body.remaining).toBe(1);
   });
 
   it('lets a non-admin use the saved 2K/4K credential without consuming site quota', async () => {

@@ -139,12 +139,12 @@ describe('useImageGeneration', () => {
     expect(result.current.lastBatch).toBeNull();
   });
 
-  it('explains that high-resolution generation requires permanent credits', async () => {
+  it('uses the regular quota message when high-resolution generation runs out', async () => {
     api.generateImage.mockRejectedValueOnce(
       Object.assign(new ImageApiError(429, 'QUOTA_EXHAUSTED', 'quota exhausted'), {
         status: 429,
         code: 'QUOTA_EXHAUSTED',
-        details: { quotaScope: 'permanent' },
+        details: { quotaScope: 'all' },
       }),
     );
     const { result } = renderHook(() => useImageGeneration());
@@ -152,7 +152,7 @@ describe('useImageGeneration', () => {
     await act(async () => {
       await expect(
         result.current.generate({ prompt: 'high resolution', resolution: '2k' }),
-      ).rejects.toThrow('未配置 2K/4K 分组 Key，且当前永久积分不足。');
+      ).rejects.toThrow('GPT 号池剩余额度不足，请稍后补充额度后再试。');
     });
   });
 

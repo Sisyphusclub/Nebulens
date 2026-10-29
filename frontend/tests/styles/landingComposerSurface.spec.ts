@@ -75,13 +75,16 @@ describe('landing composer surface contract', () => {
     );
 
     expect(glassStart).toBeGreaterThan(-1);
-    // Light tint plus a light blur keeps the artwork wall visible through the composer.
-    expect(glass).toContain('backdrop-filter: blur(14px) saturate(1.6);');
+    // Wanxiang's light tint and 4px blur keep what is behind clearly visible.
+    expect(glass).toContain('--card-bg: rgb(18 22 30 / 0.2) !important;');
+    expect(glass).toContain('backdrop-filter: blur(4px) saturate(1.15);');
+    // No blurred halo behind the glass: it tinted the glass and hid the backdrop.
+    expect(glass).not.toContain('.liquid-glass-frame::after');
     expect(glass).toContain('rgb(255 255 255 / 0.13) 0 0 2px 1px inset');
     expect(glass).toContain('rgb(255 255 255 / 0.07) 0 0 8px 2px inset');
     // Chromium adds edge refraction; other engines keep the plain frosted glass.
     expect(glass).toMatch(
-      /\[data-refraction='true'\][^{]*\{[^}]*backdrop-filter: url\(#liquid-glass-refraction\) blur\(14px\) saturate\(1\.6\);/s,
+      /\[data-refraction='true'\][^{]*\{[^}]*backdrop-filter: url\(#liquid-glass-refraction\) blur\(4px\) saturate\(1\.15\);/s,
     );
     expect(glass).toContain('background: transparent !important;');
   });
@@ -100,7 +103,10 @@ describe('landing composer surface contract', () => {
     );
     expect(glass).toContain('@property --liquid-glass-rim-angle');
     expect(glass).toContain('conic-gradient(\n    from var(--liquid-glass-rim-angle)');
-    expect(glass).toContain('animation: liquid-glass-rim-spin 6s linear infinite;');
+    expect(glass).toContain('animation: liquid-glass-rim-spin 12s linear infinite;');
+    // A quiet rim: faint at rest, still restrained when focused.
+    expect(glass).toMatch(/\.liquid-glass-frame::before\s*\{[^}]*opacity: 0\.3;/s);
+    expect(glass).toMatch(/\.liquid-glass-frame:focus-within::before\s*\{[^}]*opacity: 0\.6;/s);
     expect(glass).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{[^@]*animation: none;/s);
     expect(baseStyles).not.toContain('border-glow-liquid-glass');
   });

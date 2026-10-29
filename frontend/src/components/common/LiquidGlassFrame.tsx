@@ -38,7 +38,7 @@ export function LiquidGlassFrame({
           <feDisplacementMap
             in="SourceGraphic"
             in2="noise"
-            scale={28}
+            scale={16}
             xChannelSelector="R"
             yChannelSelector="G"
           />

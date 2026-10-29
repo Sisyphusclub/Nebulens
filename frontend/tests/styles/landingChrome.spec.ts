@@ -11,19 +11,40 @@ function rule(selector: string): string {
 }
 
 describe('landing navigation chrome', () => {
-  it('groups the collapsed rail into one glass capsule over the artwork wall', () => {
-    const rail = rule(".group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu']");
+  it('wraps the whole collapsed rail in one compact glass capsule', () => {
+    const rail = rule(".group[data-state='collapsed'] .landing-sidebar nav");
+    const divider =
+      baseStyles.match(
+        /\.landing-sidebar\s+nav\s+\[data-sidebar='group'\]\s*\+\s*\[data-sidebar='group'\]\s*\{([^}]+)\}/,
+      )?.[1] ?? '';
 
-    expect(rail).toContain('border-radius: 24px;');
+    expect(rail).toContain('border-radius: 22px;');
+    expect(rail).toContain('padding: 6px;');
     expect(rail).toContain('background: rgb(26 30 40 / 0.42);');
     expect(rail).toContain('backdrop-filter: blur(10px) saturate(1.2);');
+    // The utility group joins the same capsule behind a hairline instead of floating apart.
+    expect(divider).toContain('border-top: 1px solid rgb(255 255 255 / 0.08);');
+    expect(baseStyles).not.toMatch(
+      /\.group\[data-state='collapsed'\] \.landing-sidebar \[data-sidebar='menu'\]\s*\{[^}]*background:/,
+    );
+  });
+
+  it('nests compact rail items inside the capsule corners', () => {
+    const desktopStart = baseStyles.indexOf('@media (min-width: 861px) {\n  .landing-sidebar');
+    const desktop = baseStyles.slice(desktopStart, baseStyles.indexOf('\n}\n', desktopStart));
+
+    expect(desktop).toContain('width: 64px !important;');
+    expect(desktop).toContain('height: 58px !important;');
+    // 22px capsule radius = 16px item radius + 6px capsule padding.
+    expect(desktop).toContain('border-radius: 16px;');
+    expect(desktop).toMatch(/\[data-sidebar='menu'\]\s*\{\s*gap: 2px;/);
   });
 
   it('marks the active rail item with a light glass pill and keeps labels legible', () => {
     const active = rule(".landing-sidebar [data-sidebar='menu-button'][data-active='true']");
     const item = rule(".landing-sidebar [data-sidebar='menu-button']");
 
-    expect(active).toContain('background: rgb(255 255 255 / 0.14);');
+    expect(active).toContain('background: rgb(255 255 255 / 0.12);');
     expect(item).toContain('color: rgb(242 244 247 / 0.78);');
   });
 

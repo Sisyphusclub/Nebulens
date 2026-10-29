@@ -322,6 +322,16 @@ describe('React application routes', () => {
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('3:4');
   });
 
+  it('suggests 2K on the homepage when the scene brief has a lot of text', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+
+    await user.click(await screen.findByRole('button', { name: '活动海报' }));
+    await user.click(screen.getByRole('button', { name: '切换到 2K' }));
+
+    expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K');
+  });
+
   it('shows the functional homepage model selector', async () => {
     const user = userEvent.setup();
     renderRoute('/');

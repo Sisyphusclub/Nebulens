@@ -8,6 +8,7 @@ import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCo
 import { GenerationHistoryFlyout } from '@/components/generation/GenerationHistoryFlyout';
 import { GenerationComposerControls } from '@/components/generation/GenerationComposerControls';
 import { GenerationBatch } from '@/components/generation/GenerationBatch';
+import { TextResolutionHint } from '@/components/generation/TextResolutionHint';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
@@ -654,6 +655,11 @@ export function GenerateView() {
             onDismiss={() => setDismissedInspirationFor(prompt.trim())}
           />
         ) : null}
+        <TextResolutionHint
+          prompt={prompt}
+          resolution={resolution}
+          onUse2k={() => updateResolution('2k')}
+        />
         {reusedReferenceIds.length ? (
           <div className="reused-references">
             <span>沿用 {reusedReferenceIds.length} 张历史参考图</span>

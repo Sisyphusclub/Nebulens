@@ -11092,3 +11092,34 @@ video {
     display: none;
   }
 }
+
+/* Suggests 2K beside the composer when a prompt carries a lot of text. */
+.text-resolution-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+}
+.text-resolution-hint svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+.text-resolution-hint .button {
+  height: 26px;
+  padding: 0 8px;
+  color: var(--primary);
+  font-size: 12px;
+}
+.landing-hero__content .text-resolution-hint {
+  width: 100%;
+  max-width: 940px;
+  justify-content: center;
+  margin: 14px 0 0;
+  color: rgb(242 244 247 / 0.72);
+}
+.landing-hero__content .text-resolution-hint .button {
+  color: rgb(170 200 255 / 0.95);
+}

@@ -2120,3 +2120,23 @@ it('lets the inspiration be dismissed until the prompt changes, and hides it whi
   );
   expect(recommendationMocks.calls.at(-1)?.enabled).toBe(false);
 });
+
+it('suggests 2K for a text-heavy prompt and switches the resolution', async () => {
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter
+      initialEntries={[
+        `/generate?prompt=${encodeURIComponent('主标题“周年庆典”，副标题“全场第二件半价”，底部写“活动时间 11月1日至11月7日”')}`,
+      ]}
+    >
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await user.click(await screen.findByRole('button', { name: '切换到 2K' }));
+
+  expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K');
+  expect(screen.queryByRole('button', { name: '切换到 2K' })).not.toBeInTheDocument();
+});

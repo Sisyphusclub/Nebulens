@@ -7,6 +7,7 @@ import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { LandingGenerationControls } from '@/components/landing/LandingGenerationControls';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
+import { TextResolutionHint } from '@/components/generation/TextResolutionHint';
 import { LandingRecentCreations } from '@/components/landing/LandingRecentCreations';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingSceneShortcuts } from '@/components/landing/LandingSceneShortcuts';
@@ -265,6 +266,11 @@ export function LandingView() {
               </div>
             </div>
           </div>
+          <TextResolutionHint
+            prompt={prompt}
+            resolution={resolution}
+            onUse2k={() => updateResolution('2k')}
+          />
           {recommendations.length > 0 ? (
             <LandingRecommendations
               recommendations={recommendations}

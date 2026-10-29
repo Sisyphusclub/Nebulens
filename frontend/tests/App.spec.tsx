@@ -960,7 +960,8 @@ describe('React application routes', () => {
       expect(within(preview).getByRole('button', { name: '关闭模板预览' })).toHaveFocus(),
     );
     await user.click(within(preview).getByRole('button', { name: '使用模板' }));
-    expect(screen.getByRole('region', { name: '图像生成工作区' })).toBeInTheDocument();
+    // The generate route loads lazily, so wait for it rather than assuming it is cached.
+    expect(await screen.findByRole('region', { name: '图像生成工作区' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent(
       'Generate a high-end photorealistic render of a future-facing biotech laboratory',
     );

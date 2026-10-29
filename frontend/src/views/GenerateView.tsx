@@ -36,6 +36,7 @@ import { useImageHistory, type GroupedBatch } from '@/hooks/useImageHistory';
 import { useGenerationFeed } from '@/hooks/useGenerationFeed';
 import { readReferenceIds, useGenerationSettings } from '@/hooks/useGenerationSettings';
 import { useImageQuota } from '@/hooks/useImageQuota';
+import { useCreateBarReserve } from '@/hooks/useCreateBarReserve';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
 import {
@@ -267,6 +268,7 @@ export function GenerateView() {
     composerRef,
     feedRef: sessionFeedRef,
   });
+  useCreateBarReserve(composerRef, feed.length > 0);
 
   const regenerateReplacingBatch = (item: FeedItem, promptValue: string): void => {
     const settings: GenerationSettingsSnapshot = {

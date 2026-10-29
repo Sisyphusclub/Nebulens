@@ -4284,7 +4284,7 @@ video {
   justify-content: flex-end;
 }
 .generation-console.has-results {
-  padding-bottom: 250px;
+  padding-bottom: var(--studio-create-bar-reserve, 250px);
 }
 .studio-create-bar {
   position: relative;
@@ -5405,7 +5405,7 @@ video {
     padding: 18px 20px 88px;
   }
   .generation-console.has-results {
-    padding-bottom: 300px;
+    padding-bottom: var(--studio-create-bar-reserve, 300px);
   }
   .studio-create-bar {
     padding-top: 4px;
@@ -5511,7 +5511,7 @@ video {
     overflow-x: clip;
   }
   .generation-console.has-results {
-    padding-bottom: 330px;
+    padding-bottom: var(--studio-create-bar-reserve, 330px);
   }
   .generation-console.has-results .studio-create-bar {
     bottom: calc(74px + env(safe-area-inset-bottom));
@@ -5745,7 +5745,7 @@ video {
     padding: 14px 18px 92px;
   }
   .generation-console.has-results {
-    padding-bottom: 300px;
+    padding-bottom: var(--studio-create-bar-reserve, 300px);
   }
   .generation-console.has-results .studio-create-bar {
     right: 18px;
@@ -5776,7 +5776,7 @@ video {
     padding-left: 14px;
   }
   .generation-console.has-results {
-    padding-bottom: 330px;
+    padding-bottom: var(--studio-create-bar-reserve, 330px);
   }
   .generation-console.has-results .studio-create-bar {
     right: 14px;
@@ -7343,7 +7343,7 @@ video {
 /* Generation results share the fixed composer's baseline: requests stay on the
    right while pending, completed, and failed media all begin from the left. */
 .generation-console.has-results {
-  padding-bottom: 300px;
+  padding-bottom: var(--studio-create-bar-reserve, 300px);
   overflow-x: clip;
 }
 .session-feed {
@@ -7657,7 +7657,7 @@ video {
 
 @media (max-width: 860px) {
   .generation-console.has-results {
-    padding-bottom: 340px;
+    padding-bottom: var(--studio-create-bar-reserve, 340px);
   }
   .session-feed {
     gap: 48px;
@@ -7670,7 +7670,7 @@ video {
 
 @media (max-width: 560px) {
   .generation-console.has-results {
-    padding-bottom: 390px;
+    padding-bottom: var(--studio-create-bar-reserve, 390px);
   }
   .session-feed {
     gap: 40px;

@@ -479,10 +479,12 @@ video {
   background: var(--background);
   color: var(--foreground);
 }
+/* The hero is as tall as its content, so the skills follow right after the
+   composer instead of below a screen of empty artwork wall. */
 .landing-hero {
   position: relative;
-  height: 100svh;
-  min-height: 760px;
+  padding-top: clamp(136px, 15svh, 164px);
+  padding-bottom: clamp(56px, 8svh, 96px);
   overflow: hidden;
   background: var(--background);
 }
@@ -495,8 +497,8 @@ video {
       180deg,
       rgb(3 5 10 / 0.34) 0,
       transparent 20%,
-      transparent 58%,
-      rgb(3 5 10 / 0.9) 100%
+      transparent 52%,
+      var(--background) 100%
     ),
     color-mix(in oklch, var(--background) 5%, transparent);
 }
@@ -890,8 +892,7 @@ video {
   }
 }
 .landing-hero__content {
-  position: absolute;
-  top: clamp(136px, 15svh, 164px);
+  position: relative;
   left: calc(50% + 64px);
   z-index: 9;
   display: flex;
@@ -3076,10 +3077,12 @@ video {
   .landing-account-actions {
     display: none;
   }
+  .landing-hero {
+    padding-top: 132px;
+  }
   .landing-hero__content {
     left: 50%;
     width: min(900px, calc(100% - 40px));
-    top: 132px;
     margin-left: calc(-1 * min(450px, (100vw - 40px) / 2));
   }
   .landing-hero__content h1 {
@@ -3316,10 +3319,9 @@ video {
     height: min(300px, calc(100svh - 520px));
   }
   .landing-hero {
-    min-height: 760px;
+    padding-top: 96px;
   }
   .landing-hero__content {
-    top: 96px;
     width: calc(100% - 28px);
     gap: 10px;
   }

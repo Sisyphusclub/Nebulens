@@ -16,6 +16,7 @@ import {
   updateImageRecordForUser,
   updateImageRecordsForUser,
 } from '../services/history.service.js';
+import { recommendTeamImages } from '../services/recommendation.service.js';
 import { IMAGE_CATEGORIES } from '../types/imageCategory.js';
 
 import '../types/express.js';
@@ -37,6 +38,11 @@ const publicHistoryQuerySchema = z.object({
 
 const teamHistoryQuerySchema = publicHistoryQuerySchema.extend({
   category: z.enum(IMAGE_CATEGORIES).optional(),
+});
+
+const recommendationQuerySchema = z.object({
+  q: z.string().trim().min(1).max(500),
+  limit: z.coerce.number().int().min(1).max(12).default(6),
 });
 
 const imageMetadataUpdateSchema = z
@@ -98,6 +104,7 @@ export function buildHistoryController(): {
   list: (req: Request, res: Response, next: NextFunction) => void;
   listPublic: (_req: Request, res: Response, next: NextFunction) => void;
   listTeam: (req: Request, res: Response, next: NextFunction) => void;
+  recommend: (req: Request, res: Response, next: NextFunction) => void;
   removeOne: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   removePublicAsAdmin: (req: Request, res: Response, next: NextFunction) => void;
   removeBatch: (req: Request, res: Response, next: NextFunction) => Promise<void>;
@@ -112,6 +119,18 @@ export function buildHistoryController(): {
         const records = listImageRecordsForUser(user.id);
         const body: HistoryListResponse = { records };
         res.status(200).json(body);
+      } catch (err) {
+        next(err);
+      }
+    },
+
+    recommend(req, res, next) {
+      try {
+        requireUser(req);
+        const query = parseQuery(recommendationQuerySchema, req.query);
+        res.status(200).json({
+          recommendations: recommendTeamImages({ query: query.q, limit: query.limit }),
+        });
       } catch (err) {
         next(err);
       }

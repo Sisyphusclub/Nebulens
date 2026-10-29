@@ -33,6 +33,11 @@ export function buildHistoryRouter(deps: HistoryRouterDeps = {}): Router {
   router.use(deps.authMiddleware ?? requireAuth);
 
   // GET /api/history/team → teammates' shared images, newest first, optionally by category.
+  // GET /api/history/team/recommendations?q= → shared work relevant to a described need.
+  router.get('/team/recommendations', (req, res, next) => {
+    controller.recommend(req, res, next);
+  });
+
   router.get('/team', (req, res, next) => {
     controller.listTeam(req, res, next);
   });

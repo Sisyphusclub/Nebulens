@@ -256,3 +256,54 @@ describe('analysis after generation', () => {
     ).not.toHaveProperty('analysisStatus');
   });
 });
+
+describe('GET /api/history/team/recommendations', () => {
+  it('recommends shared teammate work for a need, with the author and a reason', async () => {
+    const suffix = randomUUID().slice(0, 8);
+    const owner = createApp({
+      provider: fakeProvider(),
+      authMiddleware: stubAuth(`rec-owner-${suffix}`, `bob_${suffix}`),
+    });
+    const asker = createApp({
+      provider: fakeProvider(),
+      authMiddleware: stubAuth(`rec-ask-${suffix}`),
+    });
+    const sharedId = await generate(owner, {
+      prompt: `奶茶新品海报 ${suffix}`,
+      category: 'poster',
+    });
+    const privateId = await generate(owner, {
+      prompt: `奶茶新品海报 ${suffix} 私有`,
+      category: 'poster',
+      isShared: false,
+    });
+
+    const res = await request(asker)
+      .get('/api/history/team/recommendations')
+      .query({ q: `奶茶新品海报 ${suffix}` });
+
+    expect(res.status).toBe(200);
+    const ids = res.body.recommendations.map((item: { record: { id: string } }) => item.record.id);
+    expect(ids).toContain(sharedId);
+    expect(ids).not.toContain(privateId);
+    expect(res.body.recommendations[0]).toMatchObject({
+      ownerName: `bob_${suffix}`,
+      reason: expect.stringContaining('海报'),
+    });
+  });
+
+  it('validates the query', async () => {
+    const app = createApp({
+      provider: fakeProvider(),
+      authMiddleware: stubAuth(`rec-q-${randomUUID()}`),
+    });
+    expect((await request(app).get('/api/history/team/recommendations')).status).toBe(400);
+    expect(
+      (
+        await request(app)
+          .get('/api/history/team/recommendations')
+          .query({ q: 'x'.repeat(501) })
+      ).status,
+    ).toBe(400);
+  });
+});

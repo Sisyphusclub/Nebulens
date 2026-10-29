@@ -338,6 +338,36 @@ export function listPublicImageRecords(input: {
   };
 }
 
+function selectTeamRows() {
+  return db
+    .select({
+      record: imageRecords,
+      username: user.displayUsername,
+      handle: user.username,
+      name: user.name,
+    })
+    .from(imageRecords)
+    .innerJoin(user, eq(user.id, imageRecords.userId));
+}
+
+function toTeamDTO(row: {
+  record: typeof imageRecords.$inferSelect;
+  username: string | null;
+  handle: string | null;
+  name: string;
+}): TeamImageRecordDTO {
+  return { ...toPublicDTO(row.record), ownerName: row.username ?? row.handle ?? row.name };
+}
+
+/** The given images that are still shared, in no particular order. */
+export function listTeamRecordDTOs(ids: readonly string[]): TeamImageRecordDTO[] {
+  if (ids.length === 0) return [];
+  return selectTeamRows()
+    .where(and(eq(imageRecords.isShared, true), inArray(imageRecords.id, [...ids])))
+    .all()
+    .map(toTeamDTO);
+}
+
 /** Shared images from every teammate, newest first, optionally narrowed to one category. */
 export function listTeamImageRecords(input: {
   cursor?: string;
@@ -358,15 +388,7 @@ export function listTeamImageRecords(input: {
           ),
         ),
   ];
-  const rows = db
-    .select({
-      record: imageRecords,
-      username: user.displayUsername,
-      handle: user.username,
-      name: user.name,
-    })
-    .from(imageRecords)
-    .innerJoin(user, eq(user.id, imageRecords.userId))
+  const rows = selectTeamRows()
     .where(and(...conditions))
     .orderBy(desc(imageRecords.createdAt), desc(imageRecords.id))
     .limit(input.limit + 1)
@@ -374,10 +396,7 @@ export function listTeamImageRecords(input: {
   const pageRows = rows.slice(0, input.limit);
   const last = pageRows.at(-1)?.record;
   return {
-    records: pageRows.map((row) => ({
-      ...toPublicDTO(row.record),
-      ownerName: row.username ?? row.handle ?? row.name,
-    })),
+    records: pageRows.map(toTeamDTO),
     ...(rows.length > input.limit && last !== undefined
       ? { nextCursor: encodePublicCursor(last.createdAt, last.id) }
       : {}),

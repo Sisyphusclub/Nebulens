@@ -4886,6 +4886,14 @@ video {
   font-size: 15px;
   font-weight: 600;
 }
+/* The template's original English title, quietly under the Chinese one. */
+.template-tile__subtitle {
+  overflow: hidden;
+  color: oklch(0.96 0 0 / 0.62);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .template-tile__actions {
   position: absolute;
   top: 10px;
@@ -4961,6 +4969,11 @@ video {
 .template-detail__body > span {
   color: var(--muted-foreground);
   font-size: 11px;
+}
+.template-detail__body .template-detail__subtitle {
+  margin: -4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
 }
 .template-detail__body h2 {
   margin: 0;

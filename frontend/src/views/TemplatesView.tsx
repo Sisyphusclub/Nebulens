@@ -59,7 +59,7 @@ export function TemplatesView() {
       if (favoritesOnly && !favoriteIds.includes(template.id)) return false;
       return (
         !normalizedQuery ||
-        `${template.title} ${template.category} ${template.prompt}`
+        `${template.title} ${template.englishTitle} ${template.category} ${template.prompt}`
           .toLocaleLowerCase('zh-CN')
           .includes(normalizedQuery)
       );
@@ -190,6 +190,7 @@ export function TemplatesView() {
                     <span className="template-tile__label">
                       <small>{used ? '最近使用' : template.category}</small>
                       <strong>{template.title}</strong>
+                      <span className="template-tile__subtitle">{template.englishTitle}</span>
                     </span>
                   </Button>
                 </MorphicCard>
@@ -294,6 +295,7 @@ export function TemplatesView() {
                 <div className="template-detail__body">
                   <span>{selected.category}</span>
                   <h2 id="template-detail-title">{selected.title}</h2>
+                  <p className="template-detail__subtitle">{selected.englishTitle}</p>
                   <p>{selected.prompt}</p>
                   <a
                     className="template-detail__source"

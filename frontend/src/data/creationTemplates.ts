@@ -1,5 +1,6 @@
 import { ASPECT_RATIOS, type AspectRatio, type ImageResolution } from '@/types/image';
 
+import { CREATION_TEMPLATE_TITLES_ZH } from './creationTemplateTitlesZh';
 import manifest from './creationTemplates.json';
 
 export interface CreationTemplateSettings {
@@ -11,7 +12,10 @@ export interface CreationTemplateSettings {
 
 export interface CreationTemplate {
   id: string;
+  /** Chinese display title. */
   title: string;
+  /** The template's original English title, shown as a subtitle. */
+  englishTitle: string;
   category: string;
   imageUrl: string;
   prompt: string;
@@ -35,7 +39,8 @@ function normalizeTemplate(value: (typeof manifest)[number]): CreationTemplate {
   }
   return {
     id: value.id,
-    title: value.title,
+    title: CREATION_TEMPLATE_TITLES_ZH[value.id] ?? value.title,
+    englishTitle: value.title,
     category: value.category,
     imageUrl: value.imageUrl,
     prompt: value.prompt,

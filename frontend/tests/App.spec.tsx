@@ -272,6 +272,18 @@ describe('React application routes', () => {
     expect(original).toContain('/media/templates/');
   });
 
+  it('names templates in Chinese with the English original as a subtitle', async () => {
+    const user = userEvent.setup();
+    renderRoute('/templates');
+
+    const card = await screen.findByRole('button', { name: '预览模板：亲自然生物科技实验室' });
+    expect(card).toHaveTextContent('Biophilic Biotech Lab');
+
+    // The English title still finds the template.
+    await user.type(screen.getByRole('searchbox', { name: '搜索创作模板' }), 'Biophilic');
+    expect(screen.getAllByRole('button', { name: /预览模板：/ })).toHaveLength(1);
+  });
+
   it('places creation templates between generation and assets in the landing navigation', async () => {
     const { container } = renderRoute('/');
     const navigation = within(await screen.findByRole('navigation', { name: '首页导航' }));
@@ -950,7 +962,7 @@ describe('React application routes', () => {
     await user.click(screen.getByRole('button', { name: '模板排序' }));
     await user.click(screen.getByRole('menuitemradio', { name: '名称排序' }));
     expect(screen.getAllByRole('button', { name: /预览模板：/ })[0]).toHaveAccessibleName(
-      '预览模板：16-panel anime expression grid',
+      '预览模板：《潮汐兄弟》19 页漫画样张',
     );
     await user.click(screen.getByRole('button', { name: '模板排序' }));
     await user.click(screen.getByRole('menuitemradio', { name: '精选排序' }));

@@ -8,7 +8,7 @@ import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCo
 import { GenerationHistoryFlyout } from '@/components/generation/GenerationHistoryFlyout';
 import { GenerationComposerControls } from '@/components/generation/GenerationComposerControls';
 import { GenerationBatch } from '@/components/generation/GenerationBatch';
-import { TextResolutionHint } from '@/components/generation/TextResolutionHint';
+import { AiInsightBar } from '@/components/generation/AiInsightBar';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
@@ -655,10 +655,11 @@ export function GenerateView() {
             onDismiss={() => setDismissedInspirationFor(prompt.trim())}
           />
         ) : null}
-        <TextResolutionHint
+        <AiInsightBar
           prompt={prompt}
           resolution={resolution}
           canUse2k={canUse2k}
+          similarCount={inspiration.length}
           onUse2k={() => updateResolution('2k')}
         />
         {reusedReferenceIds.length ? (

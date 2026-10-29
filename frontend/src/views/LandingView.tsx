@@ -7,7 +7,7 @@ import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { LandingGenerationControls } from '@/components/landing/LandingGenerationControls';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
-import { TextResolutionHint } from '@/components/generation/TextResolutionHint';
+import { AiInsightBar } from '@/components/generation/AiInsightBar';
 import { LandingRecentCreations } from '@/components/landing/LandingRecentCreations';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingSkillCapsules, LandingSkillGallery } from '@/components/landing/LandingSkills';
@@ -274,10 +274,11 @@ export function LandingView() {
               </div>
             </div>
           </div>
-          <TextResolutionHint
+          <AiInsightBar
             prompt={prompt}
             resolution={resolution}
             canUse2k={canUse2k}
+            similarCount={recommendations.length}
             onUse2k={() => updateResolution('2k')}
           />
           {recommendations.length > 0 ? (

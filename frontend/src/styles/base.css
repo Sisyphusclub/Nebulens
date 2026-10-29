@@ -11108,34 +11108,57 @@ video {
   }
 }
 
-/* Suggests 2K beside the composer when a prompt carries a lot of text. */
-.text-resolution-hint {
+/* What the AI understood from the prompt, shown beside the composer while typing. */
+.ai-insight {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin: 0 0 8px;
   color: var(--muted-foreground);
   font-size: 12.5px;
 }
-.text-resolution-hint svg {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 auto;
+.ai-insight__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(110deg, #3d81e3, #ae9ae6 60%, #f8d8d5);
+  color: #0b0d12;
+  padding: 2px 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
-.text-resolution-hint .button {
-  height: 26px;
+.ai-insight__badge svg {
+  width: 12px;
+  height: 12px;
+}
+.ai-insight__fact {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--foreground);
+  padding: 2px 9px;
+}
+.ai-insight .ai-insight__action {
+  height: 24px;
   padding: 0 8px;
   color: var(--primary);
   font-size: 12px;
 }
-.landing-hero__content .text-resolution-hint {
+.landing-hero__content .ai-insight {
   width: 100%;
   max-width: 940px;
   justify-content: center;
   margin: 14px 0 0;
-  color: rgb(242 244 247 / 0.72);
+  color: rgb(242 244 247 / 0.7);
 }
-.landing-hero__content .text-resolution-hint .button {
+.landing-hero__content .ai-insight__fact {
+  border-color: rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.05);
+  color: rgb(242 244 247 / 0.92);
+}
+.landing-hero__content .ai-insight .ai-insight__action {
   color: rgb(170 200 255 / 0.95);
 }
 

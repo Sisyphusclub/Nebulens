@@ -4650,6 +4650,9 @@ video {
   color: var(--muted-foreground);
   font-size: 12px;
 }
+.session-result__media {
+  position: relative;
+}
 .session-result__actions {
   position: absolute;
   right: 10px;

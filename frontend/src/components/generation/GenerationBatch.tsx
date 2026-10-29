@@ -134,7 +134,46 @@ export function GenerationBatch({
               className={`session-result${openEntryId === entry.record.id ? ' is-detail-open' : ''}`}
               key={entry.record.id}
             >
-              <SessionResultPreview entry={entry} onOpen={() => onOpenEntry(entry)} />
+              {/* Actions sit on the image, so they never cover the text check below it. */}
+              <div className="session-result__media">
+                <SessionResultPreview entry={entry} onOpen={() => onOpenEntry(entry)} />
+                <div className="session-result__actions">
+                  <IconTooltip label="用作参考图">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="用作参考图"
+                      onClick={() => onUseAsReference(entry)}
+                    >
+                      <ImagePlus aria-hidden="true" />
+                    </Button>
+                  </IconTooltip>
+                  <IconTooltip label="下载图片">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="下载图片"
+                      onClick={() => void downloadUrl(entry.imageUrl, entry.record.id)}
+                    >
+                      <Download aria-hidden="true" />
+                    </Button>
+                  </IconTooltip>
+                  <IconTooltip label="删除图片">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="删除图片"
+                      disabled={mutatingId === entry.record.id}
+                      onClick={() => onDeleteEntry(entry)}
+                    >
+                      <Trash2 aria-hidden="true" />
+                    </Button>
+                  </IconTooltip>
+                </div>
+              </div>
               {entry.record.textCheck ? (
                 <TextCheckNotice
                   check={entry.record.textCheck}
@@ -142,42 +181,6 @@ export function GenerationBatch({
                   onFix={() => onFixText(entry)}
                 />
               ) : null}
-              <div className="session-result__actions">
-                <IconTooltip label="用作参考图">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="用作参考图"
-                    onClick={() => onUseAsReference(entry)}
-                  >
-                    <ImagePlus aria-hidden="true" />
-                  </Button>
-                </IconTooltip>
-                <IconTooltip label="下载图片">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="下载图片"
-                    onClick={() => void downloadUrl(entry.imageUrl, entry.record.id)}
-                  >
-                    <Download aria-hidden="true" />
-                  </Button>
-                </IconTooltip>
-                <IconTooltip label="删除图片">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="删除图片"
-                    disabled={mutatingId === entry.record.id}
-                    onClick={() => onDeleteEntry(entry)}
-                  >
-                    <Trash2 aria-hidden="true" />
-                  </Button>
-                </IconTooltip>
-              </div>
             </article>
           ))}
         </div>

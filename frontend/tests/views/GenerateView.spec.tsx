@@ -2041,6 +2041,12 @@ it('fixes wrong text by regenerating from the image with an edit prompt', async 
     );
 
     expect(await screen.findByText('“中杯16元”被写成了“中杯15元”')).toBeInTheDocument();
+    // The hover actions belong to the image, so they never cover the text check below it.
+    const media = screen
+      .getByRole('button', { name: '下载图片' })
+      .closest('.session-result__media');
+    expect(media).not.toBeNull();
+    expect(media).not.toContainElement(screen.getByRole('button', { name: '修正文字' }));
     await user.click(screen.getByRole('button', { name: '修正文字' }));
 
     await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));

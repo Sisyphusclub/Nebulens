@@ -492,7 +492,7 @@ video {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgb(3 5 10 / 0.52) 0, transparent 13%, transparent 86%),
+    linear-gradient(90deg, rgb(3 5 10 / 0.4) 0, transparent 13%, transparent 86%),
     linear-gradient(
       180deg,
       rgb(3 5 10 / 0.34) 0,
@@ -11085,7 +11085,7 @@ video {
   gap: 16px;
   transform: rotateX(24deg) rotateZ(-9deg);
   transform-origin: 50% 40%;
-  opacity: 0.5;
+  opacity: 0.78;
 }
 .artwork-wall__column {
   overflow: hidden;
@@ -11121,13 +11121,13 @@ video {
   background:
     radial-gradient(
       60% 46% at 50% 38%,
-      rgb(5 6 10 / 0.82) 0%,
-      rgb(5 6 10 / 0.55) 55%,
+      rgb(5 6 10 / 0.58) 0%,
+      rgb(5 6 10 / 0.3) 55%,
       transparent 100%
     ),
     linear-gradient(
       180deg,
-      rgb(5 6 10 / 0.55) 0%,
+      rgb(5 6 10 / 0.4) 0%,
       transparent 22%,
       transparent 70%,
       rgb(5 6 10 / 0.7) 100%

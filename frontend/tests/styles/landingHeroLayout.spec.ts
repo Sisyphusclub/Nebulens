@@ -23,3 +23,15 @@ describe('landing hero layout', () => {
     expect(content).not.toMatch(/^\s*top:/m);
   });
 });
+
+describe('landing artwork wall brightness', () => {
+  it('keeps the artwork wall bright enough to read as a gallery', () => {
+    const plane = rule('.artwork-wall__plane');
+    const scrim = rule('.artwork-wall__scrim');
+
+    expect(plane).toContain('opacity: 0.78;');
+    // The centre stays a little darker for the headline, but no longer near-black.
+    expect(scrim).toContain('rgb(5 6 10 / 0.58) 0%');
+    expect(scrim).not.toContain('rgb(5 6 10 / 0.82)');
+  });
+});

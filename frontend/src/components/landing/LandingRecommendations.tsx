@@ -22,16 +22,16 @@ export function LandingRecommendations({
 }) {
   if (recommendations.length === 0) return null;
   return (
-    <section className={cn('landing-recommendations', className)} aria-label="团队里相似的成果">
+    <section className={cn('landing-recommendations', className)} aria-label="成果库里相似的作品">
       <div className="landing-recommendations__header">
-        <p className="landing-recommendations__label">团队里相似的成果</p>
+        <p className="landing-recommendations__label">成果库里相似的作品</p>
         {onDismiss ? (
           <Button
             type="button"
             variant="ghost"
             size="icon"
             className="landing-recommendations__close"
-            aria-label="关闭团队推荐"
+            aria-label="关闭成果库推荐"
             onClick={onDismiss}
           >
             <X aria-hidden="true" />

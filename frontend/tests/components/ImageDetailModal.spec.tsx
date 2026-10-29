@@ -59,7 +59,7 @@ describe('ImageDetailModal team details', () => {
     const dialog = screen.getByRole('dialog', { name: '图片详情' });
 
     expect(within(dialog).getByText('海报')).toBeInTheDocument();
-    expect(within(dialog).getByText('团队可见')).toBeInTheDocument();
+    expect(within(dialog).getByText('已入库')).toBeInTheDocument();
     expect(within(dialog).getByText('奶茶新品海报')).toBeInTheDocument();
     expect(within(dialog).getByRole('list', { name: '标签' })).toHaveTextContent('奶茶清新');
   });

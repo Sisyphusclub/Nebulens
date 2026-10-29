@@ -2083,7 +2083,7 @@ it('offers similar teammate work above the composer and reuses its prompt', asyn
   );
 
   await user.type(screen.getByRole('textbox', { name: '图像提示词' }), '周年庆海报');
-  const panel = await screen.findByRole('region', { name: '团队里相似的成果' });
+  const panel = await screen.findByRole('region', { name: '成果库里相似的作品' });
   await user.click(within(panel).getByRole('button', { name: '用这个提示词' }));
 
   expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent(
@@ -2104,11 +2104,11 @@ it('lets the inspiration be dismissed until the prompt changes, and hides it whi
   );
   const editor = screen.getByRole('textbox', { name: '图像提示词' });
   await user.type(editor, '周年庆海报');
-  await user.click(await screen.findByRole('button', { name: '关闭团队推荐' }));
-  expect(screen.queryByRole('region', { name: '团队里相似的成果' })).not.toBeInTheDocument();
+  await user.click(await screen.findByRole('button', { name: '关闭成果库推荐' }));
+  expect(screen.queryByRole('region', { name: '成果库里相似的作品' })).not.toBeInTheDocument();
 
   await user.type(editor, '设计');
-  expect(await screen.findByRole('region', { name: '团队里相似的成果' })).toBeInTheDocument();
+  expect(await screen.findByRole('region', { name: '成果库里相似的作品' })).toBeInTheDocument();
 
   generation.isLoading = true;
   rerender(

@@ -53,7 +53,7 @@ export async function fetchTeamHistory(
     throw new ImageApiError(
       response.status,
       'INVALID_RESPONSE',
-      '团队作品接口返回了无法识别的响应。',
+      '成果库接口返回了无法识别的响应。',
     );
   }
   return payload;

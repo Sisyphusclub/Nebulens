@@ -19,7 +19,7 @@ const primaryNavigation = [
   { label: '生图', to: '/generate', icon: Image },
   { label: '创作模板', to: '/templates', icon: LayoutTemplate },
   { label: '资产', to: '/history', icon: FolderOpen },
-  { label: '团队作品', to: '/team', icon: UsersRound },
+  { label: '成果库', to: '/team', icon: UsersRound },
 ] as const satisfies readonly AppNavigationItem[];
 
 const adminNavigation = {

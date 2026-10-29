@@ -317,7 +317,7 @@ describe('React application routes', () => {
     ];
     renderRoute('/');
 
-    const panel = await screen.findByRole('region', { name: '团队里相似的成果' });
+    const panel = await screen.findByRole('region', { name: '成果库里相似的作品' });
     expect(screen.queryByRole('group', { name: '从场景开始' })).not.toBeInTheDocument();
     await user.click(within(panel).getByRole('button', { name: '用这个提示词' }));
 

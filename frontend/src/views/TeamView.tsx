@@ -62,7 +62,7 @@ export function TeamView() {
         setNextCursor(page.nextCursor);
       } catch (loadError) {
         if (current !== requestId.current) return;
-        setError(loadError instanceof Error ? loadError.message : '无法加载团队作品。');
+        setError(loadError instanceof Error ? loadError.message : '无法加载成果库。');
       } finally {
         if (current === requestId.current) setIsLoading(false);
       }
@@ -101,19 +101,17 @@ export function TeamView() {
     records.find((record) => record.id === entry.record.id) ?? null;
 
   return (
-    <section className="workspace-page assets-page team-page" aria-label="团队作品">
+    <section className="workspace-page assets-page team-page" aria-label="成果库">
       <OperationalPageHeader
         id="team-title"
-        title="团队作品"
-        meta={
-          isAuthenticated ? `${records.length}${nextCursor ? '+' : ''} 项同事共享的作品` : undefined
-        }
+        title="成果库"
+        meta={isAuthenticated ? `${records.length}${nextCursor ? '+' : ''} 项共享成果` : undefined}
       />
       {authLoading ? (
         <div className="asset-loading" role="status" aria-label="正在确认登录状态" />
       ) : !isAuthenticated ? (
         <div className="auth-gate">
-          <h2>登录后查看团队作品</h2>
+          <h2>登录后查看成果库</h2>
           <Button type="button" onClick={() => openAuthModal()}>
             登录
           </Button>
@@ -142,10 +140,10 @@ export function TeamView() {
               entries={records.map(toEntry)}
               emptyMessage={
                 isLoading
-                  ? '正在加载团队作品…'
+                  ? '正在加载成果库…'
                   : category === 'all'
-                    ? '还没有同事共享作品。新生成的图片默认对团队可见。'
-                    : `“${IMAGE_CATEGORY_LABELS[category]}”下还没有团队作品。`
+                    ? '成果库还是空的。新生成的图片默认会共享到成果库。'
+                    : `“${IMAGE_CATEGORY_LABELS[category]}”下还没有共享成果。`
               }
               onSelect={(entry) => setSelected(findRecord(entry))}
               onCopyPrompt={(entry) => void copyPrompt(entry)}

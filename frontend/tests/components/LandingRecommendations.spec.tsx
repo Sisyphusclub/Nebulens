@@ -34,7 +34,7 @@ it('lists similar teammate work with the reason and author, and hands back choic
     />,
   );
 
-  const panel = screen.getByRole('region', { name: '团队里相似的成果' });
+  const panel = screen.getByRole('region', { name: '成果库里相似的作品' });
   expect(panel).toHaveTextContent('同为海报 · 标签相近：奶茶');
   expect(panel).toHaveTextContent('alice');
   expect(panel).toHaveTextContent('奶茶新品上市海报');
@@ -56,6 +56,6 @@ it('offers a close button when the panel can be dismissed', async () => {
       onDismiss={onDismiss}
     />,
   );
-  await user.click(screen.getByRole('button', { name: '关闭团队推荐' }));
+  await user.click(screen.getByRole('button', { name: '关闭成果库推荐' }));
   expect(onDismiss).toHaveBeenCalledTimes(1);
 });

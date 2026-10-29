@@ -117,7 +117,7 @@ it('reuses a teammate prompt and settings in the generation workspace', async ()
 it('asks signed-out visitors to sign in', () => {
   authMocks.isAuthenticated = false;
   renderView();
-  expect(screen.getByRole('heading', { name: '登录后查看团队作品' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: '登录后查看成果库' })).toBeInTheDocument();
   expect(api.fetchTeamHistory).not.toHaveBeenCalled();
 });
 

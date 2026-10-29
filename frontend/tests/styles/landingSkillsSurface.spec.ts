@@ -24,3 +24,17 @@ describe('landing skill cards', () => {
     expect(rule('.landing-skills__title svg')).toContain('color: rgb(244 246 250 / 0.9);');
   });
 });
+
+describe('landing skill cards on phones', () => {
+  it('keep only the title line so the caption strip does not cover half the image', () => {
+    const phone = baseStyles.slice(
+      baseStyles.indexOf('/* Phones: narrow two-column cards keep one caption line. */'),
+    );
+    const rule = phone.match(/@media \(max-width: 560px\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+
+    expect(rule).toMatch(
+      /\.landing-skills__description:not\(\.landing-showcase__prompt\),\s*\.landing-showcase__meta\s*\{\s*display: none;/,
+    );
+    expect(rule).toMatch(/\.landing-skills__body\s*\{[^}]*padding: 8px 10px;/);
+  });
+});

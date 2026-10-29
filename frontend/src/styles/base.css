@@ -11509,6 +11509,19 @@ video {
     gap: 10px;
   }
 }
+/* Phones: narrow two-column cards keep one caption line. */
+@media (max-width: 560px) {
+  .landing-skills__description:not(.landing-showcase__prompt),
+  .landing-showcase__meta {
+    display: none;
+  }
+  .landing-skills__body {
+    padding: 8px 10px;
+  }
+  .landing-skills__title {
+    font-size: 13.5px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .landing-skills__card img,
   .landing-skills__cta,

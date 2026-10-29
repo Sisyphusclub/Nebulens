@@ -4,6 +4,7 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { RequestHandler } from 'express';
+import sharp from 'sharp';
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -181,3 +182,57 @@ function binaryParser(res: request.Response, cb: (err: Error | null, body: Buffe
   res.on('end', () => cb(null, Buffer.concat(data)));
   res.on('error', cb);
 }
+
+describe('GET /api/outputs/:filename?w=', () => {
+  async function savePng(): Promise<string> {
+    const png = await sharp({
+      create: { width: 1200, height: 900, channels: 3, background: { r: 20, g: 90, b: 160 } },
+    })
+      .png()
+      .toBuffer();
+    return (await saveOutput(png, 'png')).filename;
+  }
+
+  it('serves a cached WebP thumbnail for card grids', async () => {
+    const filename = await savePng();
+    recordOutput(filename, `thumb-public-${randomUUID()}`, true);
+
+    const res = await request(createApp({ provider: fakeProvider }))
+      .get(`/api/outputs/${filename}?w=320`)
+      .buffer()
+      .parse((response, done) => {
+        const chunks: Buffer[] = [];
+        response.on('data', (chunk: Buffer) => chunks.push(chunk));
+        response.on('end', () => done(null, Buffer.concat(chunks)));
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toBe('image/webp');
+    expect(res.headers['cache-control']).toBe('private, max-age=31536000, immutable');
+    const meta = await sharp(res.body as Buffer).metadata();
+    expect(meta.width).toBe(320);
+    expect(meta.height).toBe(240);
+  });
+
+  it('keeps private thumbnails as private as the original', async () => {
+    const filename = await savePng();
+    recordOutput(filename, `thumb-owner-${randomUUID()}`, false);
+
+    const res = await request(createApp({ provider: fakeProvider })).get(
+      `/api/outputs/${filename}?w=320`,
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  it('rejects widths the grids do not use', async () => {
+    const filename = await savePng();
+    recordOutput(filename, `thumb-width-${randomUUID()}`, true);
+
+    const res = await request(createApp({ provider: fakeProvider })).get(
+      `/api/outputs/${filename}?w=123`,
+    );
+
+    expect(res.status).toBe(400);
+  });
+});

@@ -15,6 +15,8 @@ import {
   type ImageCategorySource,
 } from '../types/imageCategory.js';
 
+import { removeThumbnails } from './thumbnail.service.js';
+
 export interface ImageRecordDTO {
   id: string;
   batchId: string;
@@ -480,7 +482,10 @@ export async function deleteImageRecordBatchForUser(
 
 async function cleanupDeletedOutputs(filenames: readonly string[]): Promise<void> {
   const results = await Promise.allSettled(
-    filenames.map((filename) => removeOutputByFilename(filename)),
+    filenames.map(async (filename) => {
+      await removeOutputByFilename(filename);
+      await removeThumbnails(filename);
+    }),
   );
   results.forEach((result, index) => {
     if (result.status === 'rejected') {

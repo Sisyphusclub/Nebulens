@@ -7813,14 +7813,12 @@ video {
 .generation-console.is-empty .studio-create-bar {
   margin-top: auto;
 }
+/* In flow inside the flex-column console, the empty state takes whatever space the
+   create bar leaves, so recommendations or the AI insight bar never cover it. */
 .generation-empty-state {
-  position: absolute;
-  top: 28px;
-  right: 40px;
-  bottom: calc(16px + 197px);
-  left: 40px;
-  z-index: 1;
+  position: static;
   display: flex;
+  flex: 1 1 auto;
   width: auto;
   flex-direction: column;
   align-items: center;
@@ -8198,10 +8196,6 @@ video {
     bottom: calc(74px + 16px + env(safe-area-inset-bottom));
   }
   .generation-empty-state {
-    top: 14px;
-    right: 18px;
-    bottom: calc(74px + 16px + env(safe-area-inset-bottom) + 180px);
-    left: 18px;
     gap: 9px;
   }
   .generation-empty-state__art {
@@ -8328,9 +8322,6 @@ video {
   .studio-private-toggle {
     margin-left: 0;
   }
-  .generation-empty-state {
-    bottom: calc(16px + 179px);
-  }
 }
 
 @media (max-width: 560px) {
@@ -8339,11 +8330,6 @@ video {
   }
   .generation-console.has-results .studio-create-bar {
     bottom: calc(74px + 16px + env(safe-area-inset-bottom));
-  }
-  .generation-empty-state {
-    right: 14px;
-    bottom: calc(74px + 16px + env(safe-area-inset-bottom) + 248px);
-    left: 14px;
   }
   .studio-agent-input .agent-chat-input__surface {
     padding: 7px 8px 9px;
@@ -8577,18 +8563,6 @@ video {
   }
 }
 
-@media (min-width: 861px) and (max-width: 1000px) {
-  .generation-empty-state {
-    bottom: calc(16px + 223px);
-  }
-}
-
-@media (min-width: 561px) and (max-width: 860px) {
-  .generation-empty-state {
-    bottom: calc(74px + 16px + env(safe-area-inset-bottom) + 223px);
-  }
-}
-
 @media (max-width: 560px) {
   .studio-agent-input .agent-chat-input__toolbar {
     align-items: stretch;
@@ -8607,9 +8581,6 @@ video {
   }
   .studio-private-toggle {
     padding: 0 7px;
-  }
-  .generation-empty-state {
-    bottom: calc(74px + 16px + env(safe-area-inset-bottom) + 270px);
   }
 }
 

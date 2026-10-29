@@ -76,7 +76,7 @@ describe('landing composer surface contract', () => {
 
     expect(glassStart).toBeGreaterThan(-1);
     // Wanxiang's light tint and 4px blur keep what is behind clearly visible.
-    expect(glass).toContain('--card-bg: rgb(18 22 30 / 0.2) !important;');
+    expect(glass).toContain('--card-bg: rgb(26 30 40 / 0.26) !important;');
     expect(glass).toContain('backdrop-filter: blur(4px) saturate(1.15);');
     // No blurred halo behind the glass: it tinted the glass and hid the backdrop.
     expect(glass).not.toContain('.liquid-glass-frame::after');
@@ -89,7 +89,7 @@ describe('landing composer surface contract', () => {
     expect(glass).toContain('background: transparent !important;');
   });
 
-  it('replaces the pointer-driven glow with an even rotating rim', () => {
+  it('replaces the pointer-driven glow with a neutral glass edge like Wanxiang', () => {
     const glassStart = baseStyles.indexOf(
       '/* Liquid glass composer, shared by Discover and Generate:',
     );
@@ -101,13 +101,17 @@ describe('landing composer surface contract', () => {
     expect(glass).toMatch(
       /\.liquid-glass-frame > \.border-glow-card::before,[^{]*> \.edge-light\s*\{[^}]*display: none;/s,
     );
-    expect(glass).toContain('@property --liquid-glass-rim-angle');
-    expect(glass).toContain('conic-gradient(\n    from var(--liquid-glass-rim-angle)');
-    expect(glass).toContain('animation: liquid-glass-rim-spin 12s linear infinite;');
-    // A quiet rim: faint at rest, still restrained when focused.
-    expect(glass).toMatch(/\.liquid-glass-frame::before\s*\{[^}]*opacity: 0\.3;/s);
-    expect(glass).toMatch(/\.liquid-glass-frame:focus-within::before\s*\{[^}]*opacity: 0\.6;/s);
-    expect(glass).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{[^@]*animation: none;/s);
+    // A static light edge, brighter along the top; no coloured or moving glow.
+    expect(glass).toMatch(
+      /\.liquid-glass-frame::before\s*\{[^}]*linear-gradient\(\s*170deg,\s*rgb\(255 255 255 \/ 0\.42\)/s,
+    );
+    expect(glass).not.toContain('conic-gradient');
+    expect(glass).not.toContain('animation:');
+    expect(glass).toContain('border-radius: 28px;');
+    // Controls inside the glass are glass pills, including the send button.
+    expect(glass).toMatch(
+      /\.liquid-glass-frame > \.generation-composer \.agent-chat-input__submit\s*\{[^}]*background: rgb\(255 255 255 \/ 0\.14\)/s,
+    );
     expect(baseStyles).not.toContain('border-glow-liquid-glass');
   });
 });

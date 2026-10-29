@@ -594,9 +594,9 @@ video {
   margin: 8px auto 0;
   border: 1px solid rgb(255 255 255 / 0.1);
   border-top-color: rgb(255 255 255 / 0.2);
-  border-radius: 22px;
+  border-radius: 24px;
   background: rgb(26 30 40 / 0.42);
-  padding: 6px;
+  padding: 8px;
   box-shadow:
     rgb(255 255 255 / 0.08) 0 0 2px 1px inset,
     0 12px 30px -20px rgb(0 0 0 / 0.9);
@@ -610,9 +610,9 @@ video {
   nav
   [data-sidebar='group']
   + [data-sidebar='group'] {
-  margin-top: 6px;
+  margin-top: 8px;
   border-top: 1px solid rgb(255 255 255 / 0.08);
-  padding-top: 6px;
+  padding-top: 8px;
 }
 .group[data-state='collapsed'] .landing-sidebar .landing-sidebar__brand {
   width: 50px;
@@ -1645,19 +1645,19 @@ video {
     gap: 12px;
   }
   .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu'] {
-    gap: 2px;
+    gap: 6px;
   }
   .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu-button'] {
-    width: 64px !important;
-    height: 58px !important;
-    min-width: 64px;
-    min-height: 58px;
-    gap: 5px;
+    width: 68px !important;
+    height: 62px !important;
+    min-width: 68px;
+    min-height: 62px;
+    gap: 6px;
     border-radius: 16px;
     padding: 7px 2px 6px !important;
   }
   .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu-button'] > span {
-    max-width: 60px;
+    max-width: 64px;
     font-size: 11px;
     line-height: 1;
   }

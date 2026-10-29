@@ -18,8 +18,8 @@ describe('landing navigation chrome', () => {
         /\.landing-sidebar\s+nav\s+\[data-sidebar='group'\]\s*\+\s*\[data-sidebar='group'\]\s*\{([^}]+)\}/,
       )?.[1] ?? '';
 
-    expect(rail).toContain('border-radius: 22px;');
-    expect(rail).toContain('padding: 6px;');
+    expect(rail).toContain('border-radius: 24px;');
+    expect(rail).toContain('padding: 8px;');
     expect(rail).toContain('background: rgb(26 30 40 / 0.42);');
     expect(rail).toContain('backdrop-filter: blur(10px) saturate(1.2);');
     // The utility group joins the same capsule behind a hairline instead of floating apart.
@@ -33,11 +33,11 @@ describe('landing navigation chrome', () => {
     const desktopStart = baseStyles.indexOf('@media (min-width: 861px) {\n  .landing-sidebar');
     const desktop = baseStyles.slice(desktopStart, baseStyles.indexOf('\n}\n', desktopStart));
 
-    expect(desktop).toContain('width: 64px !important;');
-    expect(desktop).toContain('height: 58px !important;');
-    // 22px capsule radius = 16px item radius + 6px capsule padding.
+    expect(desktop).toContain('width: 68px !important;');
+    expect(desktop).toContain('height: 62px !important;');
+    // 24px capsule radius = 16px item radius + 8px capsule padding.
     expect(desktop).toContain('border-radius: 16px;');
-    expect(desktop).toMatch(/\[data-sidebar='menu'\]\s*\{\s*gap: 2px;/);
+    expect(desktop).toMatch(/\[data-sidebar='menu'\]\s*\{\s*gap: 6px;/);
   });
 
   it('marks the active rail item with a light glass pill and keeps labels legible', () => {

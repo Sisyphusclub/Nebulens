@@ -84,7 +84,7 @@ describe('landing composer surface contract', () => {
     expect(glass).toContain('rgb(255 255 255 / 0.07) 0 0 8px 2px inset');
     // Chromium adds edge refraction; other engines keep the plain frosted glass.
     expect(glass).toMatch(
-      /\[data-refraction='true'\][^{]*\{[^}]*backdrop-filter: url\(#liquid-glass-refraction\) blur\(4px\) saturate\(1\.15\);/s,
+      /\[data-refraction='true'\][^{]*\{[^}]*backdrop-filter: url\(#liquid-glass-refraction\) blur\(1\.5px\) saturate\(1\.2\);/s,
     );
     expect(glass).toContain('background: transparent !important;');
   });

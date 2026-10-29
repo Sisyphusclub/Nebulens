@@ -9262,8 +9262,8 @@ video {
   background: transparent;
 }
 .asset-commandbar .view-switch button[aria-pressed='true'] {
-  background: var(--primary);
-  color: var(--primary-foreground);
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
 }
 .assets-page .collection-rail {
   display: flex;
@@ -9293,15 +9293,25 @@ video {
 .collection-rail__items::-webkit-scrollbar {
   display: none;
 }
+/* Model chips follow the glass segmented style: quiet glass chips, and a light
+   glass pill for the active one. */
 .assets-page .collection-rail button {
-  min-height: 34px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  padding: 0 10px;
+  min-height: 32px;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: var(--radius-full);
+  background: rgb(26 30 40 / 0.42);
+  color: rgb(242 244 247 / 0.72);
+  padding: 0 14px;
+  backdrop-filter: blur(10px) saturate(1.2);
+}
+.assets-page .collection-rail button:hover:not([aria-pressed='true']) {
+  background: rgb(40 46 58 / 0.55);
+  color: #fff;
 }
 .assets-page .collection-rail button[aria-pressed='true'] {
-  background: var(--muted);
-  color: var(--foreground);
+  border-color: rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
 }
 .asset-selection-slot {
   min-height: 49px;

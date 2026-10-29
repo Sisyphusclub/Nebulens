@@ -25,3 +25,25 @@ describe('workspace toolbars', () => {
     expect(chrome).toContain('backdrop-filter: blur(16px) saturate(1.2);');
   });
 });
+
+describe('asset filters', () => {
+  function rule(selector: string): string {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return baseStyles.match(new RegExp(`^${escaped}\\s*\\{([^}]+)\\}`, 'm'))?.[1] ?? '';
+  }
+
+  it('show model chips as glass pills with a light pill for the active one', () => {
+    expect(rule('.assets-page .collection-rail button')).toContain(
+      'background: rgb(26 30 40 / 0.42);',
+    );
+    expect(rule(".assets-page .collection-rail button[aria-pressed='true']")).toContain(
+      'background: rgb(255 255 255 / 0.14);',
+    );
+  });
+
+  it('mark the active view with the same light pill instead of a solid white block', () => {
+    expect(rule(".asset-commandbar .view-switch button[aria-pressed='true']")).toContain(
+      'background: rgb(255 255 255 / 0.14);',
+    );
+  });
+});

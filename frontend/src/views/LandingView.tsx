@@ -1,6 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
 import { LandingArtworkWall } from '@/components/landing/LandingArtworkWall';
 import { LandingSidebar } from '@/components/landing/LandingSidebar';
@@ -46,13 +47,6 @@ import {
   supportsImageQuality,
 } from '@/types/image';
 import { recentCreations, type RecentCreation } from '@/utils/recentCreations';
-
-/**
- * Only Chromium renders SVG filters inside backdrop-filter; it is also the only
- * engine with navigator.userAgentData, so other browsers keep plain frosted glass.
- */
-const SUPPORTS_BACKDROP_REFRACTION =
-  typeof navigator !== 'undefined' && 'userAgentData' in navigator;
 
 const HERO_SHINY_GRADIENT_STYLE: CSSProperties = {
   backgroundImage:
@@ -231,28 +225,7 @@ export function LandingView() {
           <p>用 GPT-IMAGE-2 将你的创意变为精美图片，只需描述你脑海中的画面。</p>
           <div className="landing-composer-anchor">
             <div className="landing-composer-presentation landing-composer-hero">
-              <div
-                className="landing-composer-content"
-                data-refraction={SUPPORTS_BACKDROP_REFRACTION ? 'true' : undefined}
-              >
-                <svg className="landing-glass-filter" aria-hidden="true" focusable="false">
-                  <filter id="landing-glass-refraction" colorInterpolationFilters="sRGB">
-                    <feTurbulence
-                      type="fractalNoise"
-                      baseFrequency="0.006 0.012"
-                      numOctaves={2}
-                      seed={7}
-                      result="noise"
-                    />
-                    <feDisplacementMap
-                      in="SourceGraphic"
-                      in2="noise"
-                      scale={28}
-                      xChannelSelector="R"
-                      yChannelSelector="G"
-                    />
-                  </filter>
-                </svg>
+              <LiquidGlassFrame className="landing-composer-content">
                 <AgentChatInput
                   value={prompt}
                   onValueChange={setPrompt}
@@ -299,7 +272,7 @@ export function LandingView() {
                   }
                   className="generation-composer landing-composer"
                 />
-              </div>
+              </LiquidGlassFrame>
             </div>
           </div>
           <AiInsightBar

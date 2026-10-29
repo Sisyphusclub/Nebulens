@@ -14,6 +14,7 @@ import { LandingAccountActions } from '@/components/landing/LandingAccountAction
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
+import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { AgentChatInput } from '@/components/premium/agent-chat-input/agent-chat-input';
 import type { AgentChatAttachment } from '@/components/premium/agent-chat-input/types';
 import { Button } from '@/components/ui/button';
@@ -676,80 +677,82 @@ export function GenerateView() {
             </Button>
           </div>
         ) : null}
-        <AgentChatInput
-          value={prompt}
-          onValueChange={setPrompt}
-          onSubmit={(payload) => submitCurrent(payload.text)}
-          onStop={generation.cancel}
-          status={generation.isLoading ? 'streaming' : 'ready'}
-          placeholder="描述你想生成的画面…"
-          ariaLabel="图像提示词"
-          submitLabel="生成图片"
-          submitContent={
-            <GenerationSubmitCost count={count} model={model} resolution={resolution} />
-          }
-          disabled={authLoading}
-          minRows={2}
-          maxRows={7}
-          models={[]}
-          reasoningLevels={[]}
-          speedModes={[]}
-          agents={[]}
-          skills={[]}
-          attachments={attachments}
-          onAttachmentsChange={handleAttachments}
-          acceptedFileTypes="image/png,image/jpeg,image/webp"
-          toolbarContent={
-            <GenerationComposerControls
-              model={model}
-              aspect={aspect}
-              count={count}
-              resolution={resolution}
-              quality={quality}
-              disabled={generation.isLoading}
-              customPanelSide="top"
-              onModelChange={setModel}
-              onAspectChange={setAspect}
-              onCountChange={setCount}
-              onResolutionChange={updateResolution}
-              onQualityChange={setQuality}
-              trailingContent={
-                <span className="studio-toolbar-meta">
-                  <span
-                    className="studio-toolbar-status"
-                    data-active={generation.isLoading ? 'true' : undefined}
-                    role="status"
-                    aria-live="polite"
-                  >
+        <LiquidGlassFrame>
+          <AgentChatInput
+            value={prompt}
+            onValueChange={setPrompt}
+            onSubmit={(payload) => submitCurrent(payload.text)}
+            onStop={generation.cancel}
+            status={generation.isLoading ? 'streaming' : 'ready'}
+            placeholder="描述你想生成的画面…"
+            ariaLabel="图像提示词"
+            submitLabel="生成图片"
+            submitContent={
+              <GenerationSubmitCost count={count} model={model} resolution={resolution} />
+            }
+            disabled={authLoading}
+            minRows={2}
+            maxRows={7}
+            models={[]}
+            reasoningLevels={[]}
+            speedModes={[]}
+            agents={[]}
+            skills={[]}
+            attachments={attachments}
+            onAttachmentsChange={handleAttachments}
+            acceptedFileTypes="image/png,image/jpeg,image/webp"
+            toolbarContent={
+              <GenerationComposerControls
+                model={model}
+                aspect={aspect}
+                count={count}
+                resolution={resolution}
+                quality={quality}
+                disabled={generation.isLoading}
+                customPanelSide="top"
+                onModelChange={setModel}
+                onAspectChange={setAspect}
+                onCountChange={setCount}
+                onResolutionChange={updateResolution}
+                onQualityChange={setQuality}
+                trailingContent={
+                  <span className="studio-toolbar-meta">
                     <span
-                      className="studio-toolbar-status__dot"
+                      className="studio-toolbar-status"
                       data-active={generation.isLoading ? 'true' : undefined}
-                      aria-hidden="true"
-                    />
-                    {generation.isLoading ? generation.statusMessage : '准备生成'}
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <span
+                        className="studio-toolbar-status__dot"
+                        data-active={generation.isLoading ? 'true' : undefined}
+                        aria-hidden="true"
+                      />
+                      {generation.isLoading ? generation.statusMessage : '准备生成'}
+                    </span>
+                    <span
+                      className="studio-toolbar-quota"
+                      aria-label={
+                        activeImageApiKeyConfigured ? '当前使用个人 API Key' : '今日生成额度'
+                      }
+                    >
+                      {imageApiKey.isLoading
+                        ? '调用：同步中'
+                        : activeImageApiKeyConfigured
+                          ? `调用：个人 Key · ${activeImageApiKeySuffix ?? '已配置'}`
+                          : quotaLoading
+                            ? '额度：同步中'
+                            : isAuthenticated
+                              ? `额度：${activeQuotaRemaining ?? '—'} / ${activeQuotaTotal ?? '—'}`
+                              : '额度：登录后查看'}
+                    </span>
                   </span>
-                  <span
-                    className="studio-toolbar-quota"
-                    aria-label={
-                      activeImageApiKeyConfigured ? '当前使用个人 API Key' : '今日生成额度'
-                    }
-                  >
-                    {imageApiKey.isLoading
-                      ? '调用：同步中'
-                      : activeImageApiKeyConfigured
-                        ? `调用：个人 Key · ${activeImageApiKeySuffix ?? '已配置'}`
-                        : quotaLoading
-                          ? '额度：同步中'
-                          : isAuthenticated
-                            ? `额度：${activeQuotaRemaining ?? '—'} / ${activeQuotaTotal ?? '—'}`
-                            : '额度：登录后查看'}
-                  </span>
-                </span>
-              }
-            />
-          }
-          className="generation-composer studio-agent-input"
-        />
+                }
+              />
+            }
+            className="generation-composer studio-agent-input"
+          />
+        </LiquidGlassFrame>
       </div>
 
       {feed.length ? (

@@ -261,6 +261,10 @@ it('keeps the generation workspace prompt plain and focused', () => {
     '描述你想生成的画面…',
   );
   expect(screen.queryByText('描述你想生成的画面…')).not.toBeInTheDocument();
+  // Generate shares Discover's liquid glass composer.
+  expect(
+    screen.getByRole('textbox', { name: '图像提示词' }).closest('.liquid-glass-frame'),
+  ).toContainElement(document.querySelector('.studio-agent-input'));
   expect(document.querySelectorAll('.generation-history-track__mark')).toHaveLength(0);
 });
 

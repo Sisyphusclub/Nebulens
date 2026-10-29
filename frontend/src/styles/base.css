@@ -8850,17 +8850,18 @@ video {
   border-radius: 30px;
 }
 
-/* The hero composer is Wanxiang-style liquid glass: a light tint and blur keep
-   the artwork wall visible, layered inset highlights draw the glass edge, and
-   Chromium adds SVG edge refraction (other engines keep plain frosted glass).
-   The pointer-driven React Bits glow is uneven on a wide composer, so Discover
-   swaps it for one evenly lit rim that slowly rotates. */
-@property --landing-rim-angle {
+/* Liquid glass composer, shared by Discover and Generate: Wanxiang-style glass
+   where a light tint and blur keep what is behind visible, layered inset
+   highlights draw the glass edge, and Chromium adds SVG edge refraction (other
+   engines keep plain frosted glass). The pointer-driven React Bits glow is
+   uneven on a wide composer, so it is swapped for one evenly lit rim that
+   slowly rotates. */
+@property --liquid-glass-rim-angle {
   syntax: '<angle>';
   inherits: false;
   initial-value: 0deg;
 }
-.landing-composer-hero .landing-composer.generation-composer {
+.liquid-glass-frame > .generation-composer.agent-chat-input {
   --card-bg: rgb(18 22 30 / 0.34) !important;
   border-color: rgb(255 255 255 / 0.1);
   background:
@@ -8874,33 +8875,38 @@ video {
     rgb(255 255 255 / 0.03) 0 4px 20px 0 inset,
     0 24px 60px -30px rgb(0 0 0 / 0.9);
 }
-.landing-glass-filter {
+.liquid-glass-frame {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+.liquid-glass-frame__filter {
   position: absolute;
   width: 0;
   height: 0;
   overflow: hidden;
 }
-.landing-composer-content[data-refraction='true'] .landing-composer.generation-composer {
-  backdrop-filter: url(#landing-glass-refraction) blur(14px) saturate(1.6);
+.liquid-glass-frame[data-refraction='true'] > .generation-composer.agent-chat-input {
+  backdrop-filter: url(#liquid-glass-refraction) blur(14px) saturate(1.6);
 }
-.landing-composer-hero .landing-composer > .border-glow-inner,
-.landing-composer-hero .landing-composer .agent-chat-input__surface {
+.liquid-glass-frame > .generation-composer > .border-glow-inner,
+.liquid-glass-frame > .generation-composer .agent-chat-input__surface {
   background: transparent !important;
 }
-.landing-composer-hero .landing-composer.border-glow-card::before,
-.landing-composer-hero .landing-composer.border-glow-card::after,
-.landing-composer-hero .landing-composer.border-glow-card > .edge-light {
+.liquid-glass-frame > .border-glow-card::before,
+.liquid-glass-frame > .border-glow-card::after,
+.liquid-glass-frame > .border-glow-card > .edge-light {
   display: none;
 }
-.landing-composer-content::before,
-.landing-composer-content::after {
+.liquid-glass-frame::before,
+.liquid-glass-frame::after {
   content: '';
   position: absolute;
   inset: -1px;
   z-index: -1;
   border-radius: 21px;
   background: conic-gradient(
-    from var(--landing-rim-angle),
+    from var(--liquid-glass-rim-angle),
     #12c8f4,
     #1464ff,
     #ffb51b,
@@ -8910,12 +8916,12 @@ video {
     #12c8f4
   );
   pointer-events: none;
-  animation: landing-rim-spin 6s linear infinite;
+  animation: liquid-glass-rim-spin 6s linear infinite;
   transition: opacity 0.4s ease;
 }
 /* The rim: a 1px ring of the gradient drawn over the glass edge, since the
    glass's own backdrop blur would smear a ring painted beneath it. */
-.landing-composer-content::before {
+.liquid-glass-frame::before {
   z-index: 2;
   padding: 1px;
   opacity: 0.55;
@@ -8924,26 +8930,26 @@ video {
     linear-gradient(#000 0 0);
 }
 /* The halo: the same gradient, blurred into a soft even glow behind the glass. */
-.landing-composer-content::after {
+.liquid-glass-frame::after {
   inset: 10px;
   z-index: -2;
   opacity: 0.14;
   filter: blur(22px);
 }
-.landing-composer-content:focus-within::before {
+.liquid-glass-frame:focus-within::before {
   opacity: 0.95;
 }
-.landing-composer-content:focus-within::after {
+.liquid-glass-frame:focus-within::after {
   opacity: 0.22;
 }
-@keyframes landing-rim-spin {
+@keyframes liquid-glass-rim-spin {
   to {
-    --landing-rim-angle: 360deg;
+    --liquid-glass-rim-angle: 360deg;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .landing-composer-content::before,
-  .landing-composer-content::after {
+  .liquid-glass-frame::before,
+  .liquid-glass-frame::after {
     animation: none;
   }
 }

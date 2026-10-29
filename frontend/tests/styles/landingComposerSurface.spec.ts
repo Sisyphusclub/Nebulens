@@ -65,8 +65,10 @@ describe('landing composer surface contract', () => {
     expect(triggerFocusRule).toContain('box-shadow: none !important;');
   });
 
-  it('renders the hero composer as see-through liquid glass', () => {
-    const glassStart = baseStyles.indexOf('/* The hero composer is Wanxiang-style liquid glass:');
+  it('renders both composers as see-through liquid glass', () => {
+    const glassStart = baseStyles.indexOf(
+      '/* Liquid glass composer, shared by Discover and Generate:',
+    );
     const glass = baseStyles.slice(
       glassStart,
       baseStyles.indexOf('/* Composer parity:', glassStart),
@@ -79,27 +81,27 @@ describe('landing composer surface contract', () => {
     expect(glass).toContain('rgb(255 255 255 / 0.07) 0 0 8px 2px inset');
     // Chromium adds edge refraction; other engines keep the plain frosted glass.
     expect(glass).toMatch(
-      /\[data-refraction='true'\][^{]*\{[^}]*backdrop-filter: url\(#landing-glass-refraction\) blur\(14px\) saturate\(1\.6\);/s,
+      /\[data-refraction='true'\][^{]*\{[^}]*backdrop-filter: url\(#liquid-glass-refraction\) blur\(14px\) saturate\(1\.6\);/s,
     );
     expect(glass).toContain('background: transparent !important;');
   });
 
-  it('replaces the pointer-driven glow with an even rotating rim on Discover only', () => {
-    const glassStart = baseStyles.indexOf('/* The hero composer is Wanxiang-style liquid glass:');
+  it('replaces the pointer-driven glow with an even rotating rim', () => {
+    const glassStart = baseStyles.indexOf(
+      '/* Liquid glass composer, shared by Discover and Generate:',
+    );
     const glass = baseStyles.slice(
       glassStart,
       baseStyles.indexOf('/* Composer parity:', glassStart),
     );
 
     expect(glass).toMatch(
-      /\.landing-composer-hero \.landing-composer\.border-glow-card::before,[^{]*> \.edge-light\s*\{[^}]*display: none;/s,
+      /\.liquid-glass-frame > \.border-glow-card::before,[^{]*> \.edge-light\s*\{[^}]*display: none;/s,
     );
-    expect(glass).toContain('@property --landing-rim-angle');
-    expect(glass).toContain('conic-gradient(\n    from var(--landing-rim-angle)');
-    expect(glass).toContain('animation: landing-rim-spin 6s linear infinite;');
+    expect(glass).toContain('@property --liquid-glass-rim-angle');
+    expect(glass).toContain('conic-gradient(\n    from var(--liquid-glass-rim-angle)');
+    expect(glass).toContain('animation: liquid-glass-rim-spin 6s linear infinite;');
     expect(glass).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{[^@]*animation: none;/s);
-    // Generate keeps the shared React Bits glow untouched.
-    expect(baseStyles).not.toContain('.studio-agent-input.border-glow-card::before');
     expect(baseStyles).not.toContain('border-glow-liquid-glass');
   });
 });

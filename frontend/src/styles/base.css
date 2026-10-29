@@ -488,18 +488,18 @@ video {
   overflow: hidden;
   background: var(--background);
 }
+/* The wall and its overlay are pinned to the viewport, so they stay behind the
+   whole page as it scrolls instead of ending in a flat dark block below the
+   hero. Later page sections paint above them in document order. */
+.landing-hero .artwork-wall,
 .landing-hero__overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
+}
+.landing-hero__overlay {
   background:
     linear-gradient(90deg, rgb(3 5 10 / 0.4) 0, transparent 13%, transparent 86%),
-    linear-gradient(
-      180deg,
-      rgb(3 5 10 / 0.34) 0,
-      transparent 20%,
-      transparent 52%,
-      var(--background) 100%
-    ),
+    linear-gradient(180deg, rgb(3 5 10 / 0.34) 0, transparent 20%),
     color-mix(in oklch, var(--background) 5%, transparent);
 }
 .landing-navigation-shell {
@@ -11130,7 +11130,7 @@ video {
       rgb(5 6 10 / 0.4) 0%,
       transparent 22%,
       transparent 70%,
-      rgb(5 6 10 / 0.7) 100%
+      rgb(5 6 10 / 0.45) 100%
     );
 }
 .artwork-wall[data-paused='true'] .artwork-wall__track {
@@ -11282,6 +11282,7 @@ video {
 .landing-skills {
   position: relative;
   display: grid;
+  background: linear-gradient(180deg, transparent, rgb(5 6 10 / 0.5) 140px);
   gap: 20px;
   padding-block: 40px 96px;
   padding-left: calc(var(--workspace-sidebar-rail, 128px) + 32px);
@@ -11296,6 +11297,7 @@ video {
 .landing-skills__header {
   display: grid;
   gap: 6px;
+  text-shadow: 0 1px 14px rgb(0 0 0 / 0.7);
 }
 .landing-skills__header h2 {
   margin: 0;

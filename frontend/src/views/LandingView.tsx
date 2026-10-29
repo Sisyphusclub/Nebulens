@@ -10,13 +10,13 @@ import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { TextResolutionHint } from '@/components/generation/TextResolutionHint';
 import { LandingRecentCreations } from '@/components/landing/LandingRecentCreations';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
-import { LandingSceneShortcuts } from '@/components/landing/LandingSceneShortcuts';
+import { LandingSkillCapsules, LandingSkillGallery } from '@/components/landing/LandingSkills';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
 import { AgentChatInput } from '@/components/premium/agent-chat-input/agent-chat-input';
 import type { AgentChatAttachment } from '@/components/premium/agent-chat-input/types';
 import { IMAGE_PROMPT_EXAMPLES } from '@/data/imagePromptExamples';
-import type { LandingScene } from '@/data/landingScenes';
+import type { LandingSkill } from '@/data/landingSkills';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { useImageQuota } from '@/hooks/useImageQuota';
@@ -143,9 +143,12 @@ export function LandingView() {
     }
     setSelectedRecommendation(null);
   };
-  const selectScene = (scene: LandingScene): void => {
-    setPrompt(scene.prompt);
-    setAspect(normalizeAspectChoiceForResolution(scene.aspect, resolution));
+  const selectSkill = (skill: LandingSkill): void => {
+    setPrompt(skill.prompt);
+    setAspect(normalizeAspectChoiceForResolution(skill.aspect, resolution));
+    if (skill.referenceHint) notify(skill.referenceHint);
+    // Skills picked from the gallery below the fold bring the filled composer back into view.
+    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const submitPrompt = (
     value: string,
@@ -285,12 +288,13 @@ export function LandingView() {
             />
           ) : (
             <>
-              <LandingSceneShortcuts onSelect={selectScene} />
+              <LandingSkillCapsules onSelect={selectSkill} />
               <LandingRecentCreations creations={recent} onOpen={openRecent} />
             </>
           )}
         </div>
       </section>
+      <LandingSkillGallery onSelect={selectSkill} />
       <ImageDetailModal
         entry={selectedRecommendationEntry}
         {...(selectedRecommendation === null

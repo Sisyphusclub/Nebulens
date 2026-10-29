@@ -263,14 +263,26 @@ describe('React application routes', () => {
     expect(container.querySelector(".landing-sidebar [data-sidebar='separator']")).toBeNull();
   });
 
-  it('fills the homepage composer from a scene shortcut', async () => {
+  it('fills the homepage composer from a skill capsule', async () => {
     const user = userEvent.setup();
     renderRoute('/');
 
-    await user.click(await screen.findByRole('button', { name: '电商主图' }));
+    const capsules = await screen.findByRole('group', { name: '常用技能' });
+    await user.click(within(capsules).getByRole('button', { name: '电商主图' }));
 
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('限时特惠');
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('1:1');
+  });
+
+  it('starts a reference-based skill from the gallery and asks for the image it needs', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+
+    const gallery = await screen.findByRole('region', { name: '技能' });
+    await user.click(within(gallery).getByRole('button', { name: '使用技能：商品换背景' }));
+
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('保持商品');
+    expect(await screen.findByText('先上传一张商品图作为参考图，再开始生成。')).toBeInTheDocument();
   });
 
   it('resumes a recent creation from the homepage in its own session', async () => {
@@ -292,7 +304,7 @@ describe('React application routes', () => {
 
   it('hides recent creations when there is no history', async () => {
     renderRoute('/');
-    await screen.findByRole('group', { name: '从场景开始' });
+    await screen.findByRole('group', { name: '常用技能' });
     expect(screen.queryByRole('navigation', { name: '继续上次创作' })).not.toBeInTheDocument();
   });
 
@@ -318,7 +330,7 @@ describe('React application routes', () => {
     renderRoute('/');
 
     const panel = await screen.findByRole('region', { name: '成果库里相似的作品' });
-    expect(screen.queryByRole('group', { name: '从场景开始' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: '常用技能' })).not.toBeInTheDocument();
     await user.click(within(panel).getByRole('button', { name: '用这个提示词' }));
 
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
@@ -331,7 +343,8 @@ describe('React application routes', () => {
     const user = userEvent.setup();
     renderRoute('/');
 
-    await user.click(await screen.findByRole('button', { name: '活动海报' }));
+    const capsules = await screen.findByRole('group', { name: '常用技能' });
+    await user.click(within(capsules).getByRole('button', { name: '活动海报' }));
     await user.click(screen.getByRole('button', { name: '切换到 2K' }));
 
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K');

@@ -27,6 +27,14 @@ export function describeTextIssues(check: TextCheckResult): string[] {
   });
 }
 
+/** Every text-fix edit prompt starts with this, which tells them apart from ordinary prompts. */
+const TEXT_FIX_PROMPT_PREFIX = '请只修改图中的文字';
+
+/** Whether a prompt is a text-fix edit of an earlier image rather than a standalone request. */
+export function isTextFixPrompt(prompt: string): boolean {
+  return prompt.startsWith(TEXT_FIX_PROMPT_PREFIX);
+}
+
 const redraw = (text: string): string =>
   `把“${text}”重新清晰地画一遍，字形端正、笔画完整、字距正常`;
 
@@ -47,5 +55,5 @@ export function buildTextFixPrompt(check: TextCheckResult): string {
   });
   const fixes =
     flagged.length > 0 ? flagged : check.segments.map((segment) => redraw(segment.text));
-  return `请只修改图中的文字，画面、构图、配色和字体风格保持不变：${fixes.join('；')}。`;
+  return `${TEXT_FIX_PROMPT_PREFIX}，画面、构图、配色和字体风格保持不变：${fixes.join('；')}。`;
 }

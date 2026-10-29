@@ -11431,6 +11431,60 @@ video {
   opacity: 1;
   transform: translateY(0);
 }
+/* Below the skills: the team's newest shared work, in the same card style. */
+.landing-skills:has(+ .landing-showcase) {
+  padding-bottom: 56px;
+}
+.landing-skills + .landing-showcase {
+  background: rgb(5 6 10 / 0.5);
+  padding-top: 0;
+}
+.landing-skills .landing-showcase__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.landing-showcase__header > div {
+  display: grid;
+  gap: 6px;
+}
+.landing-showcase__more {
+  display: inline-flex;
+  height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-top-color: rgb(255 255 255 / 0.2);
+  border-radius: var(--radius-full);
+  background: rgb(26 30 40 / 0.42);
+  color: rgb(242 244 247 / 0.9);
+  padding: 0 14px;
+  font-size: 13px;
+  text-decoration: none;
+  text-shadow: none;
+  backdrop-filter: blur(10px) saturate(1.2);
+  transition: background-color 160ms var(--ease-out-expo);
+}
+.landing-showcase__more:hover,
+.landing-showcase__more:focus-visible {
+  background: rgb(40 46 58 / 0.55);
+  color: #fff;
+}
+.landing-showcase__more svg {
+  width: 14px;
+  height: 14px;
+}
+.landing-skills__description.landing-showcase__prompt {
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.landing-showcase__meta {
+  color: rgb(242 244 247 / 0.62);
+  font-size: 12px;
+}
 @media (max-width: 1100px) {
   .landing-skills__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));

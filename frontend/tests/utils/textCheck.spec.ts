@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { TextCheckResult } from '@/types/image';
-import { buildTextFixPrompt, describeTextIssues } from '@/utils/textCheck';
+import { buildTextFixPrompt, describeTextIssues, isTextFixPrompt } from '@/utils/textCheck';
 
 const issues: TextCheckResult = {
   status: 'issues',
@@ -63,5 +63,16 @@ describe('redrawing text that passed the check', () => {
     });
     expect(prompt).toContain('把“周年庆典”重新清晰地画一遍');
     expect(prompt).toContain('把“11月7日”重新清晰地画一遍');
+  });
+});
+
+describe('isTextFixPrompt', () => {
+  it('recognises the edit prompts built for fixing text, and nothing else', () => {
+    const check: TextCheckResult = {
+      status: 'issues',
+      segments: [{ text: '中杯16元', found: '中杯15元', ok: false }],
+    };
+    expect(isTextFixPrompt(buildTextFixPrompt(check))).toBe(true);
+    expect(isTextFixPrompt('奶茶价目牌，写“中杯16元”')).toBe(false);
   });
 });

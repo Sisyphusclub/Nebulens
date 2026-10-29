@@ -11,6 +11,7 @@ import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { AiInsightBar } from '@/components/generation/AiInsightBar';
 import { LandingRecentCreations } from '@/components/landing/LandingRecentCreations';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
+import { LandingShowcase } from '@/components/landing/LandingShowcase';
 import { LandingSkillCapsules, LandingSkillGallery } from '@/components/landing/LandingSkills';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
@@ -26,6 +27,7 @@ import { attachGenerationBatch, useGenerationSessions } from '@/hooks/useGenerat
 import { useImageHistory } from '@/hooks/useImageHistory';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
+import { useTeamShowcase } from '@/hooks/useTeamShowcase';
 import { buildApiUrl } from '@/services/api/imagesApi';
 import { getAppNavigation } from '@/config/navigation';
 import type {
@@ -34,6 +36,7 @@ import type {
   ImageModel,
   ImageQuality,
   ImageResolution,
+  TeamImageRecord,
   TeamRecommendation,
 } from '@/types/image';
 import {
@@ -86,6 +89,7 @@ export function LandingView() {
   const [prompt, setPrompt] = useState('');
   const { items: recommendations } = useTeamRecommendations(prompt, isAuthenticated);
   const promptEnhancer = usePromptEnhancer({ prompt, setPrompt, isAuthenticated, notify });
+  const showcase = useTeamShowcase(isAuthenticated);
   const [attachments, setAttachments] = useState<AgentChatAttachment[]>([]);
   const [model, setModel] = useState<ImageModel>(DEFAULT_IMAGE_MODEL);
   const [aspect, setAspect] = useState<AspectChoice>(DEFAULT_ASPECT_CHOICE);
@@ -151,6 +155,15 @@ export function LandingView() {
     setAspect(normalizeAspectChoiceForResolution(skill.aspect, resolution));
     if (skill.referenceHint) notify(skill.referenceHint);
     // Skills picked from the gallery below the fold bring the filled composer back into view.
+    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  /** A teammate's reference images stay theirs, so only the prompt and framing carry over. */
+  const makeSimilar = (record: TeamImageRecord): void => {
+    setPrompt(record.prompt);
+    if (record.aspectRatio) {
+      setAspect(normalizeAspectChoiceForResolution(record.aspectRatio, resolution));
+    }
+    notify('已填入这张作品的提示词，可以直接生成，或改几个字再生成。');
     if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const submitPrompt = (
@@ -305,6 +318,7 @@ export function LandingView() {
         </div>
       </section>
       <LandingSkillGallery onSelect={selectSkill} />
+      <LandingShowcase records={showcase} onUse={makeSimilar} />
       <ImageDetailModal
         entry={selectedRecommendationEntry}
         {...(selectedRecommendation === null

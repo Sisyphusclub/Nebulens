@@ -101,6 +101,12 @@ vi.mock('@/hooks/useTeamRecommendations', () => ({
   useTeamRecommendations: () => ({ items: recommendationMocks.items }),
 }));
 
+const showcaseMocks = vi.hoisted(() => ({ items: [] as unknown[] }));
+
+vi.mock('@/hooks/useTeamShowcase', () => ({
+  useTeamShowcase: () => showcaseMocks.items,
+}));
+
 const promptMocks = vi.hoisted(() => ({
   enhancePrompt: vi.fn((prompt: string) => Promise.resolve(`${prompt}，霓虹倒影，电影级广角构图`)),
 }));
@@ -223,6 +229,7 @@ beforeEach(() => {
   authMocks.isLoading = false;
   historyMocks.batches = [];
   recommendationMocks.items = [];
+  showcaseMocks.items = [];
   generation.generate.mockResolvedValue({
     batchId: 'landing-batch',
     aspectRatio: '16:9',
@@ -338,6 +345,34 @@ describe('React application routes', () => {
     const panel = await screen.findByRole('region', { name: '成果库里相似的作品' });
     expect(screen.queryByRole('group', { name: '常用技能' })).not.toBeInTheDocument();
     await user.click(within(panel).getByRole('button', { name: '用这个提示词' }));
+
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
+      '奶茶新品上市海报，清新绿色',
+    );
+    expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('3:4');
+  });
+
+  it('makes a similar image from the library showcase', async () => {
+    const user = userEvent.setup();
+    showcaseMocks.items = [
+      {
+        id: 'team-tea.png',
+        createdAt: '2026-10-29T00:00:00.000Z',
+        prompt: '奶茶新品上市海报，清新绿色',
+        model: 'gpt-image-2',
+        aspectRatio: '3:4',
+        width: 1024,
+        height: 1360,
+        isPublic: false,
+        ownerName: 'alice',
+      },
+    ];
+    renderRoute('/');
+
+    const showcase = await screen.findByRole('region', { name: '成果库精选' });
+    await user.click(
+      within(showcase).getByRole('button', { name: '做同款：奶茶新品上市海报，清新绿色' }),
+    );
 
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
       '奶茶新品上市海报，清新绿色',

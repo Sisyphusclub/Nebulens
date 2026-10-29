@@ -6,6 +6,7 @@ import { runMigrations } from './db/drizzle.js';
 import { logger } from './logger.js';
 import { seedDefaultAdminIfEnabled } from './services/defaultAdminSeed.service.js';
 import { createAnalysisQueueFromEnv } from './services/imageAnalysis.service.js';
+import { createPromptEnhancerFromEnv } from './services/promptEnhance.service.js';
 import { createProviderFromEnv } from './services/providers/createProviderFromEnv.js';
 import { withStructuredVisibleText } from './services/providers/withStructuredVisibleText.js';
 
@@ -20,7 +21,13 @@ const provider = env.TEXT_PROMPT_STRUCTURING
 const imageAnalysis = createAnalysisQueueFromEnv();
 logger.info({ enabled: imageAnalysis !== undefined }, 'image analysis: configured');
 
-const app = createApp({ provider, ...(imageAnalysis === undefined ? {} : { imageAnalysis }) });
+const promptEnhancer = createPromptEnhancerFromEnv();
+
+const app = createApp({
+  provider,
+  ...(imageAnalysis === undefined ? {} : { imageAnalysis }),
+  ...(promptEnhancer === undefined ? {} : { promptEnhancer }),
+});
 
 const server = app.listen(env.PORT, () => {
   logger.info({ port: env.PORT }, 'server: listening');

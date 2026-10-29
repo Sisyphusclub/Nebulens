@@ -10095,6 +10095,29 @@ video {
   min-width: 40px;
   min-height: 40px;
 }
+/* Workspace toolbars use the same glass pills as the Discover composer, so every
+   page reads as one product. */
+.operational-toolbar
+  :is(.search-field, .admin-search, .beui-select-trigger, .icon-button, .view-switch) {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-top-color: rgb(255 255 255 / 0.18);
+  border-radius: var(--radius-full);
+  background: rgb(26 30 40 / 0.42);
+  box-shadow: rgb(255 255 255 / 0.06) 0 0 2px 1px inset;
+  backdrop-filter: blur(10px) saturate(1.2);
+}
+.operational-toolbar :is(.beui-select-trigger, .icon-button):hover:not(:disabled) {
+  border-color: rgb(255 255 255 / 0.16);
+  background: rgb(40 46 58 / 0.55);
+}
+.operational-toolbar :is(.search-field, .admin-search):focus-within {
+  border-color: rgb(255 255 255 / 0.22);
+}
+.workspace-page .asset-workbench__chrome {
+  border-bottom-color: rgb(255 255 255 / 0.06);
+  background: rgb(5 6 10 / 0.72);
+  backdrop-filter: blur(16px) saturate(1.2);
+}
 
 .templates-page .template-toolbar {
   display: grid;

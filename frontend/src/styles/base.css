@@ -10842,6 +10842,22 @@ video {
   max-width: 940px;
   margin-top: 16px;
 }
+.landing-recommendations__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.landing-recommendations .landing-recommendations__close {
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  min-height: 26px;
+}
+.landing-recommendations__close svg {
+  width: 14px;
+  height: 14px;
+}
 .landing-recommendations__label {
   margin: 0;
   color: rgb(242 244 247 / 0.6);
@@ -11028,4 +11044,44 @@ video {
   display: flex;
   justify-content: center;
   padding-block: 8px 32px;
+}
+
+/* Generate page: the same teammate matches, compact and on the app surface. */
+.landing-recommendations.generation-inspiration {
+  max-width: none;
+  margin: 0 0 10px;
+  gap: 6px;
+}
+.generation-inspiration .landing-recommendations__label,
+.generation-inspiration .landing-recommendations__owner {
+  color: var(--muted-foreground);
+}
+.generation-inspiration .landing-recommendations__list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.generation-inspiration .landing-recommendations__item {
+  border-color: var(--border);
+  background: color-mix(in oklch, var(--card) 80%, transparent);
+  padding: 5px;
+}
+.generation-inspiration .landing-recommendations__preview {
+  width: 48px;
+  height: 48px;
+  flex-basis: 48px;
+}
+.generation-inspiration .landing-recommendations__prompt {
+  color: var(--foreground);
+  font-size: 12.5px;
+}
+.generation-inspiration .landing-recommendations__reason {
+  color: var(--muted-foreground);
+}
+@media (max-width: 760px) {
+  .generation-inspiration .landing-recommendations__list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .generation-inspiration .landing-recommendations__item:nth-child(n + 2) {
+    display: none;
+  }
 }

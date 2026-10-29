@@ -1,4 +1,7 @@
+import { X } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { buildApiUrl } from '@/services/api/imagesApi';
 import type { TeamRecommendation } from '@/types/image';
 
@@ -7,15 +10,34 @@ export function LandingRecommendations({
   recommendations,
   onOpen,
   onUsePrompt,
+  onDismiss,
+  className,
 }: {
   recommendations: readonly TeamRecommendation[];
   onOpen: (recommendation: TeamRecommendation) => void;
   onUsePrompt: (recommendation: TeamRecommendation) => void;
+  /** Shows a close button; the generate page uses it so the panel never blocks writing. */
+  onDismiss?: () => void;
+  className?: string;
 }) {
   if (recommendations.length === 0) return null;
   return (
-    <section className="landing-recommendations" aria-label="团队里相似的成果">
-      <p className="landing-recommendations__label">团队里相似的成果</p>
+    <section className={cn('landing-recommendations', className)} aria-label="团队里相似的成果">
+      <div className="landing-recommendations__header">
+        <p className="landing-recommendations__label">团队里相似的成果</p>
+        {onDismiss ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="landing-recommendations__close"
+            aria-label="关闭团队推荐"
+            onClick={onDismiss}
+          >
+            <X aria-hidden="true" />
+          </Button>
+        ) : null}
+      </div>
       <div className="landing-recommendations__list">
         {recommendations.map((recommendation) => (
           <article className="landing-recommendations__item" key={recommendation.record.id}>

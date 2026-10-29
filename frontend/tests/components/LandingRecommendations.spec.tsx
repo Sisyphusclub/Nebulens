@@ -44,3 +44,18 @@ it('lists similar teammate work with the reason and author, and hands back choic
   await user.click(within(panel).getByRole('button', { name: '用这个提示词' }));
   expect(onUsePrompt).toHaveBeenCalledWith(recommendation);
 });
+
+it('offers a close button when the panel can be dismissed', async () => {
+  const user = userEvent.setup();
+  const onDismiss = vi.fn();
+  render(
+    <LandingRecommendations
+      recommendations={[recommendation]}
+      onOpen={vi.fn()}
+      onUsePrompt={vi.fn()}
+      onDismiss={onDismiss}
+    />,
+  );
+  await user.click(screen.getByRole('button', { name: '关闭团队推荐' }));
+  expect(onDismiss).toHaveBeenCalledTimes(1);
+});

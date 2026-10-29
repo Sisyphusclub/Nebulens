@@ -10,6 +10,7 @@ import { GenerationComposerControls } from '@/components/generation/GenerationCo
 import { GenerationBatch } from '@/components/generation/GenerationBatch';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
+import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { AgentChatInput } from '@/components/premium/agent-chat-input/agent-chat-input';
@@ -33,16 +34,19 @@ import { useImageHistory, type GroupedBatch } from '@/hooks/useImageHistory';
 import { useGenerationFeed } from '@/hooks/useGenerationFeed';
 import { readReferenceIds, useGenerationSettings } from '@/hooks/useGenerationSettings';
 import { useImageQuota } from '@/hooks/useImageQuota';
+import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
 import {
   LATEST_BATCH_COMPOSER_GAP,
   useLatestBatchVisibility,
 } from '@/hooks/useLatestBatchVisibility';
-import { fetchOutputBlob } from '@/services/api/imagesApi';
+import { buildApiUrl, fetchOutputBlob } from '@/services/api/imagesApi';
 import {
   DEFAULT_IMAGE_RESOLUTION,
   MAX_REFERENCE_IMAGES,
+  normalizeAspectChoiceForResolution,
   type GenerationSettingsSnapshot,
   type HistoryEntry,
+  type TeamRecommendation,
 } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
 import { buildTextFixPrompt } from '@/utils/textCheck';
@@ -68,6 +72,9 @@ export function GenerateView() {
   const autoGenerationHandled = useRef(false);
   const bareRouteRestoreHandled = useRef(false);
   const [prompt, setPrompt] = useState(searchParams.get('prompt') ?? '');
+  /** The prompt the inspiration panel was closed for; it returns once the prompt changes. */
+  const [dismissedInspirationFor, setDismissedInspirationFor] = useState<string | null>(null);
+  const [selectedInspiration, setSelectedInspiration] = useState<TeamRecommendation | null>(null);
   const {
     model,
     setModel,
@@ -100,6 +107,28 @@ export function GenerateView() {
   const previousSessionId = useRef<string | null>(activeSessionId);
   const accountName = user?.username ?? user?.name ?? '账户';
   const currentUserId = isAuthenticated ? (user?.id ?? null) : null;
+  const { items: inspiration } = useTeamRecommendations(
+    prompt,
+    isAuthenticated && !generation.isLoading && prompt.trim() !== dismissedInspirationFor,
+  );
+  const selectedInspirationEntry = useMemo<HistoryEntry | null>(
+    () =>
+      selectedInspiration === null
+        ? null
+        : {
+            record: selectedInspiration.record,
+            imageUrl: buildApiUrl(`/api/outputs/${selectedInspiration.record.id}`),
+          },
+    [selectedInspiration],
+  );
+  const applyInspiration = (recommendation: TeamRecommendation): void => {
+    setPrompt(recommendation.record.prompt);
+    if (recommendation.record.aspectRatio !== undefined) {
+      setAspect(normalizeAspectChoiceForResolution(recommendation.record.aspectRatio, resolution));
+    }
+    setDismissedInspirationFor(recommendation.record.prompt.trim());
+    setSelectedInspiration(null);
+  };
   const activeImageApiKeyConfigured =
     resolution === DEFAULT_IMAGE_RESOLUTION
       ? imageApiKey.status?.configured === true
@@ -616,6 +645,15 @@ export function GenerateView() {
             </IconTooltip>
           </div>
         ) : null}
+        {inspiration.length > 0 ? (
+          <LandingRecommendations
+            className="generation-inspiration"
+            recommendations={inspiration.slice(0, 3)}
+            onOpen={setSelectedInspiration}
+            onUsePrompt={applyInspiration}
+            onDismiss={() => setDismissedInspirationFor(prompt.trim())}
+          />
+        ) : null}
         {reusedReferenceIds.length ? (
           <div className="reused-references">
             <span>沿用 {reusedReferenceIds.length} 张历史参考图</span>
@@ -764,6 +802,14 @@ export function GenerateView() {
         onDelete={(entry) => {
           setSelected(null);
           setDeleteTarget({ kind: 'entry', entry });
+        }}
+      />
+      <ImageDetailModal
+        entry={selectedInspirationEntry}
+        {...(selectedInspiration === null ? {} : { ownerName: selectedInspiration.ownerName })}
+        onClose={() => setSelectedInspiration(null)}
+        onReuse={() => {
+          if (selectedInspiration !== null) applyInspiration(selectedInspiration);
         }}
       />
       <ConfirmActionModal

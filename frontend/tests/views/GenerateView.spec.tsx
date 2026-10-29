@@ -109,6 +109,18 @@ vi.mock('@/hooks/useImageGeneration', () => ({
   }),
 }));
 
+const recommendationMocks = vi.hoisted(() => ({
+  items: [] as unknown[],
+  calls: [] as Array<{ query: string; enabled: boolean }>,
+}));
+
+vi.mock('@/hooks/useTeamRecommendations', () => ({
+  useTeamRecommendations: (query: string, enabled: boolean) => {
+    recommendationMocks.calls.push({ query, enabled });
+    return { items: enabled ? recommendationMocks.items : [] };
+  },
+}));
+
 vi.mock('@/hooks/useImageHistory', () => ({
   useImageHistory: () => ({
     batches: historyMocks.batches,
@@ -151,6 +163,8 @@ beforeEach(() => {
   historyMocks.remove.mockResolvedValue(undefined);
   historyMocks.batches = [];
   historyMocks.isHydrated = true;
+  recommendationMocks.items = [];
+  recommendationMocks.calls = [];
   generation.error = null;
   generation.isLoading = false;
   imageApiKeyMocks.status = { configured: false };
@@ -2039,4 +2053,70 @@ it('fixes wrong text by regenerating from the image with an edit prompt', async 
   } finally {
     vi.unstubAllGlobals();
   }
+});
+
+const teamRecommendation = {
+  record: {
+    id: 'team-poster.png',
+    createdAt: '2026-10-28T00:00:00.000Z',
+    prompt: '周年庆海报，红金配色',
+    model: 'gpt-image-2',
+    aspectRatio: '3:4' as const,
+    width: 1024,
+    height: 1360,
+    isPublic: false,
+    isShared: true,
+  },
+  ownerName: 'alice',
+  reason: '同为海报',
+};
+
+it('offers similar teammate work above the composer and reuses its prompt', async () => {
+  const user = userEvent.setup();
+  recommendationMocks.items = [teamRecommendation];
+  render(
+    <MemoryRouter initialEntries={['/generate']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await user.type(screen.getByRole('textbox', { name: '图像提示词' }), '周年庆海报');
+  const panel = await screen.findByRole('region', { name: '团队里相似的成果' });
+  await user.click(within(panel).getByRole('button', { name: '用这个提示词' }));
+
+  expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent(
+    '周年庆海报，红金配色',
+  );
+  expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('3:4');
+});
+
+it('lets the inspiration be dismissed until the prompt changes, and hides it while generating', async () => {
+  const user = userEvent.setup();
+  recommendationMocks.items = [teamRecommendation];
+  const { rerender } = render(
+    <MemoryRouter initialEntries={['/generate']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+  const editor = screen.getByRole('textbox', { name: '图像提示词' });
+  await user.type(editor, '周年庆海报');
+  await user.click(await screen.findByRole('button', { name: '关闭团队推荐' }));
+  expect(screen.queryByRole('region', { name: '团队里相似的成果' })).not.toBeInTheDocument();
+
+  await user.type(editor, '设计');
+  expect(await screen.findByRole('region', { name: '团队里相似的成果' })).toBeInTheDocument();
+
+  generation.isLoading = true;
+  rerender(
+    <MemoryRouter initialEntries={['/generate']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+  expect(recommendationMocks.calls.at(-1)?.enabled).toBe(false);
 });

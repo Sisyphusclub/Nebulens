@@ -87,6 +87,7 @@ export function MorphicCardModal({
   'use no memo';
   const reduce = useReducedMotion();
   const modalRef = useRef<HTMLDivElement>(null);
+  const focusMovedInRef = useRef(false);
   const onCloseRef = useRef(onClose);
 
   onCloseRef.current = onClose;
@@ -95,7 +96,11 @@ export function MorphicCardModal({
     if (!open) return;
     const returnFocus =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    focusMovedInRef.current = false;
     const focusFrame = window.requestAnimationFrame(() => {
+      // Focus that already moved in before this frame (a clicked field, or a
+      // menu opened from the modal and portaled out of it) must not be stolen.
+      if (focusMovedInRef.current) return;
       const focusable = modalRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
       (focusable?.[0] ?? modalRef.current)?.focus();
     });
@@ -167,6 +172,11 @@ export function MorphicCardModal({
             layout={sharedLayout}
             {...(sharedLayout ? { layoutId: `morphic-card-${id}` } : {})}
             tabIndex={-1}
+            // React focus events bubble through portals, so this also sees menus
+            // and popovers rendered from inside the modal.
+            onFocus={() => {
+              focusMovedInRef.current = true;
+            }}
             // Detail views opt out of shared-layout morphing so their media keeps
             // a stable position. Use opacity-only entry/exit in that mode; a
             // scale or y transform would move the image while the dialog opens.

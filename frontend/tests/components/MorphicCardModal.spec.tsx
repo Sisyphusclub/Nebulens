@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
-import { describe, expect, it } from 'vitest';
+import { type ReactNode, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { describe, expect, it, vi } from 'vitest';
 
 import { MorphicCardModal } from '@/components/premium/morphic-card-modal';
 
@@ -19,6 +20,31 @@ function ModalHarness() {
         </section>
       </MorphicCardModal>
     </>
+  );
+}
+
+// Holds every animation frame until the test flushes it, so the modal's deferred
+// initial focus can be made to land after an earlier focus change.
+function holdAnimationFrames() {
+  const frames: FrameRequestCallback[] = [];
+  vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    frames.push(callback);
+    return frames.length;
+  });
+  return () =>
+    act(() => {
+      frames.splice(0).forEach((callback) => callback(performance.now()));
+    });
+}
+
+function renderOpenModal(children: ReactNode) {
+  return render(
+    <MorphicCardModal id="early-focus" open onClose={() => undefined}>
+      <section role="dialog" aria-label="Settings">
+        <button type="button">Close</button>
+        {children}
+      </section>
+    </MorphicCardModal>,
   );
 }
 
@@ -40,5 +66,29 @@ describe('MorphicCardModal', () => {
 
     await user.keyboard('{Escape}');
     await waitFor(() => expect(trigger).toHaveFocus());
+  });
+
+  it('keeps a field focused before its deferred initial focus runs', () => {
+    const flushFrames = holdAnimationFrames();
+    renderOpenModal(<input aria-label="API key" />);
+
+    const field = screen.getByLabelText('API key');
+    field.focus();
+    flushFrames();
+
+    expect(field).toHaveFocus();
+  });
+
+  it('keeps focus in a menu portaled out of the modal before its deferred initial focus runs', () => {
+    const flushFrames = holdAnimationFrames();
+    renderOpenModal(
+      createPortal(<div role="menu" aria-label="Usage" tabIndex={-1} />, document.body),
+    );
+
+    const menu = screen.getByRole('menu', { name: 'Usage' });
+    menu.focus();
+    flushFrames();
+
+    expect(menu).toHaveFocus();
   });
 });

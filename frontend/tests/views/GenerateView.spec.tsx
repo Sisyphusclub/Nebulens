@@ -2123,6 +2123,7 @@ it('lets the inspiration be dismissed until the prompt changes, and hides it whi
 
 it('suggests 2K for a text-heavy prompt and switches the resolution', async () => {
   const user = userEvent.setup();
+  imageApiKeyMocks.status = { configured: false, highResConfigured: true };
   render(
     <MemoryRouter
       initialEntries={[

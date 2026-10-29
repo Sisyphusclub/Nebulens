@@ -43,6 +43,7 @@ import {
 import { buildApiUrl, fetchOutputBlob } from '@/services/api/imagesApi';
 import {
   DEFAULT_IMAGE_RESOLUTION,
+  imageGenerationCreditCost,
   MAX_REFERENCE_IMAGES,
   normalizeAspectChoiceForResolution,
   type GenerationSettingsSnapshot,
@@ -90,6 +91,10 @@ export function GenerateView() {
     applySnapshot,
     buildSnapshot,
   } = useGenerationSettings(searchParams);
+  /** 2K needs a 2K/4K key or enough permanent credits; without either the request is refused. */
+  const canUse2k =
+    imageApiKey.status?.highResConfigured === true ||
+    (quota?.permanentRemaining ?? 0) >= imageGenerationCreditCost('2k', model);
   const [reusedReferenceIds, setReusedReferenceIds] = useState<string[]>(() =>
     readReferenceIds(searchParams),
   );
@@ -658,6 +663,7 @@ export function GenerateView() {
         <TextResolutionHint
           prompt={prompt}
           resolution={resolution}
+          canUse2k={canUse2k}
           onUse2k={() => updateResolution('2k')}
         />
         {reusedReferenceIds.length ? (

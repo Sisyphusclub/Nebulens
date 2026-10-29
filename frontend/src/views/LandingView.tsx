@@ -40,6 +40,7 @@ import {
   DEFAULT_IMAGE_MODEL,
   DEFAULT_IMAGE_QUALITY,
   DEFAULT_IMAGE_RESOLUTION,
+  imageGenerationCreditCost,
   MAX_REFERENCE_IMAGES,
   normalizeAspectChoiceForResolution,
   supportsImageQuality,
@@ -87,6 +88,10 @@ export function LandingView() {
   const [aspect, setAspect] = useState<AspectChoice>(DEFAULT_ASPECT_CHOICE);
   const [count, setCount] = useState(DEFAULT_COUNT);
   const [resolution, setResolution] = useState<ImageResolution>(DEFAULT_IMAGE_RESOLUTION);
+  /** 2K needs a 2K/4K key or enough permanent credits; without either the request is refused. */
+  const canUse2k =
+    imageApiKey.status?.highResConfigured === true ||
+    (quota?.permanentRemaining ?? 0) >= imageGenerationCreditCost('2k', model);
   const [quality, setQuality] = useState<ImageQuality>(DEFAULT_IMAGE_QUALITY);
   const [imageApiKeySettingsOpen, setImageApiKeySettingsOpen] = useState(false);
   const accountName = user?.username ?? user?.name ?? '账户';
@@ -269,6 +274,7 @@ export function LandingView() {
           <TextResolutionHint
             prompt={prompt}
             resolution={resolution}
+            canUse2k={canUse2k}
             onUse2k={() => updateResolution('2k')}
           />
           {recommendations.length > 0 ? (

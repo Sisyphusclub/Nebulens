@@ -9,7 +9,9 @@ const densePrompt = '主标题“周年庆典”，副标题“全场第二件�
 it('suggests 2K for text-heavy prompts at standard resolution and switches on request', async () => {
   const user = userEvent.setup();
   const onUse2k = vi.fn();
-  render(<TextResolutionHint prompt={densePrompt} resolution="standard" onUse2k={onUse2k} />);
+  render(
+    <TextResolutionHint prompt={densePrompt} resolution="standard" canUse2k onUse2k={onUse2k} />,
+  );
 
   expect(screen.getByRole('status')).toHaveTextContent('建议切换到 2K');
   await user.click(screen.getByRole('button', { name: '切换到 2K' }));
@@ -18,10 +20,25 @@ it('suggests 2K for text-heavy prompts at standard resolution and switches on re
 
 it('stays hidden at higher resolutions and for light text', () => {
   const { rerender } = render(
-    <TextResolutionHint prompt={densePrompt} resolution="2k" onUse2k={vi.fn()} />,
+    <TextResolutionHint prompt={densePrompt} resolution="2k" canUse2k onUse2k={vi.fn()} />,
   );
   expect(screen.queryByRole('status')).not.toBeInTheDocument();
 
-  rerender(<TextResolutionHint prompt="海报写“新品”" resolution="standard" onUse2k={vi.fn()} />);
+  rerender(
+    <TextResolutionHint prompt="海报写“新品”" resolution="standard" canUse2k onUse2k={vi.fn()} />,
+  );
   expect(screen.queryByRole('status')).not.toBeInTheDocument();
+});
+
+it('points to redrawing instead of 2K when 2K is not available', () => {
+  render(
+    <TextResolutionHint
+      prompt={densePrompt}
+      resolution="standard"
+      canUse2k={false}
+      onUse2k={vi.fn()}
+    />,
+  );
+  expect(screen.getByRole('status')).toHaveTextContent('生成后可用“重画文字”修正');
+  expect(screen.queryByRole('button', { name: '切换到 2K' })).not.toBeInTheDocument();
 });

@@ -941,8 +941,8 @@ video {
   font-size: clamp(3.5rem, 5vw, 4.5rem);
   font-weight: 500;
   font-variation-settings: 'wght' 500;
-  line-height: 0.9;
-  letter-spacing: 0;
+  line-height: 1.05;
+  letter-spacing: 0.04em;
   text-align: center;
   white-space: nowrap;
   animation: landing-title-in 0.72s var(--ease-out-expo) 0.12s both;
@@ -954,13 +954,15 @@ video {
   word-spacing: -0.03em;
 }
 .landing-hero__content h1 em {
-  margin-bottom: -0.24em;
-  padding-bottom: 0.24em;
+  margin-bottom: -0.18em;
+  padding-bottom: 0.18em;
   font-family: var(--font-hero-serif);
-  font-size: 1.05em;
-  font-style: italic;
-  font-weight: 400;
-  line-height: 0.82;
+  font-size: 1em;
+  /* The headline is Chinese, which has no true italics; a synthetic slant looks broken. */
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.05;
 }
 @layer utilities {
   .animate-shiny {
@@ -3123,7 +3125,7 @@ video {
   }
   .landing-hero__content h1 {
     font-size: 3.5rem;
-    line-height: 0.9;
+    line-height: 1.05;
   }
   .landing-hero__content > p {
     font-size: 16px;
@@ -3367,7 +3369,7 @@ video {
     align-items: center;
     gap: 0;
     font-size: 2.5rem;
-    line-height: 0.88;
+    line-height: 1.1;
     white-space: normal;
   }
   .landing-hero__content > p {

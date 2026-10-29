@@ -231,10 +231,10 @@ export function LandingView() {
           onClose={() => setImageApiKeySettingsOpen(false)}
         />
         <div className="landing-hero__content">
-          <h1 id="landing-title" aria-label="Turn your idea into images">
-            <span className="landing-hero__headline-main">Turn your idea</span>
+          <h1 id="landing-title" aria-label="把想法，变成画面">
+            <span className="landing-hero__headline-main">把想法，</span>
             <em className="animate-shiny" style={HERO_SHINY_GRADIENT_STYLE}>
-              into images
+              变成画面
             </em>
           </h1>
           <p>用 GPT-IMAGE-2 将你的创意变为精美图片，只需描述你脑海中的画面。</p>

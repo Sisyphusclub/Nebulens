@@ -330,6 +330,14 @@ describe('React application routes', () => {
     );
   });
 
+  it('greets visitors with a Chinese headline', async () => {
+    renderRoute('/');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: '把想法，变成画面' }),
+    ).toBeInTheDocument();
+  });
+
   it('hides recent creations when there is no history', async () => {
     renderRoute('/');
     await screen.findByRole('group', { name: '常用技能' });

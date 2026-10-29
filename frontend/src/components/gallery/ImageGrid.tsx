@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
 import { cn } from '@/lib/utils';
 import type { HistoryEntry } from '@/types/image';
+import { thumbnailUrl } from '@/utils/thumbnail';
 
 interface ImageGridProps {
   entries: readonly HistoryEntry[];
@@ -60,7 +61,11 @@ export function ImageGrid({
                 aria-label={`查看图片：${entry.record.prompt}`}
                 onClick={() => onSelect(entry)}
               >
-                <img src={entry.imageUrl} alt={entry.record.prompt || '生成图片'} loading="lazy" />
+                <img
+                  src={thumbnailUrl(entry.imageUrl, 640)}
+                  alt={entry.record.prompt || '生成图片'}
+                  loading="lazy"
+                />
               </Button>
               <div className="image-tile__actions" role="toolbar" aria-label="图片操作">
                 {onCopyPrompt ? (

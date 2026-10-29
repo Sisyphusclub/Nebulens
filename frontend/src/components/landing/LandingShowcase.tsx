@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { buildApiUrl } from '@/services/api/imagesApi';
 import { IMAGE_CATEGORY_LABELS, type TeamImageRecord } from '@/types/image';
+import { thumbnailUrl } from '@/utils/thumbnail';
 
 /**
  * The team's newest shared work under the skills, so the library comes to people
@@ -41,7 +42,7 @@ export function LandingShowcase({
             onClick={() => onUse(record)}
           >
             <img
-              src={buildApiUrl(`/api/outputs/${record.id}`)}
+              src={thumbnailUrl(buildApiUrl(`/api/outputs/${record.id}`), 640)}
               alt=""
               loading="lazy"
               decoding="async"

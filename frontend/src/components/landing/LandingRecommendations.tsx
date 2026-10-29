@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { buildApiUrl } from '@/services/api/imagesApi';
 import type { TeamRecommendation } from '@/types/image';
+import { thumbnailUrl } from '@/utils/thumbnail';
 
 /** Teammates' work similar to the need being typed, so good results get reused. */
 export function LandingRecommendations({
@@ -49,7 +50,7 @@ export function LandingRecommendations({
               onClick={() => onOpen(recommendation)}
             >
               <img
-                src={buildApiUrl(`/api/outputs/${recommendation.record.id}`)}
+                src={thumbnailUrl(buildApiUrl(`/api/outputs/${recommendation.record.id}`), 320)}
                 alt=""
                 loading="lazy"
                 decoding="async"

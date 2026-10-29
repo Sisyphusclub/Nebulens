@@ -93,3 +93,14 @@ it('binds square, landscape, and portrait media containers to their source dimen
     aspectRatio: '1024 / 1792',
   });
 });
+
+it('shows card-sized thumbnails instead of full originals', () => {
+  render(
+    <ImageGrid entries={[{ ...entry, imageUrl: '/api/outputs/one.png' }]} onSelect={vi.fn()} />,
+  );
+
+  expect(screen.getByRole('img', { name: '雨夜城市街角' })).toHaveAttribute(
+    'src',
+    '/api/outputs/one.png?w=640',
+  );
+});

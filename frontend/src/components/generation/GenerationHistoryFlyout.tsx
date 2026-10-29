@@ -11,6 +11,7 @@ import {
 import type { GroupedBatch } from '@/hooks/useImageHistory';
 import { ASPECT_RATIO_LABELS, imageModelLabel } from '@/types/image';
 import { formatClockTime } from '@/utils/format';
+import { thumbnailUrl } from '@/utils/thumbnail';
 
 type HistoryGroupKey = 'today' | 'yesterday' | 'week' | 'earlier';
 
@@ -480,7 +481,11 @@ export function GenerationHistoryFlyout({
                           >
                             <span className="generation-history-item__thumb" aria-hidden="true">
                               {thumbnail ? (
-                                <img src={thumbnail.imageUrl} alt="" loading="lazy" />
+                                <img
+                                  src={thumbnailUrl(thumbnail.imageUrl, 320)}
+                                  alt=""
+                                  loading="lazy"
+                                />
                               ) : batch.error ? (
                                 <CircleAlert />
                               ) : (

@@ -35,7 +35,7 @@ it('lists teammates’ shared work and makes a similar one on click', async () =
   expect(card).toHaveTextContent('海报');
   expect(card.querySelector('img')).toHaveAttribute(
     'src',
-    expect.stringContaining('/api/outputs/team-tea.png'),
+    expect.stringContaining('/api/outputs/team-tea.png?w=640'),
   );
 
   await user.click(card);

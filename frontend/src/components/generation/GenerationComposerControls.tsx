@@ -86,7 +86,7 @@ export function GenerationComposerControls({
         disabled={disabled}
         leadingIcon={<ModelLogo modelId={model} className="generation-model-select__icon" />}
         className="generation-model-select"
-        contentClassName="generation-control-panel generation-model-menu !bg-popover"
+        contentClassName="generation-control-panel generation-model-menu"
         onValueChange={onModelChange}
       />
 

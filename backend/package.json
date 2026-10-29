@@ -22,6 +22,7 @@
     "storage:report-orphans": "tsx --env-file=.env src/scripts/reportOutputOrphans.ts",
     "eval:text": "tsx --env-file=.env src/scripts/textEval/runTextEval.ts",
     "analysis:backfill": "tsx --env-file=.env src/scripts/backfillImageAnalysis.ts",
+    "templates:thumbnails": "tsx src/scripts/generateTemplateThumbnails.ts",
     "prepare": "husky"
   },
   "lint-staged": {

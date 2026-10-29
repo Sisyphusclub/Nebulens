@@ -19,6 +19,7 @@ import {
 import { useTemplatePreferences } from '@/hooks/useTemplatePreferences';
 import { cn } from '@/lib/utils';
 import { ASPECT_RATIO_LABELS, IMAGE_RESOLUTION_LABELS } from '@/types/image';
+import { TEMPLATE_THUMBNAIL_WIDTH, templateThumbnailUrl } from '@/utils/thumbnail';
 
 type TemplateSort = 'featured' | 'recent' | 'title';
 
@@ -152,9 +153,10 @@ export function TemplatesView() {
           {visibleTemplates.map((template, index) => {
             const favorite = favoriteIds.includes(template.id);
             const used = recent[template.id] !== undefined;
+            const wide = index % 5 === 0;
             return (
               <article
-                className={cn('template-tile', index % 5 === 0 && 'template-tile--wide')}
+                className={cn('template-tile', wide && 'template-tile--wide')}
                 key={template.id}
               >
                 <MorphicCard id={`template-${template.id}`} className="template-tile__morph">
@@ -165,7 +167,26 @@ export function TemplatesView() {
                     aria-label={`预览模板：${template.title}`}
                     onClick={() => setSelected(template)}
                   >
-                    <img src={template.imageUrl} alt={`${template.title}示例`} loading="lazy" />
+                    <img
+                      src={templateThumbnailUrl(template.imageUrl)}
+                      // Wide cards span about 620px, so sharp screens pick the original.
+                      {...(wide
+                        ? {
+                            srcSet: `${templateThumbnailUrl(template.imageUrl)} ${TEMPLATE_THUMBNAIL_WIDTH}w, ${template.imageUrl} ${template.width}w`,
+                            sizes: '(min-width: 861px) 620px, 100vw',
+                          }
+                        : {})}
+                      alt={`${template.title}示例`}
+                      loading="lazy"
+                      onError={(event) => {
+                        // A template added without running the thumbnail script still shows.
+                        const image = event.currentTarget;
+                        if (image.dataset.fallback === 'true') return;
+                        image.dataset.fallback = 'true';
+                        image.removeAttribute('srcset');
+                        image.src = template.imageUrl;
+                      }}
+                    />
                     <span className="template-tile__label">
                       <small>{used ? '最近使用' : template.category}</small>
                       <strong>{template.title}</strong>

@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -257,6 +257,21 @@ beforeEach(() => {
 });
 
 describe('React application routes', () => {
+  it('shows template cards as small thumbnails and falls back to the original', async () => {
+    renderRoute('/templates');
+
+    const [image] = await screen.findAllByRole('img', { name: /示例$/ });
+    const original = image?.getAttribute('src')?.replace('/thumbs/', '/') ?? '';
+    expect(image).toHaveAttribute('src', expect.stringMatching(/\/thumbs\/[^/]+\.webp$/));
+    // The first card is a wide one, so sharp screens can still pick the original.
+    expect(image).toHaveAttribute('srcset', expect.stringContaining(`${original} `));
+
+    if (image) fireEvent.error(image);
+    expect(image?.getAttribute('src')).toMatch(/\/media\/templates\/[^/]+\/[^/]+\.\w+$/);
+    expect(image?.getAttribute('src')).not.toContain('/thumbs/');
+    expect(original).toContain('/media/templates/');
+  });
+
   it('places creation templates between generation and assets in the landing navigation', async () => {
     const { container } = renderRoute('/');
     const navigation = within(await screen.findByRole('navigation', { name: '首页导航' }));

@@ -8850,19 +8850,102 @@ video {
   border-radius: 30px;
 }
 
-/* The hero composer uses the beUI Agent Chat Input surface; its wrappers stay
-   visual-neutral positioning layers. */
-.landing-composer-hero .landing-composer {
-  --card-bg: color-mix(in oklch, var(--card) 88%, transparent) !important;
-  border-color: color-mix(in oklch, var(--border-strong) 82%, var(--border));
-  background: color-mix(in oklch, var(--card) 88%, transparent) !important;
+/* The hero composer is Wanxiang-style liquid glass: a light tint and blur keep
+   the artwork wall visible, layered inset highlights draw the glass edge, and
+   Chromium adds SVG edge refraction (other engines keep plain frosted glass).
+   The pointer-driven React Bits glow is uneven on a wide composer, so Discover
+   swaps it for one evenly lit rim that slowly rotates. */
+@property --landing-rim-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+.landing-composer-hero .landing-composer.generation-composer {
+  --card-bg: rgb(18 22 30 / 0.34) !important;
+  border-color: rgb(255 255 255 / 0.1);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0) 42%), var(--card-bg) !important;
+  backdrop-filter: blur(14px) saturate(1.6);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
   box-shadow:
-    inset 0 1px 0 rgb(236 248 255 / 0.08),
-    0 24px 60px -34px rgb(0 0 0 / 0.94);
+    rgb(255 255 255 / 0.13) 0 0 2px 1px inset,
+    rgb(255 255 255 / 0.07) 0 0 8px 2px inset,
+    rgb(255 255 255 / 0.05) 0 2px 12px 0 inset,
+    rgb(255 255 255 / 0.03) 0 4px 20px 0 inset,
+    0 24px 60px -30px rgb(0 0 0 / 0.9);
+}
+.landing-glass-filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.landing-composer-content[data-refraction='true'] .landing-composer.generation-composer {
+  backdrop-filter: url(#landing-glass-refraction) blur(14px) saturate(1.6);
 }
 .landing-composer-hero .landing-composer > .border-glow-inner,
 .landing-composer-hero .landing-composer .agent-chat-input__surface {
   background: transparent !important;
+}
+.landing-composer-hero .landing-composer.border-glow-card::before,
+.landing-composer-hero .landing-composer.border-glow-card::after,
+.landing-composer-hero .landing-composer.border-glow-card > .edge-light {
+  display: none;
+}
+.landing-composer-content::before,
+.landing-composer-content::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: 21px;
+  background: conic-gradient(
+    from var(--landing-rim-angle),
+    #12c8f4,
+    #1464ff,
+    #ffb51b,
+    #12c8f4,
+    #1464ff,
+    #ffb51b,
+    #12c8f4
+  );
+  pointer-events: none;
+  animation: landing-rim-spin 6s linear infinite;
+  transition: opacity 0.4s ease;
+}
+/* The rim: a 1px ring of the gradient drawn over the glass edge, since the
+   glass's own backdrop blur would smear a ring painted beneath it. */
+.landing-composer-content::before {
+  z-index: 2;
+  padding: 1px;
+  opacity: 0.55;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+/* The halo: the same gradient, blurred into a soft even glow behind the glass. */
+.landing-composer-content::after {
+  inset: 10px;
+  z-index: -2;
+  opacity: 0.14;
+  filter: blur(22px);
+}
+.landing-composer-content:focus-within::before {
+  opacity: 0.95;
+}
+.landing-composer-content:focus-within::after {
+  opacity: 0.22;
+}
+@keyframes landing-rim-spin {
+  to {
+    --landing-rim-angle: 360deg;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-composer-content::before,
+  .landing-composer-content::after {
+    animation: none;
+  }
 }
 .landing-composer-hero .landing-composer .agent-chat-input__submit {
   min-width: 68px;

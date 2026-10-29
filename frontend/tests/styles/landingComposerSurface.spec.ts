@@ -65,30 +65,41 @@ describe('landing composer surface contract', () => {
     expect(triggerFocusRule).toContain('box-shadow: none !important;');
   });
 
-  it('keeps the idle hero composer visible without painting a nested card', () => {
-    const idleStart = baseStyles.indexOf(
-      '/* The hero composer uses the beUI Agent Chat Input surface;',
-    );
-    const idleContract = baseStyles.slice(
-      idleStart,
-      baseStyles.indexOf('/* Composer parity:', idleStart),
+  it('renders the hero composer as see-through liquid glass', () => {
+    const glassStart = baseStyles.indexOf('/* The hero composer is Wanxiang-style liquid glass:');
+    const glass = baseStyles.slice(
+      glassStart,
+      baseStyles.indexOf('/* Composer parity:', glassStart),
     );
 
-    expect(idleContract).toContain(
-      '--card-bg: color-mix(in oklch, var(--card) 88%, transparent) !important;',
+    expect(glassStart).toBeGreaterThan(-1);
+    // Light tint plus a light blur keeps the artwork wall visible through the composer.
+    expect(glass).toContain('backdrop-filter: blur(14px) saturate(1.6);');
+    expect(glass).toContain('rgb(255 255 255 / 0.13) 0 0 2px 1px inset');
+    expect(glass).toContain('rgb(255 255 255 / 0.07) 0 0 8px 2px inset');
+    // Chromium adds edge refraction; other engines keep the plain frosted glass.
+    expect(glass).toMatch(
+      /\[data-refraction='true'\][^{]*\{[^}]*backdrop-filter: url\(#landing-glass-refraction\) blur\(14px\) saturate\(1\.6\);/s,
     );
-    expect(idleContract).toContain(
-      'border-color: color-mix(in oklch, var(--border-strong) 82%, var(--border));',
-    );
-    expect(idleContract).toContain('inset 0 1px 0 rgb(236 248 255 / 0.08)');
-    expect(idleContract).toContain('background: transparent !important;');
-    expect(idleContract).not.toContain('.agent-chat-input__surface {\n  background: color-mix');
+    expect(glass).toContain('background: transparent !important;');
   });
 
-  it('does not replace React Bits pointer proximity with a route focus override', () => {
-    expect(baseStyles).not.toContain(
-      '.agent-chat-input.landing-composer.border-glow-card:focus-within',
+  it('replaces the pointer-driven glow with an even rotating rim on Discover only', () => {
+    const glassStart = baseStyles.indexOf('/* The hero composer is Wanxiang-style liquid glass:');
+    const glass = baseStyles.slice(
+      glassStart,
+      baseStyles.indexOf('/* Composer parity:', glassStart),
     );
+
+    expect(glass).toMatch(
+      /\.landing-composer-hero \.landing-composer\.border-glow-card::before,[^{]*> \.edge-light\s*\{[^}]*display: none;/s,
+    );
+    expect(glass).toContain('@property --landing-rim-angle');
+    expect(glass).toContain('conic-gradient(\n    from var(--landing-rim-angle)');
+    expect(glass).toContain('animation: landing-rim-spin 6s linear infinite;');
+    expect(glass).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{[^@]*animation: none;/s);
+    // Generate keeps the shared React Bits glow untouched.
+    expect(baseStyles).not.toContain('.studio-agent-input.border-glow-card::before');
     expect(baseStyles).not.toContain('border-glow-liquid-glass');
   });
 });

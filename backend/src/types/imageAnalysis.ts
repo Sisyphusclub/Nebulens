@@ -3,7 +3,10 @@ export interface TextCheckSegment {
   text: string;
   /** The text as rendered, or null when it is missing from the image. */
   found: string | null;
+  /** The rendered text matches the expected text. */
   ok: boolean;
+  /** Glyphs are upright, complete and evenly spaced; absent in checks made before this field. */
+  clear?: boolean;
 }
 
 export interface TextCheckResult {

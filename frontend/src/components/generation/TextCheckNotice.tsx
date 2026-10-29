@@ -2,7 +2,7 @@ import { CircleAlert, CircleCheck, Wand2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import type { TextCheckResult } from '@/types/image';
-import { describeTextIssues } from '@/utils/textCheck';
+import { describeTextIssues, hasMisspelledText } from '@/utils/textCheck';
 
 /** The vision model's verdict on an image's quoted text, with a fix for wrong text. */
 export function TextCheckNotice({
@@ -16,17 +16,27 @@ export function TextCheckNotice({
 }) {
   if (check.status === 'passed') {
     return (
-      <p className="text-check text-check--passed" role="status">
+      <div className="text-check text-check--passed" role="status">
         <CircleCheck aria-hidden="true" />
-        文字核对无误
-      </p>
+        <span>文字核对无误</span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="compact"
+          className="text-check__redraw"
+          disabled={disabled}
+          onClick={onFix}
+        >
+          重画文字
+        </Button>
+      </div>
     );
   }
   return (
     <div className="text-check text-check--issues" role="status">
       <p className="text-check__title">
         <CircleAlert aria-hidden="true" />
-        疑似错字
+        {hasMisspelledText(check) ? '疑似错字' : '文字有变形'}
       </p>
       <ul className="text-check__list">
         {describeTextIssues(check).map((issue) => (

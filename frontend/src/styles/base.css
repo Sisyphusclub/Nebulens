@@ -4616,6 +4616,13 @@ video {
 .text-check--issues .button {
   justify-self: start;
 }
+.text-check--passed .text-check__redraw {
+  height: 24px;
+  margin-left: auto;
+  padding: 0 8px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
 .session-result__actions {
   position: absolute;
   right: 10px;

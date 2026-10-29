@@ -218,7 +218,8 @@ function isTextCheck(value: unknown): value is TextCheckResult {
         isRecord(segment) &&
         typeof segment.text === 'string' &&
         (segment.found === null || typeof segment.found === 'string') &&
-        typeof segment.ok === 'boolean',
+        typeof segment.ok === 'boolean' &&
+        (segment.clear === undefined || typeof segment.clear === 'boolean'),
     )
   );
 }

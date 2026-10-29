@@ -16,6 +16,20 @@ it('confirms text that was rendered exactly', () => {
   expect(screen.queryByRole('button', { name: '修正文字' })).not.toBeInTheDocument();
 });
 
+it('still lets the user redraw text the check passed', async () => {
+  const user = userEvent.setup();
+  const onFix = vi.fn();
+  render(
+    <TextCheckNotice
+      check={{ status: 'passed', segments: [{ text: '新品上市', found: '新品上市', ok: true }] }}
+      disabled={false}
+      onFix={onFix}
+    />,
+  );
+  await user.click(screen.getByRole('button', { name: '重画文字' }));
+  expect(onFix).toHaveBeenCalledTimes(1);
+});
+
 it('lists wrong text and offers a fix', async () => {
   const user = userEvent.setup();
   const onFix = vi.fn();
@@ -50,4 +64,21 @@ it('disables the fix while another generation runs', () => {
     />,
   );
   expect(screen.getByRole('button', { name: '修正文字' })).toBeDisabled();
+});
+
+it('names deformed text separately from wrong text', () => {
+  render(
+    <TextCheckNotice
+      check={{
+        status: 'issues',
+        segments: [{ text: '11月7日', found: '11月7日', ok: true, clear: false }],
+      }}
+      disabled={false}
+      onFix={vi.fn()}
+    />,
+  );
+  const notice = screen.getByRole('status');
+  expect(notice).toHaveTextContent('文字有变形');
+  expect(notice).not.toHaveTextContent('疑似错字');
+  expect(notice).toHaveTextContent('“11月7日”有变形或挤压');
 });

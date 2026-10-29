@@ -1,24 +1,51 @@
-import type { TextCheckResult } from '@/types/image';
+import type { TextCheckResult, TextCheckSegment } from '@/types/image';
 
-/** One line per wrong or missing segment, for tooltips and notices. */
-export function describeTextIssues(check: TextCheckResult): string[] {
-  return check.segments
-    .filter((segment) => !segment.ok)
-    .map((segment) =>
-      segment.found === null
-        ? `没有找到“${segment.text}”`
-        : `“${segment.text}”被写成了“${segment.found}”`,
-    );
+/** Wrong or missing text, as opposed to correct text that is merely hard to read. */
+function isMisspelled(segment: TextCheckSegment): boolean {
+  return !segment.ok;
 }
 
-/** An edit prompt that rewrites only the wrong text on the reference image. */
+function isDeformed(segment: TextCheckSegment): boolean {
+  return segment.ok && segment.clear === false;
+}
+
+export function hasMisspelledText(check: TextCheckResult): boolean {
+  return check.segments.some(isMisspelled);
+}
+
+/** One line per wrong, missing or deformed segment, for tooltips and notices. */
+export function describeTextIssues(check: TextCheckResult): string[] {
+  return check.segments.flatMap((segment) => {
+    if (isMisspelled(segment)) {
+      return [
+        segment.found === null
+          ? `没有找到“${segment.text}”`
+          : `“${segment.text}”被写成了“${segment.found}”`,
+      ];
+    }
+    return isDeformed(segment) ? [`“${segment.text}”有变形或挤压`] : [];
+  });
+}
+
+const redraw = (text: string): string =>
+  `把“${text}”重新清晰地画一遍，字形端正、笔画完整、字距正常`;
+
+/**
+ * An edit prompt that rewrites or redraws only the problem text on the reference image.
+ * When nothing was flagged the user still saw a problem, so every segment is redrawn.
+ */
 export function buildTextFixPrompt(check: TextCheckResult): string {
-  const fixes = check.segments
-    .filter((segment) => !segment.ok)
-    .map((segment) =>
-      segment.found === null
-        ? `在原本应有文字的位置补上“${segment.text}”`
-        : `把“${segment.found}”改为“${segment.text}”`,
-    );
+  const flagged = check.segments.flatMap((segment) => {
+    if (isMisspelled(segment)) {
+      return [
+        segment.found === null
+          ? `在原本应有文字的位置补上“${segment.text}”`
+          : `把“${segment.found}”改为“${segment.text}”`,
+      ];
+    }
+    return isDeformed(segment) ? [redraw(segment.text)] : [];
+  });
+  const fixes =
+    flagged.length > 0 ? flagged : check.segments.map((segment) => redraw(segment.text));
   return `请只修改图中的文字，画面、构图、配色和字体风格保持不变：${fixes.join('；')}。`;
 }

@@ -186,7 +186,10 @@ export type AnalysisStatus = 'pending' | 'done' | 'failed';
 export interface TextCheckSegment {
   text: string;
   found: string | null;
+  /** The rendered text matches the expected text. */
   ok: boolean;
+  /** Glyphs are upright, complete and evenly spaced; absent in older checks. */
+  clear?: boolean;
 }
 
 export interface TextCheckResult {

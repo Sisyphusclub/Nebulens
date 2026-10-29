@@ -47,8 +47,9 @@ function buildInstructions(expectedTexts: readonly string[]): string {
   ];
   if (expectedTexts.length > 0) {
     lines.push(
-      '字段 texts：逐条核对下列应出现在图中的文字，每条输出 {"expected": 原文, "found": 图中实际写的文字}。',
+      '字段 texts：逐条核对下列应出现在图中的文字，每条输出 {"expected": 原文, "found": 图中实际写的文字, "clear": 字形是否清晰}。',
       '竖排、书法、手写和艺术字也要认真辨认；图中写成繁体、形近字或缺字时，found 照实写出；完全找不到时 found 为 null。',
+      'clear 为 true 表示字形端正、笔画完整清晰、字距正常；有变形、挤压粘连、残缺、模糊或被裁切时为 false，小字号文字尤其要仔细看。',
       ...expectedTexts.map((text, index) => `${index + 1}. ${text}`),
     );
   }
@@ -133,21 +134,26 @@ export function parseImageAnalysis(raw: string, expectedTexts: readonly string[]
   }
   if (expectedTexts.length > 0) {
     const reported = Array.isArray(answer['texts']) ? answer['texts'] : [];
-    const foundByText = new Map<string, string | null>();
+    const reportByText = new Map<string, { found: string | null; clear: boolean }>();
     for (const item of reported) {
       if (typeof item !== 'object' || item === null) continue;
-      const { expected, found } = item as Record<string, unknown>;
+      const { expected, found, clear } = item as Record<string, unknown>;
       if (typeof expected === 'string') {
-        foundByText.set(expected, typeof found === 'string' ? found : null);
+        reportByText.set(expected, {
+          found: typeof found === 'string' ? found : null,
+          // A model that gives no legibility verdict is trusted on content alone.
+          clear: clear !== false,
+        });
       }
     }
     const segments = expectedTexts.map((text) => {
-      const found = foundByText.get(text) ?? null;
+      const found = reportByText.get(text)?.found ?? null;
       const ok = found !== null && scoreVisibleText([text], found).segments[0]?.exact === true;
-      return { text, found, ok };
+      const clear = found !== null && reportByText.get(text)?.clear !== false;
+      return { text, found, ok, clear };
     });
     analysis.textCheck = {
-      status: segments.every((segment) => segment.ok) ? 'passed' : 'issues',
+      status: segments.every((segment) => segment.ok && segment.clear) ? 'passed' : 'issues',
       segments,
     };
   }

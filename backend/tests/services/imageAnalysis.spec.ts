@@ -45,9 +45,9 @@ describe('parseImageAnalysis', () => {
       textCheck: {
         status: 'issues',
         segments: [
-          { text: '新品上市', found: '新品上市', ok: true },
-          { text: '中杯16元', found: '中杯15元', ok: false },
-          { text: '大杯19元', found: null, ok: false },
+          { text: '新品上市', found: '新品上市', ok: true, clear: true },
+          { text: '中杯16元', found: '中杯15元', ok: false, clear: true },
+          { text: '大杯19元', found: null, ok: false, clear: false },
         ],
       },
     });
@@ -251,5 +251,38 @@ describe('listRecordsNeedingAnalysis', () => {
     expect(withoutFailed).toContain(pendingId);
     expect(withoutFailed).not.toContain(failedId);
     expect(withFailed).toEqual(expect.arrayContaining([pendingId, failedId]));
+  });
+});
+
+describe('parseImageAnalysis legibility', () => {
+  it('flags correctly spelled text that the model saw as deformed or cramped', () => {
+    const parsed = parseImageAnalysis(
+      JSON.stringify({
+        texts: [
+          { expected: '周年庆典', found: '周年庆典', clear: true },
+          { expected: '11月1日至11月7日', found: '11月1日至11月7日', clear: false },
+        ],
+      }),
+      ['周年庆典', '11月1日至11月7日'],
+    );
+
+    expect(parsed.textCheck).toEqual({
+      status: 'issues',
+      segments: [
+        { text: '周年庆典', found: '周年庆典', ok: true, clear: true },
+        { text: '11月1日至11月7日', found: '11月1日至11月7日', ok: true, clear: false },
+      ],
+    });
+  });
+
+  it('treats a missing legibility verdict as clear', () => {
+    const parsed = parseImageAnalysis(
+      JSON.stringify({ texts: [{ expected: '新品', found: '新品' }] }),
+      ['新品'],
+    );
+    expect(parsed.textCheck).toEqual({
+      status: 'passed',
+      segments: [{ text: '新品', found: '新品', ok: true, clear: true }],
+    });
   });
 });

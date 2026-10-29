@@ -496,11 +496,12 @@ video {
   position: fixed;
   inset: 0;
 }
+/* Edge shading plus an even dimming veil over the whole wall, so the artwork
+   reads as backdrop rather than competing with the page content. */
 .landing-hero__overlay {
   background:
     linear-gradient(90deg, rgb(3 5 10 / 0.4) 0, transparent 13%, transparent 86%),
-    linear-gradient(180deg, rgb(3 5 10 / 0.34) 0, transparent 20%),
-    color-mix(in oklch, var(--background) 5%, transparent);
+    linear-gradient(180deg, rgb(3 5 10 / 0.34) 0, transparent 20%), rgb(5 6 10 / 0.3);
 }
 .landing-navigation-shell {
   position: absolute;

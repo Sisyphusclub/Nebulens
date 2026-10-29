@@ -39,12 +39,15 @@ describe('landing artwork wall brightness', () => {
 describe('landing page-wide artwork wall', () => {
   it('pins the wall behind the whole page so the lower half is not a flat dark block', () => {
     const wall = rule('.landing-hero .artwork-wall,\n.landing-hero__overlay');
-    const overlay = rule('.landing-hero__overlay');
+    const overlay =
+      baseStyles.match(/\.landing-hero__overlay\s*\{\s*(background:[^}]+)\}/)?.[1] ?? '';
     const skills = rule('.landing-skills');
 
     expect(wall).toContain('position: fixed;');
     // The overlay no longer fades the hero into a solid page colour.
     expect(overlay).not.toContain('var(--background) 100%');
+    // An even veil dims the whole wall behind the page content.
+    expect(overlay).toContain('rgb(5 6 10 / 0.3);');
     // A light scrim keeps the skills heading readable over the wall.
     expect(skills).toContain('rgb(5 6 10 / 0.5) 140px');
   });

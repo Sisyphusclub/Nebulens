@@ -116,7 +116,7 @@ export function structureVisibleTextPrompt(prompt: string): string {
     return `${index + 1}. ${quoted}${note}`;
   });
   const instruction = chinese
-    ? '画面文字要求：图中出现的文字必须与下列内容逐字一致，不增字、不漏字、不改字，不用形近字或繁体字替换，引号本身不要画出来。'
-    : 'Text requirements: render each line below exactly as written, letter for letter, with no added, missing or substituted characters. Do not draw the quotation marks.';
+    ? '画面文字要求：图中出现的文字必须与下列内容逐字一致，不增字、不漏字、不改字，不用形近字或繁体字替换，引号本身不要画出来。每段文字字形端正、笔画完整清晰，不压缩、不拉伸、不被裁切，数字与汉字之间保持正常间距；小字号也要清晰可读。'
+    : 'Text requirements: render each line below exactly as written, letter for letter, with no added, missing or substituted characters. Do not draw the quotation marks. Keep every glyph upright, complete, evenly spaced and legible, never squeezed, stretched or cropped, including small text.';
   return `${prompt}\n\n${instruction}\n${lines.join('\n')}`;
 }

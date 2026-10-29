@@ -83,6 +83,8 @@ describe('structureVisibleTextPrompt', () => {
 
     expect(structured.startsWith('奶茶海报，标题“新品上市”，价格“中杯16元”\n\n')).toBe(true);
     expect(structured).toContain('逐字一致');
+    expect(structured).toContain('字形端正、笔画完整清晰');
+    expect(structured).toContain('数字与汉字之间保持正常间距');
     expect(structured).toContain('1. “新品上市”');
     expect(structured).toContain('2. “中杯16元”');
     expect(structured).not.toContain('较长');
@@ -99,6 +101,7 @@ describe('structureVisibleTextPrompt', () => {
     const structured = structureVisibleTextPrompt('A coffee shop poster that says "Grand Opening"');
 
     expect(structured).toContain('exactly as written');
+    expect(structured).toContain('evenly spaced');
     expect(structured).toContain('1. "Grand Opening"');
   });
 });

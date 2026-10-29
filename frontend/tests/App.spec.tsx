@@ -90,6 +90,12 @@ vi.mock('@/hooks/useImageGeneration', () => ({
   }),
 }));
 
+const recommendationMocks = vi.hoisted(() => ({ items: [] as unknown[] }));
+
+vi.mock('@/hooks/useTeamRecommendations', () => ({
+  useTeamRecommendations: () => ({ items: recommendationMocks.items }),
+}));
+
 vi.mock('@/hooks/useImageHistory', () => ({
   useImageHistory: () => ({
     records: [],
@@ -205,6 +211,7 @@ beforeEach(() => {
   authMocks.isAuthenticated = true;
   authMocks.isLoading = false;
   historyMocks.batches = [];
+  recommendationMocks.items = [];
   generation.generate.mockResolvedValue({
     batchId: 'landing-batch',
     aspectRatio: '16:9',
@@ -282,6 +289,37 @@ describe('React application routes', () => {
     renderRoute('/');
     await screen.findByRole('group', { name: '从场景开始' });
     expect(screen.queryByRole('navigation', { name: '继续上次创作' })).not.toBeInTheDocument();
+  });
+
+  it('swaps the homepage shortcuts for similar teammate work and reuses its prompt', async () => {
+    const user = userEvent.setup();
+    recommendationMocks.items = [
+      {
+        record: {
+          id: 'team-tea.png',
+          createdAt: '2026-10-28T00:00:00.000Z',
+          prompt: '奶茶新品上市海报，清新绿色',
+          model: 'gpt-image-2',
+          aspectRatio: '3:4',
+          width: 1024,
+          height: 1360,
+          isPublic: false,
+          isShared: true,
+        },
+        ownerName: 'alice',
+        reason: '同为海报',
+      },
+    ];
+    renderRoute('/');
+
+    const panel = await screen.findByRole('region', { name: '团队里相似的成果' });
+    expect(screen.queryByRole('group', { name: '从场景开始' })).not.toBeInTheDocument();
+    await user.click(within(panel).getByRole('button', { name: '用这个提示词' }));
+
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
+      '奶茶新品上市海报，清新绿色',
+    );
+    expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('3:4');
   });
 
   it('shows the functional homepage model selector', async () => {

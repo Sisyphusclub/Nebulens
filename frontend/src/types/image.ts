@@ -199,6 +199,13 @@ export interface TeamImageRecord extends ImageRecord {
   ownerName: string;
 }
 
+/** A teammate's work matched to a described need, with why it was picked. */
+export interface TeamRecommendation {
+  record: ImageRecord;
+  ownerName: string;
+  reason: string;
+}
+
 export interface TeamHistoryPage {
   records: TeamImageRecord[];
   nextCursor?: string;

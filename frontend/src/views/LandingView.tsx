@@ -6,7 +6,9 @@ import { LandingArtworkWall } from '@/components/landing/LandingArtworkWall';
 import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { LandingGenerationControls } from '@/components/landing/LandingGenerationControls';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
+import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { LandingRecentCreations } from '@/components/landing/LandingRecentCreations';
+import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingSceneShortcuts } from '@/components/landing/LandingSceneShortcuts';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
@@ -20,8 +22,17 @@ import { useImageQuota } from '@/hooks/useImageQuota';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { attachGenerationBatch, useGenerationSessions } from '@/hooks/useGenerationSessions';
 import { useImageHistory } from '@/hooks/useImageHistory';
+import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
+import { buildApiUrl } from '@/services/api/imagesApi';
 import { getAppNavigation } from '@/config/navigation';
-import type { AspectChoice, ImageModel, ImageQuality, ImageResolution } from '@/types/image';
+import type {
+  AspectChoice,
+  HistoryEntry,
+  ImageModel,
+  ImageQuality,
+  ImageResolution,
+  TeamRecommendation,
+} from '@/types/image';
 import {
   DEFAULT_ASPECT_CHOICE,
   DEFAULT_COUNT,
@@ -51,11 +62,25 @@ export function LandingView() {
   const { notify } = useToast();
   const { batches: historyBatches } = useImageHistory();
   const { sessions, create: createSession } = useGenerationSessions();
+  const [selectedRecommendation, setSelectedRecommendation] = useState<TeamRecommendation | null>(
+    null,
+  );
+  const selectedRecommendationEntry = useMemo<HistoryEntry | null>(
+    () =>
+      selectedRecommendation === null
+        ? null
+        : {
+            record: selectedRecommendation.record,
+            imageUrl: buildApiUrl(`/api/outputs/${selectedRecommendation.record.id}`),
+          },
+    [selectedRecommendation],
+  );
   const recent = useMemo(
     () => recentCreations(historyBatches, sessions),
     [historyBatches, sessions],
   );
   const [prompt, setPrompt] = useState('');
+  const { items: recommendations } = useTeamRecommendations(prompt, isAuthenticated);
   const [attachments, setAttachments] = useState<AgentChatAttachment[]>([]);
   const [model, setModel] = useState<ImageModel>(DEFAULT_IMAGE_MODEL);
   const [aspect, setAspect] = useState<AspectChoice>(DEFAULT_ASPECT_CHOICE);
@@ -104,6 +129,13 @@ export function LandingView() {
       attachGenerationBatch(sessionId, creation.batch.batchId, creation.batch.prompt);
     }
     void navigate(`/generate?${new URLSearchParams({ session: sessionId }).toString()}`);
+  };
+  const applyRecommendedPrompt = (recommendation: TeamRecommendation): void => {
+    setPrompt(recommendation.record.prompt);
+    if (recommendation.record.aspectRatio !== undefined) {
+      setAspect(normalizeAspectChoiceForResolution(recommendation.record.aspectRatio, resolution));
+    }
+    setSelectedRecommendation(null);
   };
   const selectScene = (scene: LandingScene): void => {
     setPrompt(scene.prompt);
@@ -233,10 +265,30 @@ export function LandingView() {
               </div>
             </div>
           </div>
-          <LandingSceneShortcuts onSelect={selectScene} />
-          <LandingRecentCreations creations={recent} onOpen={openRecent} />
+          {recommendations.length > 0 ? (
+            <LandingRecommendations
+              recommendations={recommendations}
+              onOpen={setSelectedRecommendation}
+              onUsePrompt={applyRecommendedPrompt}
+            />
+          ) : (
+            <>
+              <LandingSceneShortcuts onSelect={selectScene} />
+              <LandingRecentCreations creations={recent} onOpen={openRecent} />
+            </>
+          )}
         </div>
       </section>
+      <ImageDetailModal
+        entry={selectedRecommendationEntry}
+        {...(selectedRecommendation === null
+          ? {}
+          : { ownerName: selectedRecommendation.ownerName })}
+        onClose={() => setSelectedRecommendation(null)}
+        onReuse={() => {
+          if (selectedRecommendation !== null) applyRecommendedPrompt(selectedRecommendation);
+        }}
+      />
     </div>
   );
 }

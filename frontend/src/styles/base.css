@@ -10834,6 +10834,83 @@ video {
   }
 }
 
+/* Landing hero: teammates' work matching the need being typed */
+.landing-recommendations {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 940px;
+  margin-top: 16px;
+}
+.landing-recommendations__label {
+  margin: 0;
+  color: rgb(242 244 247 / 0.6);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-align: left;
+}
+.landing-recommendations__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+.landing-recommendations__item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgb(242 244 247 / 0.12);
+  border-radius: 12px;
+  background: rgb(10 12 18 / 0.56);
+  padding: 6px;
+}
+.landing-recommendations .landing-recommendations__preview {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  overflow: hidden;
+  border-radius: 9px;
+  padding: 0;
+}
+.landing-recommendations__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.landing-recommendations__meta {
+  display: grid;
+  min-width: 0;
+  justify-items: start;
+  gap: 2px;
+  text-align: left;
+}
+.landing-recommendations__prompt,
+.landing-recommendations__reason {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.landing-recommendations__prompt {
+  color: rgb(242 244 247 / 0.92);
+  font-size: 13px;
+}
+.landing-recommendations__reason {
+  color: rgb(170 200 255 / 0.8);
+  font-size: 12px;
+}
+.landing-recommendations__owner {
+  color: rgb(242 244 247 / 0.52);
+  font-size: 12px;
+}
+.landing-recommendations .landing-recommendations__use {
+  height: 26px;
+  padding: 0 8px;
+  margin-left: -8px;
+  color: rgb(170 200 255 / 0.95);
+  font-size: 12px;
+}
+
 /* Landing hero: tilted artwork wall drifting behind the composer */
 .artwork-wall {
   position: absolute;

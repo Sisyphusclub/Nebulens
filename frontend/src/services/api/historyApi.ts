@@ -9,6 +9,7 @@ import {
   type ImageQuality,
   type ImageCategory,
   type TeamHistoryPage,
+  type TeamRecommendation,
   type TextCheckResult,
   isImageCategory,
 } from '@/types/image';
@@ -56,6 +57,34 @@ export async function fetchTeamHistory(
     );
   }
   return payload;
+}
+
+/** Teammates' shared work most relevant to `query`, best first. */
+export async function fetchTeamRecommendations(
+  query: string,
+  signal?: AbortSignal,
+): Promise<TeamRecommendation[]> {
+  const params = new URLSearchParams({ q: query });
+  const response = await authedFetch(
+    buildApiUrl(`/api/history/team/recommendations?${params.toString()}`),
+    signal === undefined ? {} : { signal },
+  );
+  const payload = await parseJsonResponse(response);
+  if (!response.ok) throw buildApiError(response.status, payload);
+  if (
+    !isRecord(payload) ||
+    !Array.isArray(payload.recommendations) ||
+    !payload.recommendations.every(
+      (item) =>
+        isRecord(item) &&
+        isImageRecord(item.record) &&
+        typeof item.ownerName === 'string' &&
+        typeof item.reason === 'string',
+    )
+  ) {
+    throw new ImageApiError(response.status, 'INVALID_RESPONSE', '推荐接口返回了无法识别的响应。');
+  }
+  return payload.recommendations as TeamRecommendation[];
 }
 
 export async function deleteHistoryRecord(id: string): Promise<void> {

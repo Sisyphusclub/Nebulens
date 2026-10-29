@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Undo2, WandSparkles } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { IMAGE_CATEGORY_LABELS, type ImageResolution } from '@/types/image';
@@ -17,6 +17,7 @@ export function AiInsightBar({
   canUse2k,
   similarCount,
   onUse2k,
+  enhance,
 }: {
   prompt: string;
   resolution: ImageResolution;
@@ -24,6 +25,13 @@ export function AiInsightBar({
   canUse2k: boolean;
   similarCount: number;
   onUse2k: () => void;
+  /** AI polishing of the prompt; omitted where polishing is unavailable. */
+  enhance?: {
+    enhancing: boolean;
+    canUndo: boolean;
+    onEnhance: () => void;
+    onUndo: () => void;
+  };
 }) {
   if (Array.from(prompt.replace(/\s/gu, '')).length < MIN_PROMPT_CHARS) return null;
   const insight = analyzePrompt(prompt);
@@ -31,6 +39,7 @@ export function AiInsightBar({
     ...(insight.category ? [`识别为${IMAGE_CATEGORY_LABELS[insight.category]}`] : []),
     ...(insight.texts.length > 0 ? [`${insight.texts.length} 段画面文字`] : []),
     ...(similarCount > 0 ? [`成果库有 ${similarCount} 个相似作品`] : []),
+    ...(enhance?.canUndo ? ['已润色'] : []),
   ];
   const adviseResolution = insight.dense && resolution === 'standard';
 
@@ -66,6 +75,35 @@ export function AiInsightBar({
         ) : (
           <span className="ai-insight__tip">小字较多，生成后可重画文字</span>
         )
+      ) : null}
+      {enhance ? (
+        <span className="ai-insight__actions">
+          {enhance.canUndo ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="compact"
+              className="ai-insight__action"
+              aria-label="撤销润色"
+              onClick={enhance.onUndo}
+            >
+              <Undo2 aria-hidden="true" />
+              撤销
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="compact"
+            className="ai-insight__action ai-insight__action--enhance"
+            aria-label="AI 润色提示词"
+            disabled={enhance.enhancing}
+            onClick={enhance.onEnhance}
+          >
+            <WandSparkles aria-hidden="true" />
+            {enhance.enhancing ? '润色中…' : '润色'}
+          </Button>
+        </span>
       ) : null}
     </div>
   );

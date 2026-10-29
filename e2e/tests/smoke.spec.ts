@@ -105,3 +105,17 @@ test('adds a pasted image as a reference instead of inline content', async ({ pa
   await expect(page.getByText('pasted-reference.png')).toBeVisible();
   await expect(editor.locator('img')).toHaveCount(0);
 });
+
+test('polishes a prompt with AI and keeps quoted text', async ({ page }) => {
+  await openNewSession(page);
+  const editor = page.getByRole('textbox', { name: '图像提示词' });
+  await editor.click();
+  await page.keyboard.type('端到端：咖啡海报，标题“晨光拿铁”');
+
+  await page.getByRole('button', { name: 'AI 润色提示词' }).click();
+
+  await expect(editor).toContainText('模拟润色：柔和自然光，电影感构图');
+  await expect(editor).toContainText('“晨光拿铁”');
+  await page.getByRole('button', { name: '撤销润色' }).click();
+  await expect(editor).not.toContainText('模拟润色');
+});

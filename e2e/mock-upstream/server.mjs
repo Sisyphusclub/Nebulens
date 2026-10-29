@@ -2,7 +2,8 @@
 // No dependencies, so it runs on a bare Node image inside docker compose.
 //
 //   POST /v1/images/generations, /v1/images/edits  -> solid-colour PNGs (b64_json)
-//   POST /v1/chat/completions                       -> image analysis JSON (see analysisAnswer)
+//   POST /v1/chat/completions                       -> image analysis JSON (see analysisAnswer),
+//                                                      or a polished prompt for prompt polishing
 //   GET  /v1/models                                 -> a minimal model list
 //   GET  /__fail?on=1 | /__fail?on=0                -> toggle upstream failures
 //   GET  /__state                                   -> { fail, calls }
@@ -113,6 +114,12 @@ function analysisAnswer(body) {
   });
 }
 
+/** Answers prompt polishing, which sends a system message followed by the user's prompt. */
+function polishAnswer(payload) {
+  const prompt = String(payload.messages?.[1]?.content ?? '');
+  return `${prompt}，模拟润色：柔和自然光，电影感构图`;
+}
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', 'http://mock');
   if (req.method === 'GET' && url.pathname === '/health') return sendJson(res, 200, { ok: true });
@@ -125,7 +132,10 @@ const server = createServer(async (req, res) => {
     return sendJson(res, 200, { data: [{ id: 'gpt-image-2' }] });
   }
   if (req.method === 'POST' && url.pathname === '/v1/chat/completions') {
-    const answer = analysisAnswer(await readBody(req));
+    const body = await readBody(req);
+    const payload = JSON.parse(body.toString('utf8') || '{}');
+    const answer =
+      payload.messages?.[0]?.role === 'system' ? polishAnswer(payload) : analysisAnswer(body);
     return sendJson(res, 200, { choices: [{ message: { role: 'assistant', content: answer } }] });
   }
   if (req.method === 'POST' && url.pathname.startsWith('/v1/images/')) {

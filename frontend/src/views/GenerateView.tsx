@@ -36,6 +36,7 @@ import { useImageHistory, type GroupedBatch } from '@/hooks/useImageHistory';
 import { useGenerationFeed } from '@/hooks/useGenerationFeed';
 import { readReferenceIds, useGenerationSettings } from '@/hooks/useGenerationSettings';
 import { useImageQuota } from '@/hooks/useImageQuota';
+import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
 import {
   LATEST_BATCH_COMPOSER_GAP,
@@ -114,6 +115,7 @@ export function GenerateView() {
   const previousSessionId = useRef<string | null>(activeSessionId);
   const accountName = user?.username ?? user?.name ?? '账户';
   const currentUserId = isAuthenticated ? (user?.id ?? null) : null;
+  const promptEnhancer = usePromptEnhancer({ prompt, setPrompt, isAuthenticated, notify });
   const { items: inspiration } = useTeamRecommendations(
     prompt,
     isAuthenticated && !generation.isLoading && prompt.trim() !== dismissedInspirationFor,
@@ -662,6 +664,12 @@ export function GenerateView() {
           canUse2k={canUse2k}
           similarCount={inspiration.length}
           onUse2k={() => updateResolution('2k')}
+          enhance={{
+            enhancing: promptEnhancer.enhancing,
+            canUndo: promptEnhancer.canUndo,
+            onEnhance: () => void promptEnhancer.enhance(),
+            onUndo: promptEnhancer.undo,
+          }}
         />
         {reusedReferenceIds.length ? (
           <div className="reused-references">

@@ -11262,6 +11262,26 @@ video {
   color: var(--primary);
   font-size: 12px;
 }
+.ai-insight__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.ai-insight .ai-insight__action svg {
+  width: 13px;
+  height: 13px;
+}
+/* Polishing is the bar's main action, so it gets a glass pill like the composer controls. */
+.ai-insight .ai-insight__action--enhance {
+  gap: 4px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 0.06);
+  color: var(--foreground);
+}
+.ai-insight .ai-insight__action--enhance:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.12);
+}
 .landing-hero__content .ai-insight {
   width: 100%;
   max-width: 940px;

@@ -57,3 +57,53 @@ it('stays hidden while the prompt is empty or very short', () => {
   renderBar({ prompt: '海' });
   expect(screen.queryByRole('status', { name: 'AI 理解' })).not.toBeInTheDocument();
 });
+
+it('offers AI polishing and shows its progress', async () => {
+  const user = userEvent.setup();
+  const onEnhance = vi.fn();
+  const { rerender } = render(
+    <AiInsightBar
+      prompt="雨后的未来都市街道"
+      resolution="standard"
+      canUse2k
+      similarCount={0}
+      onUse2k={vi.fn()}
+      enhance={{ enhancing: false, canUndo: false, onEnhance, onUndo: vi.fn() }}
+    />,
+  );
+
+  await user.click(screen.getByRole('button', { name: 'AI 润色提示词' }));
+  expect(onEnhance).toHaveBeenCalledTimes(1);
+
+  rerender(
+    <AiInsightBar
+      prompt="雨后的未来都市街道"
+      resolution="standard"
+      canUse2k
+      similarCount={0}
+      onUse2k={vi.fn()}
+      enhance={{ enhancing: true, canUndo: false, onEnhance, onUndo: vi.fn() }}
+    />,
+  );
+  expect(screen.getByRole('button', { name: 'AI 润色提示词' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'AI 润色提示词' })).toHaveTextContent('润色中');
+});
+
+it('lets the user undo a polish', async () => {
+  const user = userEvent.setup();
+  const onUndo = vi.fn();
+  render(
+    <AiInsightBar
+      prompt="雨后霓虹街道，电影级广角构图"
+      resolution="standard"
+      canUse2k
+      similarCount={0}
+      onUse2k={vi.fn()}
+      enhance={{ enhancing: false, canUndo: true, onEnhance: vi.fn(), onUndo }}
+    />,
+  );
+
+  expect(screen.getByRole('status', { name: 'AI 理解' })).toHaveTextContent('已润色');
+  await user.click(screen.getByRole('button', { name: '撤销润色' }));
+  expect(onUndo).toHaveBeenCalledTimes(1);
+});

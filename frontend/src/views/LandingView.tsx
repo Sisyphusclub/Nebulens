@@ -24,6 +24,7 @@ import { useImageQuota } from '@/hooks/useImageQuota';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { attachGenerationBatch, useGenerationSessions } from '@/hooks/useGenerationSessions';
 import { useImageHistory } from '@/hooks/useImageHistory';
+import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
 import { buildApiUrl } from '@/services/api/imagesApi';
 import { getAppNavigation } from '@/config/navigation';
@@ -84,6 +85,7 @@ export function LandingView() {
   );
   const [prompt, setPrompt] = useState('');
   const { items: recommendations } = useTeamRecommendations(prompt, isAuthenticated);
+  const promptEnhancer = usePromptEnhancer({ prompt, setPrompt, isAuthenticated, notify });
   const [attachments, setAttachments] = useState<AgentChatAttachment[]>([]);
   const [model, setModel] = useState<ImageModel>(DEFAULT_IMAGE_MODEL);
   const [aspect, setAspect] = useState<AspectChoice>(DEFAULT_ASPECT_CHOICE);
@@ -281,6 +283,12 @@ export function LandingView() {
             canUse2k={canUse2k}
             similarCount={recommendations.length}
             onUse2k={() => updateResolution('2k')}
+            enhance={{
+              enhancing: promptEnhancer.enhancing,
+              canUndo: promptEnhancer.canUndo,
+              onEnhance: () => void promptEnhancer.enhance(),
+              onUndo: promptEnhancer.undo,
+            }}
           />
           {recommendations.length > 0 ? (
             <LandingRecommendations

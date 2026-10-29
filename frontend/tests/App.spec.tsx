@@ -101,6 +101,12 @@ vi.mock('@/hooks/useTeamRecommendations', () => ({
   useTeamRecommendations: () => ({ items: recommendationMocks.items }),
 }));
 
+const promptMocks = vi.hoisted(() => ({
+  enhancePrompt: vi.fn((prompt: string) => Promise.resolve(`${prompt}，霓虹倒影，电影级广角构图`)),
+}));
+
+vi.mock('@/services/api/promptApi', () => ({ enhancePrompt: promptMocks.enhancePrompt }));
+
 vi.mock('@/hooks/useImageHistory', () => ({
   useImageHistory: () => ({
     records: [],
@@ -337,6 +343,21 @@ describe('React application routes', () => {
       '奶茶新品上市海报，清新绿色',
     );
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('3:4');
+  });
+
+  it('polishes the homepage prompt with AI and can undo it', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+
+    const prompt = await screen.findByRole('textbox', { name: '首页创作提示词' });
+    await user.type(prompt, '雨夜的未来城市');
+    await user.click(screen.getByRole('button', { name: 'AI 润色提示词' }));
+
+    expect(promptMocks.enhancePrompt).toHaveBeenCalledWith('雨夜的未来城市');
+    expect(await screen.findByText('雨夜的未来城市，霓虹倒影，电影级广角构图')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '撤销润色' }));
+    expect(prompt).toHaveTextContent('雨夜的未来城市');
+    expect(prompt).not.toHaveTextContent('霓虹倒影');
   });
 
   it('suggests 2K on the homepage when the scene brief has a lot of text', async () => {

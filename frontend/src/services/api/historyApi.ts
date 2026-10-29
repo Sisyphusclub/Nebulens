@@ -63,8 +63,10 @@ export async function fetchTeamHistory(
 export async function fetchTeamRecommendations(
   query: string,
   signal?: AbortSignal,
+  limit?: number,
 ): Promise<TeamRecommendation[]> {
   const params = new URLSearchParams({ q: query });
+  if (limit !== undefined) params.set('limit', String(limit));
   const response = await authedFetch(
     buildApiUrl(`/api/history/team/recommendations?${params.toString()}`),
     signal === undefined ? {} : { signal },

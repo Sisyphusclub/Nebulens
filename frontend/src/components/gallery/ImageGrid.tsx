@@ -19,6 +19,8 @@ interface ImageGridProps {
   onDownload?: (entry: HistoryEntry) => void;
   onToggleShared?: (entry: HistoryEntry) => void;
   onRemove?: (entry: HistoryEntry) => void;
+  /** A short line under each image, such as who made it and why it was found. */
+  captionFor?: (entry: HistoryEntry) => string | undefined;
 }
 
 export function ImageGrid({
@@ -33,6 +35,7 @@ export function ImageGrid({
   onDownload,
   onToggleShared,
   onRemove,
+  captionFor,
 }: ImageGridProps) {
   if (!entries.length) {
     return (
@@ -45,6 +48,7 @@ export function ImageGrid({
     <div className="image-grid">
       {entries.map((entry) => {
         const selected = selectedIds.has(entry.record.id);
+        const caption = captionFor?.(entry);
         return (
           <article className={cn('image-tile', selected && 'is-selected')} key={entry.record.id}>
             <MorphicCard
@@ -139,6 +143,7 @@ export function ImageGrid({
                 ) : null}
               </div>
             </MorphicCard>
+            {caption ? <p className="image-tile__caption">{caption}</p> : null}
             {onToggleSelection ? (
               <Button
                 type="button"

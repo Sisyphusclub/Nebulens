@@ -104,3 +104,9 @@ it('shows card-sized thumbnails instead of full originals', () => {
     '/api/outputs/one.png?w=640',
   );
 });
+
+it('shows an optional caption under each image', () => {
+  render(<ImageGrid entries={[entry]} onSelect={vi.fn()} captionFor={() => 'alice · 同为海报'} />);
+
+  expect(screen.getByText('alice · 同为海报')).toBeInTheDocument();
+});

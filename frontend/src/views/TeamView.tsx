@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,9 +7,11 @@ import { useToast } from '@/components/common/ToastProvider';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { ImageGrid } from '@/components/gallery/ImageGrid';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { SelectMenu } from '@/components/ui/select-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
+import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
 import { fetchTeamHistory } from '@/services/api/historyApi';
 import { buildApiUrl } from '@/services/api/imagesApi';
 import {
@@ -27,6 +30,9 @@ const CATEGORY_FILTER_OPTIONS: readonly { value: ImageCategory | 'all'; label: s
   ...IMAGE_CATEGORIES.map((value) => ({ value, label: IMAGE_CATEGORY_LABELS[value] })),
 ];
 
+/** The recommendations API's ceiling, so a search shows everything relevant it finds. */
+const SEARCH_LIMIT = 12;
+
 function toEntry(record: TeamImageRecord): HistoryEntry {
   return { record, imageUrl: buildApiUrl(`/api/outputs/${record.id}`) };
 }
@@ -44,6 +50,18 @@ export function TeamView() {
   const [selected, setSelected] = useState<TeamImageRecord | null>(null);
   const requestId = useRef(0);
   const selectedEntry = useMemo(() => (selected === null ? null : toEntry(selected)), [selected]);
+  const [query, setQuery] = useState('');
+  // Describing a need searches the library with AI instead of browsing it by category.
+  const search = useTeamRecommendations(query, isAuthenticated, SEARCH_LIMIT);
+  const matches = useMemo(
+    () => search.items.map((item) => ({ ...item.record, ownerName: item.ownerName })),
+    [search.items],
+  );
+  const reasons = useMemo(
+    () => new Map(search.items.map((item) => [item.record.id, item.reason])),
+    [search.items],
+  );
+  const visibleRecords = search.active ? matches : records;
 
   const load = useCallback(
     async (cursor?: string): Promise<void> => {
@@ -98,14 +116,22 @@ export function TeamView() {
   };
 
   const findRecord = (entry: HistoryEntry): TeamImageRecord | null =>
-    records.find((record) => record.id === entry.record.id) ?? null;
+    visibleRecords.find((record) => record.id === entry.record.id) ?? null;
 
   return (
     <section className="workspace-page assets-page team-page" aria-label="成果库">
       <OperationalPageHeader
         id="team-title"
         title="成果库"
-        meta={isAuthenticated ? `${records.length}${nextCursor ? '+' : ''} 项共享成果` : undefined}
+        meta={
+          !isAuthenticated
+            ? undefined
+            : search.active
+              ? search.loading
+                ? 'AI 正在成果库里找…'
+                : `AI 找到 ${matches.length} 个相关作品`
+              : `${records.length}${nextCursor ? '+' : ''} 项共享成果`
+        }
       />
       {authLoading ? (
         <div className="asset-loading" role="status" aria-label="正在确认登录状态" />
@@ -119,11 +145,24 @@ export function TeamView() {
       ) : (
         <>
           <div className="operational-toolbar asset-commandbar">
+            <div className="asset-commandbar__primary">
+              <label className="search-field asset-search">
+                <Search aria-hidden="true" />
+                <Input
+                  type="search"
+                  aria-label="描述你要找的作品"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="描述你要找的作品，AI 帮你在成果库里找，比如：奶茶新品海报"
+                />
+              </label>
+            </div>
             <div className="asset-commandbar__controls">
               <SelectMenu
                 label="用途筛选"
                 value={category}
                 options={CATEGORY_FILTER_OPTIONS}
+                disabled={search.active}
                 onValueChange={setCategory}
               />
             </div>
@@ -137,21 +176,34 @@ export function TeamView() {
             </div>
           ) : (
             <ImageGrid
-              entries={records.map(toEntry)}
+              entries={visibleRecords.map(toEntry)}
               emptyMessage={
-                isLoading
-                  ? '正在加载成果库…'
-                  : category === 'all'
-                    ? '成果库还是空的。新生成的图片默认会共享到成果库。'
-                    : `“${IMAGE_CATEGORY_LABELS[category]}”下还没有共享成果。`
+                search.active
+                  ? search.loading
+                    ? 'AI 正在成果库里找…'
+                    : '没找到相关作品，换个说法试试。'
+                  : isLoading
+                    ? '正在加载成果库…'
+                    : category === 'all'
+                      ? '成果库还是空的。新生成的图片默认会共享到成果库。'
+                      : `“${IMAGE_CATEGORY_LABELS[category]}”下还没有共享成果。`
               }
+              {...(search.active
+                ? {
+                    captionFor: (entry: HistoryEntry) => {
+                      const match = findRecord(entry);
+                      const reason = reasons.get(entry.record.id);
+                      return match && reason ? `${match.ownerName} · ${reason}` : undefined;
+                    },
+                  }
+                : {})}
               onSelect={(entry) => setSelected(findRecord(entry))}
               onCopyPrompt={(entry) => void copyPrompt(entry)}
               onReuse={reuse}
               onDownload={(entry) => void downloadUrl(entry.imageUrl, entry.record.id)}
             />
           )}
-          {nextCursor !== undefined && !error ? (
+          {nextCursor !== undefined && !error && !search.active ? (
             <div className="team-page__more">
               <Button
                 type="button"

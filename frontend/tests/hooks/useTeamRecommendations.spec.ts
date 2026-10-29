@@ -70,3 +70,22 @@ it('stays empty for short queries, signed-out users and failed requests', async 
   await waitFor(() => expect(api.fetchTeamRecommendations).toHaveBeenCalledTimes(1));
   expect(result.current.items).toEqual([]);
 });
+
+it('reports when it is searching and can ask for more results', async () => {
+  api.fetchTeamRecommendations.mockResolvedValue([item('a.png')]);
+  const { result } = renderHook(() => useTeamRecommendations('奶茶新品海报', true, 12));
+
+  expect(result.current.active).toBe(true);
+  expect(result.current.loading).toBe(true);
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(600);
+  });
+
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.items).toHaveLength(1);
+  expect(api.fetchTeamRecommendations).toHaveBeenCalledWith(
+    '奶茶新品海报',
+    expect.any(AbortSignal),
+    12,
+  );
+});

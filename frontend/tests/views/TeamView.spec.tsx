@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, expect, it, vi } from 'vitest';
 
 const authMocks = vi.hoisted(() => ({ isAuthenticated: true, isLoading: false }));
-const api = vi.hoisted(() => ({ fetchTeamHistory: vi.fn() }));
+const api = vi.hoisted(() => ({ fetchTeamHistory: vi.fn(), fetchTeamRecommendations: vi.fn() }));
 
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => authMocks }));
 vi.mock('@/services/api/historyApi', () => api);
@@ -146,4 +146,34 @@ it('keeps the detail modal stable when the app shell re-renders around it', asyn
   await user.click(await screen.findByRole('button', { name: '查看图片：周年庆海报' }));
 
   expect(await screen.findByRole('dialog', { name: '图片详情' })).toBeInTheDocument();
+});
+
+it('lets AI search the library by describing what is needed', async () => {
+  const user = userEvent.setup();
+  api.fetchTeamRecommendations.mockResolvedValue([
+    {
+      record: teamRecord('tea.png', '奶茶新品上市海报', 'poster'),
+      ownerName: 'bob',
+      reason: '同为海报 · 标签相近：奶茶',
+    },
+  ]);
+  renderView();
+  await screen.findByRole('button', { name: '查看图片：周年庆海报' });
+
+  await user.type(screen.getByRole('searchbox', { name: '描述你要找的作品' }), '奶茶新品海报');
+
+  expect(
+    await screen.findByRole('button', { name: '查看图片：奶茶新品上市海报' }),
+  ).toBeInTheDocument();
+  expect(screen.getByText('bob · 同为海报 · 标签相近：奶茶')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: '查看图片：周年庆海报' })).not.toBeInTheDocument();
+  expect(screen.getByText('AI 找到 1 个相关作品')).toBeInTheDocument();
+  expect(api.fetchTeamRecommendations).toHaveBeenCalledWith(
+    '奶茶新品海报',
+    expect.any(AbortSignal),
+    12,
+  );
+
+  await user.clear(screen.getByRole('searchbox', { name: '描述你要找的作品' }));
+  expect(await screen.findByRole('button', { name: '查看图片：周年庆海报' })).toBeInTheDocument();
 });

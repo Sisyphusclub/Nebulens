@@ -1681,6 +1681,16 @@ video {
   background: transparent;
   padding-bottom: 12px;
 }
+/* Why an AI search picked an image, and who made it. */
+.image-tile__caption {
+  overflow: hidden;
+  margin: 8px 2px 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .image-tile__morph {
   display: block;
   overflow: hidden;

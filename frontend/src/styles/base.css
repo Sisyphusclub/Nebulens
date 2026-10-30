@@ -993,6 +993,10 @@ video {
     font-size: 17px;
   }
 }
+/* Each clause stays whole, so narrow screens break the subtitle only between them. */
+.landing-hero__content > p > span {
+  display: inline-block;
+}
 .agent-chat-input {
   isolation: isolate;
   position: relative;

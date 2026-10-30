@@ -277,7 +277,10 @@ export function LandingView() {
             <span>把想法，</span>
             <span>变成画面</span>
           </h1>
-          <p>用 GPT-IMAGE-2 将你的创意变为精美图片，只需描述你脑海中的画面。</p>
+          <p>
+            <span>写下脑海中的画面，AI 替你落笔成图；</span>
+            <span>挑一个技能，一次做好整套设计。</span>
+          </p>
           <div className="landing-composer-anchor">
             <div className="landing-composer-presentation landing-composer-hero">
               <LiquidGlassFrame className="landing-composer-content">

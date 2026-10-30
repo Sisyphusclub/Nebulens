@@ -55,6 +55,9 @@ it('opens authentication directly from an explicit login button', async () => {
   const login = screen.getByRole('button', { name: '登录' });
   expect(login).not.toHaveAttribute('aria-haspopup');
   expect(screen.queryByRole('button', { name: /账户：/ })).not.toBeInTheDocument();
+  // Notifications and credits wait until there is an account.
+  expect(screen.queryByRole('button', { name: '查看通知' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /个人积分/ })).not.toBeInTheDocument();
 
   await user.click(login);
   expect(onLogin).toHaveBeenCalledOnce();

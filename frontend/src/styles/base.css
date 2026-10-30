@@ -4021,13 +4021,18 @@ video {
 .auth-backdrop {
   background: var(--overlay);
 }
+/* The same dark glass as the skill panel, so signing in feels part of the page. */
 .auth-modal-surface {
   width: min(100%, 420px) !important;
   max-width: 420px !important;
-  border: 0 !important;
-  border-radius: var(--radius-lg) !important;
-  background: var(--card) !important;
-  box-shadow: var(--shadow-modal) !important;
+  border: 1px solid rgb(255 255 255 / 0.1) !important;
+  border-top-color: rgb(255 255 255 / 0.18) !important;
+  border-radius: 20px !important;
+  background: rgb(18 21 29 / 0.86) !important;
+  box-shadow:
+    rgb(255 255 255 / 0.06) 0 0 2px 1px inset,
+    var(--shadow-modal) !important;
+  backdrop-filter: blur(18px) saturate(1.2);
 }
 /* Keep the MorphicCard shell responsible for viewport bounds; the inner
    dialog should size to its form instead of inheriting the generic full-screen
@@ -4056,10 +4061,30 @@ video {
   height: 28px;
   object-fit: contain;
 }
+.auth-heading {
+  display: grid;
+  gap: 6px;
+}
 .login-dialog h2 {
   margin: 2px 0 0;
+  font-family: var(--font-hero-serif);
   font-size: 26px;
-  font-weight: 550;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.auth-heading p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.auth-field {
+  display: grid;
+  gap: 7px;
+}
+.field-hint {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 450;
 }
 .auth-mode-tabs {
   width: 100%;

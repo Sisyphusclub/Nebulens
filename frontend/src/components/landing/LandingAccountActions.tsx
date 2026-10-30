@@ -48,11 +48,6 @@ export function LandingAccountActions({
   const [profileOpen, setProfileOpen] = useState(false);
 
   const handleCheckIn = async (): Promise<void> => {
-    if (!isAuthenticated) {
-      setCheckInOpen(false);
-      onLogin();
-      return;
-    }
     if (checkedInToday || checkingIn) return;
     setCheckingIn(true);
     try {
@@ -85,115 +80,104 @@ export function LandingAccountActions({
         </Button>
       </IconTooltip>
 
-      <MorphPopover>
-        <MorphPopoverTrigger>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="landing-account-actions__icon"
-            aria-label="查看通知"
-          >
-            <Bell aria-hidden="true" />
-          </Button>
-        </MorphPopoverTrigger>
-        <MorphPopoverContent
-          className="landing-account-popover landing-notification-popover"
-          radius={16}
-        >
-          <strong>通知</strong>
-          <p>暂无新通知</p>
-        </MorphPopoverContent>
-      </MorphPopover>
-
-      <MorphPopover open={checkInOpen} onOpenChange={setCheckInOpen}>
-        <MorphPopoverTrigger>
-          <Button
-            type="button"
-            variant="ghost"
-            className="landing-account-actions__credits"
-            aria-label={
-              isAuthenticated
-                ? `个人积分 ${creditsRemaining}${checkedInToday ? '，今日已签到' : '，可签到'}`
-                : '个人积分，登录后签到'
-            }
-          >
-            <span>个人积分</span>
-            <i aria-hidden="true" />
-            <Sparkles aria-hidden="true" />
-            <strong>{isAuthenticated ? creditsRemaining : 0}</strong>
-          </Button>
-        </MorphPopoverTrigger>
-        <MorphPopoverContent
-          className="landing-account-popover landing-check-in-popover"
-          radius={16}
-          sideOffset={12}
-        >
-          <div>
-            <strong>{checkedInToday ? '今日灵感已领取' : '赢取每日灵感值！'}</strong>
-            <small>
-              {isAuthenticated
-                ? `签到可得 ${dailyCheckInReward} 积分，7 天有效`
-                : '登录后即可领取每日积分'}
-              {isAuthenticated ? (
-                <span className="sr-only">每日签到可得 {dailyCheckInReward} 积分</span>
-              ) : null}
-            </small>
-          </div>
-          <Button
-            type="button"
-            disabled={checkingIn || (isAuthenticated && checkedInToday)}
-            onClick={() => void handleCheckIn()}
-          >
-            {checkedInToday ? <Check aria-hidden="true" /> : null}
-            {isAuthenticated
-              ? checkedInToday
-                ? '已签到'
-                : checkingIn
-                  ? '签到中'
-                  : '签到'
-              : '登录签到'}
-          </Button>
-        </MorphPopoverContent>
-      </MorphPopover>
-
+      {/* Notifications and credits only mean something once there is an account. */}
       {isAuthenticated ? (
-        <MorphPopover open={profileOpen} onOpenChange={setProfileOpen}>
-          <MorphPopoverTrigger>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="landing-account-actions__avatar"
-              aria-label={`账户：${accountName}`}
+        <>
+          <MorphPopover>
+            <MorphPopoverTrigger>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="landing-account-actions__icon"
+                aria-label="查看通知"
+              >
+                <Bell aria-hidden="true" />
+              </Button>
+            </MorphPopoverTrigger>
+            <MorphPopoverContent
+              className="landing-account-popover landing-notification-popover"
+              radius={16}
             >
-              <AccountAvatar image={accountImage} name={accountName} />
-            </Button>
-          </MorphPopoverTrigger>
-          <MorphPopoverContent
-            className="landing-account-popover landing-profile-popover"
-            radius={16}
-          >
-            <div>
-              <AccountAvatar image={accountImage} name={accountName} />
-              <span>
-                <strong>{accountName}</strong>
-                <small>{creditsRemaining} 积分可用</small>
-              </span>
-            </div>
-            <Button type="button" variant="ghost" onClick={openImageApiKeySettings}>
-              <KeyRound aria-hidden="true" />
-              <span>生图 API Key</span>
-              <small>
-                {imageApiKeyConfigured ? `尾号 ${imageApiKeySuffix ?? '未知'}` : '使用平台额度'}
-              </small>
-            </Button>
-            <Button type="button" variant="ghost" onClick={() => void handleLogout()}>
-              <LogOut aria-hidden="true" />
-              退出登录
-            </Button>
-          </MorphPopoverContent>
-        </MorphPopover>
+              <strong>通知</strong>
+              <p>暂无新通知</p>
+            </MorphPopoverContent>
+          </MorphPopover>
+
+          <MorphPopover open={checkInOpen} onOpenChange={setCheckInOpen}>
+            <MorphPopoverTrigger>
+              <Button
+                type="button"
+                variant="ghost"
+                className="landing-account-actions__credits"
+                aria-label={`个人积分 ${creditsRemaining}${checkedInToday ? '，今日已签到' : '，可签到'}`}
+              >
+                <span>个人积分</span>
+                <i aria-hidden="true" />
+                <Sparkles aria-hidden="true" />
+                <strong>{creditsRemaining}</strong>
+              </Button>
+            </MorphPopoverTrigger>
+            <MorphPopoverContent
+              className="landing-account-popover landing-check-in-popover"
+              radius={16}
+              sideOffset={12}
+            >
+              <div>
+                <strong>{checkedInToday ? '今日灵感已领取' : '赢取每日灵感值！'}</strong>
+                <small>
+                  {`签到可得 ${dailyCheckInReward} 积分，7 天有效`}
+                  <span className="sr-only">每日签到可得 {dailyCheckInReward} 积分</span>
+                </small>
+              </div>
+              <Button
+                type="button"
+                disabled={checkingIn || checkedInToday}
+                onClick={() => void handleCheckIn()}
+              >
+                {checkedInToday ? <Check aria-hidden="true" /> : null}
+                {checkedInToday ? '已签到' : checkingIn ? '签到中' : '签到'}
+              </Button>
+            </MorphPopoverContent>
+          </MorphPopover>
+
+          <MorphPopover open={profileOpen} onOpenChange={setProfileOpen}>
+            <MorphPopoverTrigger>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="landing-account-actions__avatar"
+                aria-label={`账户：${accountName}`}
+              >
+                <AccountAvatar image={accountImage} name={accountName} />
+              </Button>
+            </MorphPopoverTrigger>
+            <MorphPopoverContent
+              className="landing-account-popover landing-profile-popover"
+              radius={16}
+            >
+              <div>
+                <AccountAvatar image={accountImage} name={accountName} />
+                <span>
+                  <strong>{accountName}</strong>
+                  <small>{creditsRemaining} 积分可用</small>
+                </span>
+              </div>
+              <Button type="button" variant="ghost" onClick={openImageApiKeySettings}>
+                <KeyRound aria-hidden="true" />
+                <span>生图 API Key</span>
+                <small>
+                  {imageApiKeyConfigured ? `尾号 ${imageApiKeySuffix ?? '未知'}` : '使用平台额度'}
+                </small>
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => void handleLogout()}>
+                <LogOut aria-hidden="true" />
+                退出登录
+              </Button>
+            </MorphPopoverContent>
+          </MorphPopover>
+        </>
       ) : (
         <Button
           type="button"

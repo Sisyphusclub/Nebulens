@@ -2,6 +2,7 @@ import { Eye, EyeOff, LoaderCircle, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
+import { useToast } from '@/components/common/ToastProvider';
 import { MorphicCardModal } from '@/components/premium/morphic-card-modal';
 import { Tabs, TabsList, TabsTrigger } from '@/components/premium/tabs/tabs';
 import { Alert } from '@/components/ui/alert';
@@ -12,8 +13,47 @@ import { useAuthModal } from '@/hooks/useAuthModal';
 
 const USERNAME_PATTERN = /^[a-z0-9_]{3,32}$/;
 
+type AuthMode = 'signin' | 'signup';
+
+const COPY: Record<
+  AuthMode,
+  { title: string; subtitle: string; submit: string; username: string; password: string }
+> = {
+  signin: {
+    title: '欢迎回来',
+    subtitle: '登录后继续你的创作。',
+    submit: '登录',
+    username: '输入用户名',
+    password: '输入密码',
+  },
+  signup: {
+    title: '创建账户，开始创作',
+    subtitle: '注册后即可生成图片，每天签到还能领额度。',
+    submit: '创建账户',
+    username: '如：studio_lin',
+    password: '至少 8 个字符',
+  },
+};
+
+/** Signing in only needs both fields; the format rules are for picking new credentials. */
+function usernameError(mode: AuthMode, value: string): string | null {
+  const normalized = value.trim().toLowerCase();
+  if (normalized.length === 0) return '请输入用户名。';
+  if (mode === 'signup' && !USERNAME_PATTERN.test(normalized)) {
+    return '仅支持 3-32 位小写字母、数字或下划线。';
+  }
+  return null;
+}
+
+function passwordError(mode: AuthMode, value: string): string | null {
+  if (value.length === 0) return '请输入密码。';
+  if (mode === 'signup' && value.length < 8) return '密码至少为 8 个字符。';
+  return null;
+}
+
 export function LoginModal() {
   const { isOpen, close, complete } = useAuthModal();
+  const { notify } = useToast();
   const {
     isAuthenticated,
     isGoogleEnabled = false,
@@ -22,36 +62,26 @@ export function LoginModal() {
     signInWithUsername,
     signUpWithUsername,
   } = useAuth();
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<AuthMode>('signin');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  /** Fields left while signing up; a filled one that breaks the rules is flagged right away. */
+  const [touched, setTouched] = useState({ username: false, password: false });
   const usernameRef = useRef<HTMLInputElement>(null);
+  const copy = COPY[mode];
 
   const validation = useMemo(() => {
-    const normalizedUsername = username.trim().toLowerCase();
+    const shows = (field: 'username' | 'password', value: string): boolean =>
+      hasSubmitted || (mode === 'signup' && touched[field] && value.length > 0);
     return {
-      username:
-        hasSubmitted && normalizedUsername.length > 0
-          ? USERNAME_PATTERN.test(normalizedUsername)
-            ? null
-            : '仅支持 3-32 位小写字母、数字或下划线。'
-          : hasSubmitted && normalizedUsername.length === 0
-            ? '请输入用户名。'
-            : null,
-      password:
-        hasSubmitted && password.length > 0
-          ? password.length >= 8
-            ? null
-            : '密码至少为 8 个字符。'
-          : hasSubmitted && password.length === 0
-            ? '请输入密码。'
-            : null,
+      username: shows('username', username) ? usernameError(mode, username) : null,
+      password: shows('password', password) ? passwordError(mode, password) : null,
     };
-  }, [hasSubmitted, password, username]);
+  }, [hasSubmitted, mode, password, touched, username]);
 
   // The modal stays mounted while closed, so every way out must leave a clean form behind.
   const resetForm = useCallback((): void => {
@@ -62,6 +92,7 @@ export function LoginModal() {
     setError(null);
     setPending(false);
     setHasSubmitted(false);
+    setTouched({ username: false, password: false });
   }, []);
 
   const resetAndClose = useCallback((): void => {
@@ -86,15 +117,17 @@ export function LoginModal() {
   const submit = async (event: FormEvent): Promise<void> => {
     event.preventDefault();
     setHasSubmitted(true);
+    if (usernameError(mode, username) !== null || passwordError(mode, password) !== null) return;
     const normalizedUsername = username.trim().toLowerCase();
-    if (!USERNAME_PATTERN.test(normalizedUsername) || password.length < 8) return;
     setPending(true);
     setError(null);
     try {
       if (mode === 'signin') {
         await signInWithUsername({ username: normalizedUsername, password });
+        notify(`欢迎回来，${normalizedUsername}。`);
       } else {
         await signUpWithUsername({ username: normalizedUsername, password });
+        notify('注册成功，已为你登录。每天签到还能领取生成额度。');
       }
       resetForm();
       await complete();
@@ -146,7 +179,10 @@ export function LoginModal() {
           <img src="/brand/logo.png" alt="" />
           <span>Nebulens</span>
         </div>
-        <h2 id="login-title">{mode === 'signin' ? '登录' : '创建账户'}</h2>
+        <div className="auth-heading">
+          <h2 id="login-title">{copy.title}</h2>
+          <p>{copy.subtitle}</p>
+        </div>
         <Tabs
           value={mode}
           onValueChange={(next) => {
@@ -154,6 +190,7 @@ export function LoginModal() {
             setMode(next);
             setError(null);
             setHasSubmitted(false);
+            setTouched({ username: false, password: false });
           }}
           className="auth-mode-tabs"
         >
@@ -167,56 +204,72 @@ export function LoginModal() {
           </TabsList>
         </Tabs>
         <form className="form-stack auth-form" noValidate onSubmit={(event) => void submit(event)}>
-          <label>
-            <span>用户名</span>
-            <Input
-              ref={usernameRef}
-              value={username}
-              disabled={pending}
-              autoCapitalize="none"
-              autoCorrect="off"
-              autoComplete="username"
-              placeholder="3-32 位小写字母、数字或下划线"
-              aria-invalid={validation.username !== null}
-              aria-describedby={validation.username ? 'username-error' : undefined}
-              onChange={(event) => setUsername(event.target.value)}
-            />
+          <div className="auth-field">
+            <label>
+              <span>用户名</span>
+              <Input
+                ref={usernameRef}
+                value={username}
+                disabled={pending}
+                autoCapitalize="none"
+                autoCorrect="off"
+                autoComplete="username"
+                placeholder={copy.username}
+                aria-invalid={validation.username !== null}
+                aria-describedby={
+                  validation.username
+                    ? 'username-error'
+                    : mode === 'signup'
+                      ? 'username-hint'
+                      : undefined
+                }
+                onChange={(event) => setUsername(event.target.value)}
+                onBlur={() => setTouched((current) => ({ ...current, username: true }))}
+              />
+            </label>
             {validation.username ? (
               <small id="username-error" className="field-error">
                 {validation.username}
               </small>
+            ) : mode === 'signup' ? (
+              <small id="username-hint" className="field-hint">
+                3-32 位小写字母、数字或下划线
+              </small>
             ) : null}
-          </label>
-          <label>
-            <span>密码</span>
-            <span className="password-field">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                disabled={pending}
-                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                placeholder="至少 8 个字符"
-                aria-invalid={validation.password !== null}
-                aria-describedby={validation.password ? 'password-error' : undefined}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label={showPassword ? '隐藏密码' : '显示密码'}
-                disabled={pending}
-                onClick={() => setShowPassword((current) => !current)}
-              >
-                {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
-              </Button>
-            </span>
+          </div>
+          <div className="auth-field">
+            <label>
+              <span>密码</span>
+              <span className="password-field">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  disabled={pending}
+                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                  placeholder={copy.password}
+                  aria-invalid={validation.password !== null}
+                  aria-describedby={validation.password ? 'password-error' : undefined}
+                  onChange={(event) => setPassword(event.target.value)}
+                  onBlur={() => setTouched((current) => ({ ...current, password: true }))}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={showPassword ? '隐藏密码' : '显示密码'}
+                  disabled={pending}
+                  onClick={() => setShowPassword((current) => !current)}
+                >
+                  {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                </Button>
+              </span>
+            </label>
             {validation.password ? (
               <small id="password-error" className="field-error">
                 {validation.password}
               </small>
             ) : null}
-          </label>
+          </div>
           {error ? (
             <Alert variant="destructive" className="form-error">
               {error}
@@ -224,24 +277,25 @@ export function LoginModal() {
           ) : null}
           <Button type="submit" disabled={pending}>
             {pending ? <LoaderCircle className="spin" aria-hidden="true" /> : null}
-            {pending ? '处理中' : mode === 'signin' ? '登录' : '创建账户'}
+            {pending ? '处理中' : copy.submit}
           </Button>
         </form>
-        <div className="dialog-separator">
-          <span>或</span>
-        </div>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={pending || isGoogleLoading || !isGoogleEnabled}
-          onClick={() => void google()}
-        >
-          {isGoogleLoading
-            ? '正在检查 Google 登录'
-            : isGoogleEnabled
-              ? '使用 Google 继续'
-              : 'Google 登录未配置'}
-        </Button>
+        {/* Google only appears once the backend confirms it is set up. */}
+        {isGoogleEnabled && !isGoogleLoading ? (
+          <>
+            <div className="dialog-separator">
+              <span>或</span>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={pending}
+              onClick={() => void google()}
+            >
+              使用 Google 继续
+            </Button>
+          </>
+        ) : null}
       </section>
     </MorphicCardModal>
   );

@@ -202,7 +202,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const signInWithUsername = useCallback(
     async ({ username, password }: Credentials): Promise<void> => {
-      const normalized = normalizeUsername(username);
+      const normalized = username.trim().toLowerCase();
+      // No account can have a malformed name, so it reads as a wrong sign-in rather
+      // than a naming rule to learn.
+      if (!USERNAME_PATTERN.test(normalized)) {
+        throw new Error(signInMessage({ code: 'INVALID_USERNAME_OR_PASSWORD' }));
+      }
       try {
         const result: unknown = await signIn.username({ username: normalized, password });
         const error = extractError(result);

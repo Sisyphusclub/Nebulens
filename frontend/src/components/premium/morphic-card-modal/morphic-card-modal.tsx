@@ -94,6 +94,7 @@ export function MorphicCardModal({
 
   useEffect(() => {
     if (!open) return;
+    const modal = modalRef.current;
     const returnFocus =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     focusMovedInRef.current = false;
@@ -139,7 +140,13 @@ export function MorphicCardModal({
     return () => {
       window.cancelAnimationFrame(focusFrame);
       document.removeEventListener('keydown', onKey);
+      const focusAtClose = document.activeElement;
       window.requestAnimationFrame(() => {
+        // Leave focus alone if something outside the modal took it after closing.
+        const active = document.activeElement;
+        if (active !== focusAtClose && active !== document.body && !modal?.contains(active)) {
+          return;
+        }
         if (returnFocus?.isConnected) returnFocus.focus();
       });
     };

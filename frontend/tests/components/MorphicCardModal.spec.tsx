@@ -91,4 +91,31 @@ describe('MorphicCardModal', () => {
 
     expect(menu).toHaveFocus();
   });
+
+  it('leaves focus taken elsewhere after closing before its deferred return focus runs', () => {
+    const flushFrames = holdAnimationFrames();
+    const page = (open: boolean) => (
+      <>
+        <button type="button">Opener</button>
+        <input aria-label="Search" />
+        <MorphicCardModal id="return-focus" open={open} onClose={() => undefined}>
+          <section role="dialog" aria-label="Settings">
+            <button type="button">Close</button>
+          </section>
+        </MorphicCardModal>
+      </>
+    );
+    const { rerender } = render(page(false));
+    screen.getByRole('button', { name: 'Opener' }).focus();
+    rerender(page(true));
+    flushFrames();
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
+
+    rerender(page(false));
+    const search = screen.getByLabelText('Search');
+    search.focus();
+    flushFrames();
+
+    expect(search).toHaveFocus();
+  });
 });

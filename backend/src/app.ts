@@ -14,12 +14,14 @@ import { healthRouter } from './routes/health.js';
 import { buildHistoryRouter } from './routes/history.js';
 import { buildImagesRouter } from './routes/images.js';
 import { buildPromptRouter } from './routes/prompt.js';
+import { buildSkillsRouter } from './routes/skills.js';
 import { buildOpenAICompatRouter } from './routes/openaiCompat.js';
 import { buildOutputsRouter } from './routes/outputs.js';
 import { buildUserSettingsRouter } from './routes/userSettings.js';
 import type { DemoPromptCacheConfig } from './services/demoPromptCache.service.js';
 import type { AnalysisQueue } from './services/imageAnalysis.service.js';
 import type { PromptEnhancer } from './services/promptEnhance.service.js';
+import { createSkillPlanner, type SkillPlanner } from './services/skillPlanner.service.js';
 import type { ImageGenerationProvider } from './services/providers/ImageGenerationProvider.js';
 import {
   createUserImageApiKeyService,
@@ -35,6 +37,8 @@ export interface AppDeps {
   imageAnalysis?: AnalysisQueue;
   /** Rewrites short descriptions into fuller prompts; omitted when no chat model is configured. */
   promptEnhancer?: PromptEnhancer;
+  /** Writes skill prompts; defaults to the skills' own templates without a chat model. */
+  skillPlanner?: SkillPlanner;
   /** Override the auth middleware. Tests can inject a stub that attaches `req.user` synchronously. */
   authMiddleware?: RequestHandler;
   /** Override the admin middleware. Tests can inject allow/deny behavior after auth. */
@@ -138,6 +142,14 @@ export function createApp(deps: AppDeps): Express {
       ...(deps.promptEnhancer !== undefined ? { promptEnhancer: deps.promptEnhancer } : {}),
       ...(deps.authMiddleware !== undefined ? { authMiddleware: deps.authMiddleware } : {}),
       rateLimiter: rateLimiters.promptEnhance,
+    }),
+  );
+  app.use(
+    '/api/skills',
+    buildSkillsRouter({
+      planner: deps.skillPlanner ?? createSkillPlanner(),
+      ...(deps.authMiddleware !== undefined ? { authMiddleware: deps.authMiddleware } : {}),
+      rateLimiter: rateLimiters.skillPlan,
     }),
   );
   app.use('/api/outputs', buildOutputsRouter(deps.authMiddleware));

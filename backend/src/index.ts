@@ -9,6 +9,7 @@ import { createAnalysisQueueFromEnv } from './services/imageAnalysis.service.js'
 import { createPromptEnhancerFromEnv } from './services/promptEnhance.service.js';
 import { createProviderFromEnv } from './services/providers/createProviderFromEnv.js';
 import { withStructuredVisibleText } from './services/providers/withStructuredVisibleText.js';
+import { createSkillPlannerFromEnv } from './services/skillPlanner.service.js';
 
 runMigrations();
 await seedDefaultAdminIfEnabled();
@@ -25,6 +26,7 @@ const promptEnhancer = createPromptEnhancerFromEnv();
 
 const app = createApp({
   provider,
+  skillPlanner: createSkillPlannerFromEnv(),
   ...(imageAnalysis === undefined ? {} : { imageAnalysis }),
   ...(promptEnhancer === undefined ? {} : { promptEnhancer }),
 });

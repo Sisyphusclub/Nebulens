@@ -13,6 +13,7 @@ export interface AppRateLimiters {
   generation: RequestHandler;
   settingsMutation: RequestHandler;
   promptEnhance: RequestHandler;
+  skillPlan: RequestHandler;
   openAICompat: RequestHandler;
 }
 
@@ -33,6 +34,7 @@ export function createAppRateLimiters(): AppRateLimiters {
     generation: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 10, preferUserId: true }),
     settingsMutation: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 10, preferUserId: true }),
     promptEnhance: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 20, preferUserId: true }),
+    skillPlan: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 20, preferUserId: true }),
     openAICompat: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 30 }),
   };
 }

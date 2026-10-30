@@ -1,42 +1,71 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 
-import { LandingSkillCapsules, LandingSkillGallery } from '@/components/landing/LandingSkills';
-import { LANDING_SKILLS, QUICK_SKILL_COUNT } from '@/data/landingSkills';
+import { LandingSkillDeck } from '@/components/landing/LandingSkills';
+import { LANDING_SKILLS } from '@/data/landingSkills';
 import { ASPECT_CHOICES } from '@/types/image';
 
-it('offers the most used skills as capsules and hands back the chosen one', async () => {
-  const user = userEvent.setup();
-  const onSelect = vi.fn();
-  render(<LandingSkillCapsules onSelect={onSelect} />);
-
-  const group = screen.getByRole('group', { name: '常用技能' });
-  expect(within(group).getAllByRole('button')).toHaveLength(QUICK_SKILL_COUNT);
-  await user.click(within(group).getByRole('button', { name: '电商主图' }));
-  expect(onSelect).toHaveBeenCalledWith(LANDING_SKILLS.find((skill) => skill.id === 'ecommerce'));
+afterEach(() => {
+  vi.useRealTimers();
 });
 
-it('shows every skill as a card with an example, a description and a way to start', async () => {
+it('shows every skill as a tile with its description and example', async () => {
   const user = userEvent.setup();
   const onSelect = vi.fn();
-  render(<LandingSkillGallery onSelect={onSelect} />);
+  render(<LandingSkillDeck onSelect={onSelect} />);
 
-  const gallery = screen.getByRole('region', { name: '技能' });
+  const deck = screen.getByRole('region', { name: '技能' });
   for (const skill of LANDING_SKILLS) {
-    const card = within(gallery).getByRole('button', { name: `使用技能：${skill.label}` });
-    expect(card).toHaveTextContent(skill.description);
-    expect(card.querySelector('img')).toHaveAttribute('src', skill.image);
+    const tile = within(deck).getByRole('button', { name: `使用技能：${skill.label}` });
+    expect(tile).toHaveTextContent(skill.description);
+    expect(tile.querySelector('img')).toHaveAttribute('src', skill.image);
   }
-  await user.click(within(gallery).getByRole('button', { name: '使用技能：风格重绘' }));
+  await user.click(within(deck).getByRole('button', { name: '使用技能：风格重绘' }));
   expect(onSelect).toHaveBeenCalledWith(LANDING_SKILLS.find((skill) => skill.id === 'restyle'));
 });
 
+it('features one skill at a time, picked by its dot or in turn every few seconds', () => {
+  vi.useFakeTimers();
+  const onSelect = vi.fn();
+  render(<LandingSkillDeck onSelect={onSelect} />);
+  const [first, second, third] = LANDING_SKILLS;
+
+  fireEvent.click(screen.getByRole('button', { name: `立即使用：${first!.label}` }));
+  expect(onSelect).toHaveBeenCalledWith(first);
+
+  act(() => {
+    vi.advanceTimersByTime(5000);
+  });
+  expect(screen.getByRole('button', { name: `立即使用：${second!.label}` })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: `推荐：${second!.label}` })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: `推荐：${third!.label}` }));
+  expect(screen.getByRole('button', { name: `立即使用：${third!.label}` })).toBeInTheDocument();
+});
+
+it('holds the featured skill while the pointer rests on it', () => {
+  vi.useFakeTimers();
+  render(<LandingSkillDeck onSelect={vi.fn()} />);
+  const [first] = LANDING_SKILLS;
+  const cta = screen.getByRole('button', { name: `立即使用：${first!.label}` });
+
+  fireEvent.mouseEnter(cta.closest('.landing-deck__feature')!);
+  act(() => {
+    vi.advanceTimersByTime(15000);
+  });
+
+  expect(screen.getByRole('button', { name: `立即使用：${first!.label}` })).toBeInTheDocument();
+});
+
 it('only ships skills with a supported ratio, a prompt and an example image on disk', () => {
-  expect(LANDING_SKILLS.length).toBeGreaterThanOrEqual(QUICK_SKILL_COUNT);
+  expect(LANDING_SKILLS.length).toBe(8);
   for (const skill of LANDING_SKILLS) {
     expect(ASPECT_CHOICES).toContain(skill.aspect);
     expect(skill.prompt.length).toBeGreaterThan(10);

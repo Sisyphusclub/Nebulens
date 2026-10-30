@@ -26,7 +26,7 @@ export interface LandingSkill {
   referenceHint?: string;
 }
 
-/** Skills in order of everyday use; the first QUICK_SKILL_COUNT also sit under the composer. */
+/** Skills in order of everyday use, which is also their order on the Discover page. */
 export const LANDING_SKILLS: readonly LandingSkill[] = [
   {
     id: 'ecommerce',
@@ -109,5 +109,3 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
     referenceHint: '先上传一张想重绘的图片作为参考图，再开始生成。',
   },
 ];
-
-export const QUICK_SKILL_COUNT = 5;

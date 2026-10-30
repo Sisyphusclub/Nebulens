@@ -80,9 +80,10 @@ describe('landing composer surface contract', () => {
     expect(glass).toContain('backdrop-filter: blur(4px) saturate(1.15);');
     // No blurred halo behind the glass: it tinted the glass and hid the backdrop.
     expect(glass).not.toContain('.liquid-glass-frame::after');
-    // A faint highlight and a dark inner vignette keep the edge quiet on any backdrop.
-    expect(glass).toContain('rgb(255 255 255 / 0.06) 0 0 2px 1px inset');
-    expect(glass).toContain('rgb(5 6 10 / 0.35) 0 0 18px 2px inset');
+    // A light highlight and a faint inner glow keep the edge bright, not sunk in shadow.
+    expect(glass).toContain('rgb(255 255 255 / 0.08) 0 0 2px 1px inset');
+    expect(glass).toContain('rgb(255 255 255 / 0.04) 0 0 18px 2px inset');
+    expect(glass).not.toContain('rgb(5 6 10 / 0.35) 0 0 18px 2px inset');
     // Chromium adds edge refraction; other engines keep the plain frosted glass.
     expect(glass).toMatch(
       /\[data-refraction='true'\][^{]*\{[^}]*backdrop-filter: url\(#liquid-glass-refraction\) blur\(1\.5px\) saturate\(1\.2\);/s,
@@ -104,7 +105,7 @@ describe('landing composer surface contract', () => {
     );
     // A static light edge, brighter along the top; no coloured or moving glow.
     expect(glass).toMatch(
-      /\.liquid-glass-frame::before\s*\{[^}]*linear-gradient\(\s*170deg,\s*rgb\(255 255 255 \/ 0\.2\)/s,
+      /\.liquid-glass-frame::before\s*\{[^}]*linear-gradient\(\s*170deg,\s*rgb\(255 255 255 \/ 0\.32\)/s,
     );
     expect(glass).not.toContain('conic-gradient');
     expect(glass).not.toContain('animation:');

@@ -8,8 +8,8 @@ import { thumbnailUrl } from '@/utils/thumbnail';
 
 /**
  * The team's newest shared work under the skills, so the library comes to people
- * instead of waiting to be browsed. Picking a piece fills the composer with it.
- * Shares the skill cards' look so the two rows read as one gallery.
+ * instead of waiting to be browsed. A full-width masonry keeps every image at its own
+ * shape; picking a piece fills the composer with it.
  */
 export function LandingShowcase({
   records,
@@ -20,8 +20,8 @@ export function LandingShowcase({
 }) {
   if (records.length === 0) return null;
   return (
-    <section className="landing-skills landing-showcase" aria-label="成果库精选">
-      <header className="landing-skills__header landing-showcase__header">
+    <section className="landing-showcase" aria-label="成果库精选">
+      <header className="landing-section-header">
         <div>
           <h2>成果库精选</h2>
           <p>团队最近共享的作品，看中哪张就一键做同款。</p>
@@ -31,13 +31,14 @@ export function LandingShowcase({
           <ArrowRight aria-hidden="true" />
         </Link>
       </header>
-      <div className="landing-skills__grid">
+      <div className="landing-showcase__masonry">
         {records.map((record) => (
           <Button
             key={record.id}
             type="button"
             variant="ghost"
-            className="landing-skills__card"
+            className="landing-showcase__card"
+            style={{ aspectRatio: `${record.width} / ${record.height}` }}
             aria-label={`做同款：${record.prompt}`}
             onClick={() => onUse(record)}
           >
@@ -47,10 +48,8 @@ export function LandingShowcase({
               loading="lazy"
               decoding="async"
             />
-            <span className="landing-skills__body">
-              <span className="landing-skills__description landing-showcase__prompt">
-                {record.prompt}
-              </span>
+            <span className="landing-showcase__caption">
+              <span className="landing-showcase__prompt">{record.prompt}</span>
               <span className="landing-showcase__meta">
                 {[
                   record.ownerName,
@@ -58,7 +57,7 @@ export function LandingShowcase({
                 ].join(' · ')}
               </span>
             </span>
-            <span className="landing-skills__cta" aria-hidden="true">
+            <span className="landing-showcase__cta" aria-hidden="true">
               做同款
               <ArrowUpRight />
             </span>

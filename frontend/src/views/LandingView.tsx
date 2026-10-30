@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
-import { LandingArtworkWall } from '@/components/landing/LandingArtworkWall';
+import { LandingHeroBackdrop } from '@/components/landing/LandingHeroBackdrop';
 import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { LandingGenerationControls } from '@/components/landing/LandingGenerationControls';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
@@ -12,7 +12,7 @@ import { AiInsightBar } from '@/components/generation/AiInsightBar';
 import { LandingRecentCreations } from '@/components/landing/LandingRecentCreations';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingShowcase } from '@/components/landing/LandingShowcase';
-import { LandingSkillCapsules, LandingSkillGallery } from '@/components/landing/LandingSkills';
+import { LandingSkillDeck } from '@/components/landing/LandingSkills';
 import { SkillPanel, type SkillSubmission } from '@/components/landing/SkillPanel';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
@@ -26,6 +26,7 @@ import { useImageQuota } from '@/hooks/useImageQuota';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { attachGenerationBatch, useGenerationSessions } from '@/hooks/useGenerationSessions';
 import { useImageHistory } from '@/hooks/useImageHistory';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
 import { useTeamShowcase } from '@/hooks/useTeamShowcase';
@@ -59,6 +60,7 @@ import type { SkillRunRequest } from '@/utils/skillRun';
 
 export function LandingView() {
   const navigate = useNavigate();
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const { user, isAuthenticated, isLoading: authLoading, isAdmin, logout } = useAuth();
   const { quota, isLoading: quotaLoading, checkIn } = useImageQuota();
   const imageApiKey = useImageApiKey();
@@ -233,7 +235,7 @@ export function LandingView() {
   return (
     <div className="landing-page">
       <section className="landing-hero" data-layout="media-stage" aria-labelledby="landing-title">
-        <LandingArtworkWall />
+        <LandingHeroBackdrop reducedMotion={reducedMotion} />
         <div className="landing-hero__overlay" aria-hidden="true" />
         <LandingSidebar
           accountImage={user?.image}
@@ -353,14 +355,11 @@ export function LandingView() {
               onUsePrompt={applyRecommendedPrompt}
             />
           ) : (
-            <>
-              <LandingSkillCapsules onSelect={selectSkill} />
-              <LandingRecentCreations creations={recent} onOpen={openRecent} />
-            </>
+            <LandingRecentCreations creations={recent} onOpen={openRecent} />
           )}
         </div>
       </section>
-      <LandingSkillGallery onSelect={selectSkill} />
+      <LandingSkillDeck onSelect={selectSkill} />
       <SkillPanel
         skill={panelSkill}
         open={skillPanelOpen}

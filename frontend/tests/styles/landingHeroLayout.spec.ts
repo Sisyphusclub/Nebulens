@@ -11,44 +11,32 @@ function rule(selector: string): string {
 }
 
 describe('landing hero layout', () => {
-  it('sizes the hero to its content so the skills follow right after it', () => {
+  it('sizes the hero to its content so the skill deck follows right after the composer', () => {
     const hero = rule('.landing-hero');
     const content = rule('.landing-hero__content');
 
     expect(hero).not.toContain('height: 100svh;');
     expect(hero).not.toContain('min-height: 760px;');
-    expect(hero).toContain('padding-bottom: clamp(56px, 8svh, 96px);');
+    expect(hero).toContain('padding-bottom: 40px;');
     // In flow, not absolutely placed, so its height drives the hero's height.
     expect(content).toContain('position: relative;');
     expect(content).not.toMatch(/^\s*top:/m);
   });
 });
 
-describe('landing artwork wall brightness', () => {
-  it('keeps the artwork wall bright enough to read as a gallery', () => {
-    const plane = rule('.artwork-wall__plane');
-    const scrim = rule('.artwork-wall__scrim');
-
-    expect(plane).toContain('opacity: 0.7;');
-    // The centre stays a little darker for the headline, but no longer near-black.
-    expect(scrim).toContain('rgb(5 6 10 / 0.62) 0%');
-    expect(scrim).not.toContain('rgb(5 6 10 / 0.82)');
+describe('landing nebula backdrop', () => {
+  it('pins the video and its overlay behind the whole page', () => {
+    expect(rule('.landing-hero__video,\n.landing-hero__overlay')).toContain('position: fixed;');
+    expect(rule('.landing-hero__video')).toContain('object-fit: cover;');
   });
-});
 
-describe('landing page-wide artwork wall', () => {
-  it('pins the wall behind the whole page so the lower half is not a flat dark block', () => {
-    const wall = rule('.landing-hero .artwork-wall,\n.landing-hero__overlay');
+  it('only shades the edges, keeping the area around the composer bright', () => {
     const overlay =
       baseStyles.match(/\.landing-hero__overlay\s*\{\s*(background:[^}]+)\}/)?.[1] ?? '';
-    const skills = rule('.landing-skills');
 
-    expect(wall).toContain('position: fixed;');
-    // The overlay no longer fades the hero into a solid page colour.
-    expect(overlay).not.toContain('var(--background) 100%');
-    // An even veil dims the whole wall behind the page content.
-    expect(overlay).toContain('rgb(5 6 10 / 0.3);');
-    // A light scrim keeps the skills heading readable over the wall.
-    expect(skills).toContain('rgb(5 6 10 / 0.5) 140px');
+    expect(overlay).toContain('transparent 88%');
+    // No even veil over the whole video any more.
+    expect(overlay).not.toContain('rgb(5 6 10 / 0.3)');
+    expect(rule('.landing-composer-anchor::before')).toContain('radial-gradient(');
   });
 });

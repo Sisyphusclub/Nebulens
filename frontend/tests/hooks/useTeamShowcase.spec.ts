@@ -24,12 +24,22 @@ beforeEach(() => {
   fetchTeamHistory.mockReset();
 });
 
-it('shows the newest shared work, at most eight pieces', async () => {
-  fetchTeamHistory.mockResolvedValue({ records: Array.from({ length: 12 }, (_, i) => record(i)) });
+it('shows the newest shared work, at most eighteen pieces', async () => {
+  fetchTeamHistory.mockResolvedValue({ records: Array.from({ length: 24 }, (_, i) => record(i)) });
   const { result } = renderHook(() => useTeamShowcase(true));
 
-  await waitFor(() => expect(result.current).toHaveLength(8));
+  await waitFor(() => expect(result.current).toHaveLength(18));
   expect(result.current[0]?.id).toBe('team-0.png');
+});
+
+it('keeps only the newest piece of a prompt shared more than once', async () => {
+  fetchTeamHistory.mockResolvedValue({
+    records: [record(1), { ...record(2), prompt: '作品 1' }, record(3)],
+  });
+  const { result } = renderHook(() => useTeamShowcase(true));
+
+  await waitFor(() => expect(result.current).toHaveLength(2));
+  expect(result.current.map((item) => item.id)).toEqual(['team-1.png', 'team-3.png']);
 });
 
 it('stays empty for signed-out visitors and when loading fails', async () => {

@@ -356,8 +356,8 @@ describe('React application routes', () => {
     const user = userEvent.setup();
     renderRoute('/');
 
-    const capsules = await screen.findByRole('group', { name: '常用技能' });
-    await user.click(within(capsules).getByRole('button', { name: '电商主图' }));
+    const skills = await screen.findByRole('region', { name: '技能' });
+    await user.click(within(skills).getByRole('button', { name: '使用技能：电商主图' }));
     const panel = await screen.findByRole('dialog', { name: '电商主图' });
 
     expect(within(panel).getByLabelText('将生成')).toHaveTextContent('主图卖点图');
@@ -428,8 +428,8 @@ describe('React application routes', () => {
     });
     renderRoute('/');
 
-    const capsules = await screen.findByRole('group', { name: '常用技能' });
-    await user.click(within(capsules).getByRole('button', { name: '电商主图' }));
+    const skills = await screen.findByRole('region', { name: '技能' });
+    await user.click(within(skills).getByRole('button', { name: '使用技能：电商主图' }));
     const panel = await screen.findByRole('dialog', { name: '电商主图' });
     await user.type(within(panel).getByLabelText('商品名称'), '山川绿茶');
     await user.type(within(panel).getByRole('textbox', { name: '卖点 1' }), '高山云雾');
@@ -482,11 +482,11 @@ describe('React application routes', () => {
 
   it('hides recent creations when there is no history', async () => {
     renderRoute('/');
-    await screen.findByRole('group', { name: '常用技能' });
+    await screen.findByRole('region', { name: '技能' });
     expect(screen.queryByRole('navigation', { name: '继续上次创作' })).not.toBeInTheDocument();
   });
 
-  it('swaps the homepage shortcuts for similar teammate work and reuses its prompt', async () => {
+  it('shows similar teammate work under the composer and reuses its prompt', async () => {
     const user = userEvent.setup();
     recommendationMocks.items = [
       {
@@ -508,7 +508,7 @@ describe('React application routes', () => {
     renderRoute('/');
 
     const panel = await screen.findByRole('region', { name: '成果库里相似的作品' });
-    expect(screen.queryByRole('group', { name: '常用技能' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: '继续上次创作' })).not.toBeInTheDocument();
     await user.click(within(panel).getByRole('button', { name: '用这个提示词' }));
 
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
@@ -564,8 +564,8 @@ describe('React application routes', () => {
     const user = userEvent.setup();
     renderRoute('/');
 
-    const capsules = await screen.findByRole('group', { name: '常用技能' });
-    await user.click(within(capsules).getByRole('button', { name: '活动海报' }));
+    const skills = await screen.findByRole('region', { name: '技能' });
+    await user.click(within(skills).getByRole('button', { name: '使用技能：活动海报' }));
     const panel = await screen.findByRole('dialog', { name: '活动海报' });
     await user.click(within(panel).getByRole('button', { name: '改为自己写提示词' }));
     await user.click(screen.getByRole('button', { name: '切换到 2K' }));

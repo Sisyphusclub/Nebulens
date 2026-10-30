@@ -52,7 +52,11 @@ describe('createPromptEnhancer', () => {
 
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://llm.test/v1/chat/completions');
-    expect(init.headers).toMatchObject({ authorization: 'Bearer test-key' });
+    expect(init.headers).toMatchObject({
+      authorization: 'Bearer test-key',
+      'user-agent': 'nebulens/1.0',
+      'x-opencode-session': 'nebulens-prompt-enhance',
+    });
     const body = JSON.parse(String(init.body)) as {
       model: string;
       messages: Array<{ role: string; content: string }>;

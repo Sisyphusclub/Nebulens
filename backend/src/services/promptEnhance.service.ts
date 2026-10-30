@@ -1,5 +1,6 @@
 import { env } from '../config/env.js';
 import { AppError } from '../errors/AppError.js';
+import { chatApiHeaders } from '../utils/chatApiHeaders.js';
 import { extractVisibleTexts } from '../utils/visibleText.js';
 
 /** Rewrites a short description into a fuller image prompt. */
@@ -62,10 +63,7 @@ export function createPromptEnhancer(config: PromptEnhancerConfig): PromptEnhanc
       try {
         response = await fetchImpl(url, {
           method: 'POST',
-          headers: {
-            authorization: `Bearer ${config.apiKey}`,
-            'content-type': 'application/json',
-          },
+          headers: chatApiHeaders(config.apiKey, 'nebulens-prompt-enhance'),
           body: JSON.stringify({
             model: config.model,
             temperature: 0.7,

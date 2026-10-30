@@ -12,6 +12,7 @@ import {
   isImageCategory,
   type ImageCategory,
 } from '../types/imageCategory.js';
+import { chatApiHeaders } from '../utils/chatApiHeaders.js';
 import { extractVisibleTexts, scoreVisibleText } from '../utils/visibleText.js';
 
 export interface VisionAnalysisRequest {
@@ -63,10 +64,7 @@ export function createVisionClient(config: VisionClientConfig): VisionClient {
     async analyze(request) {
       const response = await fetchImpl(url, {
         method: 'POST',
-        headers: {
-          authorization: `Bearer ${config.apiKey}`,
-          'content-type': 'application/json',
-        },
+        headers: chatApiHeaders(config.apiKey, 'nebulens-image-analysis'),
         body: JSON.stringify({
           model: config.model,
           temperature: 0,

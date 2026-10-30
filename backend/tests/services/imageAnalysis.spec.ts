@@ -97,6 +97,8 @@ describe('createVisionClient', () => {
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://vision.example.com/v1/chat/completions');
     expect(new Headers(init.headers).get('authorization')).toBe('Bearer sk-vision');
+    expect(new Headers(init.headers).get('user-agent')).toBe('nebulens/1.0');
+    expect(new Headers(init.headers).get('x-opencode-session')).toBe('nebulens-image-analysis');
     const body = JSON.parse(String(init.body)) as {
       model: string;
       messages: Array<{ content: unknown }>;

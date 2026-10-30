@@ -89,6 +89,43 @@ describe('recentCreations', () => {
     expect(cards[0]).toMatchObject({ sessionId: null, title: '雨夜城市' });
   });
 
+  it('leaves out text-fix edits and repeats of a title already shown', () => {
+    const batches = [
+      batch(
+        'b4',
+        '2026-10-28T04:00:00.000Z',
+        '请只修改图中的文字，画面保持不变：把“周年庆典”重写一遍。',
+      ),
+      batch('b3', '2026-10-28T03:00:00.000Z', '门店活动海报'),
+      batch('b2', '2026-10-28T02:00:00.000Z', '门店活动海报'),
+      batch('b1', '2026-10-28T01:00:00.000Z', '雨夜城市'),
+    ];
+
+    expect(recentCreations(batches, []).map((card) => card.key)).toEqual(['batch:b3', 'batch:b1']);
+  });
+
+  it('titles a session named after a text fix with the creation prompt', () => {
+    const batches = [
+      batch(
+        'b2',
+        '2026-10-28T02:00:00.000Z',
+        '请只修改图中的文字，画面保持不变：把“新品”重写一遍。',
+      ),
+      batch('b1', '2026-10-28T01:00:00.000Z', '奶茶新品海报'),
+    ];
+    const sessions = [session('s1', '请只修改图中的文字，画面保持不变…', ['b1', 'b2'])];
+
+    expect(recentCreations(batches, sessions)).toEqual([
+      {
+        key: 's1',
+        sessionId: 's1',
+        batch: batches[1],
+        title: '奶茶新品海报',
+        imageUrl: '/api/outputs/b1.png',
+      },
+    ]);
+  });
+
   it('skips batches without an image', () => {
     const empty = { ...batch('b2', '2026-10-28T02:00:00.000Z'), entries: [] };
     expect(recentCreations([empty, batch('b1', '2026-10-28T01:00:00.000Z')], [])).toHaveLength(1);

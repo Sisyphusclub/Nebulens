@@ -55,7 +55,7 @@ import {
   type TeamRecommendation,
 } from '@/types/image';
 import { downloadUrl } from '@/utils/download';
-import { buildTextFixPrompt } from '@/utils/textCheck';
+import { buildTextFixPrompt, isTextFixPrompt } from '@/utils/textCheck';
 import type { FeedItem } from '@/utils/generationFeed';
 import { readInitialReferenceFiles, requestsAutoGeneration } from '@/utils/generationRouteState';
 import { prefersReducedMotion, scrollToGenerationBatch } from '@/utils/generationScroll';
@@ -361,7 +361,9 @@ export function GenerateView() {
     // Only reached when no local session owns any history batch, so every batch collected
     // here is unowned; batches that belong to a session are never copied into another.
     if (!restoredSession && history.batches.length > 0) {
-      const recoveredSession = createSession(history.batches[0]?.prompt);
+      const titleBatch =
+        history.batches.find((batch) => !isTextFixPrompt(batch.prompt)) ?? history.batches[0];
+      const recoveredSession = createSession(titleBatch?.prompt);
       restoredSession = recoveredSession;
       [...history.batches].reverse().forEach((batch) => {
         attachGenerationBatch(recoveredSession.id, batch.batchId, batch.prompt);

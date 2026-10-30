@@ -2003,6 +2003,32 @@ it('collects only unowned batches into a recovery session when none can be resto
   expect(screen.getByTestId('location')).toHaveTextContent(`session=${recovered?.id}`);
 });
 
+it('names a recovery session after its newest creation rather than a text fix', async () => {
+  historyMocks.batches = [
+    makeHistoryBatch(
+      'fix',
+      '请只修改图中的文字，画面保持不变：把“雪山”重写一遍。',
+      '2026-07-30T09:00:00.000Z',
+    ),
+    makeHistoryBatch('orphan', '雪山日出', '2026-07-30T08:00:00.000Z'),
+  ];
+
+  render(
+    <MemoryRouter initialEntries={['/generate']}>
+      <ToastProvider>
+        <GenerateView />
+        <LocationProbe />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('session='));
+  const stored = JSON.parse(
+    window.localStorage.getItem('nebulens-generation-sessions-v1') ?? '[]',
+  ) as Array<{ title: string; batchIds: string[] }>;
+  expect(stored.find((item) => item.batchIds.length > 0)?.title).toBe('雪山日出');
+});
+
 it('fixes wrong text by regenerating from the image with an edit prompt', async () => {
   const user = userEvent.setup();
   vi.stubGlobal(

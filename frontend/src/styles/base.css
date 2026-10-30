@@ -3808,6 +3808,41 @@ video {
   content: '';
   pointer-events: none;
 }
+/* Generate page backdrop: a soft colour wash plus a heavily blurred copy of the latest
+   image, pinned behind the whole workspace. It sits under the console panel (z-index -1),
+   so the page reads as one surface but is no longer flat black, and the glass composer
+   has colour to refract. */
+.studio-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  background:
+    radial-gradient(52% 44% at 10% 6%, rgb(91 124 250 / 0.22), transparent 72%),
+    radial-gradient(44% 40% at 94% 12%, rgb(162 107 250 / 0.16), transparent 72%),
+    radial-gradient(60% 46% at 50% 106%, rgb(56 189 248 / 0.14), transparent 72%);
+  pointer-events: none;
+}
+.studio-ambient__image {
+  position: absolute;
+  inset: -15%;
+  width: 130%;
+  height: 130%;
+  object-fit: cover;
+  filter: blur(96px) saturate(1.35);
+  opacity: 0.26;
+  animation: studio-ambient-in 1.4s ease-out both;
+}
+@keyframes studio-ambient-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-ambient__image {
+    animation: none;
+  }
+}
 .generation-console.is-empty {
   padding-top: 28px;
 }

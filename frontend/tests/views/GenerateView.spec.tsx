@@ -1159,6 +1159,28 @@ it('reveals a completed image only after its load event', async () => {
   expect(screen.getByRole('dialog', { name: '图片详情' })).toBeInTheDocument();
 });
 
+it('tints the page backdrop with the latest image once there is one', async () => {
+  const user = userEvent.setup();
+  const { container } = render(
+    <MemoryRouter initialEntries={['/generate?prompt=%E9%9B%A8%E5%A4%9C%E5%BB%BA%E7%AD%91']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  const ambient = container.querySelector('.studio-ambient');
+  expect(ambient).toHaveAttribute('aria-hidden', 'true');
+  expect(ambient?.querySelector('img')).toBeNull();
+
+  await user.click(screen.getByRole('button', { name: '生成图片' }));
+  await screen.findByRole('button', { name: '查看图片：雨夜建筑' });
+  expect(container.querySelector('.studio-ambient__image')).toHaveAttribute(
+    'src',
+    '/result-one.png',
+  );
+});
+
 it('edits a completed prompt and replaces the original generation batch', async () => {
   const replacement = deferred<Awaited<ReturnType<typeof generation.generate>>>();
   generation.generate.mockReturnValueOnce(

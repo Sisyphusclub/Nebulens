@@ -9,6 +9,7 @@ import { GenerationHistoryFlyout } from '@/components/generation/GenerationHisto
 import { GenerationComposerControls } from '@/components/generation/GenerationComposerControls';
 import { GenerationBatch } from '@/components/generation/GenerationBatch';
 import { AiInsightBar } from '@/components/generation/AiInsightBar';
+import { StudioAmbient } from '@/components/generation/StudioAmbient';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
@@ -258,6 +259,9 @@ export function GenerateView() {
     [generationHistoryBatches],
   );
   const latestBatch = feed[feed.length - 1];
+  /** While a new batch is still generating, the backdrop keeps the previous image. */
+  const ambientImageUrl = [...feed].reverse().find((item) => item.entries.length > 0)
+    ?.entries[0]?.imageUrl;
   const latestBatchVisibilityKey = latestBatch
     ? `${latestBatch.id}:${latestBatch.entries.length}:${latestBatch.error ? 'error' : 'ready'}`
     : null;
@@ -573,6 +577,7 @@ export function GenerateView() {
       data-view="generate"
       aria-label="图像生成工作区"
     >
+      <StudioAmbient imageUrl={ambientImageUrl} />
       <LandingSidebar
         accountImage={user?.image}
         accountName={accountName}

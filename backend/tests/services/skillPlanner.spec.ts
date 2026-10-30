@@ -135,6 +135,7 @@ describe('createSkillPlanner', () => {
       messages: Array<{ role: string; content: string }>;
     };
     expect(body.messages[0]?.content).toContain(ecommerce.expertise);
+    expect(body.messages[0]?.content).toContain('表单里没填的信息');
     expect(body.messages[1]?.content).toContain('- 商品名称：绿茶');
     expect(body.messages[1]?.content).toContain('必须出现的文字：“¥199”');
   });

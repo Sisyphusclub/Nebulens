@@ -164,7 +164,7 @@ export const SKILLS: readonly SkillDefinition[] = [
         label: '竖版海报',
         aspect: '3:4',
         brief:
-          '门店活动竖版海报，主标题大而醒目位于上部，优惠信息次之，时间和品牌在底部，视觉元素烘托活动氛围',
+          '门店活动竖版海报，主标题大而醒目位于上部，优惠信息次之，填了的时间和品牌放在底部，视觉元素烘托活动氛围',
         texts: (values) =>
           filled(
             values.text('title'),

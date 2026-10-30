@@ -150,6 +150,7 @@ vi.mock('@/hooks/useAdminUsers', () => ({
 
 import { App } from '@/App';
 import { ToastProvider } from '@/components/common/ToastProvider';
+import { templatesAcrossCategories } from '@/data/creationTemplates';
 import {
   attachGenerationBatch,
   createGenerationSession,
@@ -534,7 +535,7 @@ describe('React application routes', () => {
     ];
     renderRoute('/');
 
-    const showcase = await screen.findByRole('region', { name: '成果库精选' });
+    const showcase = await screen.findByRole('region', { name: '灵感' });
     await user.click(
       within(showcase).getByRole('button', { name: '做同款：奶茶新品上市海报，清新绿色' }),
     );
@@ -543,6 +544,19 @@ describe('React application routes', () => {
       '奶茶新品上市海报，清新绿色',
     );
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('3:4');
+  });
+
+  it('tops the inspiration feed up with templates and fills the composer from one', async () => {
+    const user = userEvent.setup();
+    const [template] = templatesAcrossCategories(1);
+    renderRoute('/');
+
+    const feed = await screen.findByRole('region', { name: '灵感' });
+    await user.click(within(feed).getByRole('button', { name: `做同款：${template!.title}` }));
+
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
+      template!.prompt.slice(0, 24),
+    );
   });
 
   it('polishes the homepage prompt with AI and can undo it', async () => {

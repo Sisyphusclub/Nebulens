@@ -26,9 +26,9 @@ test('finds shared work with AI search, serves thumbnails, and makes a similar o
   expect(thumbnail.ok()).toBe(true);
   expect(thumbnail.headers()['content-type']).toBe('image/webp');
 
-  // The homepage showcase offers the newest shared work to copy.
+  // The homepage inspiration feed offers the newest shared work to copy.
   await page.goto('/');
-  const showcase = page.getByRole('region', { name: '成果库精选' });
+  const showcase = page.getByRole('region', { name: '灵感' });
   await showcase
     .getByRole('button', { name: `做同款：${prompt}` })
     .first()

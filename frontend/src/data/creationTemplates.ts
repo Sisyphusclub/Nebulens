@@ -77,3 +77,24 @@ export function orderTemplatesWithAnimeLast(
 
   return [...general, ...anime];
 }
+
+/**
+ * A varied handful of templates for the Discover feed: one from each category in turn,
+ * anime last in every round as on the templates page.
+ */
+export function templatesAcrossCategories(count: number): CreationTemplate[] {
+  const queues = new Map<string, CreationTemplate[]>();
+  for (const template of orderTemplatesWithAnimeLast(CREATION_TEMPLATES)) {
+    const queue = queues.get(template.category) ?? [];
+    queue.push(template);
+    queues.set(template.category, queue);
+  }
+  const picked: CreationTemplate[] = [];
+  while (picked.length < count && [...queues.values()].some((queue) => queue.length > 0)) {
+    for (const queue of queues.values()) {
+      const next = queue.shift();
+      if (next !== undefined && picked.length < count) picked.push(next);
+    }
+  }
+  return picked;
+}

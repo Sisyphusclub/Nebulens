@@ -18,6 +18,7 @@ import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySett
 import { useToast } from '@/components/common/ToastProvider';
 import { AgentChatInput } from '@/components/premium/agent-chat-input/agent-chat-input';
 import type { AgentChatAttachment } from '@/components/premium/agent-chat-input/types';
+import { templatesAcrossCategories, type CreationTemplate } from '@/data/creationTemplates';
 import { IMAGE_PROMPT_EXAMPLES } from '@/data/imagePromptExamples';
 import type { LandingSkill } from '@/data/landingSkills';
 import { useAuth } from '@/hooks/useAuth';
@@ -57,6 +58,9 @@ import {
 import { resolveAspectChoice } from '@/utils/imageAspect';
 import { recentCreations, type RecentCreation } from '@/utils/recentCreations';
 import type { SkillRunRequest } from '@/utils/skillRun';
+
+/** Templates that top up the inspiration feed when the team has shared little. */
+const INSPIRATION_TEMPLATES = templatesAcrossCategories(24);
 
 export function LandingView() {
   const navigate = useNavigate();
@@ -208,6 +212,12 @@ export function LandingView() {
       setAspect(normalizeAspectChoiceForResolution(record.aspectRatio, resolution));
     }
     notify('已填入这张作品的提示词，可以直接生成，或改几个字再生成。');
+    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const fillTemplatePrompt = (template: CreationTemplate): void => {
+    setPrompt(template.prompt);
+    setAspect(normalizeAspectChoiceForResolution(template.settings.aspectRatio, resolution));
+    notify('已填入这个模板的提示词，可以直接生成，或改几个字再生成。');
     if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const submitPrompt = (
@@ -368,7 +378,12 @@ export function LandingView() {
         onSubmit={runSkill}
         onUseExamplePrompt={fillExamplePrompt}
       />
-      <LandingShowcase records={showcase} onUse={makeSimilar} />
+      <LandingShowcase
+        records={showcase}
+        templates={INSPIRATION_TEMPLATES}
+        onUse={makeSimilar}
+        onUseTemplate={fillTemplatePrompt}
+      />
       <ImageDetailModal
         entry={selectedRecommendationEntry}
         {...(selectedRecommendation === null

@@ -22,7 +22,7 @@ export function LandingRecentCreations({
           aria-label={`继续创作：${creation.title}`}
           onClick={() => onOpen(creation)}
         >
-          <img src={thumbnailUrl(creation.imageUrl, 320)} alt="" loading="lazy" decoding="async" />
+          <img src={thumbnailUrl(creation.imageUrl, 320)} alt="" decoding="async" />
           <span>{creation.title}</span>
         </Button>
       ))}

@@ -9,9 +9,10 @@ const FEATURE_INTERVAL_MS = 5000;
 
 /**
  * Every skill across the full width right under the composer, after Kling and Jimeng:
- * a feature card that rotates through the skills' examples, beside a compact tile for
- * each skill. Rotation stops while the feature is hovered or focused, and for people
- * who prefer reduced motion.
+ * a full-bleed feature card that rotates through the skills' examples, beside a compact
+ * tile for each skill. It all sits in the first screen, so the images load right away.
+ * Rotation stops while the feature is hovered or focused, and for people who prefer
+ * reduced motion.
  */
 export function LandingSkillDeck({ onSelect }: { onSelect: (skill: LandingSkill) => void }) {
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
@@ -45,7 +46,6 @@ export function LandingSkillDeck({ onSelect }: { onSelect: (skill: LandingSkill)
               src={skill.image}
               alt=""
               data-active={index === featured}
-              loading={index === 0 ? 'eager' : 'lazy'}
               decoding="async"
             />
           ))}
@@ -93,9 +93,9 @@ export function LandingSkillDeck({ onSelect }: { onSelect: (skill: LandingSkill)
                   <Icon aria-hidden="true" />
                   {skill.label}
                 </span>
-                <span className="landing-deck__tile-description">{skill.description}</span>
+                <span className="landing-deck__tile-description">{skill.tagline}</span>
               </span>
-              <img src={skill.image} alt="" loading="lazy" decoding="async" />
+              <img src={skill.image} alt="" decoding="async" />
             </Button>
           );
         })}

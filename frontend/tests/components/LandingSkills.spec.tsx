@@ -13,7 +13,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-it('shows every skill as a tile with its description and example', async () => {
+it('shows every skill as a tile with its tagline and example', async () => {
   const user = userEvent.setup();
   const onSelect = vi.fn();
   render(<LandingSkillDeck onSelect={onSelect} />);
@@ -21,7 +21,7 @@ it('shows every skill as a tile with its description and example', async () => {
   const deck = screen.getByRole('region', { name: '技能' });
   for (const skill of LANDING_SKILLS) {
     const tile = within(deck).getByRole('button', { name: `使用技能：${skill.label}` });
-    expect(tile).toHaveTextContent(skill.description);
+    expect(tile).toHaveTextContent(skill.tagline);
     expect(tile.querySelector('img')).toHaveAttribute('src', skill.image);
   }
   await user.click(within(deck).getByRole('button', { name: '使用技能：风格重绘' }));
@@ -69,6 +69,8 @@ it('only ships skills with a supported ratio, a prompt and an example image on d
   for (const skill of LANDING_SKILLS) {
     expect(ASPECT_CHOICES).toContain(skill.aspect);
     expect(skill.prompt.length).toBeGreaterThan(10);
+    // The tiles have room for one short line.
+    expect(skill.tagline.length).toBeLessThanOrEqual(10);
     expect(existsSync(resolve(process.cwd(), 'public', skill.image.slice(1)))).toBe(true);
   }
 });

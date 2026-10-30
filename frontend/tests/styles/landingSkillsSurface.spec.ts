@@ -15,17 +15,24 @@ describe('landing skill deck', () => {
     const grid = rule('.landing-deck__grid');
 
     expect(grid).toContain('max-width: 1760px;');
-    expect(grid).toContain('grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));');
+    expect(grid).toContain('grid-template-columns: minmax(0, 1.35fr) repeat(4, minmax(0, 1fr));');
     expect(rule('.landing-deck__feature')).toContain('grid-row: span 2;');
+  });
+
+  it('fills the feature card with the example, like the banner on Kling', () => {
+    expect(rule('.landing-deck__feature-image')).toContain('inset: 0;');
+    expect(rule('.landing-deck__feature-body')).toContain('align-content: end;');
   });
 
   it('draws each tile as compact glass with the example on the right', () => {
     const tile = rule('.landing-deck .landing-deck__tile');
 
-    expect(tile).toContain('height: 88px;');
+    expect(tile).toContain('height: 76px;');
     expect(tile).toContain('background: rgb(22 25 34 / 0.62);');
     expect(tile).toContain('backdrop-filter: blur(12px) saturate(1.2);');
-    expect(rule('.landing-deck__tile img')).toContain('width: 60px;');
+    expect(rule('.landing-deck__tile img')).toContain('width: 56px;');
+    // One short line under the name, like Kling's tiles.
+    expect(rule('.landing-deck__tile-description')).toContain('white-space: nowrap;');
   });
 });
 

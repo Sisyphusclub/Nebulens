@@ -976,15 +976,21 @@ video {
   font-size: 15px;
   line-height: 1.6;
 }
+/* The subtitle shares the headline's Song face at reading weight. */
 .landing-hero__content > p {
   margin-top: 18px;
-  color: rgb(242 244 247 / 0.62);
-  font-weight: 300;
-  letter-spacing: 0.06em;
+  color: rgb(242 244 247 / 0.66);
+  font-family: var(--font-hero-serif);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
 }
 @media (min-width: 1280px) {
   .landing-hero__content p {
     font-size: 16px;
+  }
+  .landing-hero__content > p {
+    font-size: 17px;
   }
 }
 .agent-chat-input {

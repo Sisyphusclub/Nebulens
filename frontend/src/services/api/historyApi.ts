@@ -89,6 +89,32 @@ export async function fetchTeamRecommendations(
   return payload.recommendations as TeamRecommendation[];
 }
 
+/** The user's own images most relevant to `query`, best first, with why each matched. */
+export async function fetchOwnImageMatches(
+  query: string,
+  signal?: AbortSignal,
+  limit?: number,
+): Promise<Array<{ id: string; reason: string }>> {
+  const params = new URLSearchParams({ q: query });
+  if (limit !== undefined) params.set('limit', String(limit));
+  const response = await authedFetch(
+    buildApiUrl(`/api/history/recommendations?${params.toString()}`),
+    signal === undefined ? {} : { signal },
+  );
+  const payload = await parseJsonResponse(response);
+  if (!response.ok) throw buildApiError(response.status, payload);
+  if (
+    !isRecord(payload) ||
+    !Array.isArray(payload.matches) ||
+    !payload.matches.every(
+      (item) => isRecord(item) && typeof item.id === 'string' && typeof item.reason === 'string',
+    )
+  ) {
+    throw new ImageApiError(response.status, 'INVALID_RESPONSE', '搜索接口返回了无法识别的响应。');
+  }
+  return payload.matches as Array<{ id: string; reason: string }>;
+}
+
 export async function deleteHistoryRecord(id: string): Promise<void> {
   const response = await authedFetch(buildApiUrl(`/api/history/${encodeURIComponent(id)}`), {
     method: 'DELETE',

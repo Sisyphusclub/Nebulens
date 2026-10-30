@@ -7,6 +7,7 @@ import {
   List,
   RefreshCw,
   Search,
+  Sparkles,
   Trash2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -25,6 +26,7 @@ import { SelectMenu } from '@/components/ui/select-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { useImageHistory } from '@/hooks/useImageHistory';
+import { useOwnImageSearch } from '@/hooks/useOwnImageSearch';
 import { cn } from '@/lib/utils';
 import {
   DEFAULT_ASPECT_RATIO,
@@ -81,6 +83,9 @@ export function HistoryView() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const history = useImageHistory();
   const [query, setQuery] = useState('');
+  // AI mode searches by description; the default stays a plain keyword match.
+  const [aiSearch, setAiSearch] = useState(false);
+  const ai = useOwnImageSearch(query, isAuthenticated && aiSearch);
   const [sort, setSort] = useState<AssetSort>('newest');
   const [date, setDate] = useState<DateFilter>('all');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
@@ -119,7 +124,7 @@ export function HistoryView() {
     [collections],
   );
 
-  const filtered = useMemo(() => {
+  const keywordFiltered = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase('zh-CN');
     const items = history.entries.filter((entry) => {
       const record = entry.record;
@@ -145,6 +150,16 @@ export function HistoryView() {
       return b.record.createdAt.localeCompare(a.record.createdAt);
     });
   }, [model, category, date, favoritesOnly, history.entries, query, sort]);
+  const aiReasons = useMemo(
+    () => new Map(ai.items.map((match) => [match.id, match.reason])),
+    [ai.items],
+  );
+  const aiResults = useMemo(() => {
+    const byId = new Map(history.entries.map((entry) => [entry.record.id, entry]));
+    return ai.items.flatMap((match) => byId.get(match.id) ?? []);
+  }, [ai.items, history.entries]);
+  const aiActive = aiSearch && ai.active;
+  const filtered = aiActive ? aiResults : keywordFiltered;
 
   useEffect(() => {
     const available = new Set(history.records.map((record) => record.id));
@@ -318,35 +333,58 @@ export function HistoryView() {
                     type="search"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="搜索提示词、模型或收藏集"
+                    placeholder={
+                      aiSearch ? '描述你要找的图，如：上周做的奶茶海报' : '搜索提示词、模型或收藏集'
+                    }
                   />
                 </label>
-                <span
-                  className="asset-result-count"
-                  aria-label={`当前显示 ${filtered.length} 项，共 ${history.entries.length} 项`}
-                  aria-live="polite"
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="compact"
+                  className="asset-ai-toggle"
+                  aria-label="AI 找图"
+                  aria-pressed={aiSearch}
+                  onClick={() => setAiSearch((current) => !current)}
                 >
-                  <strong>{filtered.length}</strong>
-                  <span> / {history.entries.length} 项</span>
-                </span>
+                  <Sparkles aria-hidden="true" />
+                  AI
+                </Button>
+                {aiActive ? (
+                  <span className="asset-result-count" aria-live="polite">
+                    {ai.loading ? 'AI 正在找…' : `AI 找到 ${filtered.length} 张`}
+                  </span>
+                ) : (
+                  <span
+                    className="asset-result-count"
+                    aria-label={`当前显示 ${filtered.length} 项，共 ${history.entries.length} 项`}
+                    aria-live="polite"
+                  >
+                    <strong>{filtered.length}</strong>
+                    <span> / {history.entries.length} 项</span>
+                  </span>
+                )}
               </div>
               <div className="asset-commandbar__controls">
                 <SelectMenu
                   label="日期筛选"
                   value={date}
                   options={DATE_OPTIONS}
+                  disabled={aiActive}
                   onValueChange={setDate}
                 />
                 <SelectMenu
                   label="用途筛选"
                   value={category}
                   options={CATEGORY_FILTER_OPTIONS}
+                  disabled={aiActive}
                   onValueChange={setCategory}
                 />
                 <SelectMenu
                   label="资产排序"
                   value={sort}
                   options={SORT_OPTIONS}
+                  disabled={aiActive}
                   onValueChange={setSort}
                 />
                 <IconTooltip label="仅显示收藏资产">
@@ -357,6 +395,7 @@ export function HistoryView() {
                     className={cn('icon-button', favoritesOnly && 'is-active')}
                     aria-label="仅显示收藏资产"
                     aria-pressed={favoritesOnly}
+                    disabled={aiActive}
                     onClick={() => setFavoritesOnly((current) => !current)}
                   >
                     <Heart aria-hidden="true" />
@@ -400,6 +439,7 @@ export function HistoryView() {
                     variant="ghost"
                     size="compact"
                     aria-pressed={model === item.id}
+                    disabled={aiActive}
                     onClick={() => setModel(item.id)}
                   >
                     {item.label}
@@ -507,11 +547,20 @@ export function HistoryView() {
               <EmptyStateArchive onAction={() => void navigate('/generate')} />
             ) : !filtered.length ? (
               <div className="empty-state">
-                <p>暂无符合条件的资产。</p>
+                <p>
+                  {aiActive
+                    ? ai.loading
+                      ? 'AI 正在你的资产里找…'
+                      : '没找到相关图片，换个说法试试。'
+                    : '暂无符合条件的资产。'}
+                </p>
               </div>
             ) : view === 'grid' ? (
               <ImageGrid
                 entries={filtered}
+                {...(aiActive
+                  ? { captionFor: (entry: HistoryEntry) => aiReasons.get(entry.record.id) }
+                  : {})}
                 selectedIds={selectedIds}
                 onSelect={setSelected}
                 onToggleSelection={toggleSelection}

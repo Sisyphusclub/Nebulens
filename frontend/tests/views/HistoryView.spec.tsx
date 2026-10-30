@@ -81,6 +81,24 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => authMocks,
 }));
 
+const searchMocks = vi.hoisted(() => ({
+  items: [] as Array<{ id: string; reason: string }>,
+  loading: false,
+  queries: [] as Array<{ query: string; enabled: boolean }>,
+}));
+
+vi.mock('@/hooks/useOwnImageSearch', () => ({
+  useOwnImageSearch: (query: string, enabled: boolean) => {
+    searchMocks.queries.push({ query, enabled });
+    const active = enabled && query.trim().length >= 4;
+    return {
+      items: active ? searchMocks.items : [],
+      active,
+      loading: active && searchMocks.loading,
+    };
+  },
+}));
+
 vi.mock('@/hooks/useImageHistory', () => ({
   useImageHistory: () => ({
     records: historyMocks.entries.map((entry) => entry.record),
@@ -123,6 +141,9 @@ function renderView() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  searchMocks.items = [];
+  searchMocks.loading = false;
+  searchMocks.queries = [];
   authMocks.isAuthenticated = true;
   authMocks.isLoading = false;
   historyMocks.entries = entries;
@@ -426,5 +447,40 @@ describe('HistoryView team sharing', () => {
     await user.click(screen.getByRole('menuitemradio', { name: '社媒封面' }));
 
     expect(historyMocks.update).toHaveBeenCalledWith('image-one.png', { category: 'social' });
+  });
+});
+
+describe('HistoryView AI search', () => {
+  it('finds own images by description, explains why, and pauses the filters', async () => {
+    const user = userEvent.setup();
+    searchMocks.items = [{ id: 'image-two.png', reason: '标签相近：建筑' }];
+    renderView();
+
+    await user.click(screen.getByRole('button', { name: 'AI 找图' }));
+    expect(screen.getByRole('button', { name: 'AI 找图' })).toHaveAttribute('aria-pressed', 'true');
+    await user.type(screen.getByRole('searchbox'), '有树的房子');
+
+    expect(screen.getByRole('button', { name: '查看图片：森林建筑' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '查看图片：雨夜城市' })).not.toBeInTheDocument();
+    expect(screen.getByText('标签相近：建筑')).toBeInTheDocument();
+    expect(screen.getByText('AI 找到 1 张')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '日期筛选' })).toBeDisabled();
+    expect(searchMocks.queries.at(-1)).toEqual({ query: '有树的房子', enabled: true });
+
+    // Turning AI off goes back to keyword search over the same text.
+    await user.click(screen.getByRole('button', { name: 'AI 找图' }));
+    expect(screen.queryByText('标签相近：建筑')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '日期筛选' })).toBeEnabled();
+  });
+
+  it('keeps keyword search as the default', async () => {
+    const user = userEvent.setup();
+    renderView();
+
+    await user.type(screen.getByRole('searchbox'), '雨夜');
+
+    expect(screen.getByRole('button', { name: '查看图片：雨夜城市' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '查看图片：森林建筑' })).not.toBeInTheDocument();
+    expect(searchMocks.queries.at(-1)?.enabled).toBe(false);
   });
 });

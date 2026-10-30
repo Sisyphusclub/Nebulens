@@ -129,35 +129,68 @@ function parseTags(raw: string | null): string[] {
   }
 }
 
+interface CandidateRow {
+  id: string;
+  prompt: string;
+  description: string | null;
+  tags: string | null;
+  category: string | null;
+  createdAt: Date;
+}
+
+function toCandidate(row: CandidateRow): RecommendationCandidate {
+  return {
+    id: row.id,
+    prompt: row.prompt,
+    ...(row.description === null ? {} : { description: row.description }),
+    tags: parseTags(row.tags),
+    ...(isImageCategory(row.category) ? { category: row.category } : {}),
+    createdAt: row.createdAt,
+  };
+}
+
+const candidateColumns = {
+  id: imageRecords.id,
+  prompt: imageRecords.prompt,
+  description: imageRecords.description,
+  tags: imageRecords.tags,
+  category: imageRecords.category,
+  createdAt: imageRecords.createdAt,
+};
+
+/** A user's own images, private ones included, most relevant to a described need. */
+export function recommendOwnImages(input: {
+  userId: string;
+  query: string;
+  limit: number;
+}): Array<{ id: string; reason: string }> {
+  const rows = db
+    .select(candidateColumns)
+    .from(imageRecords)
+    .where(eq(imageRecords.userId, input.userId))
+    .orderBy(desc(imageRecords.createdAt))
+    .limit(CANDIDATE_POOL)
+    .all();
+  return rankRecommendations(input.query, rows.map(toCandidate), {
+    now: new Date(),
+    limit: input.limit,
+  }).map(({ id, reason }) => ({ id, reason }));
+}
+
 /** Teammates' shared work most relevant to a described need. */
 export function recommendTeamImages(input: { query: string; limit: number }): TeamRecommendation[] {
   const rows = db
-    .select({
-      id: imageRecords.id,
-      prompt: imageRecords.prompt,
-      description: imageRecords.description,
-      tags: imageRecords.tags,
-      category: imageRecords.category,
-      createdAt: imageRecords.createdAt,
-    })
+    .select(candidateColumns)
     .from(imageRecords)
     .innerJoin(user, eq(user.id, imageRecords.userId))
     .where(eq(imageRecords.isShared, true))
     .orderBy(desc(imageRecords.createdAt))
     .limit(CANDIDATE_POOL)
     .all();
-  const ranked = rankRecommendations(
-    input.query,
-    rows.map((row) => ({
-      id: row.id,
-      prompt: row.prompt,
-      ...(row.description === null ? {} : { description: row.description }),
-      tags: parseTags(row.tags),
-      ...(isImageCategory(row.category) ? { category: row.category } : {}),
-      createdAt: row.createdAt,
-    })),
-    { now: new Date(), limit: input.limit },
-  );
+  const ranked = rankRecommendations(input.query, rows.map(toCandidate), {
+    now: new Date(),
+    limit: input.limit,
+  });
   const records = new Map(
     listTeamRecordDTOs(ranked.map((item) => item.id)).map((dto) => [dto.id, dto]),
   );

@@ -307,3 +307,51 @@ describe('GET /api/history/team/recommendations', () => {
     ).toBe(400);
   });
 });
+
+describe('GET /api/history/recommendations', () => {
+  it('searches only the signed-in user’s own images, private ones included', async () => {
+    const suffix = randomUUID().slice(0, 8);
+    const me = createApp({
+      provider: fakeProvider(),
+      authMiddleware: stubAuth(`own-rec-me-${suffix}`),
+    });
+    const other = createApp({
+      provider: fakeProvider(),
+      authMiddleware: stubAuth(`own-rec-other-${suffix}`),
+    });
+    const privateId = await generate(me, {
+      prompt: `咖啡店开业海报 ${suffix}`,
+      category: 'poster',
+      isShared: false,
+    });
+    const othersId = await generate(other, {
+      prompt: `咖啡店开业海报 ${suffix}`,
+      category: 'poster',
+    });
+
+    const res = await request(me)
+      .get('/api/history/recommendations')
+      .query({ q: `咖啡店开业海报 ${suffix}` });
+
+    expect(res.status).toBe(200);
+    const ids = res.body.matches.map((item: { id: string }) => item.id);
+    expect(ids).toContain(privateId);
+    expect(ids).not.toContain(othersId);
+    expect(res.body.matches[0]).toMatchObject({
+      id: privateId,
+      reason: expect.stringContaining('海报'),
+    });
+  });
+
+  it('requires a signed-in user and validates the query', async () => {
+    const denied = createApp({ provider: fakeProvider(), authMiddleware: denyAuth });
+    expect(
+      (await request(denied).get('/api/history/recommendations').query({ q: '海报' })).status,
+    ).toBe(401);
+    const app = createApp({
+      provider: fakeProvider(),
+      authMiddleware: stubAuth(`own-rec-q-${randomUUID()}`),
+    });
+    expect((await request(app).get('/api/history/recommendations')).status).toBe(400);
+  });
+});

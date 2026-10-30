@@ -16,7 +16,7 @@ import {
   updateImageRecordForUser,
   updateImageRecordsForUser,
 } from '../services/history.service.js';
-import { recommendTeamImages } from '../services/recommendation.service.js';
+import { recommendOwnImages, recommendTeamImages } from '../services/recommendation.service.js';
 import { IMAGE_CATEGORIES } from '../types/imageCategory.js';
 
 import '../types/express.js';
@@ -105,6 +105,7 @@ export function buildHistoryController(): {
   listPublic: (_req: Request, res: Response, next: NextFunction) => void;
   listTeam: (req: Request, res: Response, next: NextFunction) => void;
   recommend: (req: Request, res: Response, next: NextFunction) => void;
+  recommendOwn: (req: Request, res: Response, next: NextFunction) => void;
   removeOne: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   removePublicAsAdmin: (req: Request, res: Response, next: NextFunction) => void;
   removeBatch: (req: Request, res: Response, next: NextFunction) => Promise<void>;
@@ -130,6 +131,18 @@ export function buildHistoryController(): {
         const query = parseQuery(recommendationQuerySchema, req.query);
         res.status(200).json({
           recommendations: recommendTeamImages({ query: query.q, limit: query.limit }),
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+
+    recommendOwn(req, res, next) {
+      try {
+        const user = requireUser(req);
+        const query = parseQuery(recommendationQuerySchema, req.query);
+        res.status(200).json({
+          matches: recommendOwnImages({ userId: user.id, query: query.q, limit: query.limit }),
         });
       } catch (err) {
         next(err);

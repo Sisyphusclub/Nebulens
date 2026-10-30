@@ -38,6 +38,11 @@ export function buildHistoryRouter(deps: HistoryRouterDeps = {}): Router {
     controller.recommend(req, res, next);
   });
 
+  // GET /api/history/recommendations?q= → the user's own images relevant to a described need.
+  router.get('/recommendations', (req, res, next) => {
+    controller.recommendOwn(req, res, next);
+  });
+
   router.get('/team', (req, res, next) => {
     controller.listTeam(req, res, next);
   });

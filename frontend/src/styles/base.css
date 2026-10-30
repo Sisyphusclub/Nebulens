@@ -479,6 +479,17 @@ video {
   background: var(--background);
   color: var(--foreground);
 }
+/* A soft shade under the floating rail and account buttons, so content scrolling up
+   fades out beneath them instead of colliding with the logo and buttons. */
+.landing-page::before {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 35;
+  height: 104px;
+  background: linear-gradient(180deg, rgb(5 6 10 / 0.62), rgb(5 6 10 / 0.3) 55%, transparent);
+  content: '';
+  pointer-events: none;
+}
 /* The hero is as tall as its content, so the skills follow right after the
    composer instead of below a screen of empty artwork wall. */
 .landing-hero {

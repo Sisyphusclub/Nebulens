@@ -3,6 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 export const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:5180';
 export const MOCK_UPSTREAM_URL = process.env.E2E_MOCK_UPSTREAM_URL ?? 'http://localhost:4010';
 export const ADMIN_STATE = '.auth/admin.json';
+export const SKILLS_STATE = '.auth/skills.json';
 
 export default defineConfig({
   testDir: './tests',

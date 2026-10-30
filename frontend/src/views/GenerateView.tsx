@@ -38,6 +38,7 @@ import { useGenerationFeed } from '@/hooks/useGenerationFeed';
 import { readReferenceIds, useGenerationSettings } from '@/hooks/useGenerationSettings';
 import { useImageQuota } from '@/hooks/useImageQuota';
 import { useCreateBarReserve } from '@/hooks/useCreateBarReserve';
+import { useSkillRun } from '@/hooks/useSkillRun';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
 import {
@@ -58,6 +59,7 @@ import { downloadUrl } from '@/utils/download';
 import { buildTextFixPrompt, isTextFixPrompt } from '@/utils/textCheck';
 import type { FeedItem } from '@/utils/generationFeed';
 import { readInitialReferenceFiles, requestsAutoGeneration } from '@/utils/generationRouteState';
+import { readSkillRun } from '@/utils/skillRun';
 import { prefersReducedMotion, scrollToGenerationBatch } from '@/utils/generationScroll';
 
 type DeleteTarget = { kind: 'entry'; entry: HistoryEntry } | { kind: 'batch'; item: FeedItem };
@@ -76,6 +78,7 @@ export function GenerateView() {
   const { clear: clearUpload, selectFiles: selectUploadFiles } = upload;
   const generation = useImageGeneration();
   const autoGenerationHandled = useRef(false);
+  const skillRunHandled = useRef(false);
   const bareRouteRestoreHandled = useRef(false);
   const [prompt, setPrompt] = useState(searchParams.get('prompt') ?? '');
   /** The prompt the inspiration panel was closed for; it returns once the prompt changes. */
@@ -281,7 +284,11 @@ export function GenerateView() {
     };
     if (authLoading) return;
     if (!isAuthenticated) {
-      openAuthModal({ onSuccess: () => performGeneration(settings, [], false, item) });
+      openAuthModal({
+        onSuccess: async () => {
+          await performGeneration(settings, [], false, item);
+        },
+      });
       return;
     }
     void performGeneration(settings, [], false, item);
@@ -445,6 +452,25 @@ export function GenerateView() {
       notify(error instanceof Error ? error.message : '无法修正文字，请稍后重试。', 'error');
     }
   };
+
+  const skillRun = useSkillRun({
+    isGenerating: generation.isLoading,
+    feed,
+    runGeneration: (settings) => performGeneration(settings),
+    fixText,
+    notify,
+  });
+  const startSkillRun = skillRun.start;
+
+  // A skill planned on the homepage arrives as navigation state, in its own session.
+  useEffect(() => {
+    if (authLoading || skillRunHandled.current) return;
+    const request = readSkillRun(location.state);
+    if (request === null) return;
+    skillRunHandled.current = true;
+    void navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+    startSkillRun(request);
+  }, [authLoading, location.pathname, location.search, location.state, navigate, startSkillRun]);
 
   const deleteBatch = async (item: FeedItem): Promise<void> => {
     setMutatingId(item.id);
@@ -699,7 +725,10 @@ export function GenerateView() {
             value={prompt}
             onValueChange={setPrompt}
             onSubmit={(payload) => submitCurrent(payload.text)}
-            onStop={generation.cancel}
+            onStop={() => {
+              skillRun.cancel();
+              generation.cancel();
+            }}
             status={generation.isLoading ? 'streaming' : 'ready'}
             placeholder="描述你想生成的画面…"
             ariaLabel="图像提示词"

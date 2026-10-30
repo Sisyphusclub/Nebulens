@@ -20,9 +20,9 @@ export interface LandingSkill {
   /** Small example shown on the skill card. */
   image: string;
   aspect: AspectChoice;
-  /** A starting prompt; quoted text is what should appear in the image. */
+  /** Example prompt for writing it yourself; quoted text is what should appear in the image. */
   prompt: string;
-  /** Set when the skill works from the user's own image; shown as a reminder to attach it. */
+  /** Set when the example prompt needs the user's own image; shown as a reminder to attach it. */
   referenceHint?: string;
 }
 
@@ -31,7 +31,7 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
   {
     id: 'ecommerce',
     label: '电商主图',
-    description: '商品居中、干净背景，自动排好卖点和价格文字',
+    description: '填商品和卖点，一次出主图、场景图和卖点图',
     icon: ShoppingBag,
     image: '/media/skills/ecommerce.jpg',
     aspect: '1:1',
@@ -41,7 +41,7 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
   {
     id: 'poster',
     label: '活动海报',
-    description: '标题、副标题和活动时间一次排好，字字准确',
+    description: '填活动信息，一次出竖版海报、朋友圈方图和横幅',
     icon: Megaphone,
     image: '/media/skills/poster.jpg',
     aspect: '3:4',
@@ -51,7 +51,7 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
   {
     id: 'background',
     label: '商品换背景',
-    description: '上传商品图，保留商品本身，换成任意场景',
+    description: '上传商品图，商品原样不动，一次出三种构图的新背景',
     icon: Replace,
     image: '/media/skills/background.jpg',
     aspect: '1:1',
@@ -62,7 +62,7 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
   {
     id: 'social',
     label: '社媒封面',
-    description: '小红书、公众号封面，醒目标题加生活感画面',
+    description: '填标题和平台，一次出实拍、插画、大字报三种封面',
     icon: Smartphone,
     image: '/media/skills/social.jpg',
     aspect: '3:4',
@@ -72,7 +72,7 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
   {
     id: 'logo',
     label: '品牌 Logo',
-    description: '几何图形加中英文字标，适合门店和新品牌',
+    description: '填品牌名和行业，一次出四个不同方向的 Logo',
     icon: PenTool,
     image: '/media/skills/logo.jpg',
     aspect: '1:1',
@@ -82,7 +82,7 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
   {
     id: 'infographic',
     label: '信息图',
-    description: '流程、步骤和数据，清晰分区的扁平图解',
+    description: '填标题和步骤，一次出竖版和横版两张图解',
     icon: ChartColumn,
     image: '/media/skills/infographic.jpg',
     aspect: '3:4',
@@ -92,7 +92,7 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
   {
     id: 'product',
     label: '产品渲染',
-    description: '金属、磨砂、玻璃材质的高端产品渲染图',
+    description: '填产品和材质，一次出主视觉、细节特写和场景图',
     icon: Box,
     image: '/media/skills/product.jpg',
     aspect: '4:3',
@@ -101,7 +101,7 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
   {
     id: 'restyle',
     label: '风格重绘',
-    description: '上传一张图，保留构图，换成水彩、油画或动漫风格',
+    description: '上传一张图，构图不变，一次出水彩、动漫、油画三种画风',
     icon: Palette,
     image: '/media/skills/restyle.jpg',
     aspect: 'auto',

@@ -113,6 +113,12 @@ const promptMocks = vi.hoisted(() => ({
 
 vi.mock('@/services/api/promptApi', () => ({ enhancePrompt: promptMocks.enhancePrompt }));
 
+const skillMocks = vi.hoisted(() => ({ fetchSkillForms: vi.fn(), planSkill: vi.fn() }));
+vi.mock('@/services/api/skillsApi', () => ({
+  fetchSkillForms: skillMocks.fetchSkillForms,
+  planSkill: skillMocks.planSkill,
+}));
+
 vi.mock('@/hooks/useImageHistory', () => ({
   useImageHistory: () => ({
     records: [],
@@ -150,6 +156,48 @@ import {
   rememberGenerationSession,
   resetGenerationSessionsForTests,
 } from '@/hooks/useGenerationSessions';
+
+const SKILL_FORMS = [
+  {
+    id: 'ecommerce',
+    label: '电商主图',
+    description: '填商品和卖点，一次出主图、场景图和卖点图',
+    reference: 'optional',
+    referenceLabel: '商品图（上传后保留商品原样）',
+    fields: [
+      { id: 'product', label: '商品名称', kind: 'text', required: true, maxLength: 30 },
+      { id: 'points', label: '卖点', kind: 'list', maxItems: 3, maxLength: 16 },
+      {
+        id: 'style',
+        label: '风格',
+        kind: 'choice',
+        options: ['简约白底', '节日促销'],
+        defaultValue: '简约白底',
+      },
+    ],
+    outputs: [
+      { id: 'main', label: '主图' },
+      { id: 'points', label: '卖点图' },
+    ],
+  },
+  {
+    id: 'poster',
+    label: '活动海报',
+    description: '填活动信息，一次出竖版海报、朋友圈方图和横幅',
+    reference: 'optional',
+    fields: [{ id: 'title', label: '主标题', kind: 'text', required: true, maxLength: 12 }],
+    outputs: [{ id: 'portrait', label: '竖版海报' }],
+  },
+  {
+    id: 'background',
+    label: '商品换背景',
+    description: '上传商品图，商品原样不动，一次出三种构图的新背景',
+    reference: 'required',
+    referenceLabel: '商品图',
+    fields: [{ id: 'scene', label: '新背景', kind: 'text', required: true, maxLength: 40 }],
+    outputs: [{ id: 'front', label: '原角度' }],
+  },
+];
 
 type TestRouteEntry =
   | string
@@ -228,6 +276,7 @@ beforeEach(() => {
   authMocks.isAuthenticated = true;
   authMocks.isLoading = false;
   historyMocks.batches = [];
+  skillMocks.fetchSkillForms.mockResolvedValue(SKILL_FORMS);
   recommendationMocks.items = [];
   showcaseMocks.items = [];
   generation.generate.mockResolvedValue({
@@ -303,26 +352,107 @@ describe('React application routes', () => {
     expect(container.querySelector(".landing-sidebar [data-sidebar='separator']")).toBeNull();
   });
 
-  it('fills the homepage composer from a skill capsule', async () => {
+  it('opens a skill form from a capsule and can fall back to the example prompt', async () => {
     const user = userEvent.setup();
     renderRoute('/');
 
     const capsules = await screen.findByRole('group', { name: '常用技能' });
     await user.click(within(capsules).getByRole('button', { name: '电商主图' }));
+    const panel = await screen.findByRole('dialog', { name: '电商主图' });
 
+    expect(within(panel).getByLabelText('将生成')).toHaveTextContent('主图卖点图');
+    expect(within(panel).getByText('共 2 张 · 消耗 2 额度')).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: '开始生成' })).toBeDisabled();
+
+    await user.click(within(panel).getByRole('button', { name: '改为自己写提示词' }));
+
+    expect(screen.queryByRole('dialog', { name: '电商主图' })).not.toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('限时特惠');
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('1:1');
   });
 
-  it('starts a reference-based skill from the gallery and asks for the image it needs', async () => {
+  it('asks for the image a reference-based skill works from before it can start', async () => {
     const user = userEvent.setup();
     renderRoute('/');
 
     const gallery = await screen.findByRole('region', { name: '技能' });
     await user.click(within(gallery).getByRole('button', { name: '使用技能：商品换背景' }));
+    const panel = await screen.findByRole('dialog', { name: '商品换背景' });
+    await user.type(within(panel).getByLabelText('新背景'), '海边礁石');
+    const start = within(panel).getByRole('button', { name: '开始生成' });
 
-    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('保持商品');
-    expect(await screen.findByText('先上传一张商品图作为参考图，再开始生成。')).toBeInTheDocument();
+    expect(start).toBeDisabled();
+    await user.upload(
+      within(panel).getByLabelText('上传商品图'),
+      new File(['cup'], 'cup.png', { type: 'image/png' }),
+    );
+
+    expect(within(panel).getByRole('img', { name: '已选的参考图' })).toBeInTheDocument();
+    expect(start).toBeEnabled();
+  });
+
+  it('runs a skill: plans every image, then generates them one by one in a new session', async () => {
+    const user = userEvent.setup();
+    skillMocks.planSkill.mockResolvedValue({
+      title: '电商主图 · 山川绿茶',
+      outputs: [
+        { id: 'main', label: '主图', aspect: '1:1', prompt: '山川绿茶主图，右下角写着“¥199”' },
+        { id: 'points', label: '卖点图', aspect: '3:4', prompt: '山川绿茶卖点图，列出“高山云雾”' },
+      ],
+    });
+    generation.generate.mockImplementation((options: { prompt: string; aspectRatio: string }) => {
+      const batchId = `skill-${options.aspectRatio}`;
+      return Promise.resolve({
+        batchId,
+        aspectRatio: options.aspectRatio,
+        generationMode: 'text-to-image',
+        entries: [
+          {
+            record: {
+              id: `${batchId}.png`,
+              batchId,
+              createdAt: '2026-10-29T08:00:00.000Z',
+              prompt: options.prompt,
+              model: 'gpt-image-2',
+              aspectRatio: options.aspectRatio,
+              width: 1024,
+              height: 1024,
+              count: 1,
+              resolution: 'standard',
+              isPublic: false,
+            },
+            imageUrl: `/${batchId}.png`,
+          },
+        ],
+      });
+    });
+    renderRoute('/');
+
+    const capsules = await screen.findByRole('group', { name: '常用技能' });
+    await user.click(within(capsules).getByRole('button', { name: '电商主图' }));
+    const panel = await screen.findByRole('dialog', { name: '电商主图' });
+    await user.type(within(panel).getByLabelText('商品名称'), '山川绿茶');
+    await user.type(within(panel).getByRole('textbox', { name: '卖点 1' }), '高山云雾');
+    await user.click(within(panel).getByRole('radio', { name: '节日促销' }));
+    await user.click(within(panel).getByRole('button', { name: '开始生成' }));
+
+    expect(skillMocks.planSkill).toHaveBeenCalledWith(
+      'ecommerce',
+      { product: '山川绿茶', points: ['高山云雾'], style: '节日促销' },
+      false,
+    );
+    await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(2));
+    expect(
+      generation.generate.mock.calls.map(([options]) => [
+        (options as { prompt: string }).prompt,
+        (options as { aspectRatio: string }).aspectRatio,
+        (options as { count: number }).count,
+      ]),
+    ).toEqual([
+      ['山川绿茶主图，右下角写着“¥199”', '1:1', 1],
+      ['山川绿茶卖点图，列出“高山云雾”', '3:4', 1],
+    ]);
+    expect(screen.getByLabelText('当前路由')).toHaveTextContent('/generate?session=');
   });
 
   it('resumes a recent creation from the homepage in its own session', async () => {
@@ -436,6 +566,8 @@ describe('React application routes', () => {
 
     const capsules = await screen.findByRole('group', { name: '常用技能' });
     await user.click(within(capsules).getByRole('button', { name: '活动海报' }));
+    const panel = await screen.findByRole('dialog', { name: '活动海报' });
+    await user.click(within(panel).getByRole('button', { name: '改为自己写提示词' }));
     await user.click(screen.getByRole('button', { name: '切换到 2K' }));
 
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K');

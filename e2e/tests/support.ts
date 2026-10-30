@@ -5,6 +5,13 @@ import { MOCK_UPSTREAM_URL } from '../playwright.config';
 // Seeded by SEED_DEFAULT_ADMIN=true in .env.e2e; only ever exists on the e2e stack.
 export const ADMIN = { username: 'blur', password: 'admin123' };
 
+/**
+ * Created by the global setup on the e2e stack. Skills make several images at once, so
+ * their test signs in as this account to keep the burst off the admin's generation
+ * rate limit, which every other test shares.
+ */
+export const SKILLS_USER = { username: 'skills_e2e', password: 'skills-e2e-password' };
+
 export async function setMockFailure(on: boolean): Promise<void> {
   const res = await fetch(`${MOCK_UPSTREAM_URL}/__fail?on=${on ? 1 : 0}`);
   if (!res.ok) throw new Error(`Mock upstream control failed: ${res.status}`);

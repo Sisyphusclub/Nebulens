@@ -62,6 +62,16 @@
         "hidden": true
       },
       "rationale": "A hidden native file input is required to open the browser file picker; the visible trigger uses the shared Button primitive."
+    },
+    {
+      "file": "src/components/landing/SkillPanel.tsx",
+      "tag": "input",
+      "count": 1,
+      "requiredAttributes": {
+        "type": "file",
+        "hidden": true
+      },
+      "rationale": "A skill takes exactly one reference image; a hidden native file input opens the browser file picker and the visible trigger uses the shared Button primitive."
     }
   ],
   "foundationImports": [

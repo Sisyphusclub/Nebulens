@@ -13,6 +13,7 @@ import { LandingRecentCreations } from '@/components/landing/LandingRecentCreati
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingShowcase } from '@/components/landing/LandingShowcase';
 import { LandingSkillCapsules, LandingSkillGallery } from '@/components/landing/LandingSkills';
+import { SkillPanel, type SkillSubmission } from '@/components/landing/SkillPanel';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
 import { AgentChatInput } from '@/components/premium/agent-chat-input/agent-chat-input';
@@ -28,10 +29,12 @@ import { useImageHistory } from '@/hooks/useImageHistory';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
 import { useTeamShowcase } from '@/hooks/useTeamShowcase';
-import { buildApiUrl } from '@/services/api/imagesApi';
+import { buildApiUrl, uploadReferenceImages } from '@/services/api/imagesApi';
+import { planSkill } from '@/services/api/skillsApi';
 import { getAppNavigation } from '@/config/navigation';
 import type {
   AspectChoice,
+  GenerationSettingsSnapshot,
   HistoryEntry,
   ImageModel,
   ImageQuality,
@@ -50,7 +53,9 @@ import {
   normalizeAspectChoiceForResolution,
   supportsImageQuality,
 } from '@/types/image';
+import { resolveAspectChoice } from '@/utils/imageAspect';
 import { recentCreations, type RecentCreation } from '@/utils/recentCreations';
+import type { SkillRunRequest } from '@/utils/skillRun';
 
 const HERO_SHINY_GRADIENT_STYLE: CSSProperties = {
   backgroundImage:
@@ -101,6 +106,8 @@ export function LandingView() {
     (quota?.remaining ?? 0) >= imageGenerationCreditCost('2k', model);
   const [quality, setQuality] = useState<ImageQuality>(DEFAULT_IMAGE_QUALITY);
   const [imageApiKeySettingsOpen, setImageApiKeySettingsOpen] = useState(false);
+  const [panelSkill, setPanelSkill] = useState<LandingSkill | null>(null);
+  const [skillPanelOpen, setSkillPanelOpen] = useState(false);
   const accountName = user?.username ?? user?.name ?? '账户';
   const providerPending = authLoading || (isAuthenticated && imageApiKey.isLoading);
   const quotaPending = isAuthenticated && quotaLoading;
@@ -151,11 +158,55 @@ export function LandingView() {
     setSelectedRecommendation(null);
   };
   const selectSkill = (skill: LandingSkill): void => {
+    setPanelSkill(skill);
+    setSkillPanelOpen(true);
+  };
+  /** For people who would rather write: the skill's example prompt goes into the composer. */
+  const fillExamplePrompt = (skill: LandingSkill): void => {
+    setSkillPanelOpen(false);
     setPrompt(skill.prompt);
     setAspect(normalizeAspectChoiceForResolution(skill.aspect, resolution));
     if (skill.referenceHint) notify(skill.referenceHint);
     // Skills picked from the gallery below the fold bring the filled composer back into view.
     if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  /**
+   * Uploads the skill's image once, has the server plan a prompt per output, and opens
+   * the generate page in a new session that makes the images one after another.
+   */
+  const runSkill = async ({ form, values, referenceFile }: SkillSubmission): Promise<void> => {
+    if (!isAuthenticated) {
+      // The panel keeps its answers while closed, so it reopens filled in after signing in.
+      setSkillPanelOpen(false);
+      openAuthModal({ onSuccess: () => setSkillPanelOpen(true) });
+      return;
+    }
+    const referenceFiles = referenceFile === null ? [] : [referenceFile];
+    const referenceIds = (await uploadReferenceImages(referenceFiles)).map((upload) => upload.id);
+    const plan = await planSkill(form.id, values, referenceFile !== null);
+    const steps = await Promise.all(
+      plan.outputs.map(async (output) => {
+        const settings: GenerationSettingsSnapshot = {
+          prompt: output.prompt,
+          model,
+          count: 1,
+          aspectRatio: await resolveAspectChoice(
+            normalizeAspectChoiceForResolution(output.aspect, resolution),
+            referenceFiles,
+          ),
+          resolution,
+          ...(supportsImageQuality(model) ? { quality } : {}),
+          isPublic: false,
+          referenceIds,
+        };
+        return { label: output.label, settings };
+      }),
+    );
+    const session = createSession(plan.title);
+    const skillRun: SkillRunRequest = { skillLabel: form.label, steps };
+    void navigate(`/generate?${new URLSearchParams({ session: session.id }).toString()}`, {
+      state: { skillRun },
+    });
   };
   /** A teammate's reference images stay theirs, so only the prompt and framing carry over. */
   const makeSimilar = (record: TeamImageRecord): void => {
@@ -318,6 +369,14 @@ export function LandingView() {
         </div>
       </section>
       <LandingSkillGallery onSelect={selectSkill} />
+      <SkillPanel
+        skill={panelSkill}
+        open={skillPanelOpen}
+        creditCost={imageGenerationCreditCost(resolution, model)}
+        onClose={() => setSkillPanelOpen(false)}
+        onSubmit={runSkill}
+        onUseExamplePrompt={fillExamplePrompt}
+      />
       <LandingShowcase records={showcase} onUse={makeSimilar} />
       <ImageDetailModal
         entry={selectedRecommendationEntry}

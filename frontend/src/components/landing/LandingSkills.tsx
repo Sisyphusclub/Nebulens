@@ -32,7 +32,7 @@ export function LandingSkillGallery({ onSelect }: { onSelect: (skill: LandingSki
     <section className="landing-skills" aria-label="技能">
       <header className="landing-skills__header">
         <h2>技能</h2>
-        <p>选一个技能，AI 先帮你搭好提示词和画面比例，改几个字就能出图。</p>
+        <p>选一个技能，填几项信息，AI 写好提示词，一次做出一整组图。</p>
       </header>
       <div className="landing-skills__grid">
         {LANDING_SKILLS.map((skill) => {

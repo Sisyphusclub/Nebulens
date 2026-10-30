@@ -152,12 +152,13 @@ export function useGenerationFeed({
     });
   };
 
+  /** Resolves to the new batch id once it is saved; failures resolve to undefined. */
   const performGeneration = async (
     settings: GenerationSettingsSnapshot,
     referenceFiles: readonly File[] = [],
     fromComposer = false,
     replaceItem?: FeedItem,
-  ): Promise<void> => {
+  ): Promise<string | undefined> => {
     const generationUserId = currentUserIdRef.current;
     if (generation.isLoading) return;
     if (!settings.prompt) {
@@ -289,6 +290,7 @@ export function useGenerationFeed({
       } else {
         notify(replaceItem ? '已重新生成并替换原结果。' : '图片生成完成。');
       }
+      return result.batchId;
     } catch (error) {
       const message = error instanceof Error ? error.message : '生成失败，请稍后重试。';
       if (message === GENERATION_STOPPED_MESSAGE) {

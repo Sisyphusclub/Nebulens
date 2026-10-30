@@ -119,8 +119,12 @@ describe('useGenerationFeed', () => {
     const { result: hook, generate, notify, onComposerSubmitted } = setup(session);
     generate.mockResolvedValue(result('batch-1'));
 
-    await act(() => hook.current.performGeneration(settings, [], true));
+    let batchId: string | undefined;
+    await act(async () => {
+      batchId = await hook.current.performGeneration(settings, [], true);
+    });
 
+    expect(batchId).toBe('batch-1');
     expect(hook.current.feed.map((item) => item.id)).toEqual(['batch-1']);
     expect(hook.current.activeHistoryBatchId).toBe('batch-1');
     expect(onComposerSubmitted).toHaveBeenCalledWith('雨夜建筑');
@@ -132,7 +136,12 @@ describe('useGenerationFeed', () => {
     const { result: hook, generate, notify, onComposerSubmitted } = setup(session);
     generate.mockRejectedValue(new Error('上游失败（请求编号：req-1）'));
 
-    await act(() => hook.current.performGeneration(settings, [], true));
+    let batchId: string | undefined = 'unset';
+    await act(async () => {
+      batchId = await hook.current.performGeneration(settings, [], true);
+    });
+
+    expect(batchId).toBeUndefined();
 
     expect(hook.current.feed).toHaveLength(1);
     expect(hook.current.feed[0]?.error).toBe('上游失败（请求编号：req-1）');
@@ -199,7 +208,7 @@ describe('useGenerationFeed', () => {
       });
 
       const snapshotsBefore = harness.feedSnapshots.length;
-      let pending!: Promise<void>;
+      let pending!: Promise<string | undefined>;
       act(() => {
         pending = harness.result.current.performGeneration(settings, [], false, oldItem);
       });
@@ -265,7 +274,7 @@ describe('useGenerationFeed', () => {
     let resolve!: (value: GeneratedBatchResult) => void;
     generate.mockReturnValue(new Promise((done) => (resolve = done)));
 
-    let pending!: Promise<void>;
+    let pending!: Promise<string | undefined>;
     act(() => {
       pending = hook.current.performGeneration(settings);
     });

@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
@@ -57,15 +57,6 @@ import { resolveAspectChoice } from '@/utils/imageAspect';
 import { recentCreations, type RecentCreation } from '@/utils/recentCreations';
 import type { SkillRunRequest } from '@/utils/skillRun';
 
-const HERO_SHINY_GRADIENT_STYLE: CSSProperties = {
-  backgroundImage:
-    'linear-gradient(110deg, #3D81E3, 20%, #AE9AE6, 40%, #F8D8D5, 60%, #FEEFDB, 80%, #3D81E3)',
-  backgroundSize: '200% auto',
-  WebkitBackgroundClip: 'text',
-  backgroundClip: 'text',
-  color: 'transparent',
-  WebkitTextFillColor: 'transparent',
-};
 export function LandingView() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: authLoading, isAdmin, logout } = useAuth();
@@ -283,10 +274,8 @@ export function LandingView() {
         />
         <div className="landing-hero__content">
           <h1 id="landing-title" aria-label="把想法，变成画面">
-            <span className="landing-hero__headline-main">把想法，</span>
-            <em className="animate-shiny" style={HERO_SHINY_GRADIENT_STYLE}>
-              变成画面
-            </em>
+            <span>把想法，</span>
+            <span>变成画面</span>
           </h1>
           <p>用 GPT-IMAGE-2 将你的创意变为精美图片，只需描述你脑海中的画面。</p>
           <div className="landing-composer-anchor">

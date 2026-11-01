@@ -16,6 +16,8 @@ describe('landing skill deck', () => {
 
     expect(grid).toContain('max-width: 1760px;');
     expect(grid).toContain('grid-template-columns: minmax(0, 1.35fr) repeat(4, minmax(0, 1fr));');
+    // Fixed rows keep the feature exactly two tiles tall, so it cannot open gaps under them.
+    expect(grid).toContain('grid-template-rows: repeat(2, 80px);');
     expect(rule('.landing-deck__feature')).toContain('grid-row: span 2;');
   });
 
@@ -27,7 +29,7 @@ describe('landing skill deck', () => {
   it('draws each tile as compact glass with the example on the right', () => {
     const tile = rule('.landing-deck .landing-deck__tile');
 
-    expect(tile).toContain('height: 76px;');
+    expect(tile).toContain('height: auto;');
     expect(tile).toContain('background: rgb(22 25 34 / 0.62);');
     expect(tile).toContain('backdrop-filter: blur(12px) saturate(1.2);');
     expect(rule('.landing-deck__tile img')).toContain('width: 56px;');

@@ -1,0 +1,23 @@
+# 大型设计 / QA 资源
+design-qa-assets/
+docs/screenshots/
+
+# 大图
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# TypeScript 构建缓存
+frontend/tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Claude Code worktrees
+.claude/worktrees/
+
+# 与 .gitignore 一致
+node_modules/
+dist/
+coverage/
+*.log
+tmp/

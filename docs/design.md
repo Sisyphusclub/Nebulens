@@ -5,7 +5,7 @@
 **Visual sources:** [beUI Pro](https://pro.beui.dev/components) component language + [Wanxiang Explore](https://tongyi.aliyun.com/wan/explore) media-stage hierarchy<br>
 **Primary references:** Agent Chat Input, shadcn Sidebar, Animated Dropdown, Morphic Card Modal, Morphic Tooltip, Image Gallery Vertical, Data Table, Empty States, Auth<br>
 **Product:** Nebulens AI image creation workspace<br>
-**Reference extraction:** [`themes/wanxiang/DESIGN.md`](themes/wanxiang/DESIGN.md) and [`themes/wanxiang/preview.html`](themes/wanxiang/preview.html)<br>
+**Reference extraction:** [`themes/wanxiang/DESIGN.md`](../themes/wanxiang/DESIGN.md) and [`themes/wanxiang/preview.html`](../themes/wanxiang/preview.html)<br>
 **Updated:** 2026-08-13
 
 ## Product Direction

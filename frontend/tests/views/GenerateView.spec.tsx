@@ -386,7 +386,20 @@ it('shows the requested custom aspect ratios in order and preserves a selection'
     within(aspectGroup)
       .getAllByRole('menuitemradio')
       .map((option) => option.textContent),
-  ).toEqual(['智能', '1:1', '3:4', '4:3', '16:9', '9:16', '2:3', '3:2']);
+  ).toEqual([
+    '智能',
+    '1:1',
+    '3:4',
+    '4:3',
+    '16:9',
+    '9:16',
+    '2:3',
+    '3:2',
+    '1:3',
+    '3:1',
+    '4:5',
+    '5:4',
+  ]);
 
   await user.click(within(aspectGroup).getByRole('menuitemradio', { name: '4:3' }));
   await user.keyboard('{Escape}');

@@ -404,7 +404,7 @@ describe('TwoApiImageProvider', () => {
     expect(out.images[0]).toMatchObject({ width: 1, height: 1 });
     const init = fetchMock.mock.calls[0]![1] as RequestInit;
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
-    expect(body['size']).toBe('3840x2160');
+    expect(body['size']).toBe('4096x2304');
   });
 
   it('supports 4k square requests before provider IO', async () => {
@@ -490,7 +490,7 @@ describe('TwoApiImageProvider', () => {
     const [calledUrl, init] = fetchMock.mock.calls[0]!;
     expect(calledUrl).toBe('https://codex.example.com/v1/images/edits');
     const form = (init as RequestInit).body as FormData;
-    expect(form.get('size')).toBe('2160x3840');
+    expect(form.get('size')).toBe('2304x4096');
   });
 
   it('maps prompt rejection upstream statuses to PROVIDER_PROMPT_REJECTED 422', async () => {

@@ -15,6 +15,10 @@ describe('imageAspect', () => {
     [1080, 1920, '9:16'],
     [800, 1200, '2:3'],
     [1500, 1000, '3:2'],
+    [1000, 3000, '1:3'],
+    [3000, 1000, '3:1'],
+    [800, 1000, '4:5'],
+    [1280, 1024, '5:4'],
   ] as const)('maps %sx%s to %s', (width, height, expected) => {
     expect(closestAspectRatio(width, height)).toBe(expected);
   });

@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { SelectMenu } from '@/components/ui/select-menu';
 import {
   ASPECT_CHOICES,
+  ASPECT_RATIO_CONFIGS,
   DEFAULT_IMAGE_MODEL,
   IMAGE_MODEL_LABELS,
   IMAGE_MODELS,
@@ -32,6 +33,15 @@ import {
 } from '@/types/image';
 
 const MODEL_OPTIONS = IMAGE_MODELS.map((value) => ({ value, label: IMAGE_MODEL_LABELS[value] }));
+
+function aspectFrameSize(aspect: Exclude<AspectChoice, 'auto'>): {
+  width: number;
+  height: number;
+} {
+  const ratio = ASPECT_RATIO_CONFIGS[aspect].ratio;
+  const height = Math.min(21, 23 / ratio);
+  return { width: height * ratio, height };
+}
 
 function keepCustomPanelOpen(event: Event): void {
   event.preventDefault();
@@ -147,7 +157,10 @@ export function GenerationComposerControls({
                       {value === 'auto' ? (
                         <Sparkles />
                       ) : (
-                        <span className="generation-custom-option__frame" />
+                        <span
+                          className="generation-custom-option__frame"
+                          style={aspectFrameSize(value)}
+                        />
                       )}
                     </AnimatedDropdownItemIcon>
                     <AnimatedDropdownItemText className="generation-custom-option__text group-data-[highlighted]:translate-x-0">

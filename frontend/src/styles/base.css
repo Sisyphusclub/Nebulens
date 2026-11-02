@@ -10876,30 +10876,6 @@ video {
   border: 1.5px solid currentColor;
   border-radius: 3px;
 }
-.generation-custom-option__visual[data-aspect='3:4'] .generation-custom-option__frame {
-  width: 13px;
-  height: 18px;
-}
-.generation-custom-option__visual[data-aspect='4:3'] .generation-custom-option__frame {
-  width: 20px;
-  height: 14px;
-}
-.generation-custom-option__visual[data-aspect='16:9'] .generation-custom-option__frame {
-  width: 23px;
-  height: 13px;
-}
-.generation-custom-option__visual[data-aspect='9:16'] .generation-custom-option__frame {
-  width: 12px;
-  height: 21px;
-}
-.generation-custom-option__visual[data-aspect='2:3'] .generation-custom-option__frame {
-  width: 13px;
-  height: 20px;
-}
-.generation-custom-option__visual[data-aspect='3:2'] .generation-custom-option__frame {
-  width: 21px;
-  height: 14px;
-}
 .generation-custom-option[data-state='checked'] .generation-custom-option__visual {
   color: #fff;
 }

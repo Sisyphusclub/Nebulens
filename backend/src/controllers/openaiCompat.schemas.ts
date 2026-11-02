@@ -1,7 +1,14 @@
 import { z, ZodError } from 'zod';
 
 import { AppError } from '../errors/AppError.js';
-import { DEFAULT_ASPECT_RATIO, MAX_COUNT, MIN_COUNT, type AspectRatio } from '../types/image.js';
+import {
+  ASPECT_RATIOS,
+  ASPECT_SIZE_MAP,
+  DEFAULT_ASPECT_RATIO,
+  MAX_COUNT,
+  MIN_COUNT,
+  type AspectRatio,
+} from '../types/image.js';
 
 export const MODEL_CREATED_AT = 1_710_000_000;
 
@@ -21,6 +28,7 @@ export const OPENAI_COMPAT_MODEL_IDS = [
 ] as const;
 
 export const SIZE_TO_ASPECT_RATIO: Record<string, AspectRatio> = {
+  ...Object.fromEntries(ASPECT_RATIOS.map((ratio) => [ASPECT_SIZE_MAP[ratio].size, ratio])),
   auto: DEFAULT_ASPECT_RATIO,
   '1024x1024': '1:1',
   '1536x1024': '3:2',

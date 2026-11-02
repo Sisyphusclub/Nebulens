@@ -27,13 +27,13 @@ export interface LandingSkill {
   image: string;
   /** A one-line brief to type after the skill in the composer, shown as the example. */
   briefExample: string;
-  /** What creators reach for most: shown in the composer and on the Discover page. */
+  /** What people reach for most: creators' scenes and the company's own, on the Discover page. */
   everyday?: boolean;
 }
 
 /**
  * Every skill, offered in the composer's + menu and after typing "/". The everyday ones
- * come first, in the order they appear in the composer and on the Discover page.
+ * come first, in the order they appear on the Discover page.
  */
 export const LANDING_SKILLS: readonly LandingSkill[] = [
   {
@@ -117,6 +117,46 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
     everyday: true,
   },
   {
+    id: 'report',
+    label: '汇报封面',
+    tagline: '封面目录过渡页',
+    description: '说说主题和章节，一次出封面、目录页和章节过渡页',
+    icon: Presentation,
+    image: '/media/templates/gpt-image2/desktop-analytics-dashboard-operations.webp',
+    briefExample: '2026 年度经营汇报，市场拓展、产品进展、项目交付、明年规划',
+    everyday: true,
+  },
+  {
+    id: 'architecture',
+    label: '架构图',
+    tagline: '分层总览两张图',
+    description: '说说系统和各层模块，一次出分层架构图和模块总览图',
+    icon: Network,
+    image: '/media/templates/gpt-image2/agent-architecture.webp',
+    briefExample: '产业数智平台，设备接入层、数据中台、智能应用、运营门户',
+    everyday: true,
+  },
+  {
+    id: 'solution',
+    label: '方案主视觉',
+    tagline: '售前物料一次出',
+    description: '说说方案和核心能力，一次出主视觉、能力图和传播方图',
+    icon: Target,
+    image: '/media/templates/gpt-image2/data-sankey.webp',
+    briefExample: '机器人柔性产线方案，换产更快、节拍稳定、远程运维',
+    everyday: true,
+  },
+  {
+    id: 'factory',
+    label: '产线场景',
+    tagline: '车间工位特写',
+    description: '说说设备和场景，一次出车间全景、工位中景和细节特写',
+    icon: Factory,
+    image: '/media/templates/gpt-image2/biophilic-biotech-lab-render.webp',
+    briefExample: '六轴焊接机器人',
+    everyday: true,
+  },
+  {
     id: 'product',
     label: '产品渲染',
     tagline: '高级质感渲染图',
@@ -133,42 +173,6 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
     icon: Replace,
     image: '/media/skills/background.jpg',
     briefExample: '清晨阳光下的大理石台面，旁边有绿植',
-  },
-  {
-    id: 'report',
-    label: '汇报封面',
-    tagline: '封面目录过渡页',
-    description: '说说主题和章节，一次出封面、目录页和章节过渡页',
-    icon: Presentation,
-    image: '/media/templates/gpt-image2/desktop-analytics-dashboard-operations.webp',
-    briefExample: '2026 年度经营汇报，市场拓展、产品进展、项目交付、明年规划',
-  },
-  {
-    id: 'architecture',
-    label: '架构图',
-    tagline: '分层总览两张图',
-    description: '说说系统和各层模块，一次出分层架构图和模块总览图',
-    icon: Network,
-    image: '/media/templates/gpt-image2/agent-architecture.webp',
-    briefExample: '产业数智平台，设备接入层、数据中台、智能应用、运营门户',
-  },
-  {
-    id: 'solution',
-    label: '方案主视觉',
-    tagline: '售前物料一次出',
-    description: '说说方案和核心能力，一次出主视觉、能力图和传播方图',
-    icon: Target,
-    image: '/media/templates/gpt-image2/data-sankey.webp',
-    briefExample: '机器人柔性产线方案，换产更快、节拍稳定、远程运维',
-  },
-  {
-    id: 'factory',
-    label: '产线场景',
-    tagline: '车间工位特写',
-    description: '说说设备和场景，一次出车间全景、工位中景和细节特写',
-    icon: Factory,
-    image: '/media/templates/gpt-image2/biophilic-biotech-lab-render.webp',
-    briefExample: '六轴焊接机器人',
   },
 ];
 

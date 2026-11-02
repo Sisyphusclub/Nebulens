@@ -23,6 +23,14 @@ it('shows every skill as a tile with its tagline and example', async () => {
   expect(onSelect).toHaveBeenCalledWith(LANDING_SKILLS.find((skill) => skill.id === 'character'));
 });
 
+it('keeps the company skills on the page beside the creator ones', () => {
+  render(<LandingSkillDeck onSelect={vi.fn()} />);
+
+  for (const label of ['汇报封面', '架构图', '方案主视觉', '产线场景']) {
+    expect(screen.getByRole('button', { name: `使用技能：${label}` })).toBeInTheDocument();
+  }
+});
+
 it('shows each skill only once, with no separate featured card', () => {
   render(<LandingSkillDeck onSelect={vi.fn()} />);
 
@@ -33,7 +41,7 @@ it('shows each skill only once, with no separate featured card', () => {
 
 it('only ships skills with a brief example and an example image on disk', () => {
   expect(LANDING_SKILLS.length).toBe(14);
-  expect(EVERYDAY_SKILLS.length).toBe(8);
+  expect(EVERYDAY_SKILLS.length).toBe(12);
   for (const skill of LANDING_SKILLS) {
     expect(skill.briefExample.length).toBeGreaterThan(5);
     // The tiles have room for one short line.

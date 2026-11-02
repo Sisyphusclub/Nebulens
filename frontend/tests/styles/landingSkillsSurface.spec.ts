@@ -23,7 +23,7 @@ describe('landing skill deck', () => {
     const tile = rule('.landing-deck .landing-deck__tile');
 
     expect(tile).toContain('height: auto;');
-    expect(tile).toContain('background: rgb(22 25 34 / 0.62);');
+    expect(tile).toContain('background: rgb(52 58 76 / 0.72);');
     expect(tile).toContain('backdrop-filter: blur(12px) saturate(1.2);');
     expect(rule('.landing-deck__tile img')).toContain('width: 56px;');
     // One short line under the name, like Kling's tiles.

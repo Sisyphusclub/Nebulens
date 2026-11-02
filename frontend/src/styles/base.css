@@ -11376,10 +11376,10 @@ video {
   justify-content: space-between;
   gap: 12px;
   overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 0.08);
-  border-top-color: rgb(255 255 255 / 0.14);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-top-color: rgb(255 255 255 / 0.26);
   border-radius: 16px;
-  background: rgb(22 25 34 / 0.62);
+  background: rgb(52 58 76 / 0.72);
   padding: 10px 10px 10px 16px;
   text-align: left;
   backdrop-filter: blur(12px) saturate(1.2);
@@ -11390,8 +11390,8 @@ video {
 }
 .landing-deck .landing-deck__tile:hover,
 .landing-deck .landing-deck__tile:focus-visible {
-  border-color: rgb(255 255 255 / 0.24);
-  background: rgb(32 36 48 / 0.72);
+  border-color: rgb(255 255 255 / 0.36);
+  background: rgb(68 75 96 / 0.8);
   transform: translateY(-2px);
 }
 .landing-deck__tile-text {
@@ -11416,7 +11416,7 @@ video {
 }
 .landing-deck__tile-description {
   overflow: hidden;
-  color: rgb(242 244 247 / 0.58);
+  color: rgb(242 244 247 / 0.78);
   font-size: 12px;
   font-weight: 400;
   text-overflow: ellipsis;

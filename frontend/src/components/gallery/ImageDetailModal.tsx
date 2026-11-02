@@ -78,10 +78,10 @@ export function ImageDetailModal({
       onClose={onClose}
       sharedLayout={false}
       backdropClassName="!bg-black/[0.78]"
-      className="image-detail-modal !rounded-2xl !bg-card !text-card-foreground !shadow-[var(--shadow-modal)]"
+      className="image-detail-modal w-fit max-w-[92vw] min-h-[580px] h-[80vh] max-h-[720px] flex overflow-hidden rounded-2xl !bg-card !text-card-foreground !shadow-[var(--shadow-modal)]"
     >
       <section
-        className="dialog image-detail"
+        className="dialog image-detail flex h-full min-h-0 w-full overflow-hidden rounded-2xl"
         style={
           {
             '--image-detail-image-ratio': entry.record.width / entry.record.height,
@@ -105,80 +105,83 @@ export function ImageDetailModal({
             </Button>
           </IconTooltip>
         </div>
-        <div className="image-detail__media">
+        <div className="image-detail__media h-full w-auto min-w-0 flex items-center justify-center bg-black/40">
           <img
             src={entry.imageUrl}
             alt={entry.record.prompt || '生成图片'}
             width={entry.record.width}
             height={entry.record.height}
+            className="image-detail__image h-full w-auto max-h-full max-w-[calc(92vw-360px)] object-contain"
           />
         </div>
-        <div className="image-detail__body">
-          <p className="eyebrow">NEBULENS OUTPUT</p>
-          <h2 id="image-detail-title">图片详情</h2>
-          <p className="image-detail__prompt">{entry.record.prompt}</p>
-          <dl className="metadata-grid">
-            <div>
-              <dt>模型</dt>
-              <dd>{imageModelLabel(entry.record.model)}</dd>
-            </div>
-            <div>
-              <dt>尺寸</dt>
-              <dd>
-                {entry.record.width} × {entry.record.height}
-              </dd>
-            </div>
-            <div>
-              <dt>比例</dt>
-              <dd>{entry.record.aspectRatio ?? '智能'}</dd>
-            </div>
-            <div>
-              <dt>时间</dt>
-              <dd>{formatDateTime(entry.record.createdAt)}</dd>
-            </div>
-            {ownerName ? (
+        <div className="image-detail__body w-[340px] flex-shrink-0 h-full flex flex-col min-h-0 bg-[#141414] p-5">
+          <div className="image-detail__body-content flex-1 min-h-0 overflow-y-auto space-y-2">
+            <p className="eyebrow">NEBULENS OUTPUT</p>
+            <h2 id="image-detail-title">图片详情</h2>
+            <p className="image-detail__prompt">{entry.record.prompt}</p>
+            <dl className="metadata-grid">
               <div>
-                <dt>作者</dt>
-                <dd>{ownerName}</dd>
+                <dt>模型</dt>
+                <dd>{imageModelLabel(entry.record.model)}</dd>
               </div>
-            ) : null}
-            <div>
-              <dt>用途</dt>
-              <dd>
-                {onCategoryChange ? (
-                  <SelectMenu
-                    label="修改用途"
-                    value={entry.record.category ?? 'none'}
-                    options={CATEGORY_OPTIONS}
-                    onValueChange={(value) =>
-                      onCategoryChange(entry, value === 'none' ? null : value)
-                    }
-                  />
-                ) : entry.record.category ? (
-                  IMAGE_CATEGORY_LABELS[entry.record.category]
-                ) : (
-                  '未分类'
-                )}
-              </dd>
-            </div>
-            {entry.record.isShared !== undefined ? (
               <div>
-                <dt>共享</dt>
-                <dd>{entry.record.isShared ? '已入库' : '仅自己'}</dd>
+                <dt>尺寸</dt>
+                <dd>
+                  {entry.record.width} × {entry.record.height}
+                </dd>
               </div>
+              <div>
+                <dt>比例</dt>
+                <dd>{entry.record.aspectRatio ?? '智能'}</dd>
+              </div>
+              <div>
+                <dt>时间</dt>
+                <dd>{formatDateTime(entry.record.createdAt)}</dd>
+              </div>
+              {ownerName ? (
+                <div>
+                  <dt>作者</dt>
+                  <dd>{ownerName}</dd>
+                </div>
+              ) : null}
+              <div>
+                <dt>用途</dt>
+                <dd>
+                  {onCategoryChange ? (
+                    <SelectMenu
+                      label="修改用途"
+                      value={entry.record.category ?? 'none'}
+                      options={CATEGORY_OPTIONS}
+                      onValueChange={(value) =>
+                        onCategoryChange(entry, value === 'none' ? null : value)
+                      }
+                    />
+                  ) : entry.record.category ? (
+                    IMAGE_CATEGORY_LABELS[entry.record.category]
+                  ) : (
+                    '未分类'
+                  )}
+                </dd>
+              </div>
+              {entry.record.isShared !== undefined ? (
+                <div>
+                  <dt>共享</dt>
+                  <dd>{entry.record.isShared ? '已入库' : '仅自己'}</dd>
+                </div>
+              ) : null}
+            </dl>
+            {entry.record.description ? (
+              <p className="image-detail__description">{entry.record.description}</p>
             ) : null}
-          </dl>
-          {entry.record.description ? (
-            <p className="image-detail__description">{entry.record.description}</p>
-          ) : null}
-          {entry.record.tags?.length ? (
-            <ul className="image-detail__tags" aria-label="标签">
-              {entry.record.tags.map((tag) => (
-                <li key={tag}>{tag}</li>
-              ))}
-            </ul>
-          ) : null}
-          <div className="detail-actions">
+            {entry.record.tags?.length ? (
+              <ul className="image-detail__tags" aria-label="标签">
+                {entry.record.tags.map((tag) => (
+                  <li key={tag}>{tag}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+          <div className="detail-actions flex-shrink-0 mt-auto pt-3 space-y-1.5">
             <Button type="button" onClick={() => void downloadUrl(entry.imageUrl, filename)}>
               <Download aria-hidden="true" />
               保存图片

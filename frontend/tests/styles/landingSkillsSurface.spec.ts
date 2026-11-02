@@ -15,15 +15,8 @@ describe('landing skill deck', () => {
     const grid = rule('.landing-deck__grid');
 
     expect(grid).toContain('max-width: 1760px;');
-    expect(grid).toContain('grid-template-columns: minmax(0, 1.35fr) repeat(4, minmax(0, 1fr));');
-    // Fixed rows keep the feature exactly two tiles tall, so it cannot open gaps under them.
-    expect(grid).toContain('grid-template-rows: repeat(2, 80px);');
-    expect(rule('.landing-deck__feature')).toContain('grid-row: span 2;');
-  });
-
-  it('fills the feature card with the example, like the banner on Kling', () => {
-    expect(rule('.landing-deck__feature-image')).toContain('inset: 0;');
-    expect(rule('.landing-deck__feature-body')).toContain('align-content: end;');
+    expect(grid).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
+    expect(grid).toContain('grid-auto-rows: 80px;');
   });
 
   it('draws each tile as compact glass with the example on the right', () => {

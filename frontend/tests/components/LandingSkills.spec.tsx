@@ -1,16 +1,12 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, expect, it, vi } from 'vitest';
+import { expect, it, vi } from 'vitest';
 
 import { LandingSkillDeck } from '@/components/landing/LandingSkills';
 import { EVERYDAY_SKILLS, LANDING_SKILLS } from '@/data/landingSkills';
-
-afterEach(() => {
-  vi.useRealTimers();
-});
 
 it('shows every skill as a tile with its tagline and example', async () => {
   const user = userEvent.setup();
@@ -27,40 +23,12 @@ it('shows every skill as a tile with its tagline and example', async () => {
   expect(onSelect).toHaveBeenCalledWith(LANDING_SKILLS.find((skill) => skill.id === 'character'));
 });
 
-it('features one skill at a time, picked by its dot or in turn every few seconds', () => {
-  vi.useFakeTimers();
-  const onSelect = vi.fn();
-  render(<LandingSkillDeck onSelect={onSelect} />);
-  const [first, second, third] = EVERYDAY_SKILLS;
-
-  fireEvent.click(screen.getByRole('button', { name: `立即使用：${first!.label}` }));
-  expect(onSelect).toHaveBeenCalledWith(first);
-
-  act(() => {
-    vi.advanceTimersByTime(5000);
-  });
-  expect(screen.getByRole('button', { name: `立即使用：${second!.label}` })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: `推荐：${second!.label}` })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-
-  fireEvent.click(screen.getByRole('button', { name: `推荐：${third!.label}` }));
-  expect(screen.getByRole('button', { name: `立即使用：${third!.label}` })).toBeInTheDocument();
-});
-
-it('holds the featured skill while the pointer rests on it', () => {
-  vi.useFakeTimers();
+it('shows each skill only once, with no separate featured card', () => {
   render(<LandingSkillDeck onSelect={vi.fn()} />);
-  const [first] = EVERYDAY_SKILLS;
-  const cta = screen.getByRole('button', { name: `立即使用：${first!.label}` });
 
-  fireEvent.mouseEnter(cta.closest('.landing-deck__feature')!);
-  act(() => {
-    vi.advanceTimersByTime(15000);
-  });
-
-  expect(screen.getByRole('button', { name: `立即使用：${first!.label}` })).toBeInTheDocument();
+  const deck = screen.getByRole('region', { name: '技能' });
+  expect(within(deck).getAllByRole('button')).toHaveLength(EVERYDAY_SKILLS.length);
+  expect(within(deck).queryByText('精选技能')).not.toBeInTheDocument();
 });
 
 it('only ships skills with a brief example and an example image on disk', () => {

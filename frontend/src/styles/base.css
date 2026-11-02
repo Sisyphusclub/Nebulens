@@ -11352,9 +11352,8 @@ video {
   color: rgb(170 200 255 / 0.95);
 }
 
-/* Below the hero: every skill across the full width, after Kling and Jimeng. A
-   feature card rotates through the skills' examples beside a compact glass tile for
-   each skill, all within the first screen. */
+/* Below the hero: a compact glass tile for each everyday skill across the full width,
+   all within the first screen. */
 .landing-deck {
   position: relative;
   padding-block: 0 72px;
@@ -11365,126 +11364,9 @@ video {
   width: 100%;
   max-width: 1760px;
   margin: 0 auto;
-  grid-template-columns: minmax(0, 1.35fr) repeat(4, minmax(0, 1fr));
-  /* Fixed rows, so the feature is exactly two tiles tall and can never stretch them. */
-  grid-template-rows: repeat(2, 80px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 80px;
   gap: 12px;
-}
-.landing-deck__feature {
-  position: relative;
-  grid-row: span 2;
-  overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  border-top-color: rgb(255 255 255 / 0.18);
-  border-radius: 18px;
-  background: rgb(16 19 27);
-}
-/* Like Kling's banner, the example fills the whole card; the text sits low on the left. */
-.landing-deck__feature-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transform: scale(1.06);
-  transition:
-    opacity 700ms ease,
-    transform 6s linear;
-}
-.landing-deck__feature-image[data-active='true'] {
-  opacity: 1;
-  transform: scale(1);
-}
-.landing-deck__feature::after {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, rgb(8 10 16 / 0.85) 0%, rgb(8 10 16 / 0.4) 55%, transparent 85%),
-    linear-gradient(0deg, rgb(8 10 16 / 0.8) 0%, transparent 62%);
-  content: '';
-  pointer-events: none;
-}
-.landing-deck__feature-body {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  height: 100%;
-  max-width: 78%;
-  align-content: end;
-  justify-items: start;
-  gap: 2px;
-  padding: 14px 18px 16px;
-}
-.landing-deck__eyebrow {
-  color: rgb(242 244 247 / 0.62);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-}
-.landing-deck__feature-title {
-  color: #fff;
-  font-family: var(--font-hero-serif);
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.3;
-  letter-spacing: 0.04em;
-  text-shadow: 0 1px 12px rgb(0 0 0 / 0.6);
-}
-.landing-deck__feature-description {
-  display: -webkit-box;
-  overflow: hidden;
-  color: rgb(242 244 247 / 0.82);
-  font-size: 12.5px;
-  line-height: 1.5;
-  text-shadow: 0 1px 10px rgb(0 0 0 / 0.6);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-.landing-deck .landing-deck__feature-cta {
-  height: 28px;
-  gap: 4px;
-  margin-top: 8px;
-  border-radius: var(--radius-full);
-  padding: 0 12px;
-  font-size: 12.5px;
-}
-.landing-deck__feature-cta svg {
-  width: 14px;
-  height: 14px;
-}
-/* Top right, over the image, so they never meet the text or the button. */
-.landing-deck__dots {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  z-index: 1;
-  display: flex;
-  gap: 2px;
-}
-/* A short bar inside a taller button, so the dots stay easy to hit. */
-.landing-deck .landing-deck__dot {
-  width: 16px;
-  min-width: 0;
-  height: 16px;
-  border: 0;
-  background: transparent;
-  padding: 0 3px;
-}
-.landing-deck__dot::before {
-  display: block;
-  width: 100%;
-  height: 3px;
-  border-radius: 2px;
-  background: rgb(255 255 255 / 0.28);
-  content: '';
-  transition: background-color 200ms ease;
-}
-.landing-deck .landing-deck__dot:hover {
-  background: transparent;
-}
-.landing-deck__dot[aria-pressed='true']::before,
-.landing-deck__dot:hover::before {
-  background: #fff;
 }
 .landing-deck .landing-deck__tile {
   display: flex;
@@ -11552,17 +11434,6 @@ video {
 .landing-deck__tile:focus-visible img {
   transform: scale(1.06);
 }
-@media (max-width: 1280px) {
-  .landing-deck__grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: 200px;
-    grid-auto-rows: 80px;
-  }
-  .landing-deck__feature {
-    grid-column: 1 / -1;
-    grid-row: auto;
-  }
-}
 @media (max-width: 860px) {
   .landing-deck {
     padding-left: max(16px, env(safe-area-inset-left, 0px));
@@ -11570,12 +11441,11 @@ video {
   }
   .landing-deck__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: 180px;
     grid-auto-rows: 72px;
     gap: 10px;
   }
 }
-/* Phones: half-width tiles keep the name and example, and the feature text spans. */
+/* Phones: half-width tiles keep the name and example. */
 @media (max-width: 560px) {
   .landing-deck__tile-description,
   .landing-deck__tile-title svg {
@@ -11590,9 +11460,6 @@ video {
   .landing-deck__tile img {
     width: 48px;
     height: 48px;
-  }
-  .landing-deck__feature-body {
-    max-width: 100%;
   }
 }
 
@@ -11777,7 +11644,6 @@ video {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .landing-deck__feature-image,
   .landing-deck__tile,
   .landing-deck__tile img,
   .landing-showcase__card img,

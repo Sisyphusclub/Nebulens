@@ -57,7 +57,7 @@ describe('publicSkill', () => {
       { id: 'points', label: '卖点图' },
     ]);
     expect(JSON.stringify(skill)).not.toContain(ecommerce.expertise);
-    expect(SKILLS).toHaveLength(8);
+    expect(SKILLS).toHaveLength(12);
   });
 });
 
@@ -242,6 +242,64 @@ describe('createSkillPlanner readBrief', () => {
     });
     expect(await failing.readBrief(ecommerce, '绿茶，高山云雾')).toEqual(
       briefAnswers(ecommerce, '绿茶，高山云雾'),
+    );
+  });
+});
+
+describe('enterprise skills', () => {
+  const skill = (id: string) => findSkill(id)!;
+
+  it('reads a one-line architecture brief and quotes every layer exactly', () => {
+    const architecture = skill('architecture');
+    const answers = briefAnswers(architecture, '产业数智平台，设备接入层、数据中台、智能应用');
+    const values = readSkillValues(architecture, answers, false);
+    const prompt = fallbackPrompt(architecture, architecture.outputs[0]!, values, false);
+
+    expect(prompt).toContain('“产业数智平台”、“设备接入层”、“数据中台”、“智能应用”');
+    expect(architecture.outputs.map((output) => output.aspect)).toEqual(['16:9', '4:3']);
+  });
+
+  it('builds a report contents page from its sections', () => {
+    const report = skill('report');
+    const values = readSkillValues(
+      report,
+      briefAnswers(report, '年度经营汇报，市场拓展、项目交付'),
+      false,
+    );
+    const contents = report.outputs.find((output) => output.id === 'contents')!;
+
+    expect(contents.texts?.(values)).toEqual(['目录', '市场拓展', '项目交付']);
+  });
+
+  it('keeps factory scenes free of text and the uploaded equipment unchanged', () => {
+    const factory = skill('factory');
+    const values = readSkillValues(factory, briefAnswers(factory, '六轴焊接机器人'), true);
+
+    for (const output of factory.outputs) {
+      const prompt = fallbackPrompt(factory, output, values, true);
+      expect(prompt).toContain('画面中不要出现任何文字');
+      expect(prompt).toContain('保持参考图中主体的外观');
+      expect(prompt).toContain('智能工厂');
+    }
+  });
+
+  it('asks for the capabilities a solution visual has to show', () => {
+    const solution = skill('solution');
+    expect(missingBriefField(solution, briefAnswers(solution, '柔性产线方案'))?.label).toBe(
+      '核心能力',
+    );
+  });
+
+  it('passes the chosen infographic layout to the prompt', () => {
+    const infographic = skill('infographic');
+    const values = readSkillValues(
+      infographic,
+      { title: '项目交付', steps: ['立项', '上线'], layout: '时间线里程碑' },
+      false,
+    );
+
+    expect(fallbackPrompt(infographic, infographic.outputs[0]!, values, false)).toContain(
+      '版式：时间线里程碑',
     );
   });
 });

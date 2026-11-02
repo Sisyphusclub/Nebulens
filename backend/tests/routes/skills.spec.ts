@@ -29,6 +29,10 @@ describe('GET /api/skills', () => {
     expect(response.status).toBe(200);
     const skills = response.body.skills as Array<{ id: string; fields: unknown[] }>;
     expect(skills.map((skill) => skill.id)).toEqual([
+      'report',
+      'architecture',
+      'solution',
+      'factory',
       'ecommerce',
       'poster',
       'background',

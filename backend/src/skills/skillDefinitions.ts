@@ -49,6 +49,246 @@ const filled = (...texts: string[]): string[] => texts.filter((text) => text.len
 
 export const SKILLS: readonly SkillDefinition[] = [
   {
+    id: 'report',
+    label: '汇报封面',
+    description: '填主题和章节，一次出封面、目录页和章节过渡页',
+    reference: 'none',
+    fields: [
+      {
+        id: 'title',
+        label: '汇报主题',
+        kind: 'text',
+        required: true,
+        maxLength: 20,
+        placeholder: '如：2026 年度经营汇报',
+      },
+      {
+        id: 'sections',
+        label: '章节',
+        kind: 'list',
+        required: true,
+        maxItems: 5,
+        maxLength: 12,
+        placeholder: '如：市场拓展',
+      },
+      {
+        id: 'owner',
+        label: '部门或汇报人',
+        kind: 'text',
+        maxLength: 16,
+        placeholder: '如：战略策划团队',
+      },
+      {
+        id: 'style',
+        label: '风格',
+        kind: 'choice',
+        options: ['科技蓝', '商务深色', '简约白'],
+        defaultValue: '科技蓝',
+      },
+    ],
+    outputs: [
+      {
+        id: 'cover',
+        label: '封面',
+        aspect: '16:9',
+        brief: '汇报演示文稿封面，大标题居左或居中，背景是抽象的工业与数字化意象，稳重大气',
+        texts: (values) => filled(values.text('title'), values.text('owner')),
+      },
+      {
+        id: 'contents',
+        label: '目录页',
+        aspect: '16:9',
+        brief: '汇报目录页，各章节按顺序编号纵向排列，版式清爽，与封面同一视觉风格',
+        texts: (values) => ['目录', ...values.list('sections')],
+      },
+      {
+        id: 'divider',
+        label: '章节过渡页',
+        aspect: '16:9',
+        brief: '章节过渡页的通用背景，同一视觉风格，中部大面积留白用于后续放章节名',
+      },
+    ],
+    expertise:
+      '汇报页面要在投影上一眼看清：标题字大、对比强，一页只有一个重点，左右留足边距，不放写实人物和杂乱装饰，三页的配色和图形语言保持一致。',
+    subject: (values) => values.text('title'),
+  },
+  {
+    id: 'architecture',
+    label: '架构图',
+    description: '填系统名和各层模块，一次出分层架构图和模块总览图',
+    reference: 'none',
+    fields: [
+      {
+        id: 'title',
+        label: '系统或平台名',
+        kind: 'text',
+        required: true,
+        maxLength: 16,
+        placeholder: '如：产业数智平台',
+      },
+      {
+        id: 'layers',
+        label: '分层或模块',
+        kind: 'list',
+        required: true,
+        maxItems: 6,
+        maxLength: 12,
+        placeholder: '如：设备接入层',
+      },
+      {
+        id: 'style',
+        label: '风格',
+        kind: 'choice',
+        options: ['简洁白底', '蓝图线稿', '深色科技'],
+        defaultValue: '简洁白底',
+      },
+    ],
+    outputs: [
+      {
+        id: 'layered',
+        label: '分层架构图',
+        aspect: '16:9',
+        brief:
+          '分层架构图，标题在顶部，各层按填写顺序自上而下排成等宽横向色带，层间用箭头表示数据流向',
+        texts: (values) => [values.text('title'), ...values.list('layers')],
+      },
+      {
+        id: 'overview',
+        label: '模块总览图',
+        aspect: '4:3',
+        brief:
+          '模块总览图，标题在顶部，各模块是大小相近的圆角卡片并排成网格，每张卡片配一个简单线性图标',
+        texts: (values) => [values.text('title'), ...values.list('layers')],
+      },
+    ],
+    expertise:
+      '架构图的重点是结构清楚：严格对齐，同级元素同样大小，颜色不超过三种且只用来区分层次，连接线不交叉，不画写实元素和立体装饰。',
+    subject: (values) => values.text('title'),
+  },
+  {
+    id: 'solution',
+    label: '方案主视觉',
+    description: '填方案名和核心能力，一次出主视觉、能力图和传播方图',
+    reference: 'optional',
+    referenceLabel: '产品或项目实拍（可选）',
+    fields: [
+      {
+        id: 'name',
+        label: '方案名称',
+        kind: 'text',
+        required: true,
+        maxLength: 16,
+        placeholder: '如：机器人柔性产线方案',
+      },
+      {
+        id: 'points',
+        label: '核心能力',
+        kind: 'list',
+        required: true,
+        maxItems: 4,
+        maxLength: 12,
+        placeholder: '如：换产时间缩短',
+      },
+      {
+        id: 'industry',
+        label: '面向行业',
+        kind: 'text',
+        maxLength: 12,
+        placeholder: '如：汽车零部件',
+      },
+      {
+        id: 'style',
+        label: '风格',
+        kind: 'choice',
+        options: ['工业科技', '简约商务', '深色未来'],
+        defaultValue: '工业科技',
+      },
+    ],
+    outputs: [
+      {
+        id: 'hero',
+        label: '主视觉',
+        aspect: '16:9',
+        brief:
+          '面向企业客户的解决方案主视觉，用可信的工业应用场景作背景，方案名大字醒目，可用于官网首屏和售前材料封面',
+        texts: (values) => [values.text('name')],
+      },
+      {
+        id: 'capabilities',
+        label: '能力图',
+        aspect: '4:3',
+        brief:
+          '方案能力说明图，方案名在顶部，各项能力分栏排列，每项配一个简单线性图标，便于放进售前方案',
+        texts: (values) => [values.text('name'), ...values.list('points')],
+      },
+      {
+        id: 'share',
+        label: '传播方图',
+        aspect: '1:1',
+        brief: '用于朋友圈和行业社群传播的方图，主体突出，方案名清晰，手机上也能看清',
+        texts: (values) => [values.text('name')],
+      },
+    ],
+    expertise:
+      '面向企业客户的物料要专业可信：用真实感强的工业场景，不用卡通和夸张促销语气，配色克制，不要出现客户未授权的品牌标识，也不要编造参数和数据。',
+    subject: (values) => values.text('name'),
+  },
+  {
+    id: 'factory',
+    label: '产线场景',
+    description: '说说设备和场景，一次出车间全景、工位中景和细节特写',
+    reference: 'optional',
+    referenceLabel: '设备或现场照片（上传后保留设备原样）',
+    fields: [
+      {
+        id: 'subject',
+        label: '设备或工序',
+        kind: 'text',
+        required: true,
+        maxLength: 30,
+        placeholder: '如：六轴焊接机器人',
+      },
+      {
+        id: 'scene',
+        label: '场景',
+        kind: 'choice',
+        options: ['智能工厂', '机器人工位', '机械加工车间', '仓储物流'],
+        defaultValue: '智能工厂',
+      },
+      {
+        id: 'tone',
+        label: '影调',
+        kind: 'choice',
+        options: ['明亮写实', '科技冷调', '夜间蓝调'],
+        defaultValue: '明亮写实',
+      },
+    ],
+    outputs: [
+      {
+        id: 'panorama',
+        label: '车间全景',
+        aspect: '16:9',
+        brief:
+          '现代化车间的广角全景，产线纵深有秩序，设备是视觉主体，环境整洁，可用于项目汇报和官网',
+      },
+      {
+        id: 'station',
+        label: '工位中景',
+        aspect: '4:3',
+        brief: '单个工位的中景，清楚展示设备的工作状态和结构，背景适度虚化',
+      },
+      {
+        id: 'closeup',
+        label: '细节特写',
+        aspect: '1:1',
+        brief: '设备关键部件的特写，突出金属质感、结构和加工精度，浅景深',
+      },
+    ],
+    expertise:
+      '工业场景要符合真实生产：结构比例合理，线缆和管路走向有逻辑，人员如出现需穿戴规范的安全防护，不要科幻造型，不要出现文字、铭牌和品牌标识。',
+    subject: (values) => values.text('subject'),
+  },
+  {
     id: 'ecommerce',
     label: '电商主图',
     description: '填商品和卖点，一次出主图、场景图和卖点图',
@@ -391,6 +631,13 @@ export const SKILLS: readonly SkillDefinition[] = [
         placeholder: '如：下载应用',
       },
       {
+        id: 'layout',
+        label: '版式',
+        kind: 'choice',
+        options: ['步骤流程', '时间线里程碑', '循环闭环', '对比两栏'],
+        defaultValue: '步骤流程',
+      },
+      {
         id: 'style',
         label: '风格',
         kind: 'choice',
@@ -403,14 +650,15 @@ export const SKILLS: readonly SkillDefinition[] = [
         id: 'vertical',
         label: '竖版',
         aspect: '3:4',
-        brief: '竖版信息图，标题在顶部，各步骤自上而下用编号、图标和箭头串联，分区清晰',
+        brief:
+          '竖版信息图，标题在顶部，内容按所选版式自上而下展开，用编号、图标和连接元素串联，分区清晰',
         texts: (values) => [values.text('title'), ...values.list('steps')],
       },
       {
         id: 'horizontal',
         label: '横版',
         aspect: '16:9',
-        brief: '横版信息图，标题在上方，各步骤从左到右排列，用编号、图标和连接线串联',
+        brief: '横版信息图，标题在上方，内容按所选版式从左到右展开，用编号、图标和连接元素串联',
         texts: (values) => [values.text('title'), ...values.list('steps')],
       },
     ],

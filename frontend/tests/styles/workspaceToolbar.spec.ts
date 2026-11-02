@@ -41,6 +41,12 @@ describe('asset filters', () => {
     );
   });
 
+  it('round the view buttons to match the pill around them', () => {
+    expect(rule('.asset-commandbar .view-switch button')).toContain(
+      'border-radius: var(--radius-full);',
+    );
+  });
+
   it('mark the active view with the same light pill instead of a solid white block', () => {
     expect(rule(".asset-commandbar .view-switch button[aria-pressed='true']")).toContain(
       'background: rgb(255 255 255 / 0.14);',

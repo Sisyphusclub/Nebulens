@@ -1,6 +1,7 @@
 import { ASPECT_RATIOS, type AspectRatio, type ImageResolution } from '@/types/image';
 
 import { CREATION_TEMPLATE_TITLES_ZH } from './creationTemplateTitlesZh';
+import promptsZh from './creationTemplatePromptsZh.json';
 import manifest from './creationTemplates.json';
 
 export interface CreationTemplateSettings {
@@ -16,6 +17,8 @@ export interface CreationTemplate {
   title: string;
   /** The template's original English title, shown as a subtitle. */
   englishTitle: string;
+  /** The original prompt from the source gallery, which search still matches. */
+  originalPrompt: string;
   category: string;
   imageUrl: string;
   prompt: string;
@@ -43,7 +46,9 @@ function normalizeTemplate(value: (typeof manifest)[number]): CreationTemplate {
     englishTitle: value.title,
     category: value.category,
     imageUrl: value.imageUrl,
-    prompt: value.prompt,
+    // Text meant to appear in the image stays as written; the rest is in Chinese.
+    prompt: (promptsZh as Record<string, string>)[value.id] ?? value.prompt,
+    originalPrompt: value.prompt,
     settings: {
       aspectRatio: value.aspectRatio,
       count: value.count,

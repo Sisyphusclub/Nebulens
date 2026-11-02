@@ -59,7 +59,7 @@ export function TemplatesView() {
       if (favoritesOnly && !favoriteIds.includes(template.id)) return false;
       return (
         !normalizedQuery ||
-        `${template.title} ${template.englishTitle} ${template.category} ${template.prompt}`
+        `${template.title} ${template.englishTitle} ${template.category} ${template.prompt} ${template.originalPrompt}`
           .toLocaleLowerCase('zh-CN')
           .includes(normalizedQuery)
       );

@@ -1148,7 +1148,7 @@ describe('React application routes', () => {
     // The generate route loads lazily, so wait for it rather than assuming it is cached.
     expect(await screen.findByRole('region', { name: '图像生成工作区' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent(
-      'Generate a high-end photorealistic render of a future-facing biotech laboratory',
+      '生成一张高端写实渲染图，呈现融合亲自然设计的未来生物科技实验室',
     );
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('16:9');
     expect(screen.getByRole('status', { name: '1 张' })).toBeInTheDocument();

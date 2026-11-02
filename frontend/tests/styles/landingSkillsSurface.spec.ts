@@ -24,8 +24,7 @@ describe('landing skill deck', () => {
     const tile = rule('.landing-deck .landing-deck__tile');
 
     expect(tile).toContain('height: auto;');
-    expect(tile).toContain('background: rgb(36 40 54 / 0.68);');
-    expect(tile).toContain('backdrop-filter: blur(12px) saturate(1.2);');
+    expect(tile).toContain('background: rgb(36 40 52 / 0.94);');
     expect(rule('.landing-deck__tile img')).toContain('width: 48px;');
     // One short line under the name, like Kling's tiles.
     expect(rule('.landing-deck__tile-description')).toContain('white-space: nowrap;');
@@ -37,6 +36,20 @@ describe('landing skill deck beside the rail on narrow windows', () => {
     expect(baseStyles).toMatch(
       /@media \(max-width: 1240px\)\s*\{\s*\.landing-deck__grid\s*\{\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/,
     );
+  });
+});
+
+describe('landing skill deck on hover', () => {
+  it('only changes colour, so it cannot flicker over the playing video', () => {
+    const hover =
+      baseStyles.match(/\.landing-deck \.landing-deck__tile:hover[^{]*\{([^}]+)\}/)?.[1] ?? '';
+
+    expect(hover).toContain('background:');
+    // Moving away from the pointer un-hovers the tile, which moves it back, and so on.
+    expect(hover).not.toContain('transform');
+    // A blur over a video re-samples, and jumps in brightness, as soon as a tile changes.
+    expect(rule('.landing-deck .landing-deck__tile')).not.toContain('backdrop-filter');
+    expect(baseStyles).not.toMatch(/\.landing-deck__tile:hover img/);
   });
 });
 

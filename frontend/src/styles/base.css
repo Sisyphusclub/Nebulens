@@ -11566,20 +11566,17 @@ video.landing-hero__video[data-playing='false'] {
   border: 1px solid rgb(255 255 255 / 0.12);
   border-top-color: rgb(255 255 255 / 0.2);
   border-radius: 14px;
-  background: rgb(36 40 54 / 0.68);
+  background: rgb(36 40 52 / 0.94);
   padding: 8px 8px 8px 12px;
   text-align: left;
-  backdrop-filter: blur(12px) saturate(1.2);
   transition:
-    border-color 200ms var(--ease-out-expo),
-    background-color 200ms var(--ease-out-expo),
-    transform 200ms var(--ease-out-expo);
+    border-color 160ms var(--ease-out-expo),
+    background-color 160ms var(--ease-out-expo);
 }
 .landing-deck .landing-deck__tile:hover,
 .landing-deck .landing-deck__tile:focus-visible {
   border-color: rgb(255 255 255 / 0.28);
-  background: rgb(50 56 72 / 0.76);
-  transform: translateY(-2px);
+  background: rgb(52 57 72 / 0.96);
 }
 .landing-deck__tile-text {
   display: grid;
@@ -11615,11 +11612,6 @@ video.landing-hero__video[data-playing='false'] {
   flex: none;
   border-radius: 10px;
   object-fit: cover;
-  transition: transform 300ms var(--ease-out-expo);
-}
-.landing-deck__tile:hover img,
-.landing-deck__tile:focus-visible img {
-  transform: scale(1.06);
 }
 /* Laptops: still two rows, giving up the icon and then the tagline before the name. */
 @media (min-width: 1241px) and (max-width: 1400px) {
@@ -11856,7 +11848,6 @@ video.landing-hero__video[data-playing='false'] {
 }
 @media (prefers-reduced-motion: reduce) {
   .landing-deck__tile,
-  .landing-deck__tile img,
   .landing-showcase__card img,
   .landing-showcase__cta {
     transition: none;

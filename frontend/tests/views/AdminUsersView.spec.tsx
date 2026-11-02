@@ -219,6 +219,30 @@ describe('AdminUsersView workbench', () => {
     expect(screen.queryByText('额度已更新。')).not.toBeInTheDocument();
   });
 
+  it('edits only the permanent quota, leaving sign-in grants out of the saved amount', async () => {
+    const user = userEvent.setup();
+    adminMocks.users = [
+      {
+        ...makeUsers(1)[0]!,
+        quota: {
+          total: 10_015,
+          usedToday: 0,
+          remainingToday: 9_996,
+          permanentTotal: 10_000,
+          permanentUsed: 4,
+          bonusRemaining: 0,
+        },
+      },
+    ];
+    renderView();
+
+    const row = screen.getByText('member0').closest('[role="row"]') as HTMLElement;
+    expect(within(row).getByLabelText('设置 member0 的永久额度')).toHaveValue(10_000);
+    await user.click(within(row).getByRole('button', { name: '保存额度' }));
+
+    await waitFor(() => expect(adminMocks.updateQuota).toHaveBeenCalledWith('user-0', 10_000));
+  });
+
   it('keeps quota update errors visible without showing a success toast', async () => {
     const user = userEvent.setup();
     adminMocks.updateQuota.mockRejectedValueOnce(new Error('额度更新失败，请稍后重试。'));

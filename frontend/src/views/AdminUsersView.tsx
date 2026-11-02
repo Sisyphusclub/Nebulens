@@ -19,6 +19,11 @@ function displayName(user: AdminUser): string {
   return user.username ?? user.name;
 }
 
+/** The quota an admin sets: `total` also counts sign-in grants, which saving must not absorb. */
+function permanentTotalOf(target: AdminUser): number {
+  return target.quota.permanentTotal ?? target.quota.total;
+}
+
 function isValidDailyTotal(value: number): boolean {
   return Number.isInteger(value) && value >= 0 && value <= 10_000;
 }
@@ -106,7 +111,7 @@ export function AdminUsersView() {
     }
   };
   const saveQuota = async (target: AdminUser): Promise<void> => {
-    const dailyQuota = quotaEdits[target.id] ?? target.quota.total;
+    const dailyQuota = quotaEdits[target.id] ?? permanentTotalOf(target);
     if (savingId !== null || !isValidDailyTotal(dailyQuota)) return;
     setSavingId(target.id);
     try {
@@ -311,7 +316,7 @@ export function AdminUsersView() {
                                 type="number"
                                 min="0"
                                 max="10000"
-                                value={quotaEdits[item.id] ?? item.quota.total}
+                                value={quotaEdits[item.id] ?? permanentTotalOf(item)}
                                 disabled={savingId === item.id}
                                 onChange={(event) =>
                                   setQuotaEdits((current) => ({
@@ -331,7 +336,7 @@ export function AdminUsersView() {
                             <div aria-hidden="true">
                               <i
                                 style={{
-                                  width: `${item.quota.total > 0 ? Math.min(100, (item.quota.usedToday / item.quota.total) * 100) : 0}%`,
+                                  width: `${permanentTotalOf(item) > 0 ? Math.min(100, ((item.quota.permanentUsed ?? item.quota.usedToday) / permanentTotalOf(item)) * 100) : 0}%`,
                                 }}
                               />
                             </div>
@@ -343,7 +348,7 @@ export function AdminUsersView() {
                               size="compact"
                               disabled={
                                 savingId !== null ||
-                                !isValidDailyTotal(quotaEdits[item.id] ?? item.quota.total)
+                                !isValidDailyTotal(quotaEdits[item.id] ?? permanentTotalOf(item))
                               }
                               onClick={() => void saveQuota(item)}
                             >

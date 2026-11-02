@@ -19,6 +19,8 @@ interface LandingAccountActionsProps {
   creditsRemaining: number | string;
   dailyCheckInReward: number;
   isAuthenticated: boolean;
+  /** Until the session is known, show neither sign-in nor the account, to avoid swapping them. */
+  isAuthPending?: boolean;
   imageApiKeyConfigured: boolean;
   imageApiKeySuffix: string | undefined;
   onCheckIn: () => Promise<DailyCheckInResponse>;
@@ -35,6 +37,7 @@ export function LandingAccountActions({
   creditsRemaining,
   dailyCheckInReward,
   isAuthenticated,
+  isAuthPending = false,
   imageApiKeyConfigured,
   imageApiKeySuffix,
   onCheckIn,
@@ -81,7 +84,7 @@ export function LandingAccountActions({
       </IconTooltip>
 
       {/* Notifications and credits only mean something once there is an account. */}
-      {isAuthenticated ? (
+      {isAuthPending ? null : isAuthenticated ? (
         <>
           <MorphPopover>
             <MorphPopoverTrigger>

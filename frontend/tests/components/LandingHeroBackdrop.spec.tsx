@@ -51,8 +51,29 @@ it('plays the light hero video with its poster on capable devices', () => {
   const video = container.querySelector('video.landing-hero__video');
 
   expect(video).toHaveAttribute('src', HERO_BACKDROP_VIDEO);
-  expect(video).toHaveAttribute('poster', HERO_BACKDROP_POSTER);
-  expect(container.querySelector('img')).not.toBeInTheDocument();
+  expect(container.querySelector('img.landing-hero__video')).toHaveAttribute(
+    'src',
+    HERO_BACKDROP_POSTER,
+  );
+});
+
+it('keeps the poster up until the video is actually playing, then fades the video in', () => {
+  const { container } = render(<LandingHeroBackdrop reducedMotion={false} />);
+  const video = container.querySelector('video')!;
+
+  expect(video).toHaveAttribute('data-playing', 'false');
+  fireEvent.playing(video);
+  expect(video).toHaveAttribute('data-playing', 'true');
+  expect(container.querySelector('img.landing-hero__video')).toBeInTheDocument();
+});
+
+it('also reveals the video once its clock moves, in case the playing event never arrives', () => {
+  const { container } = render(<LandingHeroBackdrop reducedMotion={false} />);
+  const video = container.querySelector('video')!;
+
+  fireEvent.timeUpdate(video);
+
+  expect(video).toHaveAttribute('data-playing', 'true');
 });
 
 it('shows only the static poster on low-end devices', () => {

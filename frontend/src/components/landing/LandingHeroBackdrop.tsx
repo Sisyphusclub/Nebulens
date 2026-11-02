@@ -21,6 +21,7 @@ export function LandingHeroBackdrop({ reducedMotion }: { reducedMotion: boolean 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [stillOnly] = useState(prefersStillBackdrop);
   const [videoFailed, setVideoFailed] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const showVideo = !reducedMotion && !stillOnly && !videoFailed;
 
   useEffect(() => {
@@ -35,32 +36,30 @@ export function LandingHeroBackdrop({ reducedMotion }: { reducedMotion: boolean 
     return () => observer.disconnect();
   }, [showVideo]);
 
-  if (!showVideo) {
-    return (
-      <img
-        className="landing-hero__video"
-        src={HERO_BACKDROP_POSTER}
-        alt=""
-        aria-hidden="true"
-        decoding="async"
-      />
-    );
-  }
-
   return (
-    <video
-      ref={videoRef}
-      className="landing-hero__video"
-      src={HERO_BACKDROP_VIDEO}
-      poster={HERO_BACKDROP_POSTER}
-      autoPlay
-      muted
-      loop
-      playsInline
-      preload="auto"
-      aria-hidden="true"
-      tabIndex={-1}
-      onError={() => setVideoFailed(true)}
-    />
+    <>
+      <img className="landing-hero__video" src={HERO_BACKDROP_POSTER} alt="" aria-hidden="true" />
+      {showVideo ? (
+        // Fades in over the poster once it plays: the poster is a different frame, and swapping
+        // straight to the video would jump.
+        <video
+          ref={videoRef}
+          className="landing-hero__video"
+          data-playing={playing}
+          src={HERO_BACKDROP_VIDEO}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+          tabIndex={-1}
+          onPlaying={() => setPlaying(true)}
+          // `playing` can arrive late or not at all for an autoplayed video; a moving clock can't lie.
+          onTimeUpdate={() => setPlaying(true)}
+          onError={() => setVideoFailed(true)}
+        />
+      ) : null}
+    </>
   );
 }

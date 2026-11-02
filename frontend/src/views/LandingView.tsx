@@ -160,12 +160,13 @@ export function LandingView() {
   const accountName = user?.username ?? user?.name ?? '账户';
   const providerPending = authLoading || (isAuthenticated && imageApiKey.isLoading);
   const quotaPending = isAuthenticated && quotaLoading;
+  // While it syncs the label keeps its shape, rather than flicking through status words.
   const quotaLabel = providerPending
-    ? '调用方式同步中'
+    ? '额度 —/—'
     : imageApiKey.status?.configured === true
       ? '个人 Key'
       : quotaPending
-        ? '额度同步中'
+        ? '额度 —/—'
         : isAuthenticated
           ? `额度 ${quota?.remaining ?? '—'}/${quota?.total ?? '—'}`
           : '登录查额度';
@@ -355,6 +356,7 @@ export function LandingView() {
           onNotify={notify}
         />
         <LandingAccountActions
+          isAuthPending={authLoading}
           accountImage={user?.image}
           accountName={accountName}
           checkedInToday={quota?.checkedInToday ?? false}
@@ -480,15 +482,17 @@ export function LandingView() {
               }}
             />
           ) : null}
-          {recommendations.length > 0 ? (
-            <LandingRecommendations
-              recommendations={recommendations}
-              onOpen={setSelectedRecommendation}
-              onUsePrompt={applyRecommendedPrompt}
-            />
-          ) : (
-            <LandingRecentCreations creations={recent} onOpen={openRecent} />
-          )}
+          <div className="landing-hero__secondary">
+            {recommendations.length > 0 ? (
+              <LandingRecommendations
+                recommendations={recommendations}
+                onOpen={setSelectedRecommendation}
+                onUsePrompt={applyRecommendedPrompt}
+              />
+            ) : (
+              <LandingRecentCreations creations={recent} onOpen={openRecent} />
+            )}
+          </div>
         </div>
       </section>
       <LandingSkillDeck onSelect={selectSkill} />

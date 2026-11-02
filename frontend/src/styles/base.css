@@ -522,6 +522,12 @@ video {
   object-fit: cover;
   transform: translateX(-48.2%);
 }
+video.landing-hero__video {
+  transition: opacity 600ms var(--ease-out-expo);
+}
+video.landing-hero__video[data-playing='false'] {
+  opacity: 0;
+}
 /* The video is dark already, so the overlay only shades the edges behind the rail
    and header; the area around the composer stays bright. */
 .landing-hero__overlay {
@@ -973,17 +979,6 @@ video {
   letter-spacing: 0.05em;
   text-align: center;
   white-space: nowrap;
-  animation: landing-title-in 0.72s var(--ease-out-expo) 0.12s both;
-}
-@keyframes landing-title-in {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 .landing-hero__content p {
   max-width: 900px;
@@ -11266,7 +11261,14 @@ video {
 }
 
 /* Landing hero: the signed-in user's latest sessions, one tap from resuming */
+/* Holds the row's height before the history arrives, so the skills below stay put. */
+.landing-hero__secondary {
+  width: 100%;
+  max-width: 940px;
+  min-height: 60px;
+}
 .landing-recent {
+  animation: landing-recent-in 240ms var(--ease-out-expo) both;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -11275,6 +11277,11 @@ video {
   width: 100%;
   max-width: 940px;
   margin-top: 12px;
+}
+@keyframes landing-recent-in {
+  from {
+    opacity: 0;
+  }
 }
 .landing-recent__label {
   color: rgb(242 244 247 / 0.56);

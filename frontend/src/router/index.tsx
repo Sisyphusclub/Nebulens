@@ -1,5 +1,7 @@
 import { lazy, Suspense } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+
+import { HERO_BACKDROP_POSTER } from '@/components/landing/LandingHeroBackdrop';
 
 const LandingView = lazy(() =>
   import('@/views/LandingView').then((module) => ({ default: module.LandingView })),
@@ -21,8 +23,9 @@ const AdminUsersView = lazy(() =>
 );
 
 export function AppRoutes() {
+  const { pathname } = useLocation();
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={pathname === '/' ? <LandingFallback /> : <PageSkeleton />}>
       <Routes>
         <Route path="/" element={<LandingView />} />
         <Route path="/generate" element={<GenerateView />} />
@@ -33,6 +36,13 @@ export function AppRoutes() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
+  );
+}
+
+/** The home page's own backdrop, so it loads into itself instead of through grey blocks. */
+function LandingFallback() {
+  return (
+    <img className="landing-hero__video" src={HERO_BACKDROP_POSTER} alt="" aria-hidden="true" />
   );
 }
 

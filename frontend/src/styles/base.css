@@ -7666,12 +7666,24 @@ video {
   max-width: 640px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+/* The image carries the card surface, so the text check under it reads as a caption on
+   the page rather than a black strip hanging off the image. */
 .session-result {
   width: 100%;
   justify-self: start;
-  border-color: color-mix(in oklch, var(--border) 76%, transparent);
+  overflow: visible;
+  border: 0;
+  background: transparent;
+}
+.session-result__media {
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--border) 76%, transparent);
   border-radius: 16px;
+  background: var(--surface-media);
   box-shadow: 0 22px 56px -48px rgb(0 0 0 / 0.92);
+}
+.session-result > .text-check {
+  padding-inline: 4px;
 }
 .session-batch[data-count='1'] .session-result {
   max-width: var(--result-media-max-height);

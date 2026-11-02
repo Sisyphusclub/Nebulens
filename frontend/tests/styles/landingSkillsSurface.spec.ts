@@ -31,6 +31,14 @@ describe('landing skill deck', () => {
   });
 });
 
+describe('landing skill deck beside the rail on narrow windows', () => {
+  it('drops to two columns before the name and example collide', () => {
+    expect(baseStyles).toMatch(
+      /@media \(max-width: 1100px\)\s*\{\s*\.landing-deck__grid\s*\{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/,
+    );
+  });
+});
+
 describe('landing skill deck on phones', () => {
   it('keeps only the name and example in half-width tiles', () => {
     const phone = baseStyles.slice(

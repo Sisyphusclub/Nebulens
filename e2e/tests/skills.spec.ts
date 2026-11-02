@@ -4,17 +4,22 @@ import { SKILLS_STATE } from '../playwright.config';
 
 test.use({ storageState: SKILLS_STATE });
 
-test('runs a skill from its form, then redraws wrong text by itself', async ({ page }) => {
+test('runs a skill from one line in the composer, then redraws wrong text by itself', async ({
+  page,
+}) => {
   await page.goto('/');
   await page
     .getByRole('region', { name: '技能' })
     .getByRole('button', { name: '使用技能：信息图' })
     .click();
-  const panel = page.getByRole('dialog', { name: '信息图' });
-  await expect(panel.getByLabel('将生成')).toContainText('竖版');
-  await panel.getByLabel('标题').fill('端到端错字流程');
-  await panel.getByRole('textbox', { name: '步骤或要点 1' }).fill('下载应用');
-  await panel.getByRole('button', { name: '开始生成' }).click();
+  await expect(
+    page.getByRole('group', { name: '技能：信息图' }).getByLabel('将生成'),
+  ).toContainText('竖版');
+  const editor = page.getByRole('textbox', { name: '首页创作提示词' });
+  await editor.click();
+  await page.keyboard.press('End');
+  await page.keyboard.type('端到端错字流程，下载应用、填写手机号');
+  await page.keyboard.press('Enter');
 
   // The skill opens its own session and makes a vertical and a horizontal image, each
   // from a prompt the server planned with the title quoted exactly.

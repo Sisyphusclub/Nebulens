@@ -79,6 +79,16 @@ describe('AuthProvider', () => {
     expect(session.refetch).toHaveBeenCalledTimes(1);
   });
 
+  it('answers a malformed sign-in name as a wrong sign-in without asking the server', async () => {
+    const { signIn } = await import('@/lib/authClient');
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await expect(
+      result.current.signInWithUsername({ username: 'No Such User', password: 'secret' }),
+    ).rejects.toThrow('用户名或密码错误。');
+    expect(signIn.username).not.toHaveBeenCalled();
+  });
+
   it('does not expose the previous profile after the session switches accounts', async () => {
     const profileB = deferred<{
       id: string;

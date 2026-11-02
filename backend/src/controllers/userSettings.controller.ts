@@ -58,7 +58,10 @@ export function buildUserSettingsController(deps: UserSettingsControllerDeps): {
         }
         await deps.provider.validateCredential({
           credential: apiKey,
-          model: env.IMAGE_MODEL,
+          model:
+            parsed.group === 'high-res'
+              ? (env.HIGH_RES_IMAGE_MODEL ?? env.IMAGE_MODEL)
+              : env.IMAGE_MODEL,
           credentialGroup: parsed.group,
           requestId: req.requestId,
         });

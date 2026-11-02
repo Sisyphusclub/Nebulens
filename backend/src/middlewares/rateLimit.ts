@@ -13,13 +13,16 @@ export interface AppRateLimiters {
   upload: RequestHandler;
   generation: RequestHandler;
   settingsMutation: RequestHandler;
+  promptEnhance: RequestHandler;
+  skillPlan: RequestHandler;
   openAICompat: RequestHandler;
 }
 
 export function createAppRateLimiters(): AppRateLimiters {
   return {
-    // Session/profile reads happen on every app mount and must not consume the
-    // same budget as credential and OAuth mutations.
+    // Provider metadata, session lookups and the profile read are idempotent reads
+    // fetched on every app mount. They must not consume the same budget as
+    // credential/OAuth mutations, or ordinary page refreshes start failing with 429.
     auth: createLimiter({
       windowMs: FIFTEEN_MINUTES_MS,
       limit: 20,
@@ -30,6 +33,8 @@ export function createAppRateLimiters(): AppRateLimiters {
     upload: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 30, preferUserId: true }),
     generation: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 10, preferUserId: true }),
     settingsMutation: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 10, preferUserId: true }),
+    promptEnhance: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 20, preferUserId: true }),
+    skillPlan: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 20, preferUserId: true }),
     openAICompat: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 30 }),
   };
 }

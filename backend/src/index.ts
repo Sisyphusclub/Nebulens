@@ -5,23 +5,31 @@ import { env } from './config/env.js';
 import { runMigrations } from './db/drizzle.js';
 import { logger } from './logger.js';
 import { seedDefaultAdminIfEnabled } from './services/defaultAdminSeed.service.js';
-import { TwoApiImageProvider } from './services/providers/TwoApiImageProvider.js';
+import { createAnalysisQueueFromEnv } from './services/imageAnalysis.service.js';
+import { createPromptEnhancerFromEnv } from './services/promptEnhance.service.js';
+import { createProviderFromEnv } from './services/providers/createProviderFromEnv.js';
+import { withStructuredVisibleText } from './services/providers/withStructuredVisibleText.js';
+import { createSkillPlannerFromEnv } from './services/skillPlanner.service.js';
 
 runMigrations();
 await seedDefaultAdminIfEnabled();
 
-const provider = new TwoApiImageProvider({
-  baseUrl: env.IMAGE_API_BASE_URL,
-  apiKey: env.IMAGE_API_KEY,
-  modelApiKeys: { 'gemini-3-pro-image': env.GEMINI_IMAGE_API_KEY },
-  ...(env.HIGH_RES_IMAGE_API_KEY !== undefined
-    ? { highResApiKey: env.HIGH_RES_IMAGE_API_KEY }
-    : {}),
-  defaultModel: env.IMAGE_MODEL,
-  timeoutMs: env.IMAGE_API_TIMEOUT_MS,
-});
+const baseProvider = createProviderFromEnv();
+const provider = env.TEXT_PROMPT_STRUCTURING
+  ? withStructuredVisibleText(baseProvider)
+  : baseProvider;
 
-const app = createApp({ provider });
+const imageAnalysis = createAnalysisQueueFromEnv();
+logger.info({ enabled: imageAnalysis !== undefined }, 'image analysis: configured');
+
+const promptEnhancer = createPromptEnhancerFromEnv();
+
+const app = createApp({
+  provider,
+  skillPlanner: createSkillPlannerFromEnv(),
+  ...(imageAnalysis === undefined ? {} : { imageAnalysis }),
+  ...(promptEnhancer === undefined ? {} : { promptEnhancer }),
+});
 
 const server = app.listen(env.PORT, () => {
   logger.info({ port: env.PORT }, 'server: listening');

@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -44,13 +44,6 @@ const authMocks = vi.hoisted(
   }),
 );
 
-const publicGalleryMocks = vi.hoisted(() => ({
-  hasMore: false,
-  isHydrating: false,
-  hydrateError: null as Error | null,
-  loadMore: vi.fn(),
-}));
-
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
     user: authMocks.user,
@@ -67,7 +60,12 @@ vi.mock('@/hooks/useAuth', () => ({
 
 vi.mock('@/hooks/useImageQuota', () => ({
   useImageQuota: () => ({
-    quota: { total: 20, remaining: 16, checkedInToday: false, dailyCheckInReward: 5 },
+    quota: {
+      total: 20,
+      remaining: 16,
+      checkedInToday: false,
+      dailyCheckInReward: 5,
+    },
     isLoading: false,
     error: null,
     refresh: vi.fn(),
@@ -97,6 +95,30 @@ vi.mock('@/hooks/useImageGeneration', () => ({
   }),
 }));
 
+const recommendationMocks = vi.hoisted(() => ({ items: [] as unknown[] }));
+
+vi.mock('@/hooks/useTeamRecommendations', () => ({
+  useTeamRecommendations: () => ({ items: recommendationMocks.items }),
+}));
+
+const showcaseMocks = vi.hoisted(() => ({ items: [] as unknown[] }));
+
+vi.mock('@/hooks/useTeamShowcase', () => ({
+  useTeamShowcase: () => showcaseMocks.items,
+}));
+
+const promptMocks = vi.hoisted(() => ({
+  enhancePrompt: vi.fn((prompt: string) => Promise.resolve(`${prompt}，霓虹倒影，电影级广角构图`)),
+}));
+
+vi.mock('@/services/api/promptApi', () => ({ enhancePrompt: promptMocks.enhancePrompt }));
+
+const skillMocks = vi.hoisted(() => ({ fetchSkillForms: vi.fn(), planSkill: vi.fn() }));
+vi.mock('@/services/api/skillsApi', () => ({
+  fetchSkillForms: skillMocks.fetchSkillForms,
+  planSkill: skillMocks.planSkill,
+}));
+
 vi.mock('@/hooks/useImageHistory', () => ({
   useImageHistory: () => ({
     records: [],
@@ -114,21 +136,6 @@ vi.mock('@/hooks/useImageHistory', () => ({
   }),
 }));
 
-vi.mock('@/hooks/usePublicGallery', () => ({
-  usePublicGallery: () => ({
-    entries: [],
-    isHydrating: publicGalleryMocks.isHydrating,
-    hydrateError: publicGalleryMocks.hydrateError,
-    hasMore: publicGalleryMocks.hasMore,
-    refresh: vi.fn(),
-    loadMore: publicGalleryMocks.loadMore,
-    add: vi.fn(),
-    removeAsAdmin: vi.fn(),
-  }),
-  addPublicRecord: vi.fn(),
-  removePublicRecord: vi.fn(),
-}));
-
 vi.mock('@/hooks/useAdminUsers', () => ({
   useAdminUsers: () => ({
     users: [],
@@ -143,12 +150,55 @@ vi.mock('@/hooks/useAdminUsers', () => ({
 
 import { App } from '@/App';
 import { ToastProvider } from '@/components/common/ToastProvider';
+import { templatesAcrossCategories } from '@/data/creationTemplates';
 import {
   attachGenerationBatch,
   createGenerationSession,
   rememberGenerationSession,
   resetGenerationSessionsForTests,
 } from '@/hooks/useGenerationSessions';
+
+const SKILL_FORMS = [
+  {
+    id: 'ecommerce',
+    label: '电商主图',
+    description: '填商品和卖点，一次出主图、场景图和卖点图',
+    reference: 'optional',
+    referenceLabel: '商品图（上传后保留商品原样）',
+    fields: [
+      { id: 'product', label: '商品名称', kind: 'text', required: true, maxLength: 30 },
+      { id: 'points', label: '卖点', kind: 'list', maxItems: 3, maxLength: 16 },
+      {
+        id: 'style',
+        label: '风格',
+        kind: 'choice',
+        options: ['简约白底', '节日促销'],
+        defaultValue: '简约白底',
+      },
+    ],
+    outputs: [
+      { id: 'main', label: '主图' },
+      { id: 'points', label: '卖点图' },
+    ],
+  },
+  {
+    id: 'poster',
+    label: '活动海报',
+    description: '填活动信息，一次出竖版海报、朋友圈方图和横幅',
+    reference: 'optional',
+    fields: [{ id: 'title', label: '主标题', kind: 'text', required: true, maxLength: 12 }],
+    outputs: [{ id: 'portrait', label: '竖版海报' }],
+  },
+  {
+    id: 'background',
+    label: '商品换背景',
+    description: '上传商品图，商品原样不动，一次出三种构图的新背景',
+    reference: 'required',
+    referenceLabel: '商品图',
+    fields: [{ id: 'scene', label: '新背景', kind: 'text', required: true, maxLength: 40 }],
+    outputs: [{ id: 'front', label: '原角度' }],
+  },
+];
 
 type TestRouteEntry =
   | string
@@ -227,10 +277,9 @@ beforeEach(() => {
   authMocks.isAuthenticated = true;
   authMocks.isLoading = false;
   historyMocks.batches = [];
-  publicGalleryMocks.hasMore = false;
-  publicGalleryMocks.isHydrating = false;
-  publicGalleryMocks.hydrateError = null;
-  publicGalleryMocks.loadMore.mockResolvedValue(undefined);
+  skillMocks.fetchSkillForms.mockResolvedValue(SKILL_FORMS);
+  recommendationMocks.items = [];
+  showcaseMocks.items = [];
   generation.generate.mockResolvedValue({
     batchId: 'landing-batch',
     aspectRatio: '16:9',
@@ -258,238 +307,36 @@ beforeEach(() => {
 });
 
 describe('React application routes', () => {
-  it('renders the complete GPT Image 2 gallery without pagination', async () => {
+  it('shows template cards as small thumbnails and falls back to the original', async () => {
+    renderRoute('/templates');
+
+    const [image] = await screen.findAllByRole('img', { name: /示例$/ });
+    const original = image?.getAttribute('src')?.replace('/thumbs/', '/') ?? '';
+    expect(image).toHaveAttribute('src', expect.stringMatching(/\/thumbs\/[^/]+\.webp$/));
+    // The first card is a wide one, so sharp screens can still pick the original.
+    expect(image).toHaveAttribute('srcset', expect.stringContaining(`${original} `));
+
+    if (image) fireEvent.error(image);
+    expect(image?.getAttribute('src')).toMatch(/\/media\/templates\/[^/]+\/[^/]+\.\w+$/);
+    expect(image?.getAttribute('src')).not.toContain('/thumbs/');
+    expect(original).toContain('/media/templates/');
+  });
+
+  it('names templates in Chinese with the English original as a subtitle', async () => {
     const user = userEvent.setup();
-    const { container } = renderRoute('/');
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Turn your idea into images' }),
-    ).toBeInTheDocument();
-    const shinyHeadline = screen.getByText('into images');
-    expect(shinyHeadline).toHaveClass('animate-shiny');
-    expect(shinyHeadline.style.backgroundSize).toBe('200% auto');
-    expect(shinyHeadline.style.color).toBe('transparent');
-    expect(shinyHeadline.style.backgroundImage).toContain('linear-gradient(110deg');
-    expect(screen.queryByRole('heading', { level: 2, name: '今日创作' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 2, name: '画廊' })).not.toBeInTheDocument();
-    expect(container.querySelector('video.landing-hero__video')).toBeInTheDocument();
-    expect(container.querySelector('.landing-hero')).toHaveAttribute('data-layout', 'media-stage');
-    const initialCreationCards = container.querySelectorAll(
-      '.image-gallery-vertical__image-button',
-    );
-    const initialCreationImages = container.querySelectorAll(
-      '.landing-creations .image-gallery-vertical__columns img',
-    );
-    const animatedGalleryTracks = container.querySelectorAll(
-      '.landing-creations [style*="animation-name"]',
-    );
-    const desktopGallery = container.querySelector<HTMLElement>(
-      '.landing-creations [style*="--gallery-columns"]',
-    );
-    expect(desktopGallery?.style.getPropertyValue('--gallery-columns')).toBe('6');
-    expect(initialCreationCards).toHaveLength(169);
-    expect(initialCreationImages).toHaveLength(169);
-    expect(container.querySelectorAll('.image-gallery-vertical__columns')).toHaveLength(1);
-    expect(initialCreationCards[0]).toHaveAccessibleName(
-      '查看图片：雾中的混凝土运动场与奔跑者，冷灰建筑、湿润空气与柔和晨光',
-    );
-    expect(animatedGalleryTracks).toHaveLength(0);
-    expect(container.querySelector('.landing-creations style')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '加载更多' })).not.toBeInTheDocument();
-    const creationCards = container.querySelectorAll('.image-gallery-vertical__image-button');
-    const creationImages = container.querySelectorAll(
-      '.landing-creations .image-gallery-vertical__columns img',
-    );
-    const creationSources = new Set(
-      Array.from(creationCards).map((card) => card.querySelector('img')?.getAttribute('src')),
-    );
-    expect(creationSources).toHaveLength(169);
-    expect(creationImages).toHaveLength(169);
-    expect(Array.from(creationSources)).toEqual(
-      expect.arrayContaining([
-        '/media/hero-card-left.jpg',
-        '/media/hero-card-center.jpg',
-        '/media/hero-card-right.jpg',
-        '/media/hero-card-runner-detail.jpg',
-        '/media/hero-card-piano-detail.jpg',
-        '/media/hero-card-plants-detail.jpg',
-      ]),
-    );
-    const templateSources = Array.from(creationCards)
-      .slice(6)
-      .map((card) => card.querySelector('img')?.getAttribute('src'));
-    expect(templateSources.slice(0, 6).every((source) => !source?.includes('/anime-'))).toBe(true);
-    expect(templateSources.slice(-6).some((source) => source?.includes('/anime-'))).toBe(true);
-    expect(screen.queryByRole('button', { name: '上一张作品' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '下一张作品' })).not.toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toBeInTheDocument();
-    const landingAnchor = container.querySelector('.landing-composer-anchor');
-    const landingComposers = landingAnchor?.querySelectorAll('[data-slot="agent-chat-input"]');
-    const landingComposer = landingComposers?.item(0);
-    expect(landingAnchor).toBeInTheDocument();
-    expect(landingComposers).toHaveLength(1);
-    expect(landingAnchor?.querySelector('.landing-composer-layout')).not.toBeInTheDocument();
-    expect(
-      landingAnchor?.querySelectorAll(
-        ':scope > .landing-composer-hero > .landing-composer-content',
-      ),
-    ).toHaveLength(1);
-    expect(landingAnchor?.querySelector('.landing-liquidglass-target')).not.toBeInTheDocument();
-    expect(landingAnchor?.querySelector('.landing-liquidglass-backdrop')).not.toBeInTheDocument();
-    expect(landingAnchor?.querySelector('canvas')).not.toBeInTheDocument();
-    expect(landingComposer).not.toHaveAttribute('data-liquid-glass');
-    expect(
-      landingComposer?.querySelector('.border-glow-liquid-glass__effect'),
-    ).not.toBeInTheDocument();
-    expect(landingComposer?.querySelector('feDisplacementMap')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /选择智能体/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '添加参考图或技能' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /选择模型和推理强度/ })).not.toBeInTheDocument();
-    const modelTrigger = screen.getByRole('button', { name: '选择模型' });
-    expect(modelTrigger).toHaveTextContent('gpt-image-2');
-    await user.click(modelTrigger);
-    const modelPanel = document.querySelector('.generation-model-menu');
-    expect(modelPanel).toHaveClass('generation-control-panel', '!bg-popover');
-    expect(modelPanel).not.toHaveClass('!bg-background');
-    await user.click(modelTrigger);
-    const customTrigger = screen.getByRole('button', { name: '自定义生成参数' });
-    expect(customTrigger).toHaveTextContent('自定义');
-    expect(customTrigger).toHaveTextContent('智能 · 1K · 1张');
-    expect(screen.queryByRole('group', { name: '画面比例' })).not.toBeInTheDocument();
-    await user.click(customTrigger);
-    const customPanel = screen.getByRole('menu', { name: '自定义生成参数' });
-    expect(customPanel).toHaveClass('generation-control-panel');
-    expect(customPanel).toHaveAttribute('data-side', 'bottom');
-    expect(within(customPanel).getByText('生成偏好')).toBeInTheDocument();
-    expect(within(customPanel).queryByText('其他设置')).not.toBeInTheDocument();
-    expect(within(customPanel).getByText('智能 · 1K · 1张')).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: '画面比例' })).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: '生成张数' })).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: '清晰度' })).toBeInTheDocument();
-    expect(screen.queryByRole('group', { name: '质量' })).not.toBeInTheDocument();
-    expect(
-      within(screen.getByRole('group', { name: '画面比例' }))
-        .getByRole('menuitemradio', { name: '16:9' })
-        .querySelector('.generation-custom-option__frame'),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: '发布到发现页' })).not.toBeChecked();
-    expect(screen.getByRole('status', { name: '剩余额度 16，总额度 20' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: '正在发生的想象' })).not.toBeInTheDocument();
+    renderRoute('/templates');
+
+    const card = await screen.findByRole('button', { name: '预览模板：亲自然生物科技实验室' });
+    expect(card).toHaveTextContent('Biophilic Biotech Lab');
+
+    // The English title still finds the template.
+    await user.type(screen.getByRole('searchbox', { name: '搜索创作模板' }), 'Biophilic');
+    expect(screen.getAllByRole('button', { name: /预览模板：/ })).toHaveLength(1);
   });
 
-  it('automatically loads remaining public gallery pages without pagination', async () => {
-    publicGalleryMocks.hasMore = true;
-    renderRoute('/');
-
-    await screen.findByRole('textbox', { name: '首页创作提示词' });
-    await waitFor(() => expect(publicGalleryMocks.loadMore).toHaveBeenCalledTimes(1));
-    expect(screen.queryByRole('button', { name: '加载更多' })).not.toBeInTheDocument();
-  });
-
-  it('docks the landing composer while browsing the gallery and expands it on focus', async () => {
-    const user = userEvent.setup();
+  it('places creation templates between generation and assets in the landing navigation', async () => {
     const { container } = renderRoute('/');
-    await screen.findByRole('textbox', { name: '首页创作提示词' });
-    const anchor = container.querySelector<HTMLElement>('.landing-composer-anchor');
-    expect(anchor).toHaveAttribute('data-docked', 'false');
-    expect(anchor).toHaveAttribute('data-expanded', 'false');
-
-    const scrollY = vi.spyOn(window, 'scrollY', 'get').mockReturnValue(520);
-    vi.spyOn(anchor!, 'getBoundingClientRect').mockReturnValue(new DOMRect(250, -220, 940, 137));
-    void act(() => window.dispatchEvent(new Event('scroll')));
-
-    await waitFor(() => expect(anchor).toHaveAttribute('data-docked', 'true'));
-    expect(anchor).toHaveAttribute('data-expanded', 'false');
-    expect(anchor?.querySelector('.landing-composer-hero')).toBeInTheDocument();
-    expect(anchor?.querySelector('.landing-composer-dock')).not.toBeInTheDocument();
-    await waitFor(() =>
-      expect(anchor?.querySelector('.landing-composer-dock')).toBeInTheDocument(),
-    );
-    expect(anchor?.querySelector('.landing-composer-hero')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('textbox', { name: '首页创作提示词' })).toHaveLength(1);
-
-    await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
-    expect(screen.getByRole('menu', { name: '自定义生成参数' })).toHaveAttribute(
-      'data-side',
-      'top',
-    );
-    await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
-
-    const promptInput = screen.getByRole('textbox', { name: '首页创作提示词' });
-    await user.click(promptInput);
-    expect(anchor).toHaveAttribute('data-expanded', 'true');
-    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toBe(promptInput);
-
-    act(() => promptInput.blur());
-    await waitFor(() => expect(anchor).toHaveAttribute('data-expanded', 'false'));
-
-    await user.click(promptInput);
-    expect(anchor).toHaveAttribute('data-expanded', 'true');
-
-    await user.type(promptInput, '冷白背景产品摄影');
-    expect(promptInput).toHaveTextContent('冷白背景产品摄影');
-    expect(anchor).toHaveAttribute('data-expanded', 'true');
-
-    await user.click(screen.getByRole('button', { name: '添加参考图或技能' }));
-    await user.click(screen.getByRole('menuitem', { name: '添加参考图' }));
-    const fileInput = container.querySelector<HTMLInputElement>('input[type="file"]');
-    await user.upload(
-      fileInput!,
-      new File(['transition-reference'], 'transition-reference.png', { type: 'image/png' }),
-    );
-    expect(screen.getByText('transition-reference.png')).toBeInTheDocument();
-
-    scrollY.mockReturnValue(80);
-    void act(() => window.dispatchEvent(new Event('scroll')));
-    await waitFor(() => expect(anchor).toHaveAttribute('data-docked', 'false'));
-    expect(anchor?.querySelector('.landing-composer-dock')).toBeInTheDocument();
-    expect(anchor?.querySelector('.landing-composer-hero')).not.toBeInTheDocument();
-    await waitFor(() =>
-      expect(anchor?.querySelector('.landing-composer-hero')).toBeInTheDocument(),
-    );
-    expect(anchor?.querySelector('.landing-composer-dock')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('textbox', { name: '首页创作提示词' })).toHaveLength(1);
-    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
-      '冷白背景产品摄影',
-    );
-    expect(screen.getByText('transition-reference.png')).toBeInTheDocument();
-  });
-
-  it('keeps dock focus and collapse behavior with reduced motion enabled', async () => {
-    vi.mocked(window.matchMedia).mockImplementation((query) => ({
-      matches: query === '(prefers-reduced-motion: reduce)',
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    }));
-    const user = userEvent.setup();
-    const { container } = renderRoute('/');
-    await screen.findByRole('textbox', { name: '首页创作提示词' });
-    const anchor = container.querySelector<HTMLElement>('.landing-composer-anchor');
-
-    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(520);
-    vi.spyOn(anchor!, 'getBoundingClientRect').mockReturnValue(new DOMRect(250, -220, 940, 137));
-    void act(() => window.dispatchEvent(new Event('scroll')));
-    await waitFor(() => expect(anchor).toHaveAttribute('data-docked', 'true'));
-    await waitFor(() =>
-      expect(anchor?.querySelector('.landing-composer-dock')).toBeInTheDocument(),
-    );
-
-    const promptInput = screen.getByRole('textbox', { name: '首页创作提示词' });
-    await user.click(promptInput);
-    expect(promptInput).toHaveFocus();
-    expect(anchor).toHaveAttribute('data-expanded', 'true');
-
-    act(() => promptInput.blur());
-    await waitFor(() => expect(anchor).toHaveAttribute('data-expanded', 'false'));
-  });
-
-  it('places creation templates between generation and assets in the landing navigation', () => {
-    const { container } = renderRoute('/');
-    const navigation = within(screen.getByRole('navigation', { name: '首页导航' }));
+    const navigation = within(await screen.findByRole('navigation', { name: '首页导航' }));
     const productLinks = navigation
       .getAllByRole('link')
       .map((link) => link.textContent)
@@ -504,6 +351,241 @@ describe('React application routes', () => {
       '--sidebar-width-icon': '6.875rem',
     });
     expect(container.querySelector(".landing-sidebar [data-sidebar='separator']")).toBeNull();
+  });
+
+  it('turns the composer into skill mode from a capsule and leaves it again', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+
+    const skills = await screen.findByRole('region', { name: '技能' });
+    await user.click(within(skills).getByRole('button', { name: '使用技能：电商主图' }));
+    const bar = await screen.findByRole('group', { name: '技能：电商主图' });
+
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('/电商主图');
+    expect(within(bar).getByLabelText('将生成')).toHaveTextContent('主图');
+    expect(within(bar).getByText(/如：山川明前绿茶/u)).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: '电商主图' })).not.toBeInTheDocument();
+
+    await user.click(within(bar).getByRole('button', { name: '退出技能：电商主图' }));
+
+    expect(screen.queryByRole('group', { name: '技能：电商主图' })).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).not.toHaveTextContent(
+      '/电商主图',
+    );
+  });
+
+  it('asks for the image a reference-based skill works from before it plans anything', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+
+    const gallery = await screen.findByRole('region', { name: '技能' });
+    await user.click(within(gallery).getByRole('button', { name: '使用技能：商品换背景' }));
+    const bar = await screen.findByRole('group', { name: '技能：商品换背景' });
+    await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '海边礁石');
+
+    expect(within(bar).getByText('需附商品图')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '用「商品换背景」开始生成' }));
+
+    expect(await screen.findByText('请先上传商品图。')).toBeInTheDocument();
+    expect(skillMocks.planSkill).not.toHaveBeenCalled();
+  });
+
+  it('runs a skill: plans every image, then generates them one by one in a new session', async () => {
+    const user = userEvent.setup();
+    skillMocks.planSkill.mockResolvedValue({
+      title: '电商主图 · 山川绿茶',
+      outputs: [
+        { id: 'main', label: '主图', aspect: '1:1', prompt: '山川绿茶主图，右下角写着“¥199”' },
+        { id: 'points', label: '卖点图', aspect: '3:4', prompt: '山川绿茶卖点图，列出“高山云雾”' },
+      ],
+    });
+    generation.generate.mockImplementation((options: { prompt: string; aspectRatio: string }) => {
+      const batchId = `skill-${options.aspectRatio}`;
+      return Promise.resolve({
+        batchId,
+        aspectRatio: options.aspectRatio,
+        generationMode: 'text-to-image',
+        entries: [
+          {
+            record: {
+              id: `${batchId}.png`,
+              batchId,
+              createdAt: '2026-10-29T08:00:00.000Z',
+              prompt: options.prompt,
+              model: 'gpt-image-2',
+              aspectRatio: options.aspectRatio,
+              width: 1024,
+              height: 1024,
+              count: 1,
+              resolution: 'standard',
+              isPublic: false,
+            },
+            imageUrl: `/${batchId}.png`,
+          },
+        ],
+      });
+    });
+    renderRoute('/');
+
+    const skills = await screen.findByRole('region', { name: '技能' });
+    await user.click(within(skills).getByRole('button', { name: '使用技能：电商主图' }));
+    const bar = await screen.findByRole('group', { name: '技能：电商主图' });
+    await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '山川绿茶，高山云雾');
+    await user.click(within(bar).getByRole('button', { name: '风格' }));
+    await user.click(screen.getByRole('menuitemradio', { name: '节日促销' }));
+    await user.click(screen.getByRole('button', { name: '用「电商主图」开始生成' }));
+
+    await waitFor(() =>
+      expect(skillMocks.planSkill).toHaveBeenCalledWith('ecommerce', {
+        brief: '山川绿茶，高山云雾',
+        values: { style: '节日促销' },
+        hasReference: false,
+      }),
+    );
+    await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(2));
+    expect(
+      generation.generate.mock.calls.map(([options]) => [
+        (options as { prompt: string }).prompt,
+        (options as { aspectRatio: string }).aspectRatio,
+        (options as { count: number }).count,
+      ]),
+    ).toEqual([
+      ['山川绿茶主图，右下角写着“¥199”', '1:1', 1],
+      ['山川绿茶卖点图，列出“高山云雾”', '3:4', 1],
+    ]);
+    expect(screen.getByLabelText('当前路由')).toHaveTextContent('/generate?session=');
+  });
+
+  it('resumes a recent creation from the homepage in its own session', async () => {
+    const user = userEvent.setup();
+    const session = createGenerationSession('雾中的未来车站');
+    attachGenerationBatch(session.id, 'recent-batch', '雾中的未来车站');
+    historyMocks.batches = [mockHistoryBatch('recent-batch', '雾中的未来车站')];
+    renderRoute('/');
+
+    const recent = await screen.findByRole('navigation', { name: '继续上次创作' });
+    await user.click(within(recent).getByRole('button', { name: '继续创作：雾中的未来车站' }));
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('当前路由')).toHaveTextContent(
+        `/generate?session=${session.id}`,
+      ),
+    );
+  });
+
+  it('greets visitors with a Chinese headline', async () => {
+    renderRoute('/');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: '把想法，变成画面' }),
+    ).toBeInTheDocument();
+  });
+
+  it('hides recent creations when there is no history', async () => {
+    renderRoute('/');
+    await screen.findByRole('region', { name: '技能' });
+    expect(screen.queryByRole('navigation', { name: '继续上次创作' })).not.toBeInTheDocument();
+  });
+
+  it('shows similar teammate work under the composer and reuses its prompt', async () => {
+    const user = userEvent.setup();
+    recommendationMocks.items = [
+      {
+        record: {
+          id: 'team-tea.png',
+          createdAt: '2026-10-28T00:00:00.000Z',
+          prompt: '奶茶新品上市海报，清新绿色',
+          model: 'gpt-image-2',
+          aspectRatio: '3:4',
+          width: 1024,
+          height: 1360,
+          isPublic: false,
+          isShared: true,
+        },
+        ownerName: 'alice',
+        reason: '同为海报',
+      },
+    ];
+    renderRoute('/');
+
+    const panel = await screen.findByRole('region', { name: '成果库里相似的作品' });
+    expect(screen.queryByRole('navigation', { name: '继续上次创作' })).not.toBeInTheDocument();
+    await user.click(within(panel).getByRole('button', { name: '用这个提示词' }));
+
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
+      '奶茶新品上市海报，清新绿色',
+    );
+    expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('3:4');
+  });
+
+  it('makes a similar image from the library showcase', async () => {
+    const user = userEvent.setup();
+    showcaseMocks.items = [
+      {
+        id: 'team-tea.png',
+        createdAt: '2026-10-29T00:00:00.000Z',
+        prompt: '奶茶新品上市海报，清新绿色',
+        model: 'gpt-image-2',
+        aspectRatio: '3:4',
+        width: 1024,
+        height: 1360,
+        isPublic: false,
+        ownerName: 'alice',
+      },
+    ];
+    renderRoute('/');
+
+    const showcase = await screen.findByRole('region', { name: '灵感' });
+    await user.click(
+      within(showcase).getByRole('button', { name: '做同款：奶茶新品上市海报，清新绿色' }),
+    );
+
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
+      '奶茶新品上市海报，清新绿色',
+    );
+    expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('3:4');
+  });
+
+  it('tops the inspiration feed up with templates and fills the composer from one', async () => {
+    const user = userEvent.setup();
+    const [template] = templatesAcrossCategories(1);
+    renderRoute('/');
+
+    const feed = await screen.findByRole('region', { name: '灵感' });
+    await user.click(within(feed).getByRole('button', { name: `做同款：${template!.title}` }));
+
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
+      template!.prompt.slice(0, 24),
+    );
+  });
+
+  it('polishes the homepage prompt with AI and can undo it', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+
+    const prompt = await screen.findByRole('textbox', { name: '首页创作提示词' });
+    await user.type(prompt, '雨夜的未来城市');
+    await user.click(screen.getByRole('button', { name: 'AI 润色提示词' }));
+
+    expect(promptMocks.enhancePrompt).toHaveBeenCalledWith('雨夜的未来城市');
+    expect(await screen.findByText('雨夜的未来城市，霓虹倒影，电影级广角构图')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '撤销润色' }));
+    expect(prompt).toHaveTextContent('雨夜的未来城市');
+    expect(prompt).not.toHaveTextContent('霓虹倒影');
+  });
+
+  it('suggests 2K on the homepage when the scene brief has a lot of text', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+
+    const prompt = await screen.findByRole('textbox', { name: '首页创作提示词' });
+    await user.type(
+      prompt,
+      '门店活动海报，主标题“周年庆典”，副标题“全场第二件半价”，底部写“活动时间 11月1日至11月7日”',
+    );
+    await user.click(screen.getByRole('button', { name: '切换到 2K' }));
+
+    expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K');
   });
 
   it('shows the functional homepage model selector', async () => {
@@ -634,7 +716,7 @@ describe('React application routes', () => {
         name: '2K',
       }),
     );
-    await user.click(screen.getByRole('switch', { name: '发布到发现页' }));
+    expect(screen.queryByRole('switch', { name: '发布到发现页' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '带着提示词开始创作' }));
 
     expect(await screen.findByRole('region', { name: '图像生成工作区' })).toBeInTheDocument();
@@ -647,10 +729,10 @@ describe('React application routes', () => {
         count: 2,
         resolution: '2k',
         quality: 'xhigh',
-        isPublic: true,
         referenceFiles: referenceFiles.slice(0, 4),
       }),
     );
+    expect(generation.generate.mock.calls[0]?.[0]).not.toHaveProperty('isPublic');
     expect(screen.getByRole('region', { name: '本次创作结果' })).toHaveTextContent(
       '雨夜的未来城市',
     );
@@ -658,7 +740,6 @@ describe('React application routes', () => {
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K');
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('xhigh');
     expect(screen.getByRole('status', { name: '2 张' })).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: '发布到发现页' })).toBeChecked();
   });
 
   it('opens and closes the shadcn mobile sidebar', async () => {
@@ -678,38 +759,6 @@ describe('React application routes', () => {
       expect(screen.queryByRole('navigation', { name: '首页导航' })).not.toBeInTheDocument();
     });
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
-  });
-
-  it('opens discover images with square, landscape, and portrait detail framing', async () => {
-    const user = userEvent.setup();
-    const { container } = renderRoute('/');
-    const creationCards = container.querySelectorAll<HTMLButtonElement>(
-      '.image-gallery-vertical__image-button',
-    );
-    expect(creationCards.length).toBeGreaterThanOrEqual(4);
-
-    for (const [index, ratio, width, height] of [
-      [0, 1024 / 1536, '1024', '1536'],
-      [1, 1536 / 1024, '1536', '1024'],
-      [3, 1, '1024', '1024'],
-    ] as const) {
-      await user.click(creationCards[index]!);
-
-      const dialog = screen.getByRole('dialog', { name: '图片详情' });
-      expect(dialog).toBeInTheDocument();
-      expect(dialog.querySelector(':scope > .image-detail__close')).toBeInTheDocument();
-      const media = dialog.querySelector<HTMLElement>(':scope > .image-detail__media');
-      expect(media).toBeInTheDocument();
-      expect(dialog).toHaveStyle(`--image-detail-image-ratio: ${ratio}`);
-      expect(media?.querySelector('img')).toHaveAttribute('width', width);
-      expect(media?.querySelector('img')).toHaveAttribute('height', height);
-      expect(dialog.querySelector(':scope > .image-detail__body')).toBeInTheDocument();
-
-      await user.click(screen.getByRole('button', { name: '关闭图片详情' }));
-      await waitFor(() => {
-        expect(screen.queryByRole('dialog', { name: '图片详情' })).not.toBeInTheDocument();
-      });
-    }
   });
 
   it('keeps the generation route and its operational controls', async () => {
@@ -950,7 +999,8 @@ describe('React application routes', () => {
       expect(screen.getByLabelText('当前路由').textContent).toMatch(/^\/generate\?session=/),
     );
     expect(screen.getByLabelText('当前路由')).not.toHaveTextContent(session.id);
-    expect(screen.getByRole('button', { name: '查看图片：旧会话' })).toBeInTheDocument();
+    // The new session only shows its own batches; the old one stays in history.
+    expect(screen.queryByRole('button', { name: '查看图片：旧会话' })).not.toBeInTheDocument();
   });
 
   it('does not restore a remembered session for a state-only automatic entry', async () => {
@@ -1069,7 +1119,7 @@ describe('React application routes', () => {
     await user.click(screen.getByRole('button', { name: '模板排序' }));
     await user.click(screen.getByRole('menuitemradio', { name: '名称排序' }));
     expect(screen.getAllByRole('button', { name: /预览模板：/ })[0]).toHaveAccessibleName(
-      '预览模板：16-panel anime expression grid',
+      '预览模板：《潮汐兄弟》19 页漫画样张',
     );
     await user.click(screen.getByRole('button', { name: '模板排序' }));
     await user.click(screen.getByRole('menuitemradio', { name: '精选排序' }));
@@ -1087,13 +1137,14 @@ describe('React application routes', () => {
       expect(within(preview).getByRole('button', { name: '关闭模板预览' })).toHaveFocus(),
     );
     await user.click(within(preview).getByRole('button', { name: '使用模板' }));
-    expect(screen.getByRole('region', { name: '图像生成工作区' })).toBeInTheDocument();
+    // The generate route loads lazily, so wait for it rather than assuming it is cached.
+    expect(await screen.findByRole('region', { name: '图像生成工作区' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent(
       'Generate a high-end photorealistic render of a future-facing biotech laboratory',
     );
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('16:9');
     expect(screen.getByRole('status', { name: '1 张' })).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: '发布到发现页' })).not.toBeChecked();
+    expect(screen.queryByRole('switch', { name: '发布到发现页' })).not.toBeInTheDocument();
     expect(generation.generate).not.toHaveBeenCalled();
   }, 10_000);
 

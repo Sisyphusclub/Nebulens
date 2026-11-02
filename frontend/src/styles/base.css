@@ -485,44 +485,54 @@ video {
   background: var(--background);
   color: var(--foreground);
 }
+/* A soft shade under the floating rail and account buttons, so content scrolling up
+   fades out beneath them instead of colliding with the logo and buttons. */
+.landing-page::before {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 35;
+  height: 104px;
+  background: linear-gradient(180deg, rgb(5 6 10 / 0.62), rgb(5 6 10 / 0.3) 55%, transparent);
+  content: '';
+  pointer-events: none;
+}
+/* The hero is as tall as its content, so the skills follow right after the
+   composer instead of below a screen of empty artwork wall. */
 .landing-hero {
   position: relative;
-  height: 100svh;
-  min-height: 760px;
+  padding-top: clamp(136px, 15svh, 164px);
+  /* The skill deck follows closely, as one block with the composer. */
+  padding-bottom: 40px;
   overflow: hidden;
   background: var(--background);
-  --landing-video-x-shift: 64px;
 }
-.landing-hero__video {
-  position: absolute;
+/* The nebula video and its overlay are pinned to the viewport, so the page
+   scrolls over them. Later page sections paint above them in document order. */
+.landing-hero__video,
+.landing-hero__overlay {
+  position: fixed;
   inset: 0;
-  width: 100%;
+}
+/* Widened by the rail so the vortex centres on the composer, not the window. The
+   video is narrower than most screens, so shifting it would bare the left edge. */
+.landing-hero__video {
+  width: calc(100% + 128px);
   height: 100%;
   object-fit: cover;
-  object-position: 50% 50%;
-  opacity: 0.94;
-  filter: saturate(1.02) contrast(1.03) brightness(1.08);
-  transform: translate3d(var(--landing-video-x-shift), 0, 0) scale(1.04);
-  transform-origin: center center;
+  object-position: 50% 40%;
 }
-@media (min-width: 861px) {
+/* Without the rail the composer is centred, and so is the vortex. */
+@media (max-width: 860px) {
   .landing-hero__video {
-    object-position: 50% 52%;
+    width: 100%;
   }
 }
+/* The video is dark already, so the overlay only shades the edges behind the rail
+   and header; the area around the composer stays bright. */
 .landing-hero__overlay {
-  position: absolute;
-  inset: 0;
   background:
-    linear-gradient(90deg, rgb(3 5 10 / 0.52) 0, transparent 13%, transparent 86%),
-    linear-gradient(
-      180deg,
-      rgb(3 5 10 / 0.34) 0,
-      transparent 20%,
-      transparent 58%,
-      rgb(3 5 10 / 0.9) 100%
-    ),
-    color-mix(in oklch, var(--background) 5%, transparent);
+    linear-gradient(90deg, rgb(3 5 10 / 0.35) 0, transparent 12%, transparent 88%),
+    linear-gradient(180deg, rgb(3 5 10 / 0.25) 0, transparent 18%);
 }
 .landing-navigation-shell {
   position: absolute;
@@ -586,7 +596,7 @@ video {
   height: 52px;
   border-radius: var(--radius-control);
   padding: 0 12px;
-  color: rgb(242 244 247 / 0.62);
+  color: rgb(242 244 247 / 0.78);
   font-size: 10px;
   line-height: 1.1;
   transition:
@@ -606,6 +616,35 @@ video {
 }
 .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu'] {
   align-items: center;
+}
+/* The whole collapsed rail is one compact glass capsule, like the composer, so its
+   icons and small labels stay legible over the artwork wall. */
+.group[data-state='collapsed'] .landing-sidebar nav {
+  display: flex;
+  width: max-content;
+  flex-direction: column;
+  margin: 8px auto 0;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-top-color: rgb(255 255 255 / 0.2);
+  border-radius: 24px;
+  background: rgb(26 30 40 / 0.42);
+  padding: 8px;
+  box-shadow:
+    rgb(255 255 255 / 0.08) 0 0 2px 1px inset,
+    0 12px 30px -20px rgb(0 0 0 / 0.9);
+  backdrop-filter: blur(10px) saturate(1.2);
+}
+.group[data-state='collapsed'] .landing-sidebar nav [data-sidebar='group'] {
+  padding: 0;
+}
+.group[data-state='collapsed']
+  .landing-sidebar
+  nav
+  [data-sidebar='group']
+  + [data-sidebar='group'] {
+  margin-top: 8px;
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  padding-top: 8px;
 }
 .group[data-state='collapsed'] .landing-sidebar .landing-sidebar__brand {
   width: 50px;
@@ -629,25 +668,13 @@ video {
 }
 .landing-sidebar [data-sidebar='menu-button']:hover,
 .landing-sidebar [data-sidebar='menu-button']:focus-visible {
-  background: rgb(38 38 44 / 0.56);
+  background: rgb(255 255 255 / 0.07);
   color: var(--foreground);
 }
 .landing-sidebar [data-sidebar='menu-button'][data-active='true'] {
-  border: 1px solid rgb(255 255 255 / 0.08);
-  background:
-    linear-gradient(
-      335deg,
-      rgb(255 255 255 / 0.075),
-      transparent 34%,
-      transparent 66%,
-      rgb(255 255 255 / 0.035)
-    ),
-    rgb(38 38 44 / 0.78);
-  color: var(--foreground);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.08),
-    inset 0 -1px 0 rgb(0 0 0 / 0.24),
-    0 10px 24px -18px rgb(0 0 0 / 0.9);
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
 }
 .landing-sidebar__mobile-footer {
   display: none;
@@ -673,10 +700,13 @@ video {
   min-height: 40px;
   place-items: center;
   border-radius: 50%;
-  border: 1px solid transparent;
-  background: transparent;
-  color: rgb(242 244 247 / 0.86);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-top-color: rgb(255 255 255 / 0.2);
+  background: rgb(26 30 40 / 0.42);
+  color: rgb(242 244 247 / 0.9);
   padding: 0;
+  box-shadow: rgb(255 255 255 / 0.08) 0 0 2px 1px inset;
+  backdrop-filter: blur(10px) saturate(1.2);
   transition:
     border-color 160ms var(--ease-out-expo),
     background 160ms var(--ease-out-expo),
@@ -685,8 +715,8 @@ video {
 }
 .landing-account-actions .landing-account-actions__icon:hover,
 .landing-account-actions .landing-account-actions__avatar:hover {
-  border-color: rgb(255 255 255 / 0.1);
-  background: rgb(19 19 20 / 0.62);
+  border-color: rgb(255 255 255 / 0.2);
+  background: rgb(40 46 58 / 0.55);
   color: var(--foreground);
 }
 .landing-account-actions .landing-account-actions__icon svg {
@@ -700,21 +730,21 @@ video {
   align-items: center;
   gap: 8px;
   border: 1px solid rgb(255 255 255 / 0.1);
+  border-top-color: rgb(255 255 255 / 0.2);
   border-radius: var(--radius-pill);
-  background: rgb(19 19 22 / 0.72);
-  color: rgb(238 240 247 / 0.88);
+  background: rgb(26 30 40 / 0.42);
+  color: rgb(238 240 247 / 0.9);
   padding: 0 14px 0 16px;
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.055),
+    rgb(255 255 255 / 0.08) 0 0 2px 1px inset,
     0 12px 28px -20px rgb(0 0 0 / 0.95);
-  backdrop-filter: blur(18px) saturate(1.14);
-  -webkit-backdrop-filter: blur(18px) saturate(1.14);
+  backdrop-filter: blur(10px) saturate(1.2);
   font-size: 13px;
   font-weight: 560;
 }
 .landing-account-actions .landing-account-actions__credits:hover {
-  border-color: rgb(215 228 255 / 0.18);
-  background: rgb(28 28 34 / 0.82);
+  border-color: rgb(255 255 255 / 0.2);
+  background: rgb(40 46 58 / 0.55);
   color: var(--foreground);
 }
 .landing-account-actions__credits i {
@@ -755,14 +785,16 @@ video {
   min-height: 40px;
   margin-left: 8px;
   gap: 7px;
-  border-color: rgb(255 255 255 / 0.13);
+  border-color: rgb(255 255 255 / 0.1);
+  border-top-color: rgb(255 255 255 / 0.2);
   border-radius: var(--radius-pill);
-  background: rgb(24 25 29 / 0.78);
+  background: rgb(26 30 40 / 0.42);
   color: rgb(245 246 249 / 0.94);
   padding: 0 14px;
-  box-shadow: 0 12px 28px -22px rgb(0 0 0 / 0.96);
-  backdrop-filter: blur(18px) saturate(1.1);
-  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  box-shadow:
+    rgb(255 255 255 / 0.08) 0 0 2px 1px inset,
+    0 12px 28px -22px rgb(0 0 0 / 0.96);
+  backdrop-filter: blur(10px) saturate(1.2);
 }
 .landing-account-actions .landing-account-actions__login:hover {
   border-color: rgb(255 255 255 / 0.22);
@@ -780,7 +812,6 @@ video {
     inset 0 1px 0 rgb(255 255 255 / 0.05),
     0 24px 60px -28px rgb(0 0 0 / 0.96);
   backdrop-filter: blur(24px) saturate(1.14);
-  -webkit-backdrop-filter: blur(24px) saturate(1.14);
 }
 .landing-account-popover::before {
   position: absolute;
@@ -914,8 +945,7 @@ video {
   }
 }
 .landing-hero__content {
-  position: absolute;
-  top: clamp(136px, 15svh, 164px);
+  position: relative;
   left: calc(50% + 64px);
   z-index: 9;
   display: flex;
@@ -929,52 +959,25 @@ video {
   margin-left: calc(-1 * min(470px, (100% - 144px) / 2));
   text-align: center;
 }
+/* A light, widely tracked Song headline in plain white. 'halt' sets the comma half
+   width, so the two halves read as one line instead of two words with a gap. */
 .landing-hero__content h1 {
   display: flex;
   width: max-content;
   max-width: calc(100vw - 152px);
   align-items: baseline;
   justify-content: center;
-  gap: 0.14em;
   margin: 0;
   color: var(--foreground);
-  font-family: var(--font-hero-sans);
-  font-size: clamp(3.5rem, 5vw, 4.5rem);
-  font-weight: 500;
-  font-variation-settings: 'wght' 500;
-  line-height: 0.9;
-  letter-spacing: 0;
+  font-family: var(--font-hero-serif);
+  font-size: clamp(3.25rem, 4.6vw, 4.25rem);
+  font-feature-settings: 'halt';
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: 0.05em;
   text-align: center;
   white-space: nowrap;
   animation: landing-title-in 0.72s var(--ease-out-expo) 0.12s both;
-}
-.landing-hero__headline-main {
-  font-family: var(--font-hero-sans);
-  font-weight: 460;
-  font-variation-settings: 'wght' 460;
-  word-spacing: -0.03em;
-}
-.landing-hero__content h1 em {
-  margin-bottom: -0.24em;
-  padding-bottom: 0.24em;
-  font-family: var(--font-hero-serif);
-  font-size: 1.05em;
-  font-style: italic;
-  font-weight: 400;
-  line-height: 0.82;
-}
-@layer utilities {
-  .animate-shiny {
-    animation: shiny 6s linear infinite;
-  }
-}
-@keyframes shiny {
-  0% {
-    background-position: 200% center;
-  }
-  100% {
-    background-position: -200% center;
-  }
 }
 @keyframes landing-title-in {
   from {
@@ -993,13 +996,26 @@ video {
   font-size: 15px;
   line-height: 1.6;
 }
+/* The subtitle shares the headline's Song face at reading weight. */
 .landing-hero__content > p {
-  margin-top: 20px;
+  margin-top: 18px;
+  color: rgb(242 244 247 / 0.66);
+  font-family: var(--font-hero-serif);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
 }
 @media (min-width: 1280px) {
   .landing-hero__content p {
     font-size: 16px;
   }
+  .landing-hero__content > p {
+    font-size: 17px;
+  }
+}
+/* Each clause stays whole, so narrow screens break the subtitle only between them. */
+.landing-hero__content > p > span {
+  display: inline-block;
 }
 .agent-chat-input {
   isolation: isolate;
@@ -1421,86 +1437,33 @@ video {
   color: var(--foreground);
 }
 .landing-composer-anchor {
+  position: relative;
   width: 100%;
   max-width: 940px;
-  margin-top: 30px;
+  margin-top: 40px;
   min-height: 137px;
+}
+/* A soft glow in the nebula's colours behind the composer, so the glass has light
+   to bend and the area around it never sinks into black. */
+.landing-composer-anchor::before {
+  position: absolute;
+  inset: -90px -140px;
+  z-index: -1;
+  background: radial-gradient(
+    closest-side,
+    rgb(86 150 255 / 0.22),
+    rgb(120 100 255 / 0.1) 55%,
+    transparent
+  );
+  content: '';
+  filter: blur(24px);
+  pointer-events: none;
 }
 .landing-composer {
   max-width: 940px;
   margin-top: 0;
   box-shadow: 0 18px 54px -38px rgb(0 0 0 / 0.82);
   container-type: inline-size;
-}
-.landing-composer-dock::before {
-  position: fixed;
-  z-index: 46;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 240px;
-  background: linear-gradient(
-    to top,
-    rgb(0 0 0 / 0.96) 0%,
-    rgb(0 0 0 / 0.8) 28%,
-    rgb(0 0 0 / 0.42) 60%,
-    transparent 100%
-  );
-  content: '';
-  pointer-events: none;
-}
-.landing-composer-dock:not(.is-expanded) .landing-composer,
-.landing-composer-dock.is-expanded .landing-composer {
-  position: fixed;
-  z-index: 48;
-  bottom: 22px;
-  left: calc(50% + 64px);
-  width: min(940px, calc(100% - 144px));
-  margin: 0;
-  transform: translateX(-50%);
-}
-.landing-composer-dock:not(.is-expanded) .landing-composer {
-  width: min(700px, calc(100vw - 210px));
-}
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__surface {
-  padding: 4px 8px;
-}
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__textarea {
-  min-height: 54px !important;
-  max-height: 54px !important;
-  padding: 15px 96px 10px 18px !important;
-  overflow: hidden !important;
-  white-space: pre-wrap;
-}
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__streaming-placeholder {
-  top: 19px;
-  right: 104px;
-  left: 26px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__toolbar {
-  position: absolute;
-  z-index: 3;
-  top: 50%;
-  right: 11px;
-  width: auto;
-  min-height: 40px;
-  padding: 0;
-  transform: translateY(-50%);
-}
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__toolbar-group:first-child,
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__toolbar-content,
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__model-trigger {
-  display: none;
-}
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__toolbar-group--end {
-  display: flex;
-  margin: 0;
-}
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__submit {
-  min-width: 70px;
 }
 .landing-composer:focus-within {
   box-shadow: 0 18px 54px -38px rgb(0 0 0 / 0.82);
@@ -1706,15 +1669,6 @@ video {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.landing-creations {
-  position: relative;
-  z-index: 8;
-  left: calc(var(--workspace-sidebar-rail) / 2);
-  width: min(calc(100% - var(--workspace-sidebar-rail)), var(--workspace-content-max));
-  margin: calc(-100svh + clamp(590px, 36svh, 620px)) auto 0;
-  padding: 0 var(--workspace-page-gutter) 96px;
-  background: transparent;
-}
 
 @media (min-width: 861px) {
   .landing-sidebar [data-sidebar='header'] {
@@ -1734,75 +1688,27 @@ video {
   .landing-sidebar [data-sidebar='menu'] {
     gap: 12px;
   }
-  .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu-button'] {
-    width: 80px !important;
-    height: 64px !important;
-    min-width: 80px;
-    min-height: 64px;
+  .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu'] {
     gap: 6px;
-    padding: 7px 4px 6px !important;
+  }
+  .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu-button'] {
+    width: 68px !important;
+    height: 62px !important;
+    min-width: 68px;
+    min-height: 62px;
+    gap: 6px;
+    border-radius: 16px;
+    padding: 7px 2px 6px !important;
   }
   .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu-button'] > span {
-    max-width: 76px;
+    max-width: 64px;
     font-size: 11px;
     line-height: 1;
   }
   .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu-button'] svg {
-    width: 21px;
-    height: 21px;
+    width: 20px;
+    height: 20px;
   }
-}
-.landing-creations > div > header {
-  display: block;
-  border-color: var(--border);
-  padding-bottom: 22px;
-  text-align: center;
-}
-.landing-creations > div > header > div {
-  display: block;
-}
-.landing-creations > div > header h2 {
-  max-width: none;
-  margin: 0;
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 600;
-  font-variation-settings: 'wght' 600;
-  letter-spacing: 0;
-  line-height: 1.1;
-}
-.landing-creations > div > header + div {
-  margin-top: 8px;
-}
-.landing-creations > div {
-  max-width: none;
-}
-.landing-creations .image-gallery-vertical__columns {
-  gap: 6px;
-}
-.landing-creations .image-gallery-vertical__columns > figure {
-  margin-bottom: 6px;
-}
-.landing-creations figure {
-  border: 0;
-  border-radius: 4px;
-}
-.image-gallery-vertical__image-button {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-}
-.image-gallery-vertical__image-button img {
-  transition: transform 500ms var(--ease-out-expo);
-}
-.image-gallery-vertical__image-button:hover img,
-.image-gallery-vertical__image-button:focus-visible img {
-  transform: scale(1.025);
 }
 
 /* Image collections and dialogs */
@@ -1817,6 +1723,16 @@ video {
   border-bottom: 1px solid var(--color-hairline-light);
   background: transparent;
   padding-bottom: 12px;
+}
+/* Why an AI search picked an image, and who made it. */
+.image-tile__caption {
+  overflow: hidden;
+  margin: 8px 2px 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .image-tile__morph {
   display: block;
@@ -2062,6 +1978,27 @@ video {
   color: color-mix(in oklch, var(--foreground) 96%, var(--background));
   font-size: 30px;
   font-weight: 400;
+}
+.image-detail__description {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+.image-detail__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.image-detail__tags li {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 1px 9px;
+  color: var(--muted-foreground);
+  font-size: 12px;
 }
 .image-detail__prompt {
   min-width: 0;
@@ -3153,9 +3090,6 @@ video {
     right: 16px;
     height: min(420px, calc(100svh - 360px));
   }
-  .landing-hero {
-    --landing-video-x-shift: 0px;
-  }
   .landing-navigation-shell {
     position: static;
     min-height: 0;
@@ -3261,24 +3195,20 @@ video {
   .landing-account-actions {
     display: none;
   }
+  .landing-hero {
+    padding-top: 132px;
+  }
   .landing-hero__content {
     left: 50%;
     width: min(900px, calc(100% - 40px));
-    top: 132px;
     margin-left: calc(-1 * min(450px, (100vw - 40px) / 2));
   }
   .landing-hero__content h1 {
-    font-size: 3.5rem;
-    line-height: 0.9;
+    font-size: 3.25rem;
+    line-height: 1.15;
   }
   .landing-hero__content > p {
     font-size: 16px;
-  }
-  .landing-creations {
-    left: 0;
-    width: 100%;
-    margin: calc(-100svh + clamp(608px, 62svh, 680px)) auto 0;
-    padding: 0 var(--workspace-page-gutter) 88px;
   }
   .image-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3518,10 +3448,9 @@ video {
     height: min(300px, calc(100svh - 520px));
   }
   .landing-hero {
-    min-height: 760px;
+    padding-top: 96px;
   }
   .landing-hero__content {
-    top: 96px;
     width: calc(100% - 28px);
     gap: 10px;
   }
@@ -3531,13 +3460,17 @@ video {
     align-items: center;
     gap: 0;
     font-size: 2.5rem;
-    line-height: 0.88;
+    line-height: 1.1;
     white-space: normal;
   }
   .landing-hero__content > p {
     max-width: 320px;
-    margin-top: 22px;
+    margin-top: 12px;
     font-size: 14px;
+  }
+  /* The composer carries its own top margin on phones. */
+  .landing-composer-anchor {
+    margin-top: 0;
   }
   .landing-composer {
     margin-top: 30px;
@@ -3598,14 +3531,6 @@ video {
   }
   .landing-composer .agent-chat-input__reasoning-label {
     max-width: 42px;
-  }
-  .landing-creations {
-    width: 100%;
-    margin-top: calc(-100svh + clamp(640px, calc(68svh + 48px), 700px));
-    padding: 0 var(--workspace-page-gutter) 72px;
-  }
-  .landing-creations > div > header h2 {
-    font-size: 24px;
   }
   .image-grid {
     gap: 5px;
@@ -3767,15 +3692,8 @@ video {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .image-gallery-vertical__image-button img {
-    transition: none;
-  }
   .landing-hero__content h1 {
     animation: none;
-  }
-  .animate-shiny {
-    animation: none !important;
-    background-position: 50% center;
   }
   .agent-chat-input:focus-within {
     border-color: color-mix(in oklch, var(--ring) 34%, var(--border-strong));
@@ -3981,6 +3899,41 @@ video {
   content: '';
   pointer-events: none;
 }
+/* Generate page backdrop: a soft colour wash plus a heavily blurred copy of the latest
+   image, pinned behind the whole workspace. It sits under the console panel (z-index -1),
+   so the page reads as one surface but is no longer flat black, and the glass composer
+   has colour to refract. */
+.studio-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  background:
+    radial-gradient(52% 44% at 10% 6%, rgb(91 124 250 / 0.22), transparent 72%),
+    radial-gradient(44% 40% at 94% 12%, rgb(162 107 250 / 0.16), transparent 72%),
+    radial-gradient(60% 46% at 50% 106%, rgb(56 189 248 / 0.14), transparent 72%);
+  pointer-events: none;
+}
+.studio-ambient__image {
+  position: absolute;
+  inset: -15%;
+  width: 130%;
+  height: 130%;
+  object-fit: cover;
+  filter: blur(96px) saturate(1.35);
+  opacity: 0.26;
+  animation: studio-ambient-in 1.4s ease-out both;
+}
+@keyframes studio-ambient-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-ambient__image {
+    animation: none;
+  }
+}
 .generation-console.is-empty {
   padding-top: 28px;
 }
@@ -4164,13 +4117,18 @@ video {
 .auth-backdrop {
   background: var(--overlay);
 }
+/* The same dark glass as the skill panel, so signing in feels part of the page. */
 .auth-modal-surface {
   width: min(100%, 420px) !important;
   max-width: 420px !important;
-  border: 0 !important;
-  border-radius: var(--radius-lg) !important;
-  background: var(--card) !important;
-  box-shadow: var(--shadow-modal) !important;
+  border: 1px solid rgb(255 255 255 / 0.1) !important;
+  border-top-color: rgb(255 255 255 / 0.18) !important;
+  border-radius: 20px !important;
+  background: rgb(18 21 29 / 0.86) !important;
+  box-shadow:
+    rgb(255 255 255 / 0.06) 0 0 2px 1px inset,
+    var(--shadow-modal) !important;
+  backdrop-filter: blur(18px) saturate(1.2);
 }
 /* Keep the MorphicCard shell responsible for viewport bounds; the inner
    dialog should size to its form instead of inheriting the generic full-screen
@@ -4199,10 +4157,30 @@ video {
   height: 28px;
   object-fit: contain;
 }
+.auth-heading {
+  display: grid;
+  gap: 6px;
+}
 .login-dialog h2 {
   margin: 2px 0 0;
+  font-family: var(--font-hero-serif);
   font-size: 26px;
-  font-weight: 550;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.auth-heading p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.auth-field {
+  display: grid;
+  gap: 7px;
+}
+.field-hint {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 450;
 }
 .auth-mode-tabs {
   width: 100%;
@@ -4470,7 +4448,7 @@ video {
   justify-content: flex-end;
 }
 .generation-console.has-results {
-  padding-bottom: 250px;
+  padding-bottom: var(--studio-create-bar-reserve, 250px);
 }
 .studio-create-bar {
   position: relative;
@@ -4785,6 +4763,74 @@ video {
   opacity: 1;
   transform: scale(1);
 }
+/* Vision check of the quoted text under a generated image. */
+.text-check {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.text-check svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+.text-check--passed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0;
+  color: var(--muted-foreground);
+}
+.text-check--issues {
+  border: 1px solid color-mix(in oklch, var(--destructive) 40%, transparent);
+  border-radius: 10px;
+  background: color-mix(in oklch, var(--destructive) 10%, transparent);
+  padding: 10px 12px;
+}
+.text-check__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--destructive);
+  font-weight: 600;
+}
+.text-check__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--foreground);
+}
+.text-check--issues .button {
+  justify-self: start;
+}
+/* A real button next to the quiet verdict, so redrawing the text is easy to find. */
+.text-check--passed .text-check__redraw {
+  min-height: 28px;
+  gap: 5px;
+  margin-left: auto;
+  border-color: var(--border-strong);
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--card) 80%, transparent);
+  padding: 0 12px;
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 500;
+}
+.text-check--passed .text-check__redraw:hover:not(:disabled) {
+  border-color: color-mix(in oklch, var(--primary) 60%, var(--border-strong));
+  background: var(--surface-hover);
+}
+.text-check--passed .text-check__redraw svg {
+  width: 13px;
+  height: 13px;
+}
+.session-result__media {
+  position: relative;
+}
 .session-result__actions {
   position: absolute;
   right: 10px;
@@ -5005,6 +5051,14 @@ video {
   font-size: 15px;
   font-weight: 600;
 }
+/* The template's original English title, quietly under the Chinese one. */
+.template-tile__subtitle {
+  overflow: hidden;
+  color: oklch(0.96 0 0 / 0.62);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .template-tile__actions {
   position: absolute;
   top: 10px;
@@ -5080,6 +5134,11 @@ video {
 .template-detail__body > span {
   color: var(--muted-foreground);
   font-size: 11px;
+}
+.template-detail__body .template-detail__subtitle {
+  margin: -4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
 }
 .template-detail__body h2 {
   margin: 0;
@@ -5376,7 +5435,7 @@ video {
 .asset-list__head,
 .asset-list__row {
   display: grid;
-  grid-template-columns: 44px 64px minmax(180px, 1.7fr) minmax(150px, 0.8fr) 72px 110px 150px 210px;
+  grid-template-columns: 44px 64px minmax(180px, 1.7fr) minmax(150px, 0.8fr) 110px 150px 210px;
   align-items: center;
   gap: 12px;
 }
@@ -5406,16 +5465,6 @@ video {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
-}
-.asset-visibility {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.asset-visibility svg {
-  width: 13px;
-  height: 13px;
-  color: var(--muted-foreground);
 }
 .asset-list__preview {
   display: block;
@@ -5547,7 +5596,7 @@ video {
     padding: 18px 20px 88px;
   }
   .generation-console.has-results {
-    padding-bottom: 300px;
+    padding-bottom: var(--studio-create-bar-reserve, 300px);
   }
   .studio-create-bar {
     padding-top: 4px;
@@ -5653,7 +5702,7 @@ video {
     overflow-x: clip;
   }
   .generation-console.has-results {
-    padding-bottom: 330px;
+    padding-bottom: var(--studio-create-bar-reserve, 330px);
   }
   .generation-console.has-results .studio-create-bar {
     bottom: calc(74px + env(safe-area-inset-bottom));
@@ -5887,7 +5936,7 @@ video {
     padding: 14px 18px 92px;
   }
   .generation-console.has-results {
-    padding-bottom: 300px;
+    padding-bottom: var(--studio-create-bar-reserve, 300px);
   }
   .generation-console.has-results .studio-create-bar {
     right: 18px;
@@ -5918,7 +5967,7 @@ video {
     padding-left: 14px;
   }
   .generation-console.has-results {
-    padding-bottom: 330px;
+    padding-bottom: var(--studio-create-bar-reserve, 330px);
   }
   .generation-console.has-results .studio-create-bar {
     right: 14px;
@@ -5995,7 +6044,7 @@ video {
 }
 .generation-console.has-results::after {
   position: fixed;
-  inset: auto 0 0 var(--sidebar-width);
+  inset: auto 0 0 0;
   z-index: 12;
   height: clamp(190px, 30vh, 300px);
   background: linear-gradient(
@@ -6912,7 +6961,6 @@ video {
   color: inherit;
   text-align: left;
   pointer-events: none;
-  cursor: default;
   font-size: 16px;
   line-height: 1.55;
   opacity: 0;
@@ -7027,7 +7075,6 @@ video {
     inset 0 1px 0 rgb(255 255 255 / 0.9),
     0 8px 22px -12px rgb(0 0 0 / 0.72);
   backdrop-filter: blur(14px) saturate(1.16);
-  -webkit-backdrop-filter: blur(14px) saturate(1.16);
   transition:
     background 160ms var(--ease-out-expo),
     border-color 160ms var(--ease-out-expo),
@@ -7094,28 +7141,6 @@ video {
   .landing-composer-anchor {
     min-height: 174px;
   }
-  .landing-composer-dock::before {
-    height: 210px;
-  }
-  .landing-composer-dock .landing-composer,
-  .landing-composer-dock:not(.is-expanded) .landing-composer {
-    right: 12px;
-    bottom: 14px;
-    left: 12px;
-    width: auto;
-    transform: none;
-  }
-  .landing-composer-dock:not(.is-expanded) .agent-chat-input__toolbar {
-    top: 50%;
-    right: 10px;
-    width: auto;
-    transform: translateY(-50%);
-  }
-  .landing-composer-dock:not(.is-expanded) .agent-chat-input__textarea {
-    min-height: 54px !important;
-    max-height: 54px !important;
-    padding: 15px 90px 10px 14px !important;
-  }
   .landing-composer .agent-chat-input__surface,
   .studio-agent-input .agent-chat-input__surface {
     padding: 4px 8px 8px;
@@ -7154,9 +7179,6 @@ video {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-composer-dock .landing-composer {
-    transition: none;
-  }
   .landing-composer .agent-chat-input__submit {
     transition: none;
   }
@@ -7166,7 +7188,6 @@ video {
    shared React Bits edge algorithm. */
 .agent-chat-input.landing-composer.border-glow-card {
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 .landing-composer .agent-chat-input__surface {
   background: transparent;
@@ -7513,7 +7534,7 @@ video {
 /* Generation results share the fixed composer's baseline: requests stay on the
    right while pending, completed, and failed media all begin from the left. */
 .generation-console.has-results {
-  padding-bottom: 300px;
+  padding-bottom: var(--studio-create-bar-reserve, 300px);
   overflow-x: clip;
 }
 .session-feed {
@@ -7742,12 +7763,24 @@ video {
   max-width: 640px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+/* The image carries the card surface, so the text check under it reads as a caption on
+   the page rather than a black strip hanging off the image. */
 .session-result {
   width: 100%;
   justify-self: start;
-  border-color: color-mix(in oklch, var(--border) 76%, transparent);
+  overflow: visible;
+  border: 0;
+  background: transparent;
+}
+.session-result__media {
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--border) 76%, transparent);
   border-radius: 16px;
+  background: var(--surface-media);
   box-shadow: 0 22px 56px -48px rgb(0 0 0 / 0.92);
+}
+.session-result > .text-check {
+  padding-inline: 4px;
 }
 .session-batch[data-count='1'] .session-result {
   max-width: var(--result-media-max-height);
@@ -7845,7 +7878,7 @@ video {
 
 @media (max-width: 860px) {
   .generation-console.has-results {
-    padding-bottom: 340px;
+    padding-bottom: var(--studio-create-bar-reserve, 340px);
   }
   .session-feed {
     gap: 48px;
@@ -7858,7 +7891,7 @@ video {
 
 @media (max-width: 560px) {
   .generation-console.has-results {
-    padding-bottom: 390px;
+    padding-bottom: var(--studio-create-bar-reserve, 390px);
   }
   .session-feed {
     gap: 40px;
@@ -8025,14 +8058,12 @@ video {
 .generation-console.is-empty .studio-create-bar {
   margin-top: auto;
 }
+/* In flow inside the flex-column console, the empty state takes whatever space the
+   create bar leaves, so recommendations or the AI insight bar never cover it. */
 .generation-empty-state {
-  position: absolute;
-  top: 28px;
-  right: 40px;
-  bottom: calc(16px + 197px);
-  left: 40px;
-  z-index: 1;
+  position: static;
   display: flex;
+  flex: 1 1 auto;
   width: auto;
   flex-direction: column;
   align-items: center;
@@ -8411,10 +8442,6 @@ video {
     bottom: calc(74px + 16px + env(safe-area-inset-bottom));
   }
   .generation-empty-state {
-    top: 14px;
-    right: 18px;
-    bottom: calc(74px + 16px + env(safe-area-inset-bottom) + 180px);
-    left: 18px;
     gap: 9px;
   }
   .generation-empty-state__art {
@@ -8542,9 +8569,6 @@ video {
   .studio-private-toggle {
     margin-left: 0;
   }
-  .generation-empty-state {
-    bottom: calc(16px + 179px);
-  }
 }
 
 @media (max-width: 560px) {
@@ -8553,11 +8577,6 @@ video {
   }
   .generation-console.has-results .studio-create-bar {
     bottom: calc(74px + 16px + env(safe-area-inset-bottom));
-  }
-  .generation-empty-state {
-    right: 14px;
-    bottom: calc(74px + 16px + env(safe-area-inset-bottom) + 248px);
-    left: 14px;
   }
   .studio-agent-input .agent-chat-input__surface {
     padding: 7px 8px 9px;
@@ -8791,18 +8810,6 @@ video {
   }
 }
 
-@media (min-width: 861px) and (max-width: 1000px) {
-  .generation-empty-state {
-    bottom: calc(16px + 223px);
-  }
-}
-
-@media (min-width: 561px) and (max-width: 860px) {
-  .generation-empty-state {
-    bottom: calc(74px + 16px + env(safe-area-inset-bottom) + 223px);
-  }
-}
-
 @media (max-width: 560px) {
   .studio-agent-input .agent-chat-input__toolbar {
     align-items: stretch;
@@ -8821,9 +8828,6 @@ video {
   }
   .studio-private-toggle {
     padding: 0 7px;
-  }
-  .generation-empty-state {
-    bottom: calc(74px + 16px + env(safe-area-inset-bottom) + 270px);
   }
 }
 
@@ -9003,9 +9007,6 @@ video {
 .app-shell--generate .sidebar-account-area {
   display: none;
 }
-.app-shell--generate .generation-console.has-results::after {
-  left: var(--sidebar-width);
-}
 @media (min-width: 861px) {
   .app-shell--generate .generation-console.has-results .studio-create-bar {
     left: 50%;
@@ -9029,9 +9030,6 @@ video {
   }
   .app-shell--generate .generation-console.has-results .session-feed {
     padding-top: 64px;
-  }
-  .app-shell--generate .generation-console.has-results::after {
-    left: 0;
   }
 }
 
@@ -9068,268 +9066,119 @@ video {
   border-radius: 30px;
 }
 
-/* Discover composer: the compact dock is a single, quiet pill. A prompt or
-   reference image promotes it back to the full two-row composer. */
-.landing-composer-dock:not(.is-expanded) .landing-composer {
-  width: min(560px, calc(100vw - var(--sidebar-width) - 64px));
-  border-radius: 999px;
-  --border-radius: 999px !important;
-  border-color: rgb(205 231 251 / 0.16) !important;
-  background: rgb(10 19 31 / 0.78) !important;
-  box-shadow:
-    0 18px 46px -28px rgb(0 0 0 / 0.96),
-    inset 0 1px 0 rgb(235 247 255 / 0.1) !important;
-  backdrop-filter: blur(18px) saturate(1.16);
-  -webkit-backdrop-filter: blur(18px) saturate(1.16);
+/* Liquid glass composer, shared by Discover and Generate: after Wanxiang, a
+   light tint and blur keep what is behind visible, layered inset highlights
+   and a neutral light edge (brighter along the top) draw the glass, Chromium
+   adds SVG refraction (other engines keep plain frosted glass), and the
+   controls inside are glass pills. The pointer-driven React Bits glow is
+   uneven on a wide composer, so it is switched off here. */
+.liquid-glass-frame {
+  position: relative;
+  z-index: 1;
+  width: 100%;
 }
-.landing-composer-dock {
-  position: fixed !important;
-  z-index: 48;
-  top: auto !important;
-  right: auto !important;
-  bottom: 16px !important;
-  left: calc(50% + 64px);
-  width: min(940px, calc(100% - 144px));
-  min-height: 0;
-  margin: 0 !important;
-  margin-left: calc(-1 * min(470px, (100% - 144px) / 2)) !important;
-  translate: none;
-  transform: none;
-}
-.landing-composer-dock .landing-composer {
-  position: relative !important;
-  inset: auto !important;
-  width: 100% !important;
-  max-width: none;
-  margin: 0;
-  transform: none !important;
-}
-.landing-composer-dock:not(.is-expanded) {
-  width: min(560px, calc(100vw - var(--sidebar-width) - 64px));
-  margin-left: calc(-1 * min(280px, (100vw - var(--sidebar-width) - 64px) / 2)) !important;
-}
-.landing-composer-dock:not(.is-expanded) .landing-composer > .border-glow-inner,
-.landing-composer-dock:not(.is-expanded) .landing-composer__surface,
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__surface {
-  border-radius: 999px;
-}
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__textarea {
-  min-height: 54px !important;
-  max-height: 54px !important;
-  padding: 15px 92px 10px 58px !important;
-  white-space: pre-wrap;
-}
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__streaming-placeholder {
-  top: 19px;
-  right: 96px;
-  left: 64px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__toolbar {
+.liquid-glass-frame__filter {
   position: absolute;
-  top: 50%;
-  right: 8px;
-  left: 8px;
-  z-index: 3;
-  width: auto;
-  min-height: 40px;
-  padding: 0;
-  transform: translateY(-50%);
-  pointer-events: none;
+  width: 0;
+  height: 0;
+  overflow: hidden;
 }
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__toolbar-group:first-child {
-  display: flex;
-  margin: 0;
-  pointer-events: auto;
-}
-.landing-composer-dock:not(.is-expanded)
-  .agent-chat-input__toolbar-group:first-child
-  .agent-chat-input__agent-trigger,
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__toolbar-content {
-  display: none;
-}
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__toolbar-group--end {
-  display: flex;
-  margin: 0 0 0 auto;
-  pointer-events: auto;
-}
-.landing-composer-dock:not(.is-expanded) .agent-chat-input__submit {
-  width: 52px;
-  min-width: 52px;
-  height: 40px;
-  border-radius: 999px;
-  border-color: rgb(232 242 255 / 0.14);
-  background: rgb(210 226 244 / 0.14);
-  color: rgb(230 240 251 / 0.78);
-}
-.landing-composer-dock.is-expanded .landing-composer {
-  border-color: rgb(205 231 251 / 0.16) !important;
-  background: linear-gradient(180deg, rgb(73 87 95 / 0.64) 0%, rgb(42 54 62 / 0.7) 100%) !important;
-  box-shadow: 0 20px 54px -36px rgb(0 3 10 / 0.9);
-  backdrop-filter: blur(20px) saturate(1.18);
-  -webkit-backdrop-filter: blur(20px) saturate(1.18);
-}
-.landing-composer-dock.is-expanded .landing-composer .agent-chat-input__surface {
-  background: transparent;
-}
-@media (max-width: 860px) {
-  .landing-composer-dock,
-  .landing-composer-dock:not(.is-expanded) {
-    right: 16px !important;
-    left: 16px;
-    width: auto;
-    margin-left: 0 !important;
-  }
-  .landing-composer-dock:not(.is-expanded) .landing-composer {
-    width: calc(100vw - 32px);
-  }
-  .landing-composer-dock.is-expanded {
-    right: 20px !important;
-    left: 20px;
-  }
-}
-@media (max-width: 560px) {
-  .landing-composer-dock.is-expanded {
-    right: 14px !important;
-    left: 14px;
-  }
-}
-
-/* Keep the fixed discover composer on the beUI Agent Chat Input contract. The
-   dock only changes its footprint; the surface, tokens, and control sizes stay
-   aligned with the source component. */
-.landing-composer-dock:not(.is-expanded) .landing-composer,
-.landing-composer-dock.is-expanded .landing-composer {
-  --card-bg: var(--card) !important;
-  --border-radius: 20px !important;
-  border: 1px solid var(--border-strong) !important;
-  border-radius: 20px;
-  background: var(--card) !important;
-  box-shadow: 0 16px 36px -26px rgb(0 0 0 / 0.9);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-.landing-composer-dock:not(.is-expanded) .landing-composer > .border-glow-inner,
-.landing-composer-dock:not(.is-expanded) .landing-composer .agent-chat-input__surface,
-.landing-composer-dock.is-expanded .landing-composer > .border-glow-inner,
-.landing-composer-dock.is-expanded .landing-composer .agent-chat-input__surface {
-  border-radius: 17px;
-  background: var(--card) !important;
-}
-.landing-composer-dock:not(.is-expanded) .landing-composer .agent-chat-input__surface {
-  padding: 6px 8px;
-}
-.landing-composer-dock:not(.is-expanded) .landing-composer .agent-chat-input__textarea {
-  min-height: 52px !important;
-  max-height: 52px !important;
-  padding: 15px 78px 5px 52px !important;
-  color: var(--foreground);
-  caret-color: var(--foreground);
-}
-.landing-composer-dock.is-expanded .landing-composer .agent-chat-input__textarea {
-  padding: 21px 14px 10px !important;
-}
-.landing-composer-dock.is-expanded
-  .landing-composer
-  .agent-chat-input__textarea[data-empty='true'] {
-  caret-color: transparent;
-}
-.landing-composer-dock.is-expanded .landing-composer .agent-chat-input__streaming-placeholder {
-  top: 25px;
-  right: 22px;
-  left: 22px;
-  font-size: 15px;
-  line-height: 1.5;
-}
-@media (max-width: 860px) {
-  .landing-composer-dock.is-expanded .landing-composer .agent-chat-input__textarea {
-    padding: 25px 12px 6px !important;
-  }
-  .landing-composer-dock.is-expanded .landing-composer .agent-chat-input__streaming-placeholder {
-    top: 29px;
-    right: 20px;
-    left: 20px;
-    font-size: 16px;
-    line-height: 1.5;
-  }
-}
-.landing-composer-dock:not(.is-expanded)
-  .landing-composer
-  .agent-chat-input__streaming-placeholder {
-  top: 20px;
-  right: 82px;
-  left: 58px;
-  font-size: 15px;
-}
-.landing-composer-dock:not(.is-expanded)
-  .landing-composer
-  .agent-chat-input__streaming-placeholder-text {
-  color: transparent;
-  background: linear-gradient(90deg, #f3f5fa 0%, #c5d9f2 52%, #efc9ac 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.landing-composer-dock:not(.is-expanded)
-  .landing-composer
-  .agent-chat-input__textarea[data-empty='true']::before {
-  color: var(--muted-foreground) !important;
-}
-.landing-composer-dock:not(.is-expanded) .landing-composer .agent-chat-input__submit {
-  width: 68px;
-  min-width: 68px;
-  flex: 0 0 68px;
-  height: 36px;
-  border: 0;
-  border-radius: var(--radius-full);
-  background: var(--primary);
-  color: var(--primary-foreground);
-  padding: 0 10px;
-  box-shadow: none;
-}
-.landing-composer-dock:not(.is-expanded) .landing-composer .generation-submit-cost {
-  gap: 6px;
-  white-space: nowrap;
-}
-.landing-composer-dock:not(.is-expanded) .landing-composer .agent-chat-input__submit:disabled {
-  background: var(--muted);
-  color: var(--muted-foreground);
-}
-.landing-composer-dock::before {
-  display: none;
-}
-/* All Discover items render without pagination; preserve enough end clearance
-   for the fixed composer so the final row remains inspectable. */
-.landing-creations {
-  padding-bottom: calc(160px + env(safe-area-inset-bottom));
-}
-
-/* The hero and dock share the same beUI Agent Chat Input surface. The anchor
-   and Motion boundaries remain visual-neutral positioning layers. */
-.landing-composer-hero .landing-composer {
-  --card-bg: color-mix(in oklch, var(--card) 88%, transparent) !important;
-  border-color: color-mix(in oklch, var(--border-strong) 82%, var(--border));
-  background: color-mix(in oklch, var(--card) 88%, transparent) !important;
+.liquid-glass-frame > .generation-composer.agent-chat-input {
+  --border-radius: 28px !important;
+  --card-bg: rgb(26 30 40 / 0.26) !important;
+  border-color: transparent;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.03), rgb(255 255 255 / 0) 40%), var(--card-bg) !important;
+  backdrop-filter: blur(4px) saturate(1.15);
   box-shadow:
-    inset 0 1px 0 rgb(236 248 255 / 0.08),
-    0 24px 60px -34px rgb(0 0 0 / 0.94);
+    rgb(255 255 255 / 0.08) 0 0 2px 1px inset,
+    rgb(255 255 255 / 0.04) 0 0 18px 2px inset,
+    rgb(255 255 255 / 0.02) 0 2px 12px 0 inset,
+    0 20px 50px -32px rgb(0 0 0 / 0.7);
 }
-.landing-composer-hero .landing-composer > .border-glow-inner,
-.landing-composer-hero .landing-composer .agent-chat-input__surface {
+/* With refraction, a lighter blur lets the bent backdrop read as real glass. */
+.liquid-glass-frame[data-refraction='true'] > .generation-composer.agent-chat-input {
+  backdrop-filter: url(#liquid-glass-refraction) blur(1.5px) saturate(1.2);
+}
+.liquid-glass-frame > .generation-composer > .border-glow-inner,
+.liquid-glass-frame > .generation-composer .agent-chat-input__surface {
+  border-radius: 27px;
   background: transparent !important;
 }
-.landing-composer-hero .landing-composer .agent-chat-input__submit {
-  min-width: 68px;
-  height: 36px;
-  border-radius: var(--radius-full);
-  background: var(--primary);
-  color: var(--primary-foreground);
+.liquid-glass-frame > .border-glow-card::before,
+.liquid-glass-frame > .border-glow-card::after,
+.liquid-glass-frame > .border-glow-card > .edge-light {
+  display: none;
 }
-.landing-composer-hero .landing-composer .agent-chat-input__submit:disabled {
-  background: var(--muted);
-  color: var(--muted-foreground);
+/* The edge: a 1px ring drawn over the glass, since the glass's own backdrop
+   blur would smear a ring painted beneath it. */
+.liquid-glass-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 28px;
+  padding: 1px;
+  background: linear-gradient(
+    170deg,
+    rgb(255 255 255 / 0.32),
+    rgb(255 255 255 / 0.12) 30%,
+    rgb(255 255 255 / 0.07) 65%,
+    rgb(255 255 255 / 0.14)
+  );
+  pointer-events: none;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+.liquid-glass-frame:focus-within::before {
+  opacity: 1;
+}
+.liquid-glass-frame > .generation-composer .generation-composer-controls .beui-select-trigger,
+.liquid-glass-frame > .generation-composer .generation-custom-trigger,
+.liquid-glass-frame > .generation-composer .agent-chat-input__icon-button {
+  height: 36px;
+  min-height: 36px;
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 0.06);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    inset 0 0 6px rgb(255 255 255 / 0.04);
+  color: rgb(236 240 246 / 0.82);
+}
+.liquid-glass-frame > .generation-composer .agent-chat-input__icon-button {
+  width: 36px;
+  min-width: 36px;
+}
+.liquid-glass-frame
+  > .generation-composer
+  :is(
+    .generation-composer-controls .beui-select-trigger,
+    .generation-custom-trigger,
+    .agent-chat-input__icon-button
+  ):hover:not(:disabled) {
+  border-color: rgb(255 255 255 / 0.14);
+  background: rgb(255 255 255 / 0.11);
+  color: #fff;
+}
+.liquid-glass-frame > .generation-composer .agent-chat-input__submit {
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.14);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    inset 0 0 8px rgb(255 255 255 / 0.06);
+  color: #fff;
+}
+.liquid-glass-frame > .generation-composer .agent-chat-input__submit:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.22);
+}
+.liquid-glass-frame > .generation-composer .agent-chat-input__submit:disabled {
+  background: rgb(255 255 255 / 0.07);
+  color: rgb(236 240 246 / 0.5);
 }
 .landing-composer-hero .landing-composer .agent-chat-input__streaming-placeholder-text {
   color: transparent;
@@ -9352,7 +9201,6 @@ video {
   box-shadow: none;
   padding: 0;
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 .studio-agent-input.border-glow-card {
   --border-radius: 20px !important;
@@ -9473,92 +9321,16 @@ video {
 .landing-composer-hero {
   width: 100%;
 }
-.landing-composer-dock {
-  will-change: clip-path, opacity;
-}
 .landing-composer-content {
   position: relative;
   z-index: 1;
   width: 100%;
 }
-.landing-composer-dock {
-  --landing-composer-aux-duration: 160ms;
-}
-.landing-composer-dock.is-expanded {
-  --landing-composer-aux-duration: 220ms;
-}
-.landing-composer-dock .landing-composer .agent-chat-input__toolbar {
-  transition:
-    opacity var(--landing-composer-aux-duration) var(--ease-out-expo),
-    transform var(--landing-composer-aux-duration) var(--ease-out-expo);
-}
-.landing-composer-dock .landing-composer .agent-chat-input__submit {
-  transition:
-    opacity var(--landing-composer-aux-duration) var(--ease-out-expo),
-    transform var(--landing-composer-aux-duration) var(--ease-out-expo);
-}
-.landing-composer-dock .landing-composer .agent-chat-input__toolbar-content {
-  flex: 1 1 0%;
-  min-width: 0;
-  overflow: hidden;
-  transition:
-    opacity var(--landing-composer-aux-duration) var(--ease-out-expo),
-    transform var(--landing-composer-aux-duration) var(--ease-out-expo);
-}
-.landing-composer-dock:not(.is-expanded) .landing-composer .agent-chat-input__toolbar-content {
-  display: flex;
-  flex: 0 0 0%;
-  width: 0;
-  min-width: 0;
-  visibility: visible;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-4px) scale(0.96);
-}
-.landing-composer-dock:not(.is-expanded)
-  .landing-composer
-  .agent-chat-input__toolbar-group:first-child
-  .agent-chat-input__agent-trigger {
-  display: flex;
-  visibility: visible;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(3px) scale(0.94);
-  transition:
-    opacity var(--landing-composer-aux-duration) var(--ease-out-expo),
-    transform var(--landing-composer-aux-duration) var(--ease-out-expo);
-}
-.landing-composer-dock.is-expanded
-  .landing-composer
-  .agent-chat-input__toolbar-group:first-child
-  .agent-chat-input__agent-trigger {
-  display: flex;
-  visibility: visible;
-  opacity: 1;
-  pointer-events: auto;
-  transform: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .landing-composer-dock .landing-composer .agent-chat-input__toolbar,
-  .landing-composer-dock .landing-composer .agent-chat-input__submit,
-  .landing-composer-dock .landing-composer .agent-chat-input__toolbar-content,
-  .landing-composer-dock
-    .landing-composer
-    .agent-chat-input__toolbar-group:first-child
-    .agent-chat-input__agent-trigger {
-    transition: none;
-  }
-}
 
 /* The idle generation action is a credit pill. Pending generation returns to
    beUI's compact icon-button geometry instead of inheriting that pill width. */
 .agent-chat-input__submit.agent-chat-input__submit--stop,
-:is(
-    .landing-composer-dock:not(.is-expanded) .landing-composer,
-    .landing-composer-hero .landing-composer,
-    .studio-agent-input
-  )
+:is(.landing-composer-hero .landing-composer, .studio-agent-input)
   .agent-chat-input__submit.agent-chat-input__submit--stop {
   width: 40px;
   min-width: 40px;
@@ -9701,8 +9473,8 @@ video {
   background: transparent;
 }
 .asset-commandbar .view-switch button[aria-pressed='true'] {
-  background: var(--primary);
-  color: var(--primary-foreground);
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
 }
 .assets-page .collection-rail {
   display: flex;
@@ -9732,15 +9504,25 @@ video {
 .collection-rail__items::-webkit-scrollbar {
   display: none;
 }
+/* Model chips follow the glass segmented style: quiet glass chips, and a light
+   glass pill for the active one. */
 .assets-page .collection-rail button {
-  min-height: 34px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  padding: 0 10px;
+  min-height: 32px;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: var(--radius-full);
+  background: rgb(26 30 40 / 0.42);
+  color: rgb(242 244 247 / 0.72);
+  padding: 0 14px;
+  backdrop-filter: blur(10px) saturate(1.2);
+}
+.assets-page .collection-rail button:hover:not([aria-pressed='true']) {
+  background: rgb(40 46 58 / 0.55);
+  color: #fff;
 }
 .assets-page .collection-rail button[aria-pressed='true'] {
-  background: var(--muted);
-  color: var(--foreground);
+  border-color: rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
 }
 .asset-selection-slot {
   min-height: 49px;
@@ -9938,7 +9720,7 @@ video {
 .assets-page .asset-list__head,
 .assets-page .asset-list__row {
   grid-template-columns:
-    36px 56px minmax(180px, 1.6fr) minmax(130px, 0.8fr) 70px 90px 132px
+    36px 56px minmax(180px, 1.6fr) minmax(130px, 0.8fr) 90px 132px
     minmax(216px, auto);
   gap: 14px;
   align-items: center;
@@ -10216,8 +9998,7 @@ video {
 }
 
 @media (max-width: 860px) {
-  .workspace-page,
-  .landing-creations {
+  .workspace-page {
     --workspace-page-gutter: 20px;
   }
   .assets-page,
@@ -10253,8 +10034,7 @@ video {
 }
 
 @media (max-width: 560px) {
-  .workspace-page,
-  .landing-creations {
+  .workspace-page {
     --workspace-page-gutter: 14px;
   }
   .assets-page,
@@ -10537,6 +10317,55 @@ video {
   min-width: 40px;
   min-height: 40px;
 }
+/* Workspace toolbars use the same glass pills as the Discover composer, so every
+   page reads as one product. */
+.operational-toolbar
+  :is(.search-field, .admin-search, .beui-select-trigger, .icon-button, .view-switch) {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-top-color: rgb(255 255 255 / 0.18);
+  border-radius: var(--radius-full);
+  background: rgb(26 30 40 / 0.42);
+  box-shadow: rgb(255 255 255 / 0.06) 0 0 2px 1px inset;
+  backdrop-filter: blur(10px) saturate(1.2);
+}
+.operational-toolbar :is(.beui-select-trigger, .icon-button):hover:not(:disabled) {
+  border-color: rgb(255 255 255 / 0.16);
+  background: rgb(40 46 58 / 0.55);
+}
+.operational-toolbar :is(.search-field, .admin-search):focus-within {
+  border-color: rgb(255 255 255 / 0.22);
+}
+/* Switches the asset search between keyword matching and AI description search. */
+.operational-toolbar .asset-ai-toggle {
+  height: 40px;
+  min-height: 40px;
+  flex: 0 0 auto;
+  gap: 5px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: var(--radius-full);
+  background: rgb(26 30 40 / 0.42);
+  color: rgb(242 244 247 / 0.78);
+  padding: 0 14px;
+  font-weight: 600;
+  backdrop-filter: blur(10px) saturate(1.2);
+}
+.operational-toolbar .asset-ai-toggle svg {
+  width: 14px;
+  height: 14px;
+}
+.operational-toolbar .asset-ai-toggle[aria-pressed='true'] {
+  border-color: rgb(255 255 255 / 0.18);
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
+}
+.operational-toolbar .asset-ai-toggle[aria-pressed='true'] svg {
+  color: rgb(170 200 255);
+}
+.workspace-page .asset-workbench__chrome {
+  border-bottom-color: rgb(255 255 255 / 0.06);
+  background: rgb(5 6 10 / 0.72);
+  backdrop-filter: blur(16px) saturate(1.2);
+}
 
 .templates-page .template-toolbar {
   display: grid;
@@ -10809,7 +10638,6 @@ video {
 
 /* Shared image-generation composer contract for Discover and Generate. */
 .landing-composer-hero .generation-composer,
-.landing-composer-dock .generation-composer,
 .generation-composer.studio-agent-input {
   --border-radius: 20px !important;
   --card-bg: color-mix(in oklch, var(--card) 86%, transparent) !important;
@@ -10902,7 +10730,6 @@ video {
 }
 .generation-composer-controls .beui-select-trigger,
 .generation-custom-trigger,
-.generation-public-toggle,
 .generation-controls-tail > * {
   box-sizing: border-box;
   height: 40px;
@@ -10915,7 +10742,6 @@ video {
 }
 .generation-composer-controls .beui-select-trigger:hover:not(:disabled),
 .generation-custom-trigger:hover:not(:disabled),
-.generation-public-toggle:hover,
 .generation-controls-tail > button:hover:not(:disabled) {
   background: var(--muted);
   color: var(--foreground);
@@ -10980,19 +10806,40 @@ video {
 .generation-custom-trigger[data-state='open'] > svg:last-child {
   transform: rotate(180deg);
 }
-.generation-control-panel {
-  background: var(--popover) !important;
+/* Composer popovers (model menu, custom settings): Wanxiang-style dark glass
+   with a light top edge. The select menu ships !important utilities, so these
+   overrides live in the same cascade layer and win on a doubled class. */
+@layer utilities {
+  .generation-control-panel.generation-control-panel {
+    border: 1px solid rgb(255 255 255 / 0.08) !important;
+    border-radius: 20px !important;
+    background: linear-gradient(180deg, rgb(50 54 64 / 0.9), rgb(34 38 46 / 0.94)) !important;
+    backdrop-filter: blur(24px) saturate(1.3);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.08),
+      0 28px 64px -26px rgb(0 0 0 / 0.85) !important;
+    color: rgb(240 243 248 / 0.92);
+  }
+  .generation-model-menu.generation-control-panel {
+    padding: 6px !important;
+  }
+  .generation-model-menu [role='menuitemradio'] {
+    min-height: 40px !important;
+    border-radius: 14px !important;
+  }
+}
+.generation-control-panel [data-beui-dropdown-highlight] {
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.07);
+}
+.generation-model-menu [role='menuitemradio'][data-state='checked'] {
+  background: rgb(255 255 255 / 0.12);
 }
 .generation-custom-panel {
   width: min(540px, calc(100vw - 24px));
   max-width: calc(100vw - 24px);
   overflow-x: hidden;
-  border: 0 !important;
-  border-radius: 8px !important;
-  padding: 12px !important;
-  box-shadow:
-    0 26px 64px -28px rgb(0 0 0 / 0.92),
-    0 8px 22px -14px rgb(0 0 0 / 0.72) !important;
+  padding: 16px !important;
 }
 .generation-custom-panel__header {
   display: flex;
@@ -11010,13 +10857,12 @@ video {
   color: var(--foreground);
 }
 .generation-custom-panel__title svg {
-  width: 15px;
-  height: 15px;
-  color: var(--muted-foreground);
+  display: none;
 }
 .generation-custom-panel__title strong {
+  color: rgb(240 243 248 / 0.5);
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 500;
   line-height: 18px;
 }
 .generation-custom-panel__header output {
@@ -11051,8 +10897,8 @@ video {
   padding: 0 3px;
 }
 .generation-custom-group__label {
-  color: var(--muted-foreground);
-  font-size: 11px;
+  color: rgb(240 243 248 / 0.55);
+  font-size: 12px;
   font-weight: 600;
   line-height: 16px;
 }
@@ -11065,10 +10911,10 @@ video {
 .generation-custom-options {
   display: grid;
   min-width: 0;
-  gap: 4px;
-  border-radius: 9px;
-  background: color-mix(in oklch, var(--muted) 46%, transparent);
-  padding: 3px;
+  gap: 2px;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.05);
+  padding: 4px;
 }
 .generation-custom-options--aspect {
   grid-template-columns: repeat(8, minmax(0, 1fr));
@@ -11090,16 +10936,16 @@ video {
   width: 100%;
   min-width: 0;
   border: 0;
-  border-radius: 7px;
+  border-radius: 12px;
   background: transparent;
-  color: var(--muted-foreground);
-  font-size: 11px;
-  font-weight: 600;
+  color: rgb(240 243 248 / 0.78);
+  font-size: 12.5px;
+  font-weight: 500;
   line-height: 1;
 }
 .generation-custom-option[data-state='checked'] {
-  background: color-mix(in oklch, var(--foreground) 10%, var(--popover));
-  color: var(--foreground);
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
   box-shadow: none;
 }
 .generation-custom-option:focus,
@@ -11114,10 +10960,10 @@ video {
   opacity: 0.28;
 }
 .generation-custom-option--aspect {
-  min-height: 52px;
+  min-height: 60px;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   padding: 6px 5px 5px;
 }
 .generation-custom-option__visual {
@@ -11126,7 +10972,7 @@ video {
   height: 23px;
   align-items: center;
   justify-content: center;
-  color: var(--muted-foreground);
+  color: rgb(240 243 248 / 0.78);
   transition: color 0.15s ease;
 }
 .generation-custom-option__visual > svg {
@@ -11140,8 +10986,32 @@ video {
   border: 1.75px solid currentColor;
   border-radius: 3px;
 }
+.generation-custom-option__visual[data-aspect='3:4'] .generation-custom-option__frame {
+  width: 13px;
+  height: 18px;
+}
+.generation-custom-option__visual[data-aspect='4:3'] .generation-custom-option__frame {
+  width: 20px;
+  height: 14px;
+}
+.generation-custom-option__visual[data-aspect='16:9'] .generation-custom-option__frame {
+  width: 23px;
+  height: 13px;
+}
+.generation-custom-option__visual[data-aspect='9:16'] .generation-custom-option__frame {
+  width: 12px;
+  height: 21px;
+}
+.generation-custom-option__visual[data-aspect='2:3'] .generation-custom-option__frame {
+  width: 13px;
+  height: 20px;
+}
+.generation-custom-option__visual[data-aspect='3:2'] .generation-custom-option__frame {
+  width: 21px;
+  height: 14px;
+}
 .generation-custom-option[data-state='checked'] .generation-custom-option__visual {
-  color: var(--foreground);
+  color: #fff;
 }
 .generation-custom-option__text {
   overflow: visible;
@@ -11153,66 +11023,10 @@ video {
   transition: color 0.15s ease;
 }
 .generation-custom-option--compact {
-  min-height: 36px;
+  min-height: 40px;
   justify-content: center;
   gap: 0;
   padding: 0 6px;
-}
-.generation-public-toggle {
-  position: relative;
-  display: inline-flex;
-  min-width: 124px;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 9px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.generation-public-toggle input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-}
-.generation-public-toggle__track {
-  position: relative;
-  width: 25px;
-  height: 15px;
-  flex: 0 0 auto;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-full);
-  background: var(--background);
-}
-.generation-public-toggle__track::after {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--muted-foreground);
-  content: '';
-  transition: transform 0.18s var(--ease-out-expo);
-}
-.generation-public-toggle input:checked + .generation-public-toggle__track {
-  border-color: var(--primary);
-  background: var(--primary);
-}
-.generation-public-toggle input:checked + .generation-public-toggle__track::after {
-  background: var(--primary-foreground);
-  transform: translateX(10px);
-}
-.generation-public-toggle input:focus-visible + .generation-public-toggle__track {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-.generation-public-toggle:has(input:disabled) {
-  cursor: not-allowed;
-  opacity: 0.5;
 }
 .generation-controls-tail {
   display: flex;
@@ -11264,9 +11078,6 @@ video {
     min-width: 190px;
     flex: 1 1 190px;
   }
-  .generation-public-toggle {
-    flex: 0 0 124px;
-  }
 }
 
 @media (max-width: 560px) {
@@ -11281,10 +11092,6 @@ video {
   }
   .generation-custom-trigger > small {
     display: none;
-  }
-  .generation-public-toggle {
-    min-width: 0;
-    flex: 0 1 124px;
   }
   .generation-controls-tail {
     flex: 1 1 150px;
@@ -11481,4 +11288,745 @@ video {
   .template-page-scroll {
     padding-bottom: calc(82px + env(safe-area-inset-bottom));
   }
+}
+
+/* Landing hero: the signed-in user's latest sessions, one tap from resuming */
+.landing-recent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 940px;
+  margin-top: 12px;
+}
+.landing-recent__label {
+  color: rgb(242 244 247 / 0.56);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.landing-recent .landing-recent__item {
+  height: 36px;
+  max-width: 220px;
+  gap: 8px;
+  border: 1px solid rgb(242 244 247 / 0.12);
+  border-radius: 10px;
+  background: rgb(10 12 18 / 0.5);
+  color: rgb(242 244 247 / 0.86);
+  padding: 0 12px 0 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.landing-recent .landing-recent__item:hover,
+.landing-recent .landing-recent__item:focus-visible {
+  border-color: rgb(242 244 247 / 0.3);
+  background: rgb(22 26 36 / 0.76);
+}
+.landing-recent__item img {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 7px;
+  object-fit: cover;
+}
+.landing-recent__item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .landing-recent .landing-recent__item {
+    max-width: 100%;
+  }
+}
+
+/* Landing hero: teammates' work matching the need being typed */
+.landing-recommendations {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 940px;
+  margin-top: 16px;
+}
+.landing-recommendations__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.landing-recommendations .landing-recommendations__close {
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  min-height: 26px;
+}
+.landing-recommendations__close svg {
+  width: 14px;
+  height: 14px;
+}
+.landing-recommendations__label {
+  margin: 0;
+  color: rgb(242 244 247 / 0.6);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-align: left;
+}
+.landing-recommendations__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+.landing-recommendations__item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgb(242 244 247 / 0.12);
+  border-radius: 12px;
+  background: rgb(10 12 18 / 0.56);
+  padding: 6px;
+}
+.landing-recommendations .landing-recommendations__preview {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  overflow: hidden;
+  border-radius: 9px;
+  padding: 0;
+}
+.landing-recommendations__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.landing-recommendations__meta {
+  display: grid;
+  min-width: 0;
+  justify-items: start;
+  gap: 2px;
+  text-align: left;
+}
+.landing-recommendations__prompt,
+.landing-recommendations__reason {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.landing-recommendations__prompt {
+  color: rgb(242 244 247 / 0.92);
+  font-size: 13px;
+}
+.landing-recommendations__reason {
+  color: rgb(170 200 255 / 0.8);
+  font-size: 12px;
+}
+.landing-recommendations__owner {
+  color: rgb(242 244 247 / 0.52);
+  font-size: 12px;
+}
+.landing-recommendations .landing-recommendations__use {
+  height: 26px;
+  padding: 0 8px;
+  margin-left: -8px;
+  color: rgb(170 200 255 / 0.95);
+  font-size: 12px;
+}
+
+/* Team works: load-more sits under the shared asset grid. */
+.team-page__more {
+  display: flex;
+  justify-content: center;
+  padding-block: 8px 32px;
+}
+
+/* Generate page: the same teammate matches, compact and on the app surface. */
+.landing-recommendations.generation-inspiration {
+  max-width: none;
+  margin: 0 0 10px;
+  gap: 6px;
+}
+.generation-inspiration .landing-recommendations__label,
+.generation-inspiration .landing-recommendations__owner {
+  color: var(--muted-foreground);
+}
+.generation-inspiration .landing-recommendations__list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.generation-inspiration .landing-recommendations__item {
+  border-color: var(--border);
+  background: color-mix(in oklch, var(--card) 80%, transparent);
+  padding: 5px;
+}
+.generation-inspiration .landing-recommendations__preview {
+  width: 48px;
+  height: 48px;
+  flex-basis: 48px;
+}
+.generation-inspiration .landing-recommendations__prompt {
+  color: var(--foreground);
+  font-size: 12.5px;
+}
+.generation-inspiration .landing-recommendations__reason {
+  color: var(--muted-foreground);
+}
+@media (max-width: 760px) {
+  .generation-inspiration .landing-recommendations__list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .generation-inspiration .landing-recommendations__item:nth-child(n + 2) {
+    display: none;
+  }
+}
+
+/* What the AI understood from the prompt, shown beside the composer while typing. */
+.ai-insight {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+}
+.ai-insight__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(110deg, #3d81e3, #ae9ae6 60%, #f8d8d5);
+  color: #0b0d12;
+  padding: 2px 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.ai-insight__badge svg {
+  width: 12px;
+  height: 12px;
+}
+.ai-insight__fact {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--foreground);
+  padding: 2px 9px;
+}
+.ai-insight .ai-insight__action {
+  height: 24px;
+  padding: 0 8px;
+  color: var(--primary);
+  font-size: 12px;
+}
+.ai-insight__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.ai-insight .ai-insight__action svg {
+  width: 13px;
+  height: 13px;
+}
+/* Polishing is the bar's main action, so it gets a glass pill like the composer controls. */
+.ai-insight .ai-insight__action--enhance {
+  gap: 4px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 0.06);
+  color: var(--foreground);
+}
+.ai-insight .ai-insight__action--enhance:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.12);
+}
+.landing-hero__content .ai-insight {
+  width: 100%;
+  max-width: 940px;
+  justify-content: center;
+  margin: 14px 0 0;
+  color: rgb(242 244 247 / 0.7);
+}
+.landing-hero__content .ai-insight__fact {
+  border-color: rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.05);
+  color: rgb(242 244 247 / 0.92);
+}
+.landing-hero__content .ai-insight .ai-insight__action {
+  color: rgb(170 200 255 / 0.95);
+}
+
+/* Below the hero: every skill across the full width, after Kling and Jimeng. A
+   feature card rotates through the skills' examples beside a compact glass tile for
+   each skill, all within the first screen. */
+.landing-deck {
+  position: relative;
+  padding-block: 0 72px;
+  padding-left: calc(var(--workspace-sidebar-rail, 128px) + 32px);
+  padding-right: max(32px, env(safe-area-inset-right, 0px));
+}
+.landing-deck__grid {
+  display: grid;
+  width: 100%;
+  max-width: 1760px;
+  margin: 0 auto;
+  grid-template-columns: minmax(0, 1.35fr) repeat(4, minmax(0, 1fr));
+  /* Fixed rows, so the feature is exactly two tiles tall and can never stretch them. */
+  grid-template-rows: repeat(2, 80px);
+  gap: 12px;
+}
+.landing-deck__feature {
+  position: relative;
+  grid-row: span 2;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-top-color: rgb(255 255 255 / 0.18);
+  border-radius: 18px;
+  background: rgb(16 19 27);
+}
+/* Like Kling's banner, the example fills the whole card; the text sits low on the left. */
+.landing-deck__feature-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.06);
+  transition:
+    opacity 700ms ease,
+    transform 6s linear;
+}
+.landing-deck__feature-image[data-active='true'] {
+  opacity: 1;
+  transform: scale(1);
+}
+.landing-deck__feature::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(8 10 16 / 0.85) 0%, rgb(8 10 16 / 0.4) 55%, transparent 85%),
+    linear-gradient(0deg, rgb(8 10 16 / 0.8) 0%, transparent 62%);
+  content: '';
+  pointer-events: none;
+}
+.landing-deck__feature-body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  height: 100%;
+  max-width: 78%;
+  align-content: end;
+  justify-items: start;
+  gap: 2px;
+  padding: 14px 18px 16px;
+}
+.landing-deck__eyebrow {
+  color: rgb(242 244 247 / 0.62);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.landing-deck__feature-title {
+  color: #fff;
+  font-family: var(--font-hero-serif);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.6);
+}
+.landing-deck__feature-description {
+  display: -webkit-box;
+  overflow: hidden;
+  color: rgb(242 244 247 / 0.82);
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.6);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.landing-deck .landing-deck__feature-cta {
+  height: 28px;
+  gap: 4px;
+  margin-top: 8px;
+  border-radius: var(--radius-full);
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+.landing-deck__feature-cta svg {
+  width: 14px;
+  height: 14px;
+}
+/* Top right, over the image, so they never meet the text or the button. */
+.landing-deck__dots {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 1;
+  display: flex;
+  gap: 2px;
+}
+/* A short bar inside a taller button, so the dots stay easy to hit. */
+.landing-deck .landing-deck__dot {
+  width: 16px;
+  min-width: 0;
+  height: 16px;
+  border: 0;
+  background: transparent;
+  padding: 0 3px;
+}
+.landing-deck__dot::before {
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.28);
+  content: '';
+  transition: background-color 200ms ease;
+}
+.landing-deck .landing-deck__dot:hover {
+  background: transparent;
+}
+.landing-deck__dot[aria-pressed='true']::before,
+.landing-deck__dot:hover::before {
+  background: #fff;
+}
+.landing-deck .landing-deck__tile {
+  display: flex;
+  height: auto;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-top-color: rgb(255 255 255 / 0.14);
+  border-radius: 16px;
+  background: rgb(22 25 34 / 0.62);
+  padding: 10px 10px 10px 16px;
+  text-align: left;
+  backdrop-filter: blur(12px) saturate(1.2);
+  transition:
+    border-color 200ms var(--ease-out-expo),
+    background-color 200ms var(--ease-out-expo),
+    transform 200ms var(--ease-out-expo);
+}
+.landing-deck .landing-deck__tile:hover,
+.landing-deck .landing-deck__tile:focus-visible {
+  border-color: rgb(255 255 255 / 0.24);
+  background: rgb(32 36 48 / 0.72);
+  transform: translateY(-2px);
+}
+.landing-deck__tile-text {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.landing-deck__tile-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.landing-deck__tile-title svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  color: rgb(244 246 250 / 0.85);
+}
+.landing-deck__tile-description {
+  overflow: hidden;
+  color: rgb(242 244 247 / 0.58);
+  font-size: 12px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.landing-deck__tile img {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border-radius: 12px;
+  object-fit: cover;
+  transition: transform 300ms var(--ease-out-expo);
+}
+.landing-deck__tile:hover img,
+.landing-deck__tile:focus-visible img {
+  transform: scale(1.06);
+}
+@media (max-width: 1280px) {
+  .landing-deck__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: 200px;
+    grid-auto-rows: 80px;
+  }
+  .landing-deck__feature {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
+@media (max-width: 860px) {
+  .landing-deck {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .landing-deck__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: 180px;
+    grid-auto-rows: 72px;
+    gap: 10px;
+  }
+}
+/* Phones: half-width tiles keep the name and example, and the feature text spans. */
+@media (max-width: 560px) {
+  .landing-deck__tile-description,
+  .landing-deck__tile-title svg {
+    display: none;
+  }
+  .landing-deck__tile-title {
+    font-size: 13.5px;
+  }
+  .landing-deck .landing-deck__tile {
+    padding-left: 12px;
+  }
+  .landing-deck__tile img {
+    width: 48px;
+    height: 48px;
+  }
+  .landing-deck__feature-body {
+    max-width: 100%;
+  }
+}
+
+/* Section headers below the deck share the headline's Song face. */
+.landing-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  text-shadow: 0 1px 14px rgb(0 0 0 / 0.7);
+}
+.landing-section-header > div:first-child {
+  display: grid;
+  gap: 8px;
+}
+.landing-section-header h2 {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-hero-serif);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+}
+.landing-section-header p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+/* The team's newest shared work: full width, each image at its own shape. */
+.landing-showcase {
+  position: relative;
+  display: grid;
+  gap: 24px;
+  background: linear-gradient(180deg, transparent, rgb(5 6 10 / 0.6) 160px);
+  padding-block: 16px 120px;
+  padding-left: calc(var(--workspace-sidebar-rail, 128px) + 32px);
+  padding-right: max(32px, env(safe-area-inset-right, 0px));
+}
+.landing-showcase .landing-section-header,
+.landing-showcase__masonry {
+  width: 100%;
+  max-width: 1760px;
+  margin: 0 auto;
+}
+.landing-showcase__links {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+.landing-showcase__more {
+  display: inline-flex;
+  height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-top-color: rgb(255 255 255 / 0.2);
+  border-radius: var(--radius-full);
+  background: rgb(26 30 40 / 0.42);
+  color: rgb(242 244 247 / 0.9);
+  padding: 0 14px;
+  font-size: 13px;
+  text-decoration: none;
+  text-shadow: none;
+  backdrop-filter: blur(10px) saturate(1.2);
+  transition: background-color 160ms var(--ease-out-expo);
+}
+.landing-showcase__more:hover,
+.landing-showcase__more:focus-visible {
+  background: rgb(40 46 58 / 0.55);
+  color: #fff;
+}
+.landing-showcase__more svg {
+  width: 14px;
+  height: 14px;
+}
+.landing-showcase__masonry {
+  columns: 6 200px;
+  column-gap: 12px;
+}
+.landing-showcase .landing-showcase__card {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 0 12px;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 14px;
+  background: var(--card);
+  padding: 0;
+  text-align: left;
+  break-inside: avoid;
+  transition: border-color 200ms var(--ease-out-expo);
+}
+.landing-showcase__card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 400ms var(--ease-out-expo);
+}
+.landing-showcase__caption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  display: grid;
+  gap: 2px;
+  background: linear-gradient(180deg, transparent, rgb(4 6 12 / 0.82));
+  padding: 28px 12px 10px;
+}
+.landing-showcase__prompt {
+  overflow: hidden;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.landing-showcase__meta {
+  color: rgb(242 244 247 / 0.62);
+  font-size: 12px;
+}
+.landing-showcase__cta {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 0.92);
+  color: #0b0d12;
+  padding: 4px 8px 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 180ms var(--ease-out-expo),
+    transform 180ms var(--ease-out-expo);
+}
+.landing-showcase__cta svg {
+  width: 14px;
+  height: 14px;
+}
+.landing-showcase .landing-showcase__card:hover,
+.landing-showcase .landing-showcase__card:focus-visible {
+  border-color: rgb(255 255 255 / 0.28);
+}
+.landing-showcase__card:hover img,
+.landing-showcase__card:focus-visible img {
+  transform: scale(1.04);
+}
+.landing-showcase__card:hover .landing-showcase__cta,
+.landing-showcase__card:focus-visible .landing-showcase__cta {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (max-width: 860px) {
+  .landing-showcase {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .landing-showcase__masonry {
+    columns: 2;
+    column-gap: 10px;
+  }
+  .landing-showcase .landing-showcase__card {
+    margin-bottom: 10px;
+  }
+}
+@media (max-width: 560px) {
+  .landing-showcase__meta {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-deck__feature-image,
+  .landing-deck__tile,
+  .landing-deck__tile img,
+  .landing-showcase__card img,
+  .landing-showcase__cta {
+    transition: none;
+  }
+}
+
+/* Skill mode: the skill's pill sits in the composer text and the bar under it says what
+   the skill will make, with its options and an example of the one line to write. */
+.landing-composer [data-skill-id] {
+  display: inline-block;
+  margin-right: 2px;
+  border-radius: var(--radius-full);
+  background: rgb(120 160 255 / 0.18);
+  color: rgb(190 210 255);
+  padding: 0 8px;
+  line-height: 1.6;
+}
+.landing-skill-bar__outputs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.landing-hero__content .landing-skill-bar__choice {
+  width: auto;
+  height: 24px;
+  gap: 4px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 0.05);
+  color: rgb(242 244 247 / 0.92);
+  padding: 0 8px 0 10px;
+  font-size: 12px;
+}
+.landing-skill-bar__example {
+  color: rgb(242 244 247 / 0.5);
+}
+.landing-skill-bar__choice svg {
+  width: 12px;
+  height: 12px;
+}
+.landing-skill-bar .ai-insight__badge svg {
+  width: 12px;
+  height: 12px;
 }

@@ -1,14 +1,20 @@
-import { Copy, Download, EyeOff, Globe2, ImagePlus, Trash2, X } from 'lucide-react';
+import { Copy, Download, ImagePlus, Lock, Trash2, Users, X } from 'lucide-react';
 import { useEffect, useRef, type CSSProperties } from 'react';
 
 import { MorphicCardModal } from '@/components/premium/morphic-card-modal';
 import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
+import { SelectMenu } from '@/components/ui/select-menu';
 import { useImageDetailModalState } from '@/hooks/useImageDetailModalState';
-import { imageModelLabel, type HistoryEntry } from '@/types/image';
+import {
+  IMAGE_CATEGORIES,
+  IMAGE_CATEGORY_LABELS,
+  imageModelLabel,
+  type HistoryEntry,
+  type ImageCategory,
+} from '@/types/image';
 import { downloadUrl } from '@/utils/download';
 import { formatDateTime } from '@/utils/format';
-import { getImageVisibilityActionLabel, getImageVisibilityLabel } from '@/utils/imageVisibility';
 
 interface ImageDetailModalProps {
   entry: HistoryEntry | null;
@@ -18,9 +24,19 @@ interface ImageDetailModalProps {
   onCopyPrompt?: (entry: HistoryEntry) => void;
   onReuse?: (entry: HistoryEntry) => void;
   onUseAsReference?: (entry: HistoryEntry) => void;
-  onToggleVisibility?: (entry: HistoryEntry) => void;
   onDelete?: (entry: HistoryEntry) => void;
+  /** Owner only: file the image under another usage, or clear it with null. */
+  onCategoryChange?: (entry: HistoryEntry, category: ImageCategory | null) => void;
+  /** Owner only: share the image with the team or keep it private. */
+  onToggleShared?: (entry: HistoryEntry) => void;
+  /** Shown for a teammate's image. */
+  ownerName?: string;
 }
+
+const CATEGORY_OPTIONS: readonly { value: ImageCategory | 'none'; label: string }[] = [
+  { value: 'none', label: '未分类' },
+  ...IMAGE_CATEGORIES.map((value) => ({ value, label: IMAGE_CATEGORY_LABELS[value] })),
+];
 
 export function ImageDetailModal({
   entry,
@@ -30,15 +46,19 @@ export function ImageDetailModal({
   onCopyPrompt,
   onReuse,
   onUseAsReference,
-  onToggleVisibility,
   onDelete,
+  onCategoryChange,
+  onToggleShared,
+  ownerName,
 }: ImageDetailModalProps) {
   const id = useRef(Symbol('image-detail'));
   const { openImageDetailModal, closeImageDetailModal } = useImageDetailModalState();
 
+  // Track only open/closed: callers may pass a new entry object on every render.
+  const isOpen = entry !== null;
   useEffect(() => {
     const currentId = id.current;
-    if (!entry) {
+    if (!isOpen) {
       closeImageDetailModal(currentId);
       return;
     }
@@ -46,7 +66,7 @@ export function ImageDetailModal({
     return () => {
       closeImageDetailModal(currentId);
     };
-  }, [closeImageDetailModal, entry, openImageDetailModal]);
+  }, [closeImageDetailModal, isOpen, openImageDetailModal]);
 
   if (!entry) return null;
   const filename = entry.record.id.includes('.') ? entry.record.id : `${entry.record.id}.png`;
@@ -118,11 +138,48 @@ export function ImageDetailModal({
                 <dt>时间</dt>
                 <dd>{formatDateTime(entry.record.createdAt)}</dd>
               </div>
+              {ownerName ? (
+                <div>
+                  <dt>作者</dt>
+                  <dd>{ownerName}</dd>
+                </div>
+              ) : null}
               <div>
-                <dt>可见范围</dt>
-                <dd>{getImageVisibilityLabel(entry.record.isPublic)}</dd>
+                <dt>用途</dt>
+                <dd>
+                  {onCategoryChange ? (
+                    <SelectMenu
+                      label="修改用途"
+                      value={entry.record.category ?? 'none'}
+                      options={CATEGORY_OPTIONS}
+                      onValueChange={(value) =>
+                        onCategoryChange(entry, value === 'none' ? null : value)
+                      }
+                    />
+                  ) : entry.record.category ? (
+                    IMAGE_CATEGORY_LABELS[entry.record.category]
+                  ) : (
+                    '未分类'
+                  )}
+                </dd>
               </div>
+              {entry.record.isShared !== undefined ? (
+                <div>
+                  <dt>共享</dt>
+                  <dd>{entry.record.isShared ? '已入库' : '仅自己'}</dd>
+                </div>
+              ) : null}
             </dl>
+            {entry.record.description ? (
+              <p className="image-detail__description">{entry.record.description}</p>
+            ) : null}
+            {entry.record.tags?.length ? (
+              <ul className="image-detail__tags" aria-label="标签">
+                {entry.record.tags.map((tag) => (
+                  <li key={tag}>{tag}</li>
+                ))}
+              </ul>
+            ) : null}
           </div>
           <div className="detail-actions flex-shrink-0 mt-auto pt-3 space-y-1.5">
             <Button type="button" onClick={() => void downloadUrl(entry.imageUrl, filename)}>
@@ -147,14 +204,10 @@ export function ImageDetailModal({
                 用作参考图
               </Button>
             ) : null}
-            {onToggleVisibility ? (
-              <Button type="button" variant="ghost" onClick={() => onToggleVisibility(entry)}>
-                {entry.record.isPublic ? (
-                  <EyeOff aria-hidden="true" />
-                ) : (
-                  <Globe2 aria-hidden="true" />
-                )}
-                {getImageVisibilityActionLabel(entry.record.isPublic)}
+            {onToggleShared ? (
+              <Button type="button" variant="ghost" onClick={() => onToggleShared(entry)}>
+                {entry.record.isShared ? <Lock aria-hidden="true" /> : <Users aria-hidden="true" />}
+                {entry.record.isShared ? '设为仅自己' : '共享到成果库'}
               </Button>
             ) : null}
             {canDelete && onDelete ? (

@@ -5,7 +5,7 @@ ENV HUSKY=0
 WORKDIR /app/frontend
 ARG VITE_API_BASE_URL=
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-COPY frontend/package*.json ./
+COPY frontend/package*.json frontend/.npmrc ./
 RUN npm ci
 COPY frontend ./
 RUN npm run build

@@ -16,6 +16,11 @@ services:
       OPENAI_COMPAT_API_KEY: ${OPENAI_COMPAT_API_KEY:?Set OPENAI_COMPAT_API_KEY in the root .env file}
       IMAGE_MODEL: ${IMAGE_MODEL:-gpt-image-2}
       IMAGE_API_TIMEOUT_MS: ${IMAGE_API_TIMEOUT_MS:-300000}
+      TEXT_PROMPT_STRUCTURING: ${TEXT_PROMPT_STRUCTURING:-true}
+      VISION_API_BASE_URL: ${VISION_API_BASE_URL:-}
+      VISION_API_KEY: ${VISION_API_KEY:-}
+      VISION_MODEL: ${VISION_MODEL:-}
+      VISION_API_TIMEOUT_MS: ${VISION_API_TIMEOUT_MS:-60000}
       UPLOAD_DIR: /app/tmp/uploads
       UPLOAD_MAX_BYTES: ${UPLOAD_MAX_BYTES:-10485760}
       OUTPUT_DIR: /app/tmp/outputs
@@ -64,10 +69,34 @@ services:
     ports:
       - "${FRONTEND_PORT:-5173}:80"
 
+# VOLUME MIGRATION (bellpicture_* → nebulens_*)
+# Run once on any host that already has bellpicture_* volumes before starting
+# this compose stack for the first time after the rename:
+#
+#   docker volume create nebulens_backend-data
+#   docker run --rm \
+#     -v bellpicture_backend-data:/from \
+#     -v nebulens_backend-data:/to \
+#     busybox sh -c "cp -a /from/. /to/"
+#
+#   docker volume create nebulens_backend-uploads
+#   docker run --rm \
+#     -v bellpicture_backend-uploads:/from \
+#     -v nebulens_backend-uploads:/to \
+#     busybox sh -c "cp -a /from/. /to/"
+#
+#   docker volume create nebulens_backend-outputs
+#   docker run --rm \
+#     -v bellpicture_backend-outputs:/from \
+#     -v nebulens_backend-outputs:/to \
+#     busybox sh -c "cp -a /from/. /to/"
+#
+# After verifying the new stack is healthy you may remove the old volumes:
+#   docker volume rm bellpicture_backend-data bellpicture_backend-uploads bellpicture_backend-outputs
 volumes:
   backend-data:
-    name: bellpicture_backend-data
+    name: nebulens_backend-data
   backend-uploads:
-    name: bellpicture_backend-uploads
+    name: nebulens_backend-uploads
   backend-outputs:
-    name: bellpicture_backend-outputs
+    name: nebulens_backend-outputs

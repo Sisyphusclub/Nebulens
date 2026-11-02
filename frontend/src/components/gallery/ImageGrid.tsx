@@ -1,21 +1,11 @@
-import {
-  Check,
-  Copy,
-  Download,
-  EyeOff,
-  Globe2,
-  Heart,
-  RefreshCw,
-  Square,
-  Trash2,
-} from 'lucide-react';
+import { Check, Copy, Download, Heart, Lock, RefreshCw, Square, Trash2, Users } from 'lucide-react';
 
 import { MorphicCard } from '@/components/premium/morphic-card-modal';
 import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
 import { cn } from '@/lib/utils';
 import type { HistoryEntry } from '@/types/image';
-import { getImageVisibilityActionLabel } from '@/utils/imageVisibility';
+import { thumbnailUrl } from '@/utils/thumbnail';
 
 interface ImageGridProps {
   entries: readonly HistoryEntry[];
@@ -27,8 +17,10 @@ interface ImageGridProps {
   onCopyPrompt?: (entry: HistoryEntry) => void;
   onReuse?: (entry: HistoryEntry) => void;
   onDownload?: (entry: HistoryEntry) => void;
-  onToggleVisibility?: (entry: HistoryEntry) => void;
+  onToggleShared?: (entry: HistoryEntry) => void;
   onRemove?: (entry: HistoryEntry) => void;
+  /** A short line under each image, such as who made it and why it was found. */
+  captionFor?: (entry: HistoryEntry) => string | undefined;
 }
 
 export function ImageGrid({
@@ -41,8 +33,9 @@ export function ImageGrid({
   onCopyPrompt,
   onReuse,
   onDownload,
-  onToggleVisibility,
+  onToggleShared,
   onRemove,
+  captionFor,
 }: ImageGridProps) {
   if (!entries.length) {
     return (
@@ -55,6 +48,7 @@ export function ImageGrid({
     <div className="image-grid">
       {entries.map((entry) => {
         const selected = selectedIds.has(entry.record.id);
+        const caption = captionFor?.(entry);
         return (
           <article className={cn('image-tile', selected && 'is-selected')} key={entry.record.id}>
             <MorphicCard
@@ -71,7 +65,11 @@ export function ImageGrid({
                 aria-label={`查看图片：${entry.record.prompt}`}
                 onClick={() => onSelect(entry)}
               >
-                <img src={entry.imageUrl} alt={entry.record.prompt || '生成图片'} loading="lazy" />
+                <img
+                  src={thumbnailUrl(entry.imageUrl, 640)}
+                  alt={entry.record.prompt || '生成图片'}
+                  loading="lazy"
+                />
               </Button>
               <div className="image-tile__actions" role="toolbar" aria-label="图片操作">
                 {onCopyPrompt ? (
@@ -113,19 +111,19 @@ export function ImageGrid({
                     </Button>
                   </IconTooltip>
                 ) : null}
-                {onToggleVisibility ? (
-                  <IconTooltip label={getImageVisibilityActionLabel(entry.record.isPublic)}>
+                {onToggleShared && entry.record.isShared !== undefined ? (
+                  <IconTooltip label={entry.record.isShared ? '设为仅自己' : '共享到成果库'}>
                     <Button
                       type="button"
                       variant="secondary"
                       size="icon"
-                      aria-label={getImageVisibilityActionLabel(entry.record.isPublic)}
-                      onClick={() => onToggleVisibility(entry)}
+                      aria-label={entry.record.isShared ? '设为仅自己' : '共享到成果库'}
+                      onClick={() => onToggleShared(entry)}
                     >
-                      {entry.record.isPublic ? (
-                        <EyeOff aria-hidden="true" />
+                      {entry.record.isShared ? (
+                        <Users aria-hidden="true" />
                       ) : (
-                        <Globe2 aria-hidden="true" />
+                        <Lock aria-hidden="true" />
                       )}
                     </Button>
                   </IconTooltip>
@@ -145,6 +143,7 @@ export function ImageGrid({
                 ) : null}
               </div>
             </MorphicCard>
+            {caption ? <p className="image-tile__caption">{caption}</p> : null}
             {onToggleSelection ? (
               <Button
                 type="button"

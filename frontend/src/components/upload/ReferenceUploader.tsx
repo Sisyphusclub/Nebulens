@@ -5,6 +5,7 @@ import type { ChangeEvent, DragEvent } from 'react';
 import type { SelectedReferenceFile } from '@/hooks/useFileUpload';
 import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
+import { MAX_REFERENCE_IMAGES } from '@/types/image';
 
 interface ReferenceUploaderProps {
   files: readonly SelectedReferenceFile[];
@@ -58,7 +59,7 @@ export function ReferenceUploader({
       >
         <ImagePlus aria-hidden="true" />
         <span>添加参考图</span>
-        <small>PNG、JPEG 或 WebP，最多 4 张</small>
+        <small>PNG、JPEG 或 WebP，最多 {MAX_REFERENCE_IMAGES} 张</small>
       </Button>
       {files.length ? (
         <div className="reference-list">

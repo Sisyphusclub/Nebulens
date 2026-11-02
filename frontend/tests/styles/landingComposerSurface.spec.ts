@@ -95,35 +95,55 @@ describe('landing composer surface contract', () => {
     expect(triggerFocusRule).toContain('box-shadow: none !important;');
   });
 
-  it('keeps the idle hero composer visible without painting a nested card', () => {
-    const idleStart = baseStyles.indexOf(
-      '/* The hero and dock share the same beUI Agent Chat Input surface.',
+  it('renders both composers as see-through liquid glass', () => {
+    const glassStart = baseStyles.indexOf(
+      '/* Liquid glass composer, shared by Discover and Generate:',
     );
-    const idleContract = baseStyles.slice(
-      idleStart,
-      baseStyles.indexOf('/* Composer parity:', idleStart),
+    const glass = baseStyles.slice(
+      glassStart,
+      baseStyles.indexOf('/* Composer parity:', glassStart),
     );
 
-    expect(idleContract).toContain(
-      '--card-bg: color-mix(in oklch, var(--card) 88%, transparent) !important;',
+    expect(glassStart).toBeGreaterThan(-1);
+    // Wanxiang's light tint and 4px blur keep what is behind clearly visible.
+    expect(glass).toContain('--card-bg: rgb(26 30 40 / 0.26) !important;');
+    expect(glass).toContain('backdrop-filter: blur(4px) saturate(1.15);');
+    // No blurred halo behind the glass: it tinted the glass and hid the backdrop.
+    expect(glass).not.toContain('.liquid-glass-frame::after');
+    // A light highlight and a faint inner glow keep the edge bright, not sunk in shadow.
+    expect(glass).toContain('rgb(255 255 255 / 0.08) 0 0 2px 1px inset');
+    expect(glass).toContain('rgb(255 255 255 / 0.04) 0 0 18px 2px inset');
+    expect(glass).not.toContain('rgb(5 6 10 / 0.35) 0 0 18px 2px inset');
+    // Chromium adds edge refraction; other engines keep the plain frosted glass.
+    expect(glass).toMatch(
+      /\[data-refraction='true'\][^{]*\{[^}]*backdrop-filter: url\(#liquid-glass-refraction\) blur\(1\.5px\) saturate\(1\.2\);/s,
     );
-    expect(idleContract).toContain(
-      'border-color: color-mix(in oklch, var(--border-strong) 82%, var(--border));',
-    );
-    expect(idleContract).toContain('inset 0 1px 0 rgb(236 248 255 / 0.08)');
-    expect(idleContract).toContain('background: transparent !important;');
-    expect(idleContract).not.toContain('.agent-chat-input__surface {\n  background: color-mix');
+    expect(glass).toContain('background: transparent !important;');
   });
 
-  it('does not replace React Bits pointer proximity with a route focus override', () => {
-    expect(baseStyles).not.toContain(
-      '.agent-chat-input.landing-composer.border-glow-card:focus-within',
+  it('replaces the pointer-driven glow with a neutral glass edge like Wanxiang', () => {
+    const glassStart = baseStyles.indexOf(
+      '/* Liquid glass composer, shared by Discover and Generate:',
+    );
+    const glass = baseStyles.slice(
+      glassStart,
+      baseStyles.indexOf('/* Composer parity:', glassStart),
+    );
+
+    expect(glass).toMatch(
+      /\.liquid-glass-frame > \.border-glow-card::before,[^{]*> \.edge-light\s*\{[^}]*display: none;/s,
+    );
+    // A static light edge, brighter along the top; no coloured or moving glow.
+    expect(glass).toMatch(
+      /\.liquid-glass-frame::before\s*\{[^}]*linear-gradient\(\s*170deg,\s*rgb\(255 255 255 \/ 0\.32\)/s,
+    );
+    expect(glass).not.toContain('conic-gradient');
+    expect(glass).not.toContain('animation:');
+    expect(glass).toContain('border-radius: 28px;');
+    // Controls inside the glass are glass pills, including the send button.
+    expect(glass).toMatch(
+      /\.liquid-glass-frame > \.generation-composer \.agent-chat-input__submit\s*\{[^}]*background: rgb\(255 255 255 \/ 0\.14\)/s,
     );
     expect(baseStyles).not.toContain('border-glow-liquid-glass');
-  });
-
-  it('keeps the complete gallery clear of the fixed composer without pagination', () => {
-    expect(baseStyles).not.toContain('.landing-gallery-pagination {');
-    expect(baseStyles).toContain('padding-bottom: calc(160px + env(safe-area-inset-bottom));');
   });
 });

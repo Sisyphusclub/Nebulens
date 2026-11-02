@@ -90,3 +90,54 @@ describe('useImageHistory', () => {
     expect(result.current.isHydrated).toBe(false);
   });
 });
+
+describe('analysis polling', () => {
+  it('re-fetches quietly while a recent image waits for analysis, then stops', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const now = new Date().toISOString();
+      const pending = { ...record('pending.png'), createdAt: now, analysisStatus: 'pending' };
+      const done = {
+        ...pending,
+        analysisStatus: 'done',
+        textCheck: { status: 'passed', segments: [] },
+      };
+      api.fetchHistory.mockResolvedValueOnce([pending]).mockResolvedValue([done]);
+      const { result } = renderHook(() => useImageHistory());
+      await waitFor(() => expect(result.current.records[0]?.analysisStatus).toBe('pending'));
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5_000);
+      });
+
+      await waitFor(() => expect(result.current.records[0]?.analysisStatus).toBe('done'));
+      expect(result.current.isHydrating).toBe(false);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(20_000);
+      });
+      expect(api.fetchHistory).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('checks back after a new image is added so its analysis can be picked up', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      api.fetchHistory.mockResolvedValue([]);
+      const { result } = renderHook(() => useImageHistory());
+      await waitFor(() => expect(api.fetchHistory).toHaveBeenCalledTimes(1));
+
+      act(() => {
+        result.current.add({ ...record('fresh.png'), createdAt: new Date().toISOString() });
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5_000);
+      });
+
+      expect(api.fetchHistory).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

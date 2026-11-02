@@ -42,18 +42,37 @@ describe('application security middleware', () => {
     expect(response?.headers['ratelimit']).toEqual(expect.any(String));
   });
 
-  it('does not spend the auth mutation budget on session and profile reads', async () => {
+  it('does not count session lookups against the auth rate limit', async () => {
     const app = createApp({ provider });
-
     for (let index = 0; index < 25; index += 1) {
-      expect((await request(app).get('/api/auth/get-session')).status).toBe(200);
-      expect((await request(app).get('/api/auth/me')).status).toBe(401);
+      const response = await request(app).get('/api/auth/get-session');
+      expect(response.status).not.toBe(429);
     }
 
-    const response = await request(app)
+    // Credential endpoints still share the remaining auth budget.
+    const signIn = await request(app)
       .post('/api/auth/sign-in/username')
-      .send({ username: 'missing-user', password: 'password123' });
+      .send({ username: 'nobody', password: 'wrong-password' });
+    expect(signIn.status).not.toBe(429);
+  });
 
-    expect(response.status).not.toBe(429);
+  it('does not count profile reads against the auth rate limit', async () => {
+    const app = createApp({ provider });
+    for (let index = 0; index < 25; index += 1) {
+      const response = await request(app).get('/api/auth/me');
+      expect(response.status).not.toBe(429);
+    }
+  });
+
+  it('still rate limits repeated credential attempts', async () => {
+    const app = createApp({ provider });
+    let response: request.Response | undefined;
+    for (let index = 0; index < 21; index += 1) {
+      response = await request(app)
+        .post('/api/auth/sign-in/username')
+        .send({ username: 'nobody', password: 'wrong-password' });
+    }
+
+    expect(response?.status).toBe(429);
   });
 });

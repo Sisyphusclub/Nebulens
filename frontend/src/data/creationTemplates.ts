@@ -1,10 +1,6 @@
-import {
-  ASPECT_RATIOS,
-  type AspectRatio,
-  type ImageResolution,
-  type HistoryEntry,
-} from '@/types/image';
+import { ASPECT_RATIOS, type AspectRatio, type ImageResolution } from '@/types/image';
 
+import { CREATION_TEMPLATE_TITLES_ZH } from './creationTemplateTitlesZh';
 import manifest from './creationTemplates.json';
 
 export interface CreationTemplateSettings {
@@ -16,7 +12,10 @@ export interface CreationTemplateSettings {
 
 export interface CreationTemplate {
   id: string;
+  /** Chinese display title. */
   title: string;
+  /** The template's original English title, shown as a subtitle. */
+  englishTitle: string;
   category: string;
   imageUrl: string;
   prompt: string;
@@ -40,7 +39,8 @@ function normalizeTemplate(value: (typeof manifest)[number]): CreationTemplate {
   }
   return {
     id: value.id,
-    title: value.title,
+    title: CREATION_TEMPLATE_TITLES_ZH[value.id] ?? value.title,
+    englishTitle: value.title,
     category: value.category,
     imageUrl: value.imageUrl,
     prompt: value.prompt,
@@ -78,20 +78,23 @@ export function orderTemplatesWithAnimeLast(
   return [...general, ...anime];
 }
 
-export function templateToHistoryEntry(template: CreationTemplate): HistoryEntry {
-  return {
-    record: {
-      id: `nebulens-${template.id}`,
-      createdAt: '2026-08-26T00:00:00.000Z',
-      prompt: template.prompt,
-      model: 'gpt-image-2',
-      aspectRatio: template.settings.aspectRatio,
-      width: template.width,
-      height: template.height,
-      count: template.settings.count,
-      resolution: template.settings.resolution,
-      isPublic: true,
-    },
-    imageUrl: template.imageUrl,
-  };
+/**
+ * A varied handful of templates for the Discover feed: one from each category in turn,
+ * anime last in every round as on the templates page.
+ */
+export function templatesAcrossCategories(count: number): CreationTemplate[] {
+  const queues = new Map<string, CreationTemplate[]>();
+  for (const template of orderTemplatesWithAnimeLast(CREATION_TEMPLATES)) {
+    const queue = queues.get(template.category) ?? [];
+    queue.push(template);
+    queues.set(template.category, queue);
+  }
+  const picked: CreationTemplate[] = [];
+  while (picked.length < count && [...queues.values()].some((queue) => queue.length > 0)) {
+    for (const queue of queues.values()) {
+      const next = queue.shift();
+      if (next !== undefined && picked.length < count) picked.push(next);
+    }
+  }
+  return picked;
 }

@@ -1,6 +1,6 @@
 import '@fontsource-variable/geist';
 import '@fontsource-variable/oxanium';
-import '@fontsource/instrument-serif/400-italic.css';
+import '@fontsource-variable/noto-serif-sc';
 import '@/styles/base.css';
 
 import { StrictMode } from 'react';

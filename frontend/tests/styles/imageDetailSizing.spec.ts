@@ -66,7 +66,7 @@ describe('image detail sizing contract', () => {
     expect(promptRule).toContain('overflow-wrap: anywhere;');
     expect(promptRule).toContain('white-space: pre-wrap;');
     expect(promptRule).toContain('word-break: break-word;');
-    expect(mobileContract).toContain('grid-template-rows: auto auto;');
+    expect(mobileContract).toContain('flex-direction: column;');
     expect(mobileContract).toContain('height: min(55svh, 72vw);');
     expect(mobileContract).toContain('width: 100%;');
     expect(mobileContract).not.toContain('min-height: 42vh;');

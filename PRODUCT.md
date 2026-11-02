@@ -8,7 +8,7 @@ product
 
 Nebulens serves creators and operators who want to generate, review, reuse, and locally archive AI images without leaving the workspace. They are usually in a focused desktop workflow: writing prompts, attaching optional reference images, comparing outputs, and returning to previous generations.
 
-Each visitor signs in with a Google account; every account receives an independent daily generation quota. The product is a multi-account workstation rather than a single-user local tool — but each account's history still lives locally in their browser (cloud sync is on the roadmap).
+Each visitor signs in with a username and password; Google OAuth is also supported as an optional login method. Every account receives an independent daily generation quota. The product is a multi-account workstation rather than a single-user local tool — generation history is stored server-side in SQLite and persists across sessions and devices on the same deployment.
 
 ## Product Purpose
 
@@ -33,3 +33,7 @@ Avoid generic AI SaaS dashboards, crowded admin panels, neon sci-fi styling, hea
 ## Accessibility & Inclusion
 
 Target a practical WCAG AA baseline: visible focus states, sufficient text contrast, semantic controls, descriptive Simplified Chinese labels, and reduced-motion support for entrance animations.
+
+## Theme
+
+**Light theme: not yet enabled.** All design tokens in `frontend/src/styles/tokens.css` are defined exclusively for dark mode (`color-scheme: dark`). No light-mode token overrides or `prefers-color-scheme: light` media queries exist. A future light theme will require a parallel token set and a tested toggle mechanism. Until then, no light-theme UI should be shipped.

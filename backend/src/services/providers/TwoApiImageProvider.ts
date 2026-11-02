@@ -1,10 +1,8 @@
 import { Buffer } from 'node:buffer';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
 
 import { AppError } from '../../errors/AppError.js';
 import { logger } from '../../logger.js';
-import { mimeFromExt, removeOutput, saveOutput } from '../../storage/localStorage.js';
+import { removeOutput, saveOutput } from '../../storage/localStorage.js';
 import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_COUNT,
@@ -16,40 +14,39 @@ import {
   type GenerateInput,
   type GenerateOutput,
   type ImageResolution,
-  type ImageQuality,
 } from '../../types/image.js';
 import { readImageDimensions } from '../../utils/imageDimensions.js';
+import { isRecord } from '../../utils/narrowing.js';
 
 import type {
   ImageGenerationProvider,
   ProviderCredentialValidationInput,
 } from './ImageGenerationProvider.js';
+import {
+  buildUrl,
+  sendGeminiImageRequests,
+  sendOpenAIImageRequest,
+  type FetchImpl,
+  type ProviderImageRequest,
+} from './twoApiRequests.js';
+import {
+  extensionForMime,
+  extractImageData,
+  throwForFailedResponse,
+  type ProviderImageData,
+} from './twoApiResponses.js';
+import { resolveApiKey, resolveBaseUrl, resolveModel } from './twoApiRouting.js';
 
 export interface TwoApiConfig {
   baseUrl: string;
+  highResBaseUrl?: string;
   apiKey: string;
   modelApiKeys?: Readonly<Record<string, string>>;
   highResApiKey?: string;
   defaultModel: string;
+  highResModel?: string;
   timeoutMs: number;
 }
-
-interface OpenAIImageResponse {
-  created?: number;
-  data?: Array<{ b64_json?: string; revised_prompt?: string }>;
-}
-
-interface GeminiImageResponse {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{
-        inlineData?: { data?: string; mimeType?: string };
-      }>;
-    };
-  }>;
-}
-
-type FetchImpl = typeof globalThis.fetch;
 
 export class TwoApiImageProvider implements ImageGenerationProvider {
   private readonly config: TwoApiConfig;
@@ -64,9 +61,10 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
     const timeoutSignal = AbortSignal.timeout(this.config.timeoutMs);
     const signal =
       input.signal === undefined ? timeoutSignal : AbortSignal.any([input.signal, timeoutSignal]);
-    // Standard and high-resolution credentials are validated against the same
-    // upstream; only the bearer key differs between the two credential groups.
-    const baseUrl = this.config.baseUrl;
+    const baseUrl =
+      input.credentialGroup === 'high-res'
+        ? (this.config.highResBaseUrl ?? this.config.baseUrl)
+        : this.config.baseUrl;
     let response: Response;
     try {
       response = await this.fetchImpl(buildUrl(baseUrl, 'v1/models'), {
@@ -159,9 +157,10 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
   async generate(input: GenerateInput): Promise<GenerateOutput> {
     const aspectRatio: AspectRatio = input.aspectRatio ?? DEFAULT_ASPECT_RATIO;
     const resolution: ImageResolution = input.resolution ?? DEFAULT_IMAGE_RESOLUTION;
-    const model = input.model ?? this.config.defaultModel;
-    const baseUrl = this.config.baseUrl;
-    const apiKey = this.apiKeyForRequest(
+    const model = resolveModel(this.config, resolution, input.model);
+    const baseUrl = resolveBaseUrl(this.config, model, resolution, input.providerCredentialGroup);
+    const apiKey = resolveApiKey(
+      this.config,
       model,
       resolution,
       input.providerCredential,
@@ -186,63 +185,25 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
 
     const start = Date.now();
     const isGemini = model === GEMINI_IMAGE_MODEL;
+    const request: ProviderImageRequest = {
+      baseUrl,
+      apiKey,
+      model,
+      prompt: input.prompt,
+      referencePaths,
+      count,
+      size: sizing.size,
+      quality: input.quality,
+      aspectRatio,
+      resolution,
+      signal: requestSignal,
+      requestId: input.requestId,
+    };
     let responses: Response[];
     try {
-      if (isGemini) {
-        responses = await Promise.all(
-          Array.from({ length: count }, () =>
-            hasReference
-              ? this.callGeminiEdits(
-                  baseUrl,
-                  apiKey,
-                  model,
-                  input.prompt,
-                  referencePaths,
-                  aspectRatio,
-                  resolution,
-                  requestSignal,
-                  input.requestId,
-                )
-              : this.callGeminiGenerations(
-                  baseUrl,
-                  apiKey,
-                  model,
-                  input.prompt,
-                  aspectRatio,
-                  resolution,
-                  requestSignal,
-                  input.requestId,
-                ),
-          ),
-        );
-      } else {
-        responses = [
-          hasReference
-            ? await this.callEdits(
-                baseUrl,
-                apiKey,
-                model,
-                input.prompt,
-                referencePaths,
-                count,
-                sizing.size,
-                input.quality,
-                requestSignal,
-                input.requestId,
-              )
-            : await this.callGenerations(
-                baseUrl,
-                apiKey,
-                model,
-                input.prompt,
-                count,
-                sizing.size,
-                input.quality,
-                requestSignal,
-                input.requestId,
-              ),
-        ];
-      }
+      responses = isGemini
+        ? await sendGeminiImageRequests(this.fetchImpl, request)
+        : [await sendOpenAIImageRequest(this.fetchImpl, request)];
     } catch (err) {
       if (input.signal?.aborted === true) {
         throw new AppError('REQUEST_ABORTED', 'Image generation request was cancelled', 499, err);
@@ -258,77 +219,14 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       throw new AppError('PROVIDER_ERROR', 'Failed to reach image generation provider', 502, err);
     }
 
-    const response = responses.find((candidate) => !candidate.ok) ?? responses[0];
-    if (response === undefined) {
-      throw new AppError('PROVIDER_EMPTY_RESULT', 'Provider returned no response', 502);
-    }
-    if (response.status === 429) {
-      const summary = await summarizeBody(response);
-      logger.warn(
-        { upstreamStatus: 429, summary, hasReference },
-        'image generation: provider rate-limited',
-      );
-      throw new AppError(
-        'PROVIDER_RATE_LIMITED',
-        'Image generation provider rate-limited (429)',
-        429,
-        undefined,
-        { upstreamStatus: 429 },
-      );
-    }
+    await throwForFailedResponse(responses, {
+      hasReference,
+      usesSavedCredential: input.providerCredential !== undefined,
+    });
 
-    if (!response.ok) {
-      const summary = await summarizeBody(response);
-      logger.warn(
-        { upstreamStatus: response.status, summary, hasReference },
-        'image generation: provider non-2xx',
-      );
-      if (
-        input.providerCredential !== undefined &&
-        (response.status === 401 || response.status === 403)
-      ) {
-        throw new AppError(
-          'PROVIDER_KEY_INVALID',
-          'The saved image generation API Key was rejected',
-          400,
-          undefined,
-          { upstreamStatus: response.status },
-        );
-      }
-      if (isPromptRejectionStatus(response.status)) {
-        throw new AppError(
-          'PROVIDER_PROMPT_REJECTED',
-          'Image generation provider rejected the prompt or reference image',
-          422,
-          undefined,
-          { upstreamStatus: response.status, reason: 'prompt_rejected' },
-        );
-      }
-      throw new AppError(
-        'PROVIDER_ERROR',
-        `Image generation provider returned ${response.status}`,
-        502,
-        undefined,
-        { upstreamStatus: response.status, reason: 'provider_http_error' },
-      );
-    }
-
-    const imageData: Array<{ data: string; mimeType?: string }> = [];
+    let imageData: ProviderImageData[];
     try {
-      for (const candidate of responses) {
-        const parsed = (await candidate.json()) as OpenAIImageResponse | GeminiImageResponse;
-        if (isGemini) {
-          imageData.push(...extractGeminiImageData(parsed as GeminiImageResponse));
-        } else {
-          imageData.push(
-            ...((parsed as OpenAIImageResponse).data ?? []).flatMap((item) =>
-              typeof item.b64_json === 'string' && item.b64_json.length > 0
-                ? [{ data: item.b64_json }]
-                : [],
-            ),
-          );
-        }
-      }
+      imageData = await extractImageData(responses, isGemini);
     } catch (err) {
       if (input.signal?.aborted === true) {
         throw new AppError('REQUEST_ABORTED', 'Image generation request was cancelled', 499, err);
@@ -401,209 +299,6 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
 
     return { images, aspectRatio, model };
   }
-
-  private apiKeyForRequest(
-    model: string,
-    resolution: ImageResolution,
-    providerCredential: string | undefined,
-    providerCredentialGroup: 'standard' | 'high-res' | undefined,
-  ): string {
-    if (
-      providerCredential !== undefined &&
-      (resolution === DEFAULT_IMAGE_RESOLUTION || providerCredentialGroup === 'high-res')
-    ) {
-      return providerCredential;
-    }
-    const modelApiKey = this.config.modelApiKeys?.[model];
-    if (modelApiKey !== undefined) return modelApiKey;
-    if (resolution === DEFAULT_IMAGE_RESOLUTION) {
-      return this.config.apiKey;
-    }
-    return this.config.highResApiKey ?? this.config.apiKey;
-  }
-
-  private async callGeminiGenerations(
-    baseUrl: string,
-    apiKey: string,
-    model: string,
-    prompt: string,
-    aspectRatio: AspectRatio,
-    resolution: ImageResolution,
-    signal: AbortSignal,
-    requestId?: string,
-  ): Promise<Response> {
-    return this.callGemini(
-      baseUrl,
-      apiKey,
-      model,
-      [{ text: prompt }],
-      aspectRatio,
-      resolution,
-      signal,
-      requestId,
-    );
-  }
-
-  private async callGeminiEdits(
-    baseUrl: string,
-    apiKey: string,
-    model: string,
-    prompt: string,
-    referencePaths: string[],
-    aspectRatio: AspectRatio,
-    resolution: ImageResolution,
-    signal: AbortSignal,
-    requestId?: string,
-  ): Promise<Response> {
-    const referenceFiles = await Promise.all(
-      referencePaths.map((referencePath) => readReferenceFile(referencePath)),
-    );
-    const parts = [
-      { text: prompt },
-      ...referenceFiles.map((file) => ({
-        inlineData: { mimeType: file.mime, data: file.buffer.toString('base64') },
-      })),
-    ];
-    return this.callGemini(
-      baseUrl,
-      apiKey,
-      model,
-      parts,
-      aspectRatio,
-      resolution,
-      signal,
-      requestId,
-    );
-  }
-
-  private async callGemini(
-    baseUrl: string,
-    apiKey: string,
-    model: string,
-    parts: Array<Record<string, unknown>>,
-    aspectRatio: AspectRatio,
-    resolution: ImageResolution,
-    signal: AbortSignal,
-    requestId?: string,
-  ): Promise<Response> {
-    const url = buildUrl(baseUrl, `v1beta/models/${encodeURIComponent(model)}:generateContent`);
-    logger.info(
-      { requestId, model, promptLength: parts.length, url, aspectRatio, resolution },
-      'image generation: provider request (gemini generateContent)',
-    );
-    return this.fetchImpl(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts }],
-        generationConfig: {
-          responseModalities: ['IMAGE'],
-          imageConfig: {
-            aspectRatio,
-            imageSize: geminiImageSize(resolution),
-          },
-        },
-      }),
-      signal,
-    });
-  }
-
-  private async callGenerations(
-    baseUrl: string,
-    apiKey: string,
-    model: string,
-    prompt: string,
-    count: number,
-    size: string,
-    quality: ImageQuality | undefined,
-    signal: AbortSignal,
-    requestId?: string,
-  ): Promise<Response> {
-    const url = buildUrl(baseUrl, 'v1/images/generations');
-    logger.info(
-      { requestId, model, promptLength: prompt.length, url, count, size, quality },
-      'image generation: provider request (text-to-image)',
-    );
-    return this.fetchImpl(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        prompt,
-        n: count,
-        size,
-        ...(quality === undefined ? {} : { quality }),
-        response_format: 'b64_json',
-      }),
-      signal,
-    });
-  }
-
-  private async callEdits(
-    baseUrl: string,
-    apiKey: string,
-    model: string,
-    prompt: string,
-    referencePaths: string[],
-    count: number,
-    size: string,
-    quality: ImageQuality | undefined,
-    signal: AbortSignal,
-    requestId?: string,
-  ): Promise<Response> {
-    const url = buildUrl(baseUrl, 'v1/images/edits');
-    const referenceFiles = await Promise.all(
-      referencePaths.map((referencePath) => readReferenceFile(referencePath)),
-    );
-
-    const form = new FormData();
-    for (const file of referenceFiles) {
-      form.append(
-        'image',
-        new Blob([new Uint8Array(file.buffer)], { type: file.mime }),
-        file.basename,
-      );
-    }
-    form.append('prompt', prompt);
-    form.append('model', model);
-    form.append('n', String(count));
-    form.append('size', size);
-    if (quality !== undefined) form.append('quality', quality);
-    form.append('response_format', 'b64_json');
-
-    logger.info(
-      {
-        requestId,
-        model,
-        promptLength: prompt.length,
-        url,
-        referenceFiles: referenceFiles.map((file) => file.basename),
-        referenceBytes: referenceFiles.reduce((sum, file) => sum + file.buffer.byteLength, 0),
-        referenceCount: referenceFiles.length,
-        count,
-        size,
-        quality,
-      },
-      'image generation: provider request (image-to-image)',
-    );
-
-    return this.fetchImpl(url, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}` },
-      body: form,
-      signal,
-    });
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function normalizeReferencePaths(input: GenerateInput): string[] {
@@ -611,66 +306,7 @@ function normalizeReferencePaths(input: GenerateInput): string[] {
   return Array.from(new Set(raw.filter((item) => item.length > 0)));
 }
 
-async function readReferenceFile(
-  referencePath: string,
-): Promise<{ buffer: Buffer; basename: string; mime: string }> {
-  const buffer = await readFile(referencePath);
-  const basename = path.basename(referencePath);
-  const ext = basename.split('.').pop()?.toLowerCase() ?? 'png';
-  const cleanExt = ext === 'jpg' ? 'jpeg' : ext;
-  const mime = mimeFromExt(cleanExt);
-  return { buffer, basename, mime };
-}
-
-function buildUrl(baseUrl: string, suffix: string): string {
-  const trimmed = baseUrl.replace(/\/+$/, '');
-  return `${trimmed}/${suffix}`;
-}
-
-function geminiImageSize(resolution: ImageResolution): '1K' | '2K' | '4K' {
-  if (resolution === '4k') return '4K';
-  if (resolution === '2k') return '2K';
-  return '1K';
-}
-
-function extractGeminiImageData(
-  response: GeminiImageResponse,
-): Array<{ data: string; mimeType?: string }> {
-  return (response.candidates ?? []).flatMap((candidate) =>
-    (candidate.content?.parts ?? []).flatMap((part) => {
-      const inlineData = part.inlineData;
-      return inlineData?.data
-        ? [
-            {
-              data: inlineData.data,
-              ...(inlineData.mimeType ? { mimeType: inlineData.mimeType } : {}),
-            },
-          ]
-        : [];
-    }),
-  );
-}
-
-function extensionForMime(mimeType: string | undefined): 'png' | 'jpeg' | 'webp' {
-  if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') return 'jpeg';
-  if (mimeType === 'image/webp') return 'webp';
-  return 'png';
-}
-
 function isTimeoutLike(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   return err.name === 'AbortError' || err.name === 'TimeoutError';
-}
-
-function isPromptRejectionStatus(status: number): boolean {
-  return status === 400 || status === 422;
-}
-
-async function summarizeBody(response: Response): Promise<string> {
-  try {
-    const text = await response.text();
-    return text.slice(0, 200);
-  } catch {
-    return '<no body>';
-  }
 }

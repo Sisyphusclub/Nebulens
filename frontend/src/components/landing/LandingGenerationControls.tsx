@@ -10,9 +10,7 @@ interface LandingGenerationControlsProps {
   count: number;
   resolution: ImageResolution;
   quality: ImageQuality;
-  isPublic: boolean;
   disabled?: boolean;
-  customPanelSide?: 'top' | 'bottom';
   quotaLabel: string;
   quotaAriaLabel: string;
   quotaIsAction: boolean;
@@ -21,7 +19,6 @@ interface LandingGenerationControlsProps {
   onCountChange: (count: number) => void;
   onResolutionChange: (resolution: ImageResolution) => void;
   onQualityChange: (quality: ImageQuality) => void;
-  onPublicChange: (isPublic: boolean) => void;
   onQuotaClick: () => void;
 }
 
@@ -31,9 +28,7 @@ export function LandingGenerationControls({
   count,
   resolution,
   quality,
-  isPublic,
   disabled,
-  customPanelSide = 'bottom',
   quotaLabel,
   quotaAriaLabel,
   quotaIsAction,
@@ -42,7 +37,6 @@ export function LandingGenerationControls({
   onCountChange,
   onResolutionChange,
   onQualityChange,
-  onPublicChange,
   onQuotaClick,
 }: LandingGenerationControlsProps) {
   const quotaContent = (
@@ -59,15 +53,12 @@ export function LandingGenerationControls({
       count={count}
       resolution={resolution}
       quality={quality}
-      isPublic={isPublic}
       disabled={disabled ?? false}
-      customPanelSide={customPanelSide}
       onModelChange={onModelChange}
       onAspectChange={onAspectChange}
       onCountChange={onCountChange}
       onResolutionChange={onResolutionChange}
       onQualityChange={onQualityChange}
-      onPublicChange={onPublicChange}
       trailingContent={
         quotaIsAction ? (
           <Button

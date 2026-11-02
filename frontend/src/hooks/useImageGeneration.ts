@@ -9,6 +9,7 @@ import {
 import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_COUNT,
+  DEFAULT_IMAGE_MODEL,
   DEFAULT_IMAGE_RESOLUTION,
   supportsImageQuality,
   type AspectRatio,
@@ -77,10 +78,7 @@ function generationError(error: unknown): Error {
     return new Error('生成失败，请检查后端服务是否可用后重试。');
   }
   const suffix = error.requestId ? `（请求编号：${error.requestId}）` : '';
-  const quotaMessage =
-    error.details?.['quotaScope'] === 'permanent'
-      ? '未配置 2K/4K 分组 Key，且当前永久积分不足。'
-      : 'GPT 号池剩余额度不足，请稍后补充额度后再试。';
+  const quotaMessage = 'GPT 号池剩余额度不足，请稍后补充额度后再试。';
   const messages: Record<string, string> = {
     PAYLOAD_TOO_LARGE: '参考图超过后端限制，请压缩后重试。',
     UNSUPPORTED_MEDIA_TYPE: '后端无法识别此参考图格式，请改用 PNG、JPEG 或 WebP。',
@@ -161,7 +159,7 @@ export function useImageGeneration() {
         setStatusMessage(
           referenceIds.length ? '正在结合参考图生成图片。' : '正在根据提示词生成图片。',
         );
-        const model = options.model?.trim() || 'gpt-image-2';
+        const model = options.model?.trim() || DEFAULT_IMAGE_MODEL;
         const quality = supportsImageQuality(model) ? options.quality : undefined;
         const startedAt = Date.now();
         const generated = await generateImage(

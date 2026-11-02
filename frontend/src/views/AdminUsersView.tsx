@@ -170,7 +170,7 @@ export function AdminUsersView() {
           正在确认管理员权限…
         </p>
       ) : !isAuthenticated ? (
-        <div className="auth-gate" role="status">
+        <div className="auth-gate">
           <h2>登录后管理用户</h2>
           <p>请使用管理员账号登录后继续。</p>
           <Button type="button" onClick={() => openAuthModal()}>
@@ -178,7 +178,7 @@ export function AdminUsersView() {
           </Button>
         </div>
       ) : !isAdmin ? (
-        <div className="auth-gate" role="status">
+        <div className="auth-gate">
           <p className="eyebrow">权限提示</p>
           <h2>无权访问</h2>
           <p>只有管理员账号可以查看和管理用户。</p>
@@ -226,7 +226,6 @@ export function AdminUsersView() {
                   min="0"
                   max="10000"
                   value={permanentTotal}
-                  aria-label="每日额度"
                   disabled={creating}
                   onChange={(event) =>
                     setPermanentTotal(Number.parseInt(event.target.value, 10) || 0)
@@ -309,7 +308,6 @@ export function AdminUsersView() {
                               <span className="sr-only">设置 {displayName(item)} 的永久额度</span>
                               <Input
                                 id={`quota-${item.id}`}
-                                aria-label={`设置 ${displayName(item)} 的每日额度`}
                                 type="number"
                                 min="0"
                                 max="10000"

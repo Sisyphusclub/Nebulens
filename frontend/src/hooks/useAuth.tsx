@@ -11,6 +11,7 @@ import type { PropsWithChildren } from 'react';
 
 import { authClient, signIn, signOut, useSession } from '@/lib/authClient';
 import { fetchAuthProfile, fetchAuthProviders, type AuthUserProfile } from '@/services/api/authApi';
+import { isRecord } from '@/utils/narrowing';
 
 const NETWORK_ERROR_MESSAGE = '无法连接到服务器，请检查网络或稍后重试。';
 const USERNAME_REQUIREMENTS_MESSAGE = '用户名需为 3-32 位小写字母、数字或下划线。';
@@ -43,10 +44,6 @@ interface BetterAuthErrorLike {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object';
-}
 
 function toBetterAuthErrorLike(value: unknown): BetterAuthErrorLike | null {
   if (!isRecord(value)) return null;
@@ -205,7 +202,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const signInWithUsername = useCallback(
     async ({ username, password }: Credentials): Promise<void> => {
-      const normalized = normalizeUsername(username);
+      const normalized = username.trim().toLowerCase();
+      // No account can have a malformed name, so it reads as a wrong sign-in rather
+      // than a naming rule to learn.
+      if (!USERNAME_PATTERN.test(normalized)) {
+        throw new Error(signInMessage({ code: 'INVALID_USERNAME_OR_PASSWORD' }));
+      }
       try {
         const result: unknown = await signIn.username({ username: normalized, password });
         const error = extractError(result);

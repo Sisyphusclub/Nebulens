@@ -5,6 +5,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../errors/AppError.js';
 import { findImageRecordAccess } from '../services/history.service.js';
 import { isValidSignedOutputRequest } from '../services/outputAccess.service.js';
+import { getThumbnail, isThumbnailWidth, THUMBNAIL_WIDTHS } from '../services/thumbnail.service.js';
 import { createOutputReadStream, mimeFromExt, statOutput } from '../storage/localStorage.js';
 
 const OUTPUT_FILENAME_RE =
@@ -23,6 +24,11 @@ export async function getOutput(req: Request, res: Response, next: NextFunction)
       );
     }
     authorizeOutput(req, filename);
+    const width = req.query['w'];
+    if (width !== undefined) {
+      await sendThumbnail(res, filename, width);
+      return;
+    }
     const ext = (filename.split('.').pop() ?? '').toLowerCase();
     let size: number;
     try {
@@ -56,9 +62,31 @@ export async function getOutput(req: Request, res: Response, next: NextFunction)
   }
 }
 
+/** `?w=` serves a cached WebP thumbnail for card grids instead of the full original. */
+async function sendThumbnail(res: Response, filename: string, width: unknown): Promise<void> {
+  const parsed = typeof width === 'string' ? Number(width) : Number.NaN;
+  if (!isThumbnailWidth(parsed)) {
+    throw new AppError(
+      'BAD_REQUEST',
+      `Thumbnail width must be one of ${THUMBNAIL_WIDTHS.join(', ')}`,
+      400,
+      undefined,
+      { width },
+    );
+  }
+  const thumbnail = await getThumbnail(filename, parsed);
+  res.status(200);
+  res.setHeader('Content-Type', 'image/webp');
+  res.setHeader('Content-Length', thumbnail.length.toString());
+  res.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+  res.end(thumbnail);
+}
+
 function authorizeOutput(req: Request, filename: string): void {
   const access = findImageRecordAccess(filename);
   if (access?.isPublic === true) return;
+  // Shared images are visible to every signed-in teammate.
+  if (access?.isShared === true && req.user !== undefined) return;
   if (access !== null && (req.user?.id === access.userId || req.user?.isAdmin === true)) return;
   if (
     isValidSignedOutputRequest({

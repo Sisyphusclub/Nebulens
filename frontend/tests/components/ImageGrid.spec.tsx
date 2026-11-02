@@ -94,26 +94,19 @@ it('binds square, landscape, and portrait media containers to their source dimen
   });
 });
 
-it('labels visibility controls by their next discovery action', () => {
-  const toggleVisibility = vi.fn();
-  const { rerender } = render(
-    <ImageGrid entries={[entry]} onSelect={vi.fn()} onToggleVisibility={toggleVisibility} />,
+it('shows card-sized thumbnails instead of full originals', () => {
+  render(
+    <ImageGrid entries={[{ ...entry, imageUrl: '/api/outputs/one.png' }]} onSelect={vi.fn()} />,
   );
 
-  const publishButton = screen.getByRole('button', { name: '发布到发现页' });
-  expect(publishButton.querySelector('.lucide-earth')).toBeInTheDocument();
-  fireEvent.click(publishButton);
-  expect(toggleVisibility).toHaveBeenCalledWith(entry);
-
-  const publicEntry: HistoryEntry = {
-    ...entry,
-    record: { ...entry.record, isPublic: true },
-  };
-  rerender(
-    <ImageGrid entries={[publicEntry]} onSelect={vi.fn()} onToggleVisibility={toggleVisibility} />,
+  expect(screen.getByRole('img', { name: '雨夜城市街角' })).toHaveAttribute(
+    'src',
+    '/api/outputs/one.png?w=640',
   );
+});
 
-  expect(
-    screen.getByRole('button', { name: '从发现页移除' }).querySelector('.lucide-eye-off'),
-  ).toBeInTheDocument();
+it('shows an optional caption under each image', () => {
+  render(<ImageGrid entries={[entry]} onSelect={vi.fn()} captionFor={() => 'alice · 同为海报'} />);
+
+  expect(screen.getByText('alice · 同为海报')).toBeInTheDocument();
 });

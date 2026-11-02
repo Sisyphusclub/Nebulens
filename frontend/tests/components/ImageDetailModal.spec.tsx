@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
@@ -52,39 +53,55 @@ describe('ImageDetailModal media framing', () => {
     expect(image).toHaveAttribute('width', String(width));
     expect(image).toHaveAttribute('height', String(height));
   });
+});
 
-  it('distinguishes the current discovery scope from the next visibility action', () => {
-    const onToggleVisibility = vi.fn();
-    const { rerender } = render(
+describe('ImageDetailModal team details', () => {
+  const analyzed: HistoryEntry = {
+    ...baseEntry,
+    record: {
+      ...baseEntry.record,
+      isShared: true,
+      category: 'poster',
+      description: '奶茶新品海报',
+      tags: ['奶茶', '清新'],
+    },
+  };
+
+  it('shows the usage, description and tags of an analyzed image', () => {
+    render(<ImageDetailModal entry={analyzed} onClose={vi.fn()} />);
+    const dialog = screen.getByRole('dialog', { name: '图片详情' });
+
+    expect(within(dialog).getByText('海报')).toBeInTheDocument();
+    expect(within(dialog).getByText('已入库')).toBeInTheDocument();
+    expect(within(dialog).getByText('奶茶新品海报')).toBeInTheDocument();
+    expect(within(dialog).getByRole('list', { name: '标签' })).toHaveTextContent('奶茶清新');
+  });
+
+  it('lets the owner change the usage and stop sharing', async () => {
+    const user = userEvent.setup();
+    const onCategoryChange = vi.fn();
+    const onToggleShared = vi.fn();
+    render(
       <ImageDetailModal
-        entry={baseEntry}
+        entry={analyzed}
         onClose={vi.fn()}
-        onToggleVisibility={onToggleVisibility}
+        onCategoryChange={onCategoryChange}
+        onToggleShared={onToggleShared}
       />,
     );
 
-    expect(screen.getByText('可见范围')).toBeInTheDocument();
-    expect(screen.getByText('发现页可见')).toBeInTheDocument();
-    const removeButton = screen.getByRole('button', { name: '从发现页移除' });
-    expect(removeButton.querySelector('.lucide-eye-off')).toBeInTheDocument();
-    fireEvent.click(removeButton);
-    expect(onToggleVisibility).toHaveBeenCalledWith(baseEntry);
+    await user.click(screen.getByRole('button', { name: '修改用途' }));
+    await user.click(screen.getByRole('menuitemradio', { name: '品牌 Logo' }));
+    expect(onCategoryChange).toHaveBeenCalledWith(analyzed, 'logo');
 
-    const privateEntry: HistoryEntry = {
-      ...baseEntry,
-      record: { ...baseEntry.record, isPublic: false },
-    };
-    rerender(
-      <ImageDetailModal
-        entry={privateEntry}
-        onClose={vi.fn()}
-        onToggleVisibility={onToggleVisibility}
-      />,
-    );
+    await user.click(screen.getByRole('button', { name: '设为仅自己' }));
+    expect(onToggleShared).toHaveBeenCalledWith(analyzed);
+  });
 
-    expect(screen.getByText('仅自己可见')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: '发布到发现页' }).querySelector('.lucide-earth'),
-    ).toBeInTheDocument();
+  it('names the author of a teammate image and offers no owner controls', () => {
+    render(<ImageDetailModal entry={analyzed} ownerName="alice" onClose={vi.fn()} />);
+    expect(screen.getByText('alice')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '修改用途' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '设为仅自己' })).not.toBeInTheDocument();
   });
 });

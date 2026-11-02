@@ -77,7 +77,7 @@ describe('AgentChatInput text paste', () => {
     );
     const placeholder = container.querySelector('.agent-chat-input__streaming-placeholder');
 
-    expect(placeholder?.tagName).toBe('DIV');
+    expect(placeholder?.tagName).toBe('SPAN');
     expect(placeholder).toHaveAttribute('aria-hidden', 'true');
     expect(placeholder?.querySelector('button')).toBeNull();
   });
@@ -133,9 +133,10 @@ describe('AgentChatInput text paste', () => {
     expect(onValueChange).toHaveBeenLastCalledWith('第一行\n第二行');
   });
 
-  it('leaves pasted files for the attachment handler', () => {
+  it('turns a pasted image into an attachment instead of inline editor content', () => {
+    const onAttachmentsChange = vi.fn();
     const parentPaste = vi.fn((event: ClipboardEvent<HTMLDivElement>) => event.defaultPrevented);
-    const file = new File(['image'], 'reference.png', { type: 'image/png' });
+    const file = new File(['image'], 'pasted.png', { type: 'image/png' });
     const { getByRole } = render(
       <div onPaste={parentPaste}>
         <AgentChatInput
@@ -145,6 +146,45 @@ describe('AgentChatInput text paste', () => {
           speedModes={[]}
           agents={[]}
           skills={[]}
+          acceptedFileTypes="image/png,image/jpeg,image/webp"
+          onAttachmentsChange={onAttachmentsChange}
+        />
+      </div>,
+    );
+    const editor = getByRole('textbox');
+
+    fireEvent.paste(editor, {
+      clipboardData: {
+        files: [file],
+        items: [{ kind: 'file', type: 'image/png', getAsFile: () => file }],
+        types: ['Files', 'text/html'],
+        getData: vi.fn(() => '<img src="https://example.com/pasted.png">'),
+      },
+    });
+
+    // The browser must not insert the image into the editor itself.
+    expect(parentPaste).toHaveReturnedWith(true);
+    expect(editor.innerHTML).toBe('');
+    expect(onAttachmentsChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({ name: 'pasted.png', type: 'image/png', file }),
+    ]);
+  });
+
+  it('ignores pasted files of unsupported types without inserting them', () => {
+    const onAttachmentsChange = vi.fn();
+    const parentPaste = vi.fn((event: ClipboardEvent<HTMLDivElement>) => event.defaultPrevented);
+    const file = new File(['%PDF'], 'notes.pdf', { type: 'application/pdf' });
+    const { getByRole } = render(
+      <div onPaste={parentPaste}>
+        <AgentChatInput
+          ariaLabel="图像提示词"
+          models={[]}
+          reasoningLevels={[]}
+          speedModes={[]}
+          agents={[]}
+          skills={[]}
+          acceptedFileTypes="image/png,image/jpeg,image/webp"
+          onAttachmentsChange={onAttachmentsChange}
         />
       </div>,
     );
@@ -152,13 +192,35 @@ describe('AgentChatInput text paste', () => {
     fireEvent.paste(getByRole('textbox'), {
       clipboardData: {
         files: [file],
-        items: [{ kind: 'file', getAsFile: () => file }],
+        items: [{ kind: 'file', type: 'application/pdf', getAsFile: () => file }],
         types: ['Files'],
         getData: vi.fn(() => ''),
       },
     });
 
-    expect(parentPaste).toHaveBeenCalledOnce();
-    expect(parentPaste).toHaveReturnedWith(false);
+    expect(parentPaste).toHaveReturnedWith(true);
+    expect(onAttachmentsChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('AgentChatInput streaming placeholder', () => {
+  it('renders example prompts as passive placeholder text, not a control', () => {
+    const { container, queryByRole } = render(
+      <AgentChatInput
+        ariaLabel="图像提示词"
+        models={[]}
+        reasoningLevels={[]}
+        speedModes={[]}
+        agents={[]}
+        skills={[]}
+        streamingPlaceholders={['银色礼服舞者悬浮在深海中']}
+      />,
+    );
+    const placeholder = container.querySelector('.agent-chat-input__streaming-placeholder');
+
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder?.tagName).not.toBe('BUTTON');
+    expect(placeholder).toHaveAttribute('aria-hidden', 'true');
+    expect(queryByRole('button', { name: '复制当前提示词示例' })).not.toBeInTheDocument();
   });
 });

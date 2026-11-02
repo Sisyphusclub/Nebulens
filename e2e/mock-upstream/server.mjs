@@ -1,0 +1,161 @@
+// Stand-in for the OpenAI-compatible image provider used by end-to-end tests.
+// No dependencies, so it runs on a bare Node image inside docker compose.
+//
+//   POST /v1/images/generations, /v1/images/edits  -> solid-colour PNGs (b64_json)
+//   POST /v1/chat/completions                       -> image analysis JSON (see analysisAnswer),
+//                                                      or a polished prompt for prompt polishing
+//   GET  /v1/models                                 -> a minimal model list
+//   GET  /__fail?on=1 | /__fail?on=0                -> toggle upstream failures
+//   GET  /__state                                   -> { fail, calls }
+//   GET  /health                                    -> 200
+import { createServer } from 'node:http';
+import { deflateSync } from 'node:zlib';
+
+const port = Number(process.env.PORT ?? 4010);
+const delayMs = Number(process.env.MOCK_DELAY_MS ?? 800);
+const state = { fail: false, calls: 0 };
+const COLOURS = [
+  [40, 90, 160],
+  [160, 70, 50],
+  [60, 140, 90],
+  [150, 120, 40],
+];
+
+const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
+  let c = n;
+  for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  return c >>> 0;
+});
+
+function crc32(buffer) {
+  let crc = 0xffffffff;
+  for (const byte of buffer) crc = CRC_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function chunk(type, data) {
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(data.length);
+  const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(body));
+  return Buffer.concat([length, body, crc]);
+}
+
+function png(width, height, [r, g, b]) {
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header.set([8, 2, 0, 0, 0], 8);
+  const row = Buffer.alloc(1 + width * 3);
+  for (let x = 0; x < width; x += 1) row.set([r, g, b], 1 + x * 3);
+  const raw = Buffer.concat(Array.from({ length: height }, () => row));
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(raw)),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+
+function sendJson(res, status, body) {
+  const data = JSON.stringify(body);
+  res.writeHead(status, {
+    'content-type': 'application/json',
+    'content-length': Buffer.byteLength(data),
+  });
+  res.end(data);
+}
+
+async function readBody(req) {
+  const chunks = [];
+  for await (const part of req) chunks.push(part);
+  return Buffer.concat(chunks);
+}
+
+function imageRequest(req, body) {
+  if (!(req.headers['content-type'] ?? '').startsWith('application/json')) {
+    // Multipart edits: the reference image is irrelevant to the mock.
+    return { n: 1, size: '1024x1024' };
+  }
+  try {
+    const payload = JSON.parse(body.toString('utf8') || '{}');
+    return {
+      n: Number(payload.n) || 1,
+      size: String(payload.size ?? '1024x1024'),
+    };
+  } catch {
+    return { n: 1, size: '1024x1024' };
+  }
+}
+
+/**
+ * Answers the vision analysis prompt. Quoted text containing "错字" is reported as
+ * misspelled ("措字") so tests can exercise the text check; everything else matches.
+ */
+function analysisAnswer(body) {
+  const payload = JSON.parse(body.toString('utf8') || '{}');
+  const content = payload.messages?.[0]?.content;
+  const instructions = Array.isArray(content)
+    ? (content.find((part) => part.type === 'text')?.text ?? '')
+    : String(content ?? '');
+  const expected = instructions
+    .split('\n')
+    .map((line) => /^\d+\. (.+)$/.exec(line)?.[1])
+    .filter((text) => text !== undefined);
+  return JSON.stringify({
+    category: 'poster',
+    description: '模拟分析：一张测试海报',
+    tags: ['测试', '海报'],
+    texts: expected.map((text) => ({
+      expected: text,
+      found: text.includes('错字') ? text.replace('错字', '措字') : text,
+    })),
+  });
+}
+
+/** Answers prompt polishing, which sends a system message followed by the user's prompt. */
+function polishAnswer(payload) {
+  const prompt = String(payload.messages?.[1]?.content ?? '');
+  return `${prompt}，模拟润色：柔和自然光，电影感构图`;
+}
+
+const server = createServer(async (req, res) => {
+  const url = new URL(req.url ?? '/', 'http://mock');
+  if (req.method === 'GET' && url.pathname === '/health') return sendJson(res, 200, { ok: true });
+  if (req.method === 'GET' && url.pathname === '/__state') return sendJson(res, 200, state);
+  if (req.method === 'GET' && url.pathname === '/__fail') {
+    state.fail = url.searchParams.get('on') === '1';
+    return sendJson(res, 200, state);
+  }
+  if (req.method === 'GET' && url.pathname === '/v1/models') {
+    return sendJson(res, 200, { data: [{ id: 'gpt-image-2' }] });
+  }
+  if (req.method === 'POST' && url.pathname === '/v1/chat/completions') {
+    const body = await readBody(req);
+    const payload = JSON.parse(body.toString('utf8') || '{}');
+    const answer =
+      payload.messages?.[0]?.role === 'system' ? polishAnswer(payload) : analysisAnswer(body);
+    return sendJson(res, 200, { choices: [{ message: { role: 'assistant', content: answer } }] });
+  }
+  if (req.method === 'POST' && url.pathname.startsWith('/v1/images/')) {
+    const body = await readBody(req);
+    state.calls += 1;
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    if (state.fail)
+      return sendJson(res, 500, {
+        error: { message: 'mock upstream failure' },
+      });
+    const { n, size } = imageRequest(req, body);
+    const [width, height] = size.split('x').map((value) => Number(value) || 1024);
+    const colour = COLOURS[state.calls % COLOURS.length];
+    const image = png(Math.max(64, width >> 3), Math.max(64, height >> 3), colour);
+    const data = Array.from({ length: n }, () => ({
+      b64_json: image.toString('base64'),
+    }));
+    return sendJson(res, 200, { created: Math.floor(Date.now() / 1000), data });
+  }
+  return sendJson(res, 404, { error: 'not found' });
+});
+
+server.listen(port, () => console.log(`mock upstream listening on ${port}`));

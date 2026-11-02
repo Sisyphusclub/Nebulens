@@ -1,6 +1,40 @@
 import { mkdtempSync } from 'node:fs';
+import type { AddressInfo, Server } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+
+import { Test } from 'supertest';
+
+// supertest binds `app.listen(0)` on the wildcard `::` address but sends the
+// request to 127.0.0.1:<port>. On macOS a socket already bound to
+// 127.0.0.1:<port> by another process takes that traffic, so requests randomly
+// reach a foreign server (seen as unexpected 401s). Bind test servers to
+// loopback instead and send the request once the port is known.
+type LoopbackTest = Test & { _server?: Server; loopbackPath?: string };
+const originalServerAddress = Test.prototype.serverAddress;
+const originalEnd = Test.prototype.end;
+Test.prototype.serverAddress = function (this: LoopbackTest, app, requestPath) {
+  if (typeof app === 'string' || typeof app === 'function' || app.address() !== null) {
+    return originalServerAddress.call(this, app, requestPath);
+  }
+  this._server = app.listen(0, '127.0.0.1');
+  this.loopbackPath = requestPath;
+  // Placeholder; the real port is filled in by `end` after `listening`.
+  return `http://127.0.0.1${requestPath}`;
+};
+Test.prototype.end = function (this: LoopbackTest, callback) {
+  const server = this._server;
+  const loopbackPath = this.loopbackPath;
+  if (server === undefined || loopbackPath === undefined || server.listening) {
+    return originalEnd.call(this, callback);
+  }
+  server.once('listening', () => {
+    const { port } = server.address() as AddressInfo;
+    this.url = `http://127.0.0.1:${port}${loopbackPath}`;
+    originalEnd.call(this, callback);
+  });
+  return this;
+};
 
 const root = mkdtempSync(path.join(tmpdir(), 'nebulens-test-'));
 

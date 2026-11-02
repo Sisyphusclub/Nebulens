@@ -11,6 +11,10 @@ import { createApp } from '../../src/app.js';
 import { db } from '../../src/db/drizzle.js';
 import { imageRecords, user, userQuota } from '../../src/db/schema.js';
 import { AppError } from '../../src/errors/AppError.js';
+import {
+  findDemoPromptCacheHit,
+  hasDemoPromptCache,
+} from '../../src/services/demoPromptCache.service.js';
 import type { ImageGenerationProvider } from '../../src/services/providers/ImageGenerationProvider.js';
 import { createUserImageApiKeyService } from '../../src/services/userImageApiKey.service.js';
 import { saveOutput } from '../../src/storage/localStorage.js';
@@ -81,6 +85,14 @@ function stubAuth(userId = `test-${randomUUID()}`, isAdmin = false): RequestHand
     req.user = { id: userId, email: `${userId}@test.local`, isAdmin };
     next();
   };
+}
+
+// The demo prompt cache is written after the response is sent, so wait for it
+// instead of racing the next request against the background write.
+async function waitForDemoPromptCache(prompt: string): Promise<void> {
+  const hit = findDemoPromptCacheHit(prompt, { prompts: [prompt], delayMs: 0 });
+  expect(hit).not.toBeNull();
+  await vi.waitFor(async () => expect(await hasDemoPromptCache(hit!)).toBe(true));
 }
 
 function buildApp(
@@ -478,7 +490,7 @@ describe('POST /api/images/generate', () => {
     expect(quota.body.remaining).toBe(17);
   });
 
-  it('rejects high-resolution generation when only check-in credits remain', async () => {
+  it('lets check-in credits pay for high-resolution generation', async () => {
     const { provider } = fakeProvider();
     const userId = `high-res-check-in-only-${randomUUID()}`;
     const app = buildApp(provider, stubAuth(userId));
@@ -491,21 +503,18 @@ describe('POST /api/images/generate', () => {
     expect(checkIn.body.remaining).toBe(5);
 
     const highResolution = await request(app).post('/api/images/generate/high-res').send({
-      prompt: '签到积分不能生成 2K',
+      prompt: '签到积分也能生成 2K',
       resolution: '2k',
     });
-    expect(highResolution.status).toBe(429);
-    expect(highResolution.body.error).toMatchObject({
-      code: 'QUOTA_EXHAUSTED',
-      details: { requested: 3, remaining: 0, quotaScope: 'permanent' },
-    });
-    expect(provider.generate).not.toHaveBeenCalled();
+    expect(highResolution.status).toBe(200);
+    expect(provider.generate).toHaveBeenCalledWith(expect.objectContaining({ resolution: '2k' }));
+    expect((await request(app).get('/api/images/quota')).body.remaining).toBe(2);
 
     const standard = await request(app)
       .post('/api/images/generate')
-      .send({ prompt: '签到积分仍可生成 1K' });
+      .send({ prompt: '剩余积分继续生成 1K' });
     expect(standard.status).toBe(200);
-    expect((await request(app).get('/api/images/quota')).body.remaining).toBe(4);
+    expect((await request(app).get('/api/images/quota')).body.remaining).toBe(1);
   });
 
   it('lets a non-admin use the saved 2K/4K credential without consuming site quota', async () => {
@@ -700,7 +709,7 @@ describe('POST /api/images/generate', () => {
 
     expect(first.status).toBe(200);
     expect(provider.generate).toHaveBeenCalledOnce();
-    await new Promise((resolve) => setTimeout(resolve, 25));
+    await waitForDemoPromptCache('演示提示词 A');
 
     const afterFirstQuota = await request(app).get('/api/images/quota');
     expect(afterFirstQuota.body.remaining).toBe(19);
@@ -753,6 +762,7 @@ describe('POST /api/images/generate', () => {
     });
     expect(first.status).toBe(200);
     expect(provider.generate).toHaveBeenCalledOnce();
+    await waitForDemoPromptCache(demoPrompt);
 
     const upload = await request(app)
       .post('/api/images/upload')

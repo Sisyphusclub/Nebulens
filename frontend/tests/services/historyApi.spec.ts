@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   deleteHistoryRecords,
-  fetchPublicHistory,
+  fetchHistory,
+  fetchTeamHistory,
   updateHistoryRecord,
   updateHistoryRecords,
 } from '@/services/api/historyApi';
@@ -85,22 +86,89 @@ describe('history metadata API', () => {
       }),
     );
   });
+});
 
-  it('parses a paginated public gallery response and sends the cursor', async () => {
-    const fetch = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ records: [record], nextCursor: 'next-page' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
+describe('history record analysis fields', () => {
+  it('keeps well-formed analysis fields and drops malformed ones without rejecting the record', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          Response.json({
+            records: [
+              {
+                id: 'a.png',
+                createdAt: '2026-10-28T00:00:00.000Z',
+                prompt: '海报',
+                model: 'gpt-image-2',
+                width: 1024,
+                height: 1024,
+                isPublic: false,
+                isShared: true,
+                category: 'poster',
+                tags: ['海报'],
+                textCheck: { status: 'passed', segments: [] },
+                analysisStatus: 'done',
+              },
+              {
+                id: 'b.png',
+                createdAt: '2026-10-28T00:00:00.000Z',
+                prompt: '坏数据',
+                model: 'gpt-image-2',
+                width: 1024,
+                height: 1024,
+                isPublic: false,
+                category: 'banner',
+                textCheck: { status: 'unknown' },
+              },
+            ],
+          }),
+        ),
+      ),
     );
-    vi.stubGlobal('fetch', fetch);
+    try {
+      const [good, malformed] = await fetchHistory();
+      expect(good).toMatchObject({ isShared: true, category: 'poster', analysisStatus: 'done' });
+      expect(malformed).toMatchObject({ id: 'b.png' });
+      expect(malformed).not.toHaveProperty('category');
+      expect(malformed).not.toHaveProperty('textCheck');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
 
-    await expect(fetchPublicHistory({ cursor: 'previous-page', limit: 12 })).resolves.toEqual({
-      records: [record],
-      nextCursor: 'next-page',
-    });
-    expect(String(fetch.mock.calls[0]?.[0])).toContain(
-      '/api/history/public?cursor=previous-page&limit=12',
+describe('fetchTeamHistory', () => {
+  it('requests one usage category and page, and keeps each author name', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(
+        Response.json({
+          records: [
+            {
+              id: 't.png',
+              createdAt: '2026-10-28T00:00:00.000Z',
+              prompt: '团队海报',
+              model: 'gpt-image-2',
+              width: 1024,
+              height: 1024,
+              isPublic: false,
+              isShared: true,
+              ownerName: 'alice',
+            },
+          ],
+          nextCursor: 'next',
+        }),
+      ),
     );
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      const page = await fetchTeamHistory({ category: 'poster', cursor: 'abc' });
+      expect(String((fetchMock.mock.calls[0] as unknown as [string])[0])).toContain(
+        '/api/history/team?category=poster&cursor=abc',
+      );
+      expect(page).toMatchObject({ nextCursor: 'next', records: [{ ownerName: 'alice' }] });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

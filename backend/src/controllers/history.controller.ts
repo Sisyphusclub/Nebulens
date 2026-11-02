@@ -9,12 +9,15 @@ import {
   DEFAULT_PUBLIC_HISTORY_PAGE_SIZE,
   listImageRecordsForUser,
   listPublicImageRecords,
+  listTeamImageRecords,
   MAX_PUBLIC_HISTORY_PAGE_SIZE,
   removePublicImageRecordFromGalleryAsAdmin,
   type ImageRecordDTO,
   updateImageRecordForUser,
   updateImageRecordsForUser,
 } from '../services/history.service.js';
+import { recommendOwnImages, recommendTeamImages } from '../services/recommendation.service.js';
+import { IMAGE_CATEGORIES } from '../types/imageCategory.js';
 
 import '../types/express.js';
 
@@ -33,16 +36,29 @@ const publicHistoryQuerySchema = z.object({
     .default(DEFAULT_PUBLIC_HISTORY_PAGE_SIZE),
 });
 
+const teamHistoryQuerySchema = publicHistoryQuerySchema.extend({
+  category: z.enum(IMAGE_CATEGORIES).optional(),
+});
+
+const recommendationQuerySchema = z.object({
+  q: z.string().trim().min(1).max(500),
+  limit: z.coerce.number().int().min(1).max(12).default(6),
+});
+
 const imageMetadataUpdateSchema = z
   .object({
     isFavorite: z.boolean().optional(),
     isPublic: z.boolean().optional(),
+    isShared: z.boolean().optional(),
+    category: z.enum(IMAGE_CATEGORIES).nullable().optional(),
     collection: z.string().trim().max(64).nullable().optional(),
   })
   .refine(
     (value) =>
       value.isFavorite !== undefined ||
       value.isPublic !== undefined ||
+      value.isShared !== undefined ||
+      value.category !== undefined ||
       value.collection !== undefined,
     'At least one metadata field is required',
   );
@@ -87,6 +103,9 @@ function validateIds(ids: readonly string[]): void {
 export function buildHistoryController(): {
   list: (req: Request, res: Response, next: NextFunction) => void;
   listPublic: (_req: Request, res: Response, next: NextFunction) => void;
+  listTeam: (req: Request, res: Response, next: NextFunction) => void;
+  recommend: (req: Request, res: Response, next: NextFunction) => void;
+  recommendOwn: (req: Request, res: Response, next: NextFunction) => void;
   removeOne: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   removePublicAsAdmin: (req: Request, res: Response, next: NextFunction) => void;
   removeBatch: (req: Request, res: Response, next: NextFunction) => Promise<void>;
@@ -101,6 +120,45 @@ export function buildHistoryController(): {
         const records = listImageRecordsForUser(user.id);
         const body: HistoryListResponse = { records };
         res.status(200).json(body);
+      } catch (err) {
+        next(err);
+      }
+    },
+
+    recommend(req, res, next) {
+      try {
+        requireUser(req);
+        const query = parseQuery(recommendationQuerySchema, req.query);
+        res.status(200).json({
+          recommendations: recommendTeamImages({ query: query.q, limit: query.limit }),
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+
+    recommendOwn(req, res, next) {
+      try {
+        const user = requireUser(req);
+        const query = parseQuery(recommendationQuerySchema, req.query);
+        res.status(200).json({
+          matches: recommendOwnImages({ userId: user.id, query: query.q, limit: query.limit }),
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+
+    listTeam(req, res, next) {
+      try {
+        requireUser(req);
+        const query = parseQuery(teamHistoryQuerySchema, req.query);
+        const page = listTeamImageRecords({
+          limit: query.limit,
+          ...(query.cursor === undefined ? {} : { cursor: query.cursor }),
+          ...(query.category === undefined ? {} : { category: query.category }),
+        });
+        res.status(200).json(page);
       } catch (err) {
         next(err);
       }

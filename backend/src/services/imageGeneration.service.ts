@@ -150,7 +150,8 @@ export async function generateImage(
   throwIfAborted(input.signal);
   const creditCost = imageGenerationCreditCost(resolution, input.model);
   const reservation = deps.quotaPool?.reserve(count * creditCost, {
-    scope: resolution === DEFAULT_IMAGE_RESOLUTION ? 'all' : 'permanent',
+    // 2K/4K draw on the same quota as standard images; they only cost more credits.
+    scope: 'all',
   });
   let generatedResult: GenerateOutput | undefined;
   try {

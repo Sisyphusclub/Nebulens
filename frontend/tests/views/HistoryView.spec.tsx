@@ -21,11 +21,6 @@ const authMocks = vi.hoisted(() => ({
   isLoading: false,
 }));
 
-const publicGalleryMocks = vi.hoisted(() => ({
-  addPublicRecord: vi.fn(),
-  removePublicRecord: vi.fn(),
-}));
-
 const entries: HistoryEntry[] = [
   {
     record: {
@@ -86,7 +81,23 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => authMocks,
 }));
 
-vi.mock('@/hooks/usePublicGallery', () => publicGalleryMocks);
+const searchMocks = vi.hoisted(() => ({
+  items: [] as Array<{ id: string; reason: string }>,
+  loading: false,
+  queries: [] as Array<{ query: string; enabled: boolean }>,
+}));
+
+vi.mock('@/hooks/useOwnImageSearch', () => ({
+  useOwnImageSearch: (query: string, enabled: boolean) => {
+    searchMocks.queries.push({ query, enabled });
+    const active = enabled && query.trim().length >= 4;
+    return {
+      items: active ? searchMocks.items : [],
+      active,
+      loading: active && searchMocks.loading,
+    };
+  },
+}));
 
 vi.mock('@/hooks/useImageHistory', () => ({
   useImageHistory: () => ({
@@ -130,6 +141,9 @@ function renderView() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  searchMocks.items = [];
+  searchMocks.loading = false;
+  searchMocks.queries = [];
   authMocks.isAuthenticated = true;
   authMocks.isLoading = false;
   historyMocks.entries = entries;
@@ -145,8 +159,6 @@ beforeEach(() => {
   historyMocks.remove.mockResolvedValue(undefined);
   historyMocks.removeMany.mockResolvedValue(1);
   historyMocks.refresh.mockResolvedValue(undefined);
-  publicGalleryMocks.addPublicRecord.mockReset();
-  publicGalleryMocks.removePublicRecord.mockReset();
 });
 
 describe('HistoryView asset workflows', () => {
@@ -180,12 +192,7 @@ describe('HistoryView asset workflows', () => {
     expect(scrollRegion).not.toContainElement(title.closest('header'));
     expect(scrollRegion).not.toContainElement(page.querySelector('.asset-workbench__chrome'));
 
-    const visibilityFilter = screen.getByRole('button', { name: '可见范围筛选' });
-    expect(visibilityFilter).toHaveTextContent('全部范围');
-    await user.click(visibilityFilter);
-    expect(screen.getByRole('menuitemradio', { name: '发现页可见' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitemradio', { name: '仅自己可见' })).toBeInTheDocument();
-    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('button', { name: '可见范围筛选' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Nano Banana Pro' }));
 
@@ -272,8 +279,7 @@ describe('HistoryView asset workflows', () => {
     const table = screen.getByRole('table', { name: '资产紧凑列表' });
     expect(table).toBeInTheDocument();
     expect(screen.getByText('森林建筑')).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: '可见范围' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: '发现页可见' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: '可见范围' })).not.toBeInTheDocument();
   });
 
   it('opens square, landscape, and portrait assets with their source framing', async () => {
@@ -318,36 +324,6 @@ describe('HistoryView asset workflows', () => {
         collection: '灵感库',
       });
     });
-  });
-
-  it('publishes private assets with action-oriented feedback', async () => {
-    const user = userEvent.setup();
-    renderView();
-
-    await user.click(screen.getByRole('button', { name: '发布到发现页' }));
-
-    await waitFor(() => {
-      expect(historyMocks.update).toHaveBeenCalledWith('image-one.png', { isPublic: true });
-    });
-    expect(publicGalleryMocks.addPublicRecord).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'image-one.png', isPublic: true }),
-    );
-    expect(await screen.findByText('已发布到发现页。')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '从发现页移除' })).toBeInTheDocument();
-  });
-
-  it('removes public assets from the discovery cache with action-oriented feedback', async () => {
-    const user = userEvent.setup();
-    renderView();
-
-    await user.click(screen.getByRole('button', { name: '从发现页移除' }));
-
-    await waitFor(() => {
-      expect(historyMocks.update).toHaveBeenCalledWith('image-two.png', { isPublic: false });
-    });
-    expect(publicGalleryMocks.removePublicRecord).toHaveBeenCalledWith('image-two.png');
-    expect(await screen.findByText('已从发现页移除，仅自己可见。')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '发布到发现页' })).toBeInTheDocument();
   });
 
   it('confirms single deletion with the beUI modal and supports cancel', async () => {
@@ -434,5 +410,84 @@ describe('HistoryView asset workflows', () => {
     );
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
     expect(screen.queryByRole('toolbar', { name: '已选资产操作' })).not.toBeInTheDocument();
+  });
+});
+
+describe('HistoryView team sharing', () => {
+  const categorized: HistoryEntry[] = [
+    { ...entries[0]!, record: { ...entries[0]!.record, category: 'poster', isShared: true } },
+    { ...entries[1]!, record: { ...entries[1]!.record, category: 'logo', isShared: false } },
+  ];
+
+  it('filters assets by usage category', async () => {
+    const user = userEvent.setup();
+    historyMocks.entries = categorized;
+    renderView();
+
+    await user.click(screen.getByRole('button', { name: '用途筛选' }));
+    await user.click(screen.getByRole('menuitemradio', { name: '品牌 Logo' }));
+
+    expect(screen.getByLabelText('当前显示 1 项，共 2 项')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '查看图片：森林建筑' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '查看图片：雨夜城市' })).not.toBeInTheDocument();
+  });
+
+  it('toggles team sharing from an asset card', async () => {
+    const user = userEvent.setup();
+    historyMocks.entries = categorized;
+    renderView();
+
+    await user.click(screen.getAllByRole('button', { name: '设为仅自己' })[0]!);
+    expect(historyMocks.update).toHaveBeenCalledWith('image-one.png', { isShared: false });
+
+    await user.click(screen.getByRole('button', { name: '共享到成果库' }));
+    expect(historyMocks.update).toHaveBeenCalledWith('image-two.png', { isShared: true });
+  });
+
+  it('changes the usage category from the detail view', async () => {
+    const user = userEvent.setup();
+    historyMocks.entries = categorized;
+    renderView();
+
+    await user.click(screen.getByRole('button', { name: '查看图片：雨夜城市' }));
+    await user.click(await screen.findByRole('button', { name: '修改用途' }));
+    await user.click(screen.getByRole('menuitemradio', { name: '社媒封面' }));
+
+    expect(historyMocks.update).toHaveBeenCalledWith('image-one.png', { category: 'social' });
+  });
+});
+
+describe('HistoryView AI search', () => {
+  it('finds own images by description, explains why, and pauses the filters', async () => {
+    const user = userEvent.setup();
+    searchMocks.items = [{ id: 'image-two.png', reason: '标签相近：建筑' }];
+    renderView();
+
+    await user.click(screen.getByRole('button', { name: 'AI 找图' }));
+    expect(screen.getByRole('button', { name: 'AI 找图' })).toHaveAttribute('aria-pressed', 'true');
+    await user.type(screen.getByRole('searchbox'), '有树的房子');
+
+    expect(screen.getByRole('button', { name: '查看图片：森林建筑' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '查看图片：雨夜城市' })).not.toBeInTheDocument();
+    expect(screen.getByText('标签相近：建筑')).toBeInTheDocument();
+    expect(screen.getByText('AI 找到 1 张')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '日期筛选' })).toBeDisabled();
+    expect(searchMocks.queries.at(-1)).toEqual({ query: '有树的房子', enabled: true });
+
+    // Turning AI off goes back to keyword search over the same text.
+    await user.click(screen.getByRole('button', { name: 'AI 找图' }));
+    expect(screen.queryByText('标签相近：建筑')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '日期筛选' })).toBeEnabled();
+  });
+
+  it('keeps keyword search as the default', async () => {
+    const user = userEvent.setup();
+    renderView();
+
+    await user.type(screen.getByRole('searchbox'), '雨夜');
+
+    expect(screen.getByRole('button', { name: '查看图片：雨夜城市' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '查看图片：森林建筑' })).not.toBeInTheDocument();
+    expect(searchMocks.queries.at(-1)?.enabled).toBe(false);
   });
 });

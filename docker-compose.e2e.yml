@@ -1,0 +1,36 @@
+# End-to-end test overlay (see e2e/). Replaces the image provider with
+# e2e/mock-upstream and keeps volumes, ports and the project name separate,
+# so it can run next to a local or production stack without touching its data.
+#   cd e2e && npm run stack:up
+services:
+  mock-upstream:
+    image: node:22-bookworm-slim
+    command: ["node", "/mock/server.mjs"]
+    volumes:
+      - ./e2e/mock-upstream:/mock:ro
+    ports:
+      - "${MOCK_UPSTREAM_PORT:-4010}:4010"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4010/health').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  backend:
+    depends_on:
+      mock-upstream:
+        condition: service_healthy
+
+volumes:
+  backend-data:
+    name: nebulens-e2e_backend-data
+  backend-uploads:
+    name: nebulens-e2e_backend-uploads
+  backend-outputs:
+    name: nebulens-e2e_backend-outputs

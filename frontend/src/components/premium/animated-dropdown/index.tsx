@@ -15,7 +15,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { EASE_OUT_CSS, SPRING_LAYOUT } from '@/lib/ease';
+import { EASE_OUT_CSS, HIGHLIGHT_FOLLOW } from '@/lib/ease';
 import { cn } from '@/lib/utils';
 
 const MOTION_CLASS = 'beui-animated-dropdown';
@@ -215,42 +215,59 @@ function useDropdownHighlight<T extends HTMLElement>(forwardedRef: ForwardedRef<
     [forwardedRef],
   );
 
-  const updateHighlight = useCallback((target: EventTarget | null) => {
-    const surface = surfaceRef.current;
-    const item =
-      target instanceof Element ? target.closest<HTMLElement>('[data-beui-dropdown-item]') : null;
-
-    if (!surface || !item || !surface.contains(item)) {
-      return;
-    }
-
-    const key = item.dataset.beuiDropdownIndex ?? '';
-
-    if (activeKeyRef.current === key) {
-      return;
-    }
-
-    activeKeyRef.current = key;
-
-    const surfaceRect = surface.getBoundingClientRect();
-    const itemRect = item.getBoundingClientRect();
-
-    setHighlight((current) => {
-      return {
-        destructive: item.dataset.destructive === 'true',
-        height: itemRect.height,
-        instant: current === null,
-        key,
-        width: itemRect.width,
-        x: itemRect.left - surfaceRect.left + surface.scrollLeft,
-        y: itemRect.top - surfaceRect.top + surface.scrollTop,
-      };
-    });
+  const clearHighlight = useCallback(() => {
+    activeKeyRef.current = null;
+    setHighlight(null);
   }, []);
+
+  const updateHighlight = useCallback(
+    (target: EventTarget | null) => {
+      const surface = surfaceRef.current;
+      const item =
+        target instanceof Element ? target.closest<HTMLElement>('[data-beui-dropdown-item]') : null;
+
+      if (!surface || !item || !surface.contains(item)) {
+        // Off the options, but not in the gaps between the ones in a group.
+        if (target instanceof Element && !target.closest('[role="group"]')) {
+          clearHighlight();
+        }
+        return;
+      }
+
+      const key = item.dataset.beuiDropdownIndex ?? '';
+
+      if (activeKeyRef.current === key) {
+        return;
+      }
+
+      activeKeyRef.current = key;
+
+      const surfaceRect = surface.getBoundingClientRect();
+      const itemRect = item.getBoundingClientRect();
+      // The surface scales while it opens; measure in its own unscaled pixels.
+      const scaleX = surface.offsetWidth ? surfaceRect.width / surface.offsetWidth : 1;
+      const scaleY = surface.offsetHeight ? surfaceRect.height / surface.offsetHeight : 1;
+
+      setHighlight((current) => {
+        return {
+          destructive: item.dataset.destructive === 'true',
+          height: itemRect.height / scaleY,
+          instant: current === null,
+          key,
+          width: itemRect.width / scaleX,
+          // The highlight is placed from the padding box, inside the surface's border.
+          x: (itemRect.left - surfaceRect.left) / scaleX - surface.clientLeft + surface.scrollLeft,
+          y: (itemRect.top - surfaceRect.top) / scaleY - surface.clientTop + surface.scrollTop,
+        };
+      });
+    },
+    [clearHighlight],
+  );
 
   return {
     highlight,
     onFocusCapture: (event: ReactFocusEvent<T>) => updateHighlight(event.target),
+    onPointerLeave: clearHighlight,
     onPointerMove: (event: ReactPointerEvent<T>) => updateHighlight(event.target),
     reduceMotion,
     setSurfaceRef,
@@ -268,6 +285,7 @@ function AnimatedDropdownHighlight({
     <motion.span
       aria-hidden
       data-beui-dropdown-highlight=""
+      data-active={highlight ? '' : undefined}
       data-destructive={highlight?.destructive || undefined}
       initial={false}
       animate={{
@@ -277,7 +295,12 @@ function AnimatedDropdownHighlight({
         x: highlight?.x ?? 0,
         y: highlight?.y ?? 0,
       }}
-      transition={reduceMotion || highlight?.instant ? { duration: 0 } : SPRING_LAYOUT}
+      transition={
+        reduceMotion || highlight?.instant
+          ? { duration: 0 }
+          : // Only the position slides: resizing as well would lag between differently sized options.
+            { ...HIGHLIGHT_FOLLOW, width: { duration: 0 }, height: { duration: 0 } }
+      }
       className="pointer-events-none absolute top-0 left-0 z-0 rounded-lg bg-muted data-[destructive=true]:bg-destructive/10"
     />
   );
@@ -339,6 +362,7 @@ export const AnimatedDropdownContent = forwardRef<
     children,
     onFocusCapture,
     onPointerDownCapture,
+    onPointerLeave,
     onPointerMove,
     ...props
   },
@@ -347,6 +371,7 @@ export const AnimatedDropdownContent = forwardRef<
   const {
     highlight,
     onFocusCapture: updateHighlightFromFocus,
+    onPointerLeave: clearHighlightOnLeave,
     onPointerMove: updateHighlightFromPointer,
     reduceMotion,
     setSurfaceRef,
@@ -372,6 +397,10 @@ export const AnimatedDropdownContent = forwardRef<
 
           trigger?.setAttribute('data-beui-pointer-focus', '');
           onPointerDownCapture?.(event);
+        }}
+        onPointerLeave={(event) => {
+          clearHighlightOnLeave();
+          onPointerLeave?.(event);
         }}
         onPointerMove={(event) => {
           updateHighlightFromPointer(event);
@@ -606,6 +635,7 @@ export const AnimatedDropdownSubContent = forwardRef<
     className,
     children,
     onFocusCapture,
+    onPointerLeave,
     onPointerMove,
     ...props
   },
@@ -615,6 +645,7 @@ export const AnimatedDropdownSubContent = forwardRef<
   const {
     highlight,
     onFocusCapture: updateHighlightFromFocus,
+    onPointerLeave: clearHighlightOnLeave,
     onPointerMove: updateHighlightFromPointer,
     reduceMotion,
     setSurfaceRef,
@@ -638,6 +669,10 @@ export const AnimatedDropdownSubContent = forwardRef<
         onFocusCapture={(event) => {
           updateHighlightFromFocus(event);
           onFocusCapture?.(event);
+        }}
+        onPointerLeave={(event) => {
+          clearHighlightOnLeave();
+          onPointerLeave?.(event);
         }}
         onPointerMove={(event) => {
           updateHighlightFromPointer(event);

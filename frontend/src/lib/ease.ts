@@ -40,6 +40,13 @@ export const SPRING_LAYOUT = {
   mass: 0.6,
 } as const;
 
+/** A highlight that tracks the pointer: long enough to read as a slide, short enough not to trail. */
+export const HIGHLIGHT_FOLLOW = {
+  type: 'tween',
+  duration: 0.08,
+  ease: 'easeOut',
+} as const;
+
 export const SPRING_MOUSE = {
   stiffness: 200,
   damping: 15,

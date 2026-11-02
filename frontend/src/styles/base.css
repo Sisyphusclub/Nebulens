@@ -5965,7 +5965,7 @@ video {
 }
 .generation-console.has-results::after {
   position: fixed;
-  inset: auto 0 0 var(--sidebar-width);
+  inset: auto 0 0 0;
   z-index: 12;
   height: clamp(190px, 30vh, 300px);
   background: linear-gradient(

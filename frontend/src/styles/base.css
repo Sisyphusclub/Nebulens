@@ -1957,14 +1957,15 @@ video {
   overscroll-behavior: contain;
   scrollbar-width: thin;
 }
-.image-detail__body .eyebrow {
-  color: color-mix(in oklch, var(--foreground) 72%, var(--background));
-}
 .image-detail__body h2 {
   margin: 0;
+  /* Clear of the close button in the same corner. */
+  padding-right: 36px;
   color: color-mix(in oklch, var(--foreground) 96%, var(--background));
-  font-size: 30px;
-  font-weight: 400;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 24px;
 }
 .image-detail__description {
   margin: 0;
@@ -1993,10 +1994,11 @@ video {
   max-height: 150px;
   overflow: auto;
   margin: 0;
-  color: color-mix(in oklch, var(--foreground) 88%, var(--background));
-  font-size: 15px;
+  color: color-mix(in oklch, var(--foreground) 82%, var(--background));
+  font-size: 13px;
   line-height: 1.6;
   overflow-wrap: anywhere;
+  scrollbar-width: thin;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -2027,6 +2029,30 @@ video {
   gap: 6px;
   margin-top: auto;
 }
+/* One main action across the top, the rest in pairs below it. */
+.image-detail .detail-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.image-detail .detail-actions > :first-child {
+  grid-column: 1 / -1;
+}
+.image-detail .detail-actions > :last-child:nth-child(even) {
+  grid-column: 1 / -1;
+}
+.image-detail .detail-actions .button {
+  min-width: 0;
+  min-height: 40px;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+.image-detail .detail-actions .button--danger {
+  border-color: transparent;
+  background: transparent;
+}
+.image-detail .detail-actions .button--danger:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--destructive) 14%, transparent);
+}
 @media (min-width: 861px) {
   .image-detail-modal {
     height: min(80vh, 720px, calc(100svh - 2rem)) !important;
@@ -2046,6 +2072,34 @@ video {
     overscroll-behavior: contain;
     scrollbar-width: thin;
     padding: 20px;
+  }
+  .image-detail__body-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .image-detail__prompt {
+    flex: 1 1 auto;
+    min-height: 72px;
+    max-height: none;
+  }
+  .image-detail__body-content > :not(.image-detail__prompt) {
+    flex: none;
+  }
+  /* A quiet corner button: in the panel, there is no image behind it to stand out from. */
+  .image-detail__close {
+    top: 16px;
+    right: 16px;
+  }
+  .image-detail__close .icon-button {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
   }
   .image-detail .metadata-grid {
     gap: 8px;
@@ -3235,7 +3289,10 @@ video {
     padding: 26px 20px 20px;
   }
   .image-detail__body-content {
+    display: flex;
     flex: none;
+    flex-direction: column;
+    gap: 12px;
     overflow: visible;
   }
   .image-detail-modal > div {

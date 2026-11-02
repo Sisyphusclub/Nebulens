@@ -17,6 +17,33 @@ function ruleBody(styles: string, selector: string) {
   return normalizeCss(match?.[1] ?? '');
 }
 
+describe('image detail panel', () => {
+  it('gives the prompt the spare height instead of cutting it off above an empty gap', () => {
+    const desktop = normalizeCss(baseStyles);
+
+    expect(desktop).toContain(
+      '.image-detail__body-content { display: flex; flex-direction: column; gap: 12px; }',
+    );
+    expect(desktop).toContain(
+      '.image-detail__prompt { flex: 1 1 auto; min-height: 72px; max-height: none; }',
+    );
+    expect(ruleBody(baseStyles, '.image-detail__prompt')).toContain('font-size: 13px;');
+  });
+
+  it('keeps the title small and pairs the secondary actions under the main one', () => {
+    expect(ruleBody(baseStyles, '.image-detail__body h2')).toContain('font-size: 15px;');
+    const actions = ruleBody(baseStyles, '.image-detail .detail-actions');
+    expect(actions).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
+    expect(ruleBody(baseStyles, '.image-detail .detail-actions > :first-child')).toContain(
+      'grid-column: 1 / -1;',
+    );
+    // With an odd number of secondary actions the last takes the whole row, not half of it.
+    expect(
+      ruleBody(baseStyles, '.image-detail .detail-actions > :last-child:nth-child(even)'),
+    ).toContain('grid-column: 1 / -1;');
+  });
+});
+
 describe('image detail sizing contract', () => {
   it('uses dynamic desktop sizing and preserves mobile overrides', () => {
     const desktopStart = baseStyles.indexOf(

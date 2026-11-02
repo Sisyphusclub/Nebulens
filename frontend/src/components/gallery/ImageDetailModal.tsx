@@ -115,8 +115,7 @@ export function ImageDetailModal({
           />
         </div>
         <div className="image-detail__body w-[340px] flex-shrink-0 h-full flex flex-col min-h-0 bg-[#141414] p-5">
-          <div className="image-detail__body-content flex-1 min-h-0 overflow-y-auto space-y-2">
-            <p className="eyebrow">NEBULENS OUTPUT</p>
+          <div className="image-detail__body-content flex-1 min-h-0 overflow-y-auto">
             <h2 id="image-detail-title">图片详情</h2>
             <p className="image-detail__prompt">{entry.record.prompt}</p>
             <dl className="metadata-grid">
@@ -181,7 +180,7 @@ export function ImageDetailModal({
               </ul>
             ) : null}
           </div>
-          <div className="detail-actions flex-shrink-0 mt-auto pt-3 space-y-1.5">
+          <div className="detail-actions flex-shrink-0">
             <Button type="button" onClick={() => void downloadUrl(entry.imageUrl, filename)}>
               <Download aria-hidden="true" />
               保存图片

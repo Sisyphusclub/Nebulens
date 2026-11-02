@@ -6317,6 +6317,23 @@ video {
   pointer-events: none;
   transform: translateY(-50%);
 }
+/* The same glass as the toolbars, so the rail stands out on any backdrop. */
+.generation-history-track::before {
+  position: absolute;
+  z-index: -1;
+  inset: -34px 0 0;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-top-color: rgb(255 255 255 / 0.18);
+  border-radius: var(--radius-full);
+  background: rgb(26 30 40 / 0.56);
+  box-shadow: rgb(255 255 255 / 0.06) 0 0 2px 1px inset;
+  content: '';
+  backdrop-filter: blur(10px) saturate(1.2);
+  transition: opacity 160ms var(--ease-out-expo);
+}
+.generation-history-dock.is-open .generation-history-track::before {
+  opacity: 0;
+}
 .generation-history-track .generation-history-track__all {
   position: absolute;
   top: -32px;
@@ -6330,8 +6347,7 @@ video {
   border-radius: 8px;
   background: transparent;
   padding: 0;
-  color: color-mix(in oklch, var(--muted-foreground) 74%, transparent);
-  opacity: 0.48;
+  color: rgb(255 255 255 / 0.72);
   pointer-events: auto;
   transition:
     background 180ms var(--ease-out-expo),
@@ -6367,7 +6383,6 @@ video {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 2px;
   padding: 6px 0;
   pointer-events: none;
 }
@@ -6379,14 +6394,14 @@ video {
   display: grid;
   width: 32px;
   min-width: 32px;
-  height: 16px;
-  min-height: 16px;
+  height: var(--history-tick-slot, 18px);
+  min-height: 0;
   flex: 0 0 auto;
-  place-items: center end;
+  place-items: center;
   border: 0;
   border-radius: 6px;
   background: transparent;
-  padding: 0 2px;
+  padding: 0;
   pointer-events: auto;
 }
 .generation-history-track .generation-history-track__mark:focus-visible {
@@ -6394,12 +6409,11 @@ video {
   box-shadow: none;
 }
 .generation-history-track .generation-history-track__mark::before {
-  width: var(--history-tick-length, 11px);
+  width: var(--history-tick-length, 12px);
   height: 2px;
   border-radius: var(--radius-full);
-  background: color-mix(in oklch, var(--foreground) 34%, var(--background));
+  background: rgb(255 255 255 / 0.46);
   content: '';
-  opacity: 0.68;
   transition:
     width 180ms var(--ease-out-expo),
     background 160ms var(--ease-out-expo),
@@ -6410,31 +6424,28 @@ video {
 .generation-history-track .generation-history-track__mark:hover::before,
 .generation-history-track .generation-history-track__mark:focus-visible::before,
 .generation-history-track .generation-history-track__mark.is-previewed::before {
-  width: max(var(--history-tick-length, 11px), 23px);
-  background: color-mix(in oklch, var(--foreground) 72%, var(--accent));
-  opacity: 0.98;
+  width: 22px;
+  background: rgb(255 255 255 / 0.88);
 }
 .generation-history-track .generation-history-track__mark.is-current::before {
-  width: max(var(--history-tick-length, 11px), 27px);
+  width: 22px;
   height: 3px;
-  background: color-mix(in oklch, var(--foreground) 90%, var(--accent));
-  box-shadow: 0 0 8px color-mix(in oklch, var(--accent) 20%, transparent);
-  opacity: 1;
+  background: #fff;
+  box-shadow: 0 0 8px rgb(255 255 255 / 0.4);
 }
 .generation-history-track .generation-history-track__mark:focus-visible::before {
   height: 3px;
   box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 28%, transparent);
 }
 .generation-history-track .generation-history-track__mark.is-current:focus-visible::before {
-  width: max(var(--history-tick-length, 11px), 28px);
+  width: 22px;
   background: var(--foreground);
   box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 36%, transparent);
 }
 .generation-history-track .generation-history-track__mark.is-hovered::before {
-  width: max(var(--history-tick-length, 11px), 25px);
+  width: 22px;
   background: color-mix(in oklch, var(--accent) 48%, var(--foreground));
   box-shadow: 0 0 10px color-mix(in oklch, var(--accent) 32%, transparent);
-  opacity: 1;
 }
 .generation-history-dock.is-open .generation-history-track .generation-history-track__mark::before,
 .generation-history-dock.is-open
@@ -6479,6 +6490,12 @@ video {
   transform: translate(12px, -50%);
   transform-origin: right center;
   transition:
+    transform 180ms var(--ease-out-expo),
+    opacity 180ms var(--ease-out-expo);
+}
+.generation-history-preview.is-following {
+  transition:
+    top 140ms var(--ease-out-expo),
     transform 180ms var(--ease-out-expo),
     opacity 180ms var(--ease-out-expo);
 }

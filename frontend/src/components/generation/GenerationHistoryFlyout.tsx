@@ -118,6 +118,7 @@ export function GenerationHistoryFlyout({
   const panelOpenerRef = useRef<HTMLButtonElement | null>(null);
   const suppressPreviewFocusRef = useRef(false);
   const closeTimerRef = useRef<number | null>(null);
+  const previewShownRef = useRef(false);
 
   const getPanelTrigger = useCallback(
     () =>
@@ -162,6 +163,10 @@ export function GenerationHistoryFlyout({
   );
 
   useEffect(() => clearCloseTimer, [clearCloseTimer]);
+
+  useEffect(() => {
+    previewShownRef.current = previewBatchId !== null && !isOpen;
+  }, [isOpen, previewBatchId]);
 
   useEffect(() => {
     const updateViewportSize = () => {
@@ -238,13 +243,17 @@ export function GenerationHistoryFlyout({
   const focusIndex =
     previewIndex >= 0 ? previewIndex : hoveredIndex >= 0 ? hoveredIndex : activeIndex;
   const getTickLength = (index: number) => {
-    if (focusIndex < 0) return 11;
+    if (focusIndex < 0) return 12;
     const distance = Math.abs(index - focusIndex);
-    if (distance === 0) return 30;
-    if (distance === 1) return 22;
-    if (distance === 2) return 17;
-    return 11;
+    if (distance === 0) return 22;
+    if (distance === 1) return 18;
+    if (distance === 2) return 15;
+    return 12;
   };
+  // Marks share the track evenly, with no gaps for the pointer to fall through.
+  const tickSlot = trackBatches.length
+    ? Math.min(18, (trackHeight - 12) / trackBatches.length)
+    : 18;
   const previewOffset =
     previewIndex < 0 || trackBatches.length <= 1
       ? trackHeight / 2
@@ -327,6 +336,7 @@ export function GenerationHistoryFlyout({
           <div
             className={`generation-history-track__marks${trackBatches.length === 1 ? ' is-single' : ''}`}
             aria-hidden={isOpen}
+            style={{ '--history-tick-slot': `${tickSlot}px` } as CSSProperties}
           >
             {trackBatches.map((batch, index) => (
               <Button
@@ -354,7 +364,8 @@ export function GenerationHistoryFlyout({
         </div>
 
         <section
-          className={`generation-history-preview${previewBatch && !isOpen ? ' is-visible' : ''}`}
+          // Only glides between marks: on first showing it appears beside the pointer.
+          className={`generation-history-preview${previewBatch && !isOpen ? ' is-visible' : ''}${previewShownRef.current ? ' is-following' : ''}`}
           aria-label="生成记录预览"
           aria-hidden={!previewBatch || isOpen}
           style={{ top: `calc(50% - ${trackHeight / 2}px + ${previewOffset}px)` }}

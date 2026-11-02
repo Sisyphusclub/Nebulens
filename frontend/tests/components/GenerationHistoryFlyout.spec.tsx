@@ -39,6 +39,34 @@ describe('GenerationHistoryFlyout', () => {
     vi.useRealTimers();
   });
 
+  it('glides the preview between marks, but not when it first appears', () => {
+    render(<GenerationHistoryFlyout batches={[olderBatch, batch]} onSelectBatch={vi.fn()} />);
+    const preview = document.querySelector<HTMLElement>('.generation-history-preview');
+
+    fireEvent.mouseEnter(screen.getByRole('button', { name: '查看生成记录：雨夜列车' }));
+    expect(preview).toHaveClass('is-visible');
+    expect(preview).not.toHaveClass('is-following');
+
+    fireEvent.mouseEnter(screen.getByRole('button', { name: '查看生成记录：雾港灯塔' }));
+    expect(preview).toHaveClass('is-following');
+  });
+
+  it('shares the track between the marks when there are too many to fit', () => {
+    const many = Array.from({ length: 40 }, (_, index) => ({
+      ...batch,
+      batchId: `batch-${index}`,
+    }));
+    render(<GenerationHistoryFlyout batches={many} onSelectBatch={vi.fn()} />);
+
+    const marks = document.querySelector<HTMLElement>('.generation-history-track__marks');
+    const track = document.querySelector<HTMLElement>('.generation-history-track');
+    const slot = Number.parseFloat(marks?.style.getPropertyValue('--history-tick-slot') ?? '');
+
+    expect(slot * many.length + 12).toBeLessThanOrEqual(
+      Number.parseFloat(track?.style.height ?? ''),
+    );
+  });
+
   it('shows one contextual preview without opening the searchable history panel', () => {
     vi.useFakeTimers();
     render(

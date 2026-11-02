@@ -1045,7 +1045,8 @@ it('opens the right history flyout, searches, and loads a selected batch', async
   );
 
   fireEvent.mouseLeave(document.querySelector('.generation-history-dock')!);
-  expect(historyTick).not.toHaveClass('is-current');
+  // Leaving the rail drops the jump target; the tick stays marked as the batch being read.
+  expect(historyTick).toHaveClass('is-current');
   fireEvent.mouseEnter(resultBatch!);
   expect(historyTick).toHaveClass('is-hovered');
   fireEvent.mouseLeave(resultBatch!);

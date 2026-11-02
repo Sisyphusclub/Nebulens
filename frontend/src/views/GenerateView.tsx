@@ -1,5 +1,5 @@
 import { ArrowDown, ImagePlus, Sparkles } from 'lucide-react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ConfirmActionModal } from '@/components/common/ConfirmActionModal';
@@ -60,6 +60,7 @@ import { buildTextFixPrompt, isTextFixPrompt } from '@/utils/textCheck';
 import type { FeedItem } from '@/utils/generationFeed';
 import { readInitialReferenceFiles, requestsAutoGeneration } from '@/utils/generationRouteState';
 import { readSkillRun } from '@/utils/skillRun';
+import { useReleaseJumpTarget, useViewedBatchId } from '@/hooks/useViewedBatchId';
 import { prefersReducedMotion, scrollToGenerationBatch } from '@/utils/generationScroll';
 
 type DeleteTarget = { kind: 'entry'; entry: HistoryEntry } | { kind: 'batch'; item: FeedItem };
@@ -261,6 +262,12 @@ export function GenerateView() {
     () => [...generationHistoryBatches].reverse().map((batch) => batch.batchId),
     [generationHistoryBatches],
   );
+  const viewedBatchId = useViewedBatchId(feed);
+  const releaseJumpTarget = useCallback(
+    () => setActiveHistoryBatchId(null),
+    [setActiveHistoryBatchId],
+  );
+  useReleaseJumpTarget(activeHistoryBatchId, releaseJumpTarget);
   const latestBatch = feed[feed.length - 1];
   /** While a new batch is still generating, the backdrop keeps the previous image. */
   const ambientImageUrl = [...feed].reverse().find((item) => item.entries.length > 0)
@@ -646,7 +653,8 @@ export function GenerateView() {
       <GenerationHistoryFlyout
         batches={generationHistoryBatches}
         trackBatchIds={visibleHistoryBatchIds}
-        activeBatchId={activeHistoryBatchId}
+        // While a jump is scrolling the page there, its target stays marked over what passes by.
+        activeBatchId={activeHistoryBatchId ?? viewedBatchId}
         hoveredBatchId={hoveredBatchId}
         isHydrating={history.isHydrating}
         hydrateError={history.hydrateError}

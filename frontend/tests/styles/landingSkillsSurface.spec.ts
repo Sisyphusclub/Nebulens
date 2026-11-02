@@ -15,26 +15,27 @@ describe('landing skill deck', () => {
     const grid = rule('.landing-deck__grid');
 
     expect(grid).toContain('max-width: 1760px;');
-    expect(grid).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
-    expect(grid).toContain('grid-auto-rows: 80px;');
+    // Twelve skills in two rows, not three.
+    expect(grid).toContain('grid-template-columns: repeat(6, minmax(0, 1fr));');
+    expect(grid).toContain('grid-auto-rows: 72px;');
   });
 
   it('draws each tile as compact glass with the example on the right', () => {
     const tile = rule('.landing-deck .landing-deck__tile');
 
     expect(tile).toContain('height: auto;');
-    expect(tile).toContain('background: rgb(52 58 76 / 0.72);');
+    expect(tile).toContain('background: rgb(36 40 54 / 0.68);');
     expect(tile).toContain('backdrop-filter: blur(12px) saturate(1.2);');
-    expect(rule('.landing-deck__tile img')).toContain('width: 56px;');
+    expect(rule('.landing-deck__tile img')).toContain('width: 48px;');
     // One short line under the name, like Kling's tiles.
     expect(rule('.landing-deck__tile-description')).toContain('white-space: nowrap;');
   });
 });
 
 describe('landing skill deck beside the rail on narrow windows', () => {
-  it('drops to two columns before the name and example collide', () => {
+  it('drops to three columns before the name and example collide', () => {
     expect(baseStyles).toMatch(
-      /@media \(max-width: 1100px\)\s*\{\s*\.landing-deck__grid\s*\{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/,
+      /@media \(max-width: 1240px\)\s*\{\s*\.landing-deck__grid\s*\{\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/,
     );
   });
 });

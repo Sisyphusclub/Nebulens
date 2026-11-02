@@ -3229,7 +3229,7 @@ video {
     min-height: 0;
     height: min(55svh, 72vw);
     width: 100%;
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     aspect-ratio: auto;
     padding: 0;
     border-right: 0;
@@ -3243,7 +3243,18 @@ video {
     object-fit: contain;
   }
   .image-detail__body {
+    width: 100%;
+    height: auto;
+    flex: 1 1 auto;
+    overflow-y: auto;
     padding: 26px 20px 20px;
+  }
+  .image-detail__body-content {
+    flex: none;
+    overflow: visible;
+  }
+  .image-detail-modal > div {
+    width: 100%;
   }
   .image-detail-modal {
     inset-inline: 0 !important;

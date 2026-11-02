@@ -69,6 +69,10 @@ describe('image detail sizing contract', () => {
     expect(mobileContract).toContain('flex-direction: column;');
     expect(mobileContract).toContain('height: min(55svh, 72vw);');
     expect(mobileContract).toContain('width: 100%;');
+    // The fixed desktop side panel must not squeeze the image out of the mobile column.
+    expect(mobileContract).toContain('flex: 0 0 auto;');
+    expect(mobileContract).toContain('flex: 1 1 auto;');
+    expect(mobileContract).toContain('height: auto;');
     expect(mobileContract).not.toContain('min-height: 42vh;');
     expect(mobileContract).not.toContain('grid-template-rows: 42svh 1fr;');
     expect(narrowContract).toContain('.image-detail {');

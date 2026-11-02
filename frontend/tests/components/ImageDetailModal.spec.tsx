@@ -45,11 +45,7 @@ describe('ImageDetailModal media framing', () => {
       'items-center',
       'justify-center',
     );
-    expect(image).toHaveClass(
-      'h-full',
-      'w-auto',
-      'object-contain',
-    );
+    expect(image).toHaveClass('h-full', 'w-auto', 'object-contain');
     expect(image).toHaveAttribute('width', String(width));
     expect(image).toHaveAttribute('height', String(height));
   });

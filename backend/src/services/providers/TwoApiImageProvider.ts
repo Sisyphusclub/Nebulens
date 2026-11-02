@@ -15,6 +15,7 @@ import {
   type GenerateOutput,
   type ImageResolution,
 } from '../../types/image.js';
+import { readImageDimensions } from '../../utils/imageDimensions.js';
 import { isRecord } from '../../utils/narrowing.js';
 
 import type {
@@ -256,12 +257,17 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       for (const item of imageData) {
         requestSignal.throwIfAborted();
         const buffer = Buffer.from(item.data, 'base64');
+        const dimensions = readImageDimensions(buffer) ?? sizing;
         const saved = await saveOutput(buffer, extensionForMime(item.mimeType));
         if (requestSignal.aborted) {
           await removeOutput(saved.absolutePath);
           requestSignal.throwIfAborted();
         }
-        images.push({ outputPath: saved.absolutePath, width: sizing.width, height: sizing.height });
+        images.push({
+          outputPath: saved.absolutePath,
+          width: dimensions.width,
+          height: dimensions.height,
+        });
       }
     } catch (err) {
       await Promise.all(images.map((image) => removeOutput(image.outputPath)));

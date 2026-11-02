@@ -12,6 +12,8 @@ interface SessionResultPreviewProps {
 
 export function SessionResultPreview({ entry, onOpen }: SessionResultPreviewProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null);
+  const displaySize = naturalSize ?? entry.record;
 
   return (
     <MorphicCard id={entry.record.id} className="session-result__morph">
@@ -20,7 +22,7 @@ export function SessionResultPreview({ entry, onOpen }: SessionResultPreviewProp
         variant="ghost"
         className={`session-result__preview${imageLoaded ? ' is-loaded' : ''}`}
         style={{
-          aspectRatio: `${entry.record.width} / ${entry.record.height}`,
+          aspectRatio: `${displaySize.width} / ${displaySize.height}`,
         }}
         aria-label={`查看图片：${entry.record.prompt}`}
         onClick={onOpen}
@@ -31,7 +33,17 @@ export function SessionResultPreview({ entry, onOpen }: SessionResultPreviewProp
           className="session-result__loading"
           fill
         />
-        <img src={entry.imageUrl} alt={entry.record.prompt} onLoad={() => setImageLoaded(true)} />
+        <img
+          src={entry.imageUrl}
+          alt={entry.record.prompt}
+          onLoad={(event) => {
+            const { naturalWidth, naturalHeight } = event.currentTarget;
+            if (naturalWidth > 0 && naturalHeight > 0) {
+              setNaturalSize({ width: naturalWidth, height: naturalHeight });
+            }
+            setImageLoaded(true);
+          }}
+        />
       </Button>
     </MorphicCard>
   );

@@ -18,29 +18,27 @@ function ruleBody(styles: string, selector: string) {
 }
 
 describe('image detail panel', () => {
-  it('gives the prompt the spare height instead of cutting it off above an empty gap', () => {
+  it('sizes the prompt to its text, scrolling only when a long one runs out of room', () => {
     const desktop = normalizeCss(baseStyles);
 
     expect(desktop).toContain(
-      '.image-detail__body-content { display: flex; flex-direction: column; gap: 12px; }',
+      '.image-detail__body-content { display: flex; flex-direction: column; gap: 10px; }',
     );
     expect(desktop).toContain(
-      '.image-detail__prompt { flex: 1 1 auto; min-height: 72px; max-height: none; }',
+      '.image-detail__prompt { flex: 0 1 auto; min-height: 72px; max-height: none; }',
     );
     expect(ruleBody(baseStyles, '.image-detail__prompt')).toContain('font-size: 13px;');
   });
 
   it('keeps the title small and pairs the secondary actions under the main one', () => {
     expect(ruleBody(baseStyles, '.image-detail__body h2')).toContain('font-size: 15px;');
-    const actions = ruleBody(baseStyles, '.image-detail .detail-actions');
-    expect(actions).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
-    expect(ruleBody(baseStyles, '.image-detail .detail-actions > :first-child')).toContain(
-      'grid-column: 1 / -1;',
+    expect(ruleBody(baseStyles, '.image-detail .detail-actions')).toContain('flex-wrap: wrap;');
+    expect(ruleBody(baseStyles, '.image-detail .detail-actions .button--primary')).toContain(
+      'flex: 1 1 calc(100% - 48px);',
     );
-    // With an odd number of secondary actions the last takes the whole row, not half of it.
-    expect(
-      ruleBody(baseStyles, '.image-detail .detail-actions > :last-child:nth-child(even)'),
-    ).toContain('grid-column: 1 / -1;');
+    expect(ruleBody(baseStyles, '.image-detail .detail-actions .button--danger')).toContain(
+      'width: 40px;',
+    );
   });
 });
 
@@ -74,9 +72,15 @@ describe('image detail sizing contract', () => {
 
     expect(desktopStart).toBeGreaterThanOrEqual(0);
     const desktopModalRule = ruleBody(desktopContract, '.image-detail-modal');
-    expect(desktopModalRule).toContain('height: min(80vh, 720px, calc(100svh - 2rem)) !important;');
-    expect(desktopModalRule).toContain('min-height: min(580px, calc(100svh - 2rem)) !important;');
-    expect(desktopModalRule).toContain('max-height: min(720px, calc(100svh - 2rem)) !important;');
+    expect(desktopModalRule).toContain('height: fit-content !important;');
+    expect(desktopModalRule).toContain('max-height: calc(100svh - 2rem) !important;');
+    // The dialog wraps the image at any ratio, so there is no letterbox inside it.
+    expect(desktopContract).toContain(
+      'height: max(var(--image-detail-min-height), calc(var(--image-detail-image-height) + 24px));',
+    );
+    expect(desktopContract).toContain(
+      'width: calc(var(--image-detail-image-height) * var(--image-detail-image-ratio));',
+    );
     expect(desktopContract).toContain('height: 100%;');
     expect(desktopContract).toContain('min-height: 0;');
     expect(desktopContract).toContain('display: flex;');

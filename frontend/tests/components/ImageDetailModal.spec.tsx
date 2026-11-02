@@ -28,6 +28,58 @@ describe('ImageDetailModal surface', () => {
   });
 });
 
+describe('ImageDetailModal layout by image shape', () => {
+  it.each([
+    ['portrait', 1024, 1360, false],
+    ['square', 1024, 1024, false],
+    ['4:3', 1360, 1024, false],
+    ['16:9', 1792, 1024, true],
+    ['3:1', 3072, 1024, true],
+  ])('%s: stacks the details under only wide images', (_label, width, height, stacked) => {
+    const entry: HistoryEntry = {
+      ...baseEntry,
+      record: { ...baseEntry.record, width, height },
+    };
+
+    render(<ImageDetailModal entry={entry} onClose={vi.fn()} />);
+
+    expect(screen.getByRole('dialog', { name: '图片详情' }).hasAttribute('data-stacked')).toBe(
+      stacked,
+    );
+  });
+
+  it('keeps 16:9 beside the panel when the window has room for it, but never 3:1', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(min-width: 1501px)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    const withSize = (width: number, height: number): HistoryEntry => ({
+      ...baseEntry,
+      record: { ...baseEntry.record, width, height },
+    });
+
+    const { rerender } = render(
+      <ImageDetailModal entry={withSize(1792, 1024)} onClose={vi.fn()} />,
+    );
+    expect(screen.getByRole('dialog', { name: '图片详情' })).not.toHaveAttribute('data-stacked');
+
+    rerender(<ImageDetailModal entry={withSize(3072, 1024)} onClose={vi.fn()} />);
+    expect(screen.getByRole('dialog', { name: '图片详情' })).toHaveAttribute('data-stacked');
+    vi.unstubAllGlobals();
+  });
+
+  it('offers delete as a compact icon that still has an accessible name', () => {
+    render(<ImageDetailModal entry={baseEntry} canDelete onDelete={vi.fn()} onClose={vi.fn()} />);
+
+    const remove = screen.getByRole('button', { name: '删除' });
+
+    expect(remove.querySelector('svg')).toBeInTheDocument();
+    expect(remove.querySelector('.sr-only')).toHaveTextContent('删除');
+  });
+});
+
 describe('ImageDetailModal media framing', () => {
   it.each([
     ['square', 1024, 1024],

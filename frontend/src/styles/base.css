@@ -1956,13 +1956,13 @@ video {
 }
 .image-detail__body h2 {
   margin: 0;
-  /* Clear of the close button in the same corner. */
-  padding-right: 36px;
+  /* Clear of the close button, and centred on it. */
+  padding-right: 40px;
   color: color-mix(in oklch, var(--foreground) 96%, var(--background));
   font-family: inherit;
   font-size: 15px;
   font-weight: 600;
-  line-height: 24px;
+  line-height: 32px;
 }
 .image-detail__description {
   margin: 0;
@@ -2029,23 +2029,35 @@ video {
   gap: 6px;
   margin-top: auto;
 }
-/* One main action across the top, the rest in pairs below it. */
+/* Save and a small delete on the top row, the rest in pairs below. No delete, and save
+   takes the row; an odd action out takes its own. */
 .image-detail .detail-actions {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
-.image-detail .detail-actions > :first-child {
-  grid-column: 1 / -1;
-}
-.image-detail .detail-actions > :last-child:nth-child(even) {
-  grid-column: 1 / -1;
-}
 .image-detail .detail-actions .button {
+  order: 2;
   min-width: 0;
   min-height: 40px;
+  flex: 1 1 40%;
   border-radius: var(--radius-full);
   padding-inline: 10px;
   white-space: nowrap;
+}
+.image-detail .detail-actions .button--primary {
+  order: 0;
+  flex: 1 1 calc(100% - 48px);
+}
+/* The tooltip wraps the delete button, so its wrapper is the item in the row. */
+.image-detail__delete {
+  order: 1;
+  flex: none;
+}
+.image-detail .detail-actions .button--danger {
+  width: 40px;
+  flex: none;
+  padding: 0;
 }
 .image-detail .detail-actions :is(.button--secondary, .button--ghost) {
   border-color: transparent;
@@ -2057,38 +2069,50 @@ video {
 }
 .image-detail .detail-actions .button--danger {
   border-color: transparent;
-  background: transparent;
+  background: rgb(255 255 255 / 0.07);
 }
 .image-detail .detail-actions .button--danger:hover:not(:disabled) {
   background: color-mix(in oklch, var(--destructive) 14%, transparent);
 }
 @media (min-width: 861px) {
   .image-detail-modal {
-    height: min(80vh, 720px, calc(100svh - 2rem)) !important;
-    min-height: min(580px, calc(100svh - 2rem)) !important;
-    max-height: min(720px, calc(100svh - 2rem)) !important;
+    height: fit-content !important;
+    min-height: 0 !important;
+    max-height: calc(100svh - 2rem) !important;
     overflow: hidden;
   }
+  /* The image takes the most room its ratio allows, and the dialog wraps it: a portrait makes
+     a narrow dialog, a wide image a shorter one, down to what the side panel needs. */
   .image-detail {
+    --image-detail-min-height: min(580px, calc(100svh - 2rem));
+    /* On a short window the panel's minimum sets the height, and the image can use all of it. */
+    --image-detail-max-height: max(min(80vh, 720px), var(--image-detail-min-height));
+    --image-detail-max-image-width: calc(92vw - 380px);
+    --image-detail-image-height: min(
+      calc(var(--image-detail-max-height) - 24px),
+      calc(var(--image-detail-max-image-width) / var(--image-detail-image-ratio))
+    );
     width: 100%;
-    height: 100%;
+    height: max(var(--image-detail-min-height), calc(var(--image-detail-image-height) + 24px));
     min-height: 0;
     display: flex;
   }
+  /* The same 12px as around the image, so the title and last button line up with its edges. */
   .image-detail__body {
     min-height: 0;
-    gap: 12px;
+    gap: 10px;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    padding: 18px;
+    padding: 12px 12px 12px 14px;
   }
   .image-detail__body-content {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
+  /* As tall as the prompt: a short one leaves no empty box, a long one scrolls in what is left. */
   .image-detail__prompt {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-height: 72px;
     max-height: none;
   }
@@ -2096,8 +2120,8 @@ video {
     flex: none;
   }
   .image-detail__close {
-    top: 14px;
-    right: 14px;
+    top: 12px;
+    right: 12px;
   }
   /* In the panel, not over the image: small, on the same soft fill as the other controls. */
   .image-detail__close .icon-button {
@@ -2117,18 +2141,72 @@ video {
   .image-detail__media {
     height: 100%;
     aspect-ratio: auto;
-    flex: 0 1 auto;
+    flex: 0 0 auto;
   }
   .image-detail__media img {
-    width: auto;
-    height: 100%;
-    max-width: calc(92vw - 380px);
-    max-height: 100%;
+    width: calc(var(--image-detail-image-height) * var(--image-detail-image-ratio));
+    height: var(--image-detail-image-height);
+    max-width: none;
+    max-height: none;
+    object-fit: cover;
   }
 }
 @media (min-width: 861px) and (max-width: 1100px) {
   .image-detail {
     --image-detail-body-width: 320px;
+  }
+}
+/* Wide images: the image across the top, the details in a row under it. */
+@media (min-width: 861px) {
+  .image-detail[data-stacked] {
+    --image-detail-panel-height: 236px;
+    --image-detail-image-height: min(
+      calc(100svh - 2rem - var(--image-detail-panel-height) - 12px),
+      calc((min(92vw, 1180px) - 24px) / var(--image-detail-image-ratio))
+    );
+    width: max(
+      min(92vw, 860px),
+      calc(var(--image-detail-image-height) * var(--image-detail-image-ratio) + 24px)
+    );
+    height: calc(var(--image-detail-image-height) + var(--image-detail-panel-height) + 12px);
+    flex-direction: column;
+  }
+  .image-detail[data-stacked] .image-detail__media {
+    width: 100%;
+    height: auto;
+    padding: 12px 12px 0;
+  }
+  .image-detail[data-stacked] .image-detail__body {
+    width: 100%;
+    height: var(--image-detail-panel-height);
+    flex: none;
+    flex-direction: row;
+    gap: 14px;
+  }
+  .image-detail[data-stacked] .image-detail__body-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto minmax(0, auto);
+    align-content: start;
+  }
+  .image-detail[data-stacked] .image-detail__body-content h2,
+  .image-detail[data-stacked] .image-detail__description,
+  .image-detail[data-stacked] .image-detail__tags {
+    grid-column: 1 / -1;
+  }
+  .image-detail[data-stacked] .image-detail__prompt {
+    max-height: 168px;
+  }
+  .image-detail[data-stacked] .detail-actions {
+    width: 240px;
+    flex: none;
+    align-content: flex-end;
+    margin-top: 0;
+  }
+  /* Back over the image here, so it needs the glass again. */
+  .image-detail[data-stacked] .image-detail__close .icon-button {
+    background: rgb(38 42 52 / 0.72);
+    backdrop-filter: blur(14px);
   }
 }
 .toast-region {
@@ -3277,7 +3355,7 @@ video {
     width: 100%;
     flex: 0 0 auto;
     aspect-ratio: auto;
-    padding: 0;
+    padding: 12px 12px 0;
   }
   .image-detail__media img {
     width: auto;
@@ -3290,25 +3368,39 @@ video {
     width: 100%;
     height: auto;
     flex: 1 1 auto;
-    overflow-y: auto;
-    padding: 26px 20px 20px;
+    overflow: hidden;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
   }
+  /* Details scroll as one; the actions stay in reach below them. */
   .image-detail__body-content {
     display: flex;
-    flex: none;
+    flex: 1 1 0;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
+    overflow-y: auto;
+  }
+  .image-detail__body-content > * {
+    flex: none;
+  }
+  .image-detail__prompt {
+    max-height: none;
     overflow: visible;
   }
   .image-detail-modal > div {
     width: 100%;
+    height: 100%;
+  }
+  .image-detail {
+    height: 100%;
   }
   .image-detail-modal {
-    inset-inline: 0 !important;
+    inset: 0 !important;
     width: 100% !important;
+    height: 100svh !important;
     min-height: 0 !important;
     max-width: 100% !important;
     max-height: 100svh !important;
+    border-width: 0;
     border-radius: 0 !important;
   }
   .app-sidebar {

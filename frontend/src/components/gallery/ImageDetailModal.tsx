@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
 import { SelectMenu } from '@/components/ui/select-menu';
 import { useImageDetailModalState } from '@/hooks/useImageDetailModalState';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import {
   IMAGE_CATEGORIES,
   IMAGE_CATEGORY_LABELS,
@@ -52,6 +53,7 @@ export function ImageDetailModal({
   ownerName,
 }: ImageDetailModalProps) {
   const id = useRef(Symbol('image-detail'));
+  const roomForWideImage = useMediaQuery('(min-width: 1501px)');
   const { openImageDetailModal, closeImageDetailModal } = useImageDetailModalState();
 
   // Track only open/closed: callers may pass a new entry object on every render.
@@ -70,6 +72,9 @@ export function ImageDetailModal({
 
   if (!entry) return null;
   const filename = entry.record.id.includes('.') ? entry.record.id : `${entry.record.id}.png`;
+  const ratio = entry.record.width / entry.record.height;
+  // Beside the panel a wide image would sit in a tall gap: it goes above the details instead.
+  const stacked = ratio >= 2.5 || (ratio >= 1.7 && !roomForWideImage);
 
   return (
     <MorphicCardModal
@@ -85,9 +90,10 @@ export function ImageDetailModal({
         className="dialog image-detail flex h-full min-h-0 w-full overflow-hidden"
         style={
           {
-            '--image-detail-image-ratio': entry.record.width / entry.record.height,
+            '--image-detail-image-ratio': ratio,
           } as CSSProperties
         }
+        data-stacked={stacked ? '' : undefined}
         role="dialog"
         aria-modal="true"
         aria-labelledby="image-detail-title"
@@ -211,15 +217,17 @@ export function ImageDetailModal({
               </Button>
             ) : null}
             {canDelete && onDelete ? (
-              <Button
-                type="button"
-                variant="danger"
-                disabled={isDeleting}
-                onClick={() => onDelete(entry)}
-              >
-                <Trash2 aria-hidden="true" />
-                {isDeleting ? '删除中…' : '删除'}
-              </Button>
+              <IconTooltip label="删除" className="image-detail__delete" showOnFocus={false}>
+                <Button
+                  type="button"
+                  variant="danger"
+                  disabled={isDeleting}
+                  onClick={() => onDelete(entry)}
+                >
+                  <Trash2 aria-hidden="true" />
+                  <span className="sr-only">{isDeleting ? '删除中…' : '删除'}</span>
+                </Button>
+              </IconTooltip>
             ) : null}
           </div>
         </div>

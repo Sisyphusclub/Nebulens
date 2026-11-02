@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { AppError } from '../errors/AppError.js';
 import { requireAuth } from '../middlewares/requireAuth.js';
 import {
+  missingBriefField,
   publicSkill,
   readSkillValues,
   type SkillPlanner,
@@ -19,6 +20,8 @@ export interface SkillsRouterDeps {
 
 const planBodySchema = z.object({
   values: z.record(z.string(), z.unknown()).default({}),
+  /** One line typed in the composer; when sent, the text and list answers come from it. */
+  brief: z.string().max(500).optional(),
   hasReference: z.boolean().default(false),
 });
 
@@ -30,8 +33,9 @@ export function buildSkillsRouter(deps: SkillsRouterDeps): Router {
     res.status(200).json({ skills: SKILLS.map(publicSkill) });
   });
 
-  // POST /api/skills/:id/plan { values, hasReference } -> { title, outputs } with one
-  // ready-to-generate prompt per output image.
+  // POST /api/skills/:id/plan { values, brief?, hasReference } -> { title, outputs } with
+  // one ready-to-generate prompt per output image. With a brief, `values` carries only the
+  // choices and the rest is read from the brief.
   router.post(
     '/:id/plan',
     deps.authMiddleware ?? requireAuth,
@@ -53,7 +57,16 @@ export function buildSkillsRouter(deps: SkillsRouterDeps): Router {
               },
             );
           }
-          const values = readSkillValues(skill, parsed.data.values, parsed.data.hasReference);
+          let answers: Record<string, unknown> = parsed.data.values;
+          if (parsed.data.brief !== undefined) {
+            const fromBrief = await deps.planner.readBrief(skill, parsed.data.brief);
+            const missing = missingBriefField(skill, fromBrief);
+            if (missing !== undefined) {
+              throw new AppError('BAD_REQUEST', `请在描述里写上${missing.label}。`, 400);
+            }
+            answers = { ...parsed.data.values, ...fromBrief };
+          }
+          const values = readSkillValues(skill, answers, parsed.data.hasReference);
           res.status(200).json(await deps.planner.plan(skill, values, parsed.data.hasReference));
         } catch (err) {
           next(err);

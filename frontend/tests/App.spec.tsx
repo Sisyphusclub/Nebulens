@@ -353,43 +353,41 @@ describe('React application routes', () => {
     expect(container.querySelector(".landing-sidebar [data-sidebar='separator']")).toBeNull();
   });
 
-  it('opens a skill form from a capsule and can fall back to the example prompt', async () => {
+  it('turns the composer into skill mode from a capsule and leaves it again', async () => {
     const user = userEvent.setup();
     renderRoute('/');
 
     const skills = await screen.findByRole('region', { name: '技能' });
     await user.click(within(skills).getByRole('button', { name: '使用技能：电商主图' }));
-    const panel = await screen.findByRole('dialog', { name: '电商主图' });
+    const bar = await screen.findByRole('group', { name: '技能：电商主图' });
 
-    expect(within(panel).getByLabelText('将生成')).toHaveTextContent('主图卖点图');
-    expect(within(panel).getByText('共 2 张 · 消耗 2 额度')).toBeInTheDocument();
-    expect(within(panel).getByRole('button', { name: '开始生成' })).toBeDisabled();
-
-    await user.click(within(panel).getByRole('button', { name: '改为自己写提示词' }));
-
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('/电商主图');
+    expect(within(bar).getByLabelText('将生成')).toHaveTextContent('主图');
+    expect(within(bar).getByText(/如：山川明前绿茶/u)).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: '电商主图' })).not.toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('限时特惠');
-    expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('1:1');
+
+    await user.click(within(bar).getByRole('button', { name: '退出技能：电商主图' }));
+
+    expect(screen.queryByRole('group', { name: '技能：电商主图' })).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).not.toHaveTextContent(
+      '/电商主图',
+    );
   });
 
-  it('asks for the image a reference-based skill works from before it can start', async () => {
+  it('asks for the image a reference-based skill works from before it plans anything', async () => {
     const user = userEvent.setup();
     renderRoute('/');
 
     const gallery = await screen.findByRole('region', { name: '技能' });
     await user.click(within(gallery).getByRole('button', { name: '使用技能：商品换背景' }));
-    const panel = await screen.findByRole('dialog', { name: '商品换背景' });
-    await user.type(within(panel).getByLabelText('新背景'), '海边礁石');
-    const start = within(panel).getByRole('button', { name: '开始生成' });
+    const bar = await screen.findByRole('group', { name: '技能：商品换背景' });
+    await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '海边礁石');
 
-    expect(start).toBeDisabled();
-    await user.upload(
-      within(panel).getByLabelText('上传商品图'),
-      new File(['cup'], 'cup.png', { type: 'image/png' }),
-    );
+    expect(within(bar).getByText('需附商品图')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '用「商品换背景」开始生成' }));
 
-    expect(within(panel).getByRole('img', { name: '已选的参考图' })).toBeInTheDocument();
-    expect(start).toBeEnabled();
+    expect(await screen.findByText('请先上传商品图。')).toBeInTheDocument();
+    expect(skillMocks.planSkill).not.toHaveBeenCalled();
   });
 
   it('runs a skill: plans every image, then generates them one by one in a new session', async () => {
@@ -431,16 +429,18 @@ describe('React application routes', () => {
 
     const skills = await screen.findByRole('region', { name: '技能' });
     await user.click(within(skills).getByRole('button', { name: '使用技能：电商主图' }));
-    const panel = await screen.findByRole('dialog', { name: '电商主图' });
-    await user.type(within(panel).getByLabelText('商品名称'), '山川绿茶');
-    await user.type(within(panel).getByRole('textbox', { name: '卖点 1' }), '高山云雾');
-    await user.click(within(panel).getByRole('radio', { name: '节日促销' }));
-    await user.click(within(panel).getByRole('button', { name: '开始生成' }));
+    const bar = await screen.findByRole('group', { name: '技能：电商主图' });
+    await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '山川绿茶，高山云雾');
+    await user.click(within(bar).getByRole('button', { name: '风格' }));
+    await user.click(screen.getByRole('menuitemradio', { name: '节日促销' }));
+    await user.click(screen.getByRole('button', { name: '用「电商主图」开始生成' }));
 
-    expect(skillMocks.planSkill).toHaveBeenCalledWith(
-      'ecommerce',
-      { product: '山川绿茶', points: ['高山云雾'], style: '节日促销' },
-      false,
+    await waitFor(() =>
+      expect(skillMocks.planSkill).toHaveBeenCalledWith('ecommerce', {
+        brief: '山川绿茶，高山云雾',
+        values: { style: '节日促销' },
+        hasReference: false,
+      }),
     );
     await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(2));
     expect(
@@ -578,10 +578,11 @@ describe('React application routes', () => {
     const user = userEvent.setup();
     renderRoute('/');
 
-    const skills = await screen.findByRole('region', { name: '技能' });
-    await user.click(within(skills).getByRole('button', { name: '使用技能：活动海报' }));
-    const panel = await screen.findByRole('dialog', { name: '活动海报' });
-    await user.click(within(panel).getByRole('button', { name: '改为自己写提示词' }));
+    const prompt = await screen.findByRole('textbox', { name: '首页创作提示词' });
+    await user.type(
+      prompt,
+      '门店活动海报，主标题“周年庆典”，副标题“全场第二件半价”，底部写“活动时间 11月1日至11月7日”',
+    );
     await user.click(screen.getByRole('button', { name: '切换到 2K' }));
 
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K');

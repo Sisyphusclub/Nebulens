@@ -46,7 +46,7 @@ function isSkillForm(value: unknown): value is SkillForm {
   );
 }
 
-/** Every skill's form; public, so the panel can open before signing in. */
+/** Every skill's form; public, so skill mode works before signing in. */
 export async function fetchSkillForms(): Promise<SkillForm[]> {
   const response = await publicFetch(buildApiUrl('/api/skills'));
   const payload = await parseJsonResponse(response);
@@ -57,18 +57,22 @@ export async function fetchSkillForms(): Promise<SkillForm[]> {
   return payload.skills;
 }
 
+export interface SkillPlanRequest {
+  /** The line typed after the skill in the composer; the server reads the answers from it. */
+  brief: string;
+  /** The skill's choices, such as its style. */
+  values: SkillValues;
+  hasReference: boolean;
+}
+
 /** Has the server write one ready-to-generate prompt per output image of the skill. */
-export async function planSkill(
-  skillId: string,
-  values: SkillValues,
-  hasReference: boolean,
-): Promise<SkillPlan> {
+export async function planSkill(skillId: string, request: SkillPlanRequest): Promise<SkillPlan> {
   const response = await authedFetch(
     buildApiUrl(`/api/skills/${encodeURIComponent(skillId)}/plan`),
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ values, hasReference }),
+      body: JSON.stringify(request),
     },
   );
   const payload = await parseJsonResponse(response);

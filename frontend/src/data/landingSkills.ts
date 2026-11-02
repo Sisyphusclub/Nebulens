@@ -10,8 +10,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-import type { AspectChoice } from '@/types/image';
-
 export interface LandingSkill {
   id: string;
   label: string;
@@ -21,11 +19,8 @@ export interface LandingSkill {
   icon: LucideIcon;
   /** Small example shown on the skill card. */
   image: string;
-  aspect: AspectChoice;
-  /** Example prompt for writing it yourself; quoted text is what should appear in the image. */
-  prompt: string;
-  /** Set when the example prompt needs the user's own image; shown as a reminder to attach it. */
-  referenceHint?: string;
+  /** A one-line brief to type after the skill in the composer, shown as the example. */
+  briefExample: string;
 }
 
 /** Skills in order of everyday use, which is also their order on the Discover page. */
@@ -34,23 +29,19 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
     id: 'ecommerce',
     label: '电商主图',
     tagline: '主图卖点图一次出',
-    description: '填商品和卖点，一次出主图、场景图和卖点图',
+    description: '说说商品和卖点，一次出主图、场景图和卖点图',
     icon: ShoppingBag,
     image: '/media/skills/ecommerce.jpg',
-    aspect: '1:1',
-    prompt:
-      '电商产品主图，产品居中摆放，干净的浅色背景与柔和棚拍光，左上角写“限时特惠”，右下角写“到手价 ¥199”',
+    briefExample: '山川明前绿茶，高山云雾、手工炒制，到手价 ¥199',
   },
   {
     id: 'poster',
     label: '活动海报',
     tagline: '竖版方图横幅齐活',
-    description: '填活动信息，一次出竖版海报、朋友圈方图和横幅',
+    description: '说说活动信息，一次出竖版海报、朋友圈方图和横幅',
     icon: Megaphone,
     image: '/media/skills/poster.jpg',
-    aspect: '3:4',
-    prompt:
-      '门店活动海报，喜庆明快的配色与彩带元素，主标题“周年庆典”，副标题“全场第二件半价”，底部写“活动时间 11月1日至11月7日”',
+    briefExample: '周年庆典，全场第二件半价，11月1日至11月7日，山川茶事',
   },
   {
     id: 'background',
@@ -59,53 +50,43 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
     description: '上传商品图，商品原样不动，一次出三种构图的新背景',
     icon: Replace,
     image: '/media/skills/background.jpg',
-    aspect: '1:1',
-    prompt:
-      '保持商品的外观、颜色和文字完全不变，把背景换成清晨阳光下的大理石台面，搭配绿植与柔和投影',
-    referenceHint: '先上传一张商品图作为参考图，再开始生成。',
+    briefExample: '清晨阳光下的大理石台面，旁边有绿植',
   },
   {
     id: 'social',
     label: '社媒封面',
     tagline: '三种风格任你挑',
-    description: '填标题和平台，一次出实拍、插画、大字报三种封面',
+    description: '说说标题和平台，一次出实拍、插画、大字报三种封面',
     icon: Smartphone,
     image: '/media/skills/social.jpg',
-    aspect: '3:4',
-    prompt:
-      '小红书风格封面，生活感实拍画面，留出大面积干净区域，醒目标题“周末去哪儿”，小字“5 个城市近郊好去处”',
+    briefExample: '周末去哪儿，5 个城市近郊好去处',
   },
   {
     id: 'logo',
     label: '品牌 Logo',
     tagline: '四个方向一起出',
-    description: '填品牌名和行业，一次出四个不同方向的 Logo',
+    description: '说说品牌名和行业，一次出四个不同方向的 Logo',
     icon: PenTool,
     image: '/media/skills/logo.jpg',
-    aspect: '1:1',
-    prompt:
-      '简洁现代的品牌 Logo，几何图形与文字组合，纯色背景，中文名“山川茶事”，英文名“SHANCHUAN TEA”',
+    briefExample: '山川茶事，新中式茶饮，英文名 SHANCHUAN TEA',
   },
   {
     id: 'infographic',
     label: '信息图',
     tagline: '步骤流程一图讲清',
-    description: '填标题和步骤，一次出竖版和横版两张图解',
+    description: '说说标题和步骤，一次出竖版和横版两张图解',
     icon: ChartColumn,
     image: '/media/skills/infographic.jpg',
-    aspect: '3:4',
-    prompt:
-      '扁平风格信息图，浅色背景与清晰的分区排版，标题“三步完成注册”，三个步骤分别写“下载应用”“验证手机号”“完善资料”',
+    briefExample: '三步完成注册，下载应用、填写手机号、设置密码',
   },
   {
     id: 'product',
     label: '产品渲染',
     tagline: '高级质感渲染图',
-    description: '填产品和材质，一次出主视觉、细节特写和场景图',
+    description: '说说产品和材质，一次出主视觉、细节特写和场景图',
     icon: Box,
     image: '/media/skills/product.jpg',
-    aspect: '4:3',
-    prompt: '高端产品渲染图，金属与磨砂材质，柔和的轮廓光和倒影，产品旁的极简标签写“Pro Series”',
+    briefExample: '无线降噪耳机，标签写 Pro Series',
   },
   {
     id: 'restyle',
@@ -114,8 +95,6 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
     description: '上传一张图，构图不变，一次出水彩、动漫、油画三种画风',
     icon: Palette,
     image: '/media/skills/restyle.jpg',
-    aspect: 'auto',
-    prompt: '保留参考图的构图、主体和姿态，把整体画风改成清新的水彩插画，柔和的笔触与留白',
-    referenceHint: '先上传一张想重绘的图片作为参考图，再开始生成。',
+    briefExample: '色调偏暖，保留人物表情',
   },
 ];

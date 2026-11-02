@@ -49,6 +49,7 @@ describe('POST /api/skills/:id/plan', () => {
         title: '活动海报 · 周年庆典',
         outputs: [{ id: 'portrait', label: '竖版海报', aspect: '3:4' as const, prompt: '海报' }],
       })),
+      readBrief: vi.fn(async () => ({})),
     };
     const app = createApp({ provider, skillPlanner, authMiddleware: signedIn });
 
@@ -62,6 +63,28 @@ describe('POST /api/skills/:id/plan', () => {
     expect(skill.id).toBe('poster');
     expect(values.text('title')).toBe('周年庆典');
     expect(hasReference).toBe(false);
+  });
+
+  it('reads the text answers from a brief and keeps the chosen options', async () => {
+    const app = createApp({ provider, authMiddleware: signedIn });
+
+    const response = await request(app)
+      .post('/api/skills/ecommerce/plan')
+      .send({ brief: '山川明前绿茶，高山云雾', values: { style: '高端质感' } });
+
+    expect(response.status).toBe(200);
+    expect(response.body.title).toBe('电商主图 · 山川明前绿茶');
+    expect(response.body.outputs[0].prompt).toContain('风格：高端质感');
+    expect(response.body.outputs[2].prompt).toContain('“高山云雾”');
+  });
+
+  it('asks for the subject when the brief leaves it out', async () => {
+    const app = createApp({ provider, authMiddleware: signedIn });
+
+    const response = await request(app).post('/api/skills/ecommerce/plan').send({ brief: '  ' });
+
+    expect(response.status).toBe(400);
+    expect(JSON.stringify(response.body)).toContain('请在描述里写上商品名称。');
   });
 
   it('answers with the template prompts when no planner is configured', async () => {

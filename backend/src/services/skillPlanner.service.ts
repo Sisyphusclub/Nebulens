@@ -24,9 +24,14 @@ export interface SkillPlan {
   outputs: PlannedOutput[];
 }
 
+/** Raw answers to a skill's text and list fields, before `readSkillValues` checks them. */
+export type SkillAnswers = Record<string, string | string[]>;
+
 /** Turns a skill's form answers into one ready-to-generate prompt per output image. */
 export interface SkillPlanner {
   plan(skill: SkillDefinition, values: SkillValues, hasReference: boolean): Promise<SkillPlan>;
+  /** Reads the one line typed in the composer into answers; choice fields stay the client's. */
+  readBrief(skill: SkillDefinition, brief: string): Promise<SkillAnswers>;
 }
 
 export interface SkillPlannerConfig {
@@ -113,6 +118,64 @@ export function readSkillValues(
   };
 }
 
+/** Keeps only the text and list fields, cut to their limits, so a brief never fails on length. */
+function fitAnswers(skill: SkillDefinition, raw: Record<string, unknown>): SkillAnswers {
+  const answers: SkillAnswers = {};
+  for (const field of skill.fields) {
+    const value = raw[field.id];
+    if (field.kind === 'text' && typeof value === 'string') {
+      const text = clean(value).slice(0, field.maxLength);
+      if (text.length > 0) answers[field.id] = text;
+    } else if (field.kind === 'list') {
+      const items = (Array.isArray(value) ? value : [value])
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => clean(item).slice(0, field.maxLength))
+        .filter((item) => item.length > 0)
+        .slice(0, field.maxItems);
+      if (items.length > 0) answers[field.id] = items;
+    }
+  }
+  return answers;
+}
+
+function isAnswered(answer: string | string[] | undefined): boolean {
+  return answer !== undefined && answer.length > 0;
+}
+
+/**
+ * Reads a brief without a chat model: the phrases between commas or 、 fill the required text
+ * fields in order, and a list takes the phrases after them. A skill with no required text,
+ * like restyling, gets the whole brief in its first text field.
+ */
+export function briefAnswers(skill: SkillDefinition, brief: string): SkillAnswers {
+  const phrases = brief
+    .split(/[，,、；;。\n]+/)
+    .map(clean)
+    .filter((phrase) => phrase.length > 0);
+  const raw: Record<string, unknown> = {};
+  if (!skill.fields.some((field) => field.kind === 'text' && field.required)) {
+    const first = skill.fields.find((field) => field.kind === 'text');
+    if (first !== undefined && phrases.length > 0) raw[first.id] = phrases.join('，');
+    return fitAnswers(skill, raw);
+  }
+  for (const field of skill.fields) {
+    if (phrases.length === 0) break;
+    if (field.kind === 'text' && field.required) raw[field.id] = phrases.shift();
+    else if (field.kind === 'list') raw[field.id] = phrases.splice(0, field.maxItems);
+  }
+  return fitAnswers(skill, raw);
+}
+
+/** The first required text or list field the brief left empty, if any. */
+export function missingBriefField(
+  skill: SkillDefinition,
+  answers: SkillAnswers,
+): SkillField | undefined {
+  return skill.fields.find(
+    (field) => field.required && field.kind !== 'choice' && !isAnswered(answers[field.id]),
+  );
+}
+
 function answerText(field: SkillField, values: SkillValues): string {
   return field.kind === 'list' ? values.list(field.id).join('、') : values.text(field.id);
 }
@@ -183,6 +246,25 @@ function plannerRequest(
   ].join('\n');
 }
 
+const BRIEF_RULES = [
+  '你把用户的一句话需求拆成表单字段。',
+  '1. 只提取用户明确写出的信息，原话照抄，不改字、不补充、不翻译；没提到的字段不要输出。',
+  '2. 列表字段输出字符串数组，每条一个要点。',
+  '3. 只输出一个 JSON 对象，键是字段 id，不要解释，不要 Markdown。',
+].join('\n');
+
+function briefRequest(skill: SkillDefinition, brief: string): string {
+  const fields = skill.fields.flatMap((field) => {
+    if (field.kind === 'choice') return [];
+    const shape =
+      field.kind === 'list'
+        ? `列表，最多 ${field.maxItems} 条，每条不超过 ${field.maxLength} 字`
+        : `文字，不超过 ${field.maxLength} 字`;
+    return [`- ${field.id}（${field.label}，${shape}${field.required ? '，必填' : ''}）`];
+  });
+  return [`技能：${skill.label}`, '字段：', ...fields, `用户描述：${brief}`].join('\n');
+}
+
 function parseJsonObject(raw: string): Record<string, unknown> {
   const start = raw.indexOf('{');
   const end = raw.lastIndexOf('}');
@@ -209,11 +291,12 @@ function acceptPlannedPrompt(candidate: unknown, texts: readonly string[]): stri
   return extras.length === 0 ? prompt : undefined;
 }
 
-async function askPlanner(
+/** Asks the chat model for a JSON object answering `user` under the `system` rules. */
+async function askChat(
   config: SkillPlannerConfig,
-  skill: SkillDefinition,
-  values: SkillValues,
-  hasReference: boolean,
+  temperature: number,
+  system: string,
+  user: string,
 ): Promise<Record<string, unknown>> {
   const fetchImpl = config.fetchImpl ?? globalThis.fetch;
   const response = await fetchImpl(`${config.baseUrl.replace(/\/+$/, '')}/v1/chat/completions`, {
@@ -221,10 +304,10 @@ async function askPlanner(
     headers: chatApiHeaders(config.apiKey, 'nebulens-skill-plan'),
     body: JSON.stringify({
       model: config.model,
-      temperature: 0.7,
+      temperature,
       messages: [
-        { role: 'system', content: `${PLANNER_RULES}\n本技能的设计要点：${skill.expertise}` },
-        { role: 'user', content: plannerRequest(skill, values, hasReference) },
+        { role: 'system', content: system },
+        { role: 'user', content: user },
       ],
     }),
     signal: AbortSignal.timeout(config.timeoutMs),
@@ -245,7 +328,12 @@ export function createSkillPlanner(config?: SkillPlannerConfig): SkillPlanner {
       let planned: Record<string, unknown> = {};
       if (config !== undefined) {
         try {
-          planned = await askPlanner(config, skill, values, hasReference);
+          planned = await askChat(
+            config,
+            0.7,
+            `${PLANNER_RULES}\n本技能的设计要点：${skill.expertise}`,
+            plannerRequest(skill, values, hasReference),
+          );
         } catch (err) {
           logger.warn({ err, skillId: skill.id }, 'skill planner fell back to templates');
         }
@@ -261,6 +349,28 @@ export function createSkillPlanner(config?: SkillPlannerConfig): SkillPlanner {
             fallbackPrompt(skill, output, values, hasReference),
         })),
       };
+    },
+    async readBrief(skill, brief) {
+      const guessed = briefAnswers(skill, brief);
+      if (config === undefined) return guessed;
+      try {
+        const answers = fitAnswers(
+          skill,
+          await askChat(config, 0, BRIEF_RULES, briefRequest(skill, brief)),
+        );
+        // A required field the model skipped still gets the plain reading, so a brief
+        // that names the subject is never turned away.
+        for (const field of skill.fields) {
+          const guess = guessed[field.id];
+          if (field.required && !isAnswered(answers[field.id]) && guess !== undefined) {
+            answers[field.id] = guess;
+          }
+        }
+        return answers;
+      } catch (err) {
+        logger.warn({ err, skillId: skill.id }, 'skill brief fell back to plain reading');
+        return guessed;
+      }
     },
   };
 }

@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  briefAnswers,
   createSkillPlanner,
   fallbackPrompt,
+  missingBriefField,
   publicSkill,
   readSkillValues,
 } from '../../src/services/skillPlanner.service.js';
@@ -154,6 +156,92 @@ describe('createSkillPlanner', () => {
 
     expect(plan.outputs.map((output) => output.prompt)).toEqual(
       ecommerce.outputs.map((output) => fallbackPrompt(ecommerce, output, values, false)),
+    );
+  });
+});
+
+describe('briefAnswers', () => {
+  it('fills the required text, then the list, from the phrases between commas', () => {
+    expect(briefAnswers(ecommerce, '山川明前绿茶，高山云雾、手工炒制；“明前”采摘')).toEqual({
+      product: '山川明前绿茶',
+      points: ['高山云雾', '手工炒制', '明前采摘'],
+    });
+    expect(briefAnswers(findSkill('logo')!, '山野咖啡, 精品咖啡馆, 温暖')).toEqual({
+      name: '山野咖啡',
+      industry: '精品咖啡馆',
+    });
+  });
+
+  it('puts the whole brief in the first text field of a skill without required text', () => {
+    expect(briefAnswers(findSkill('restyle')!, '保留人物，背景换成星空')).toEqual({
+      extra: '保留人物，背景换成星空',
+    });
+  });
+
+  it('cuts answers to the field limits and reports what is still missing', () => {
+    const answers = briefAnswers(ecommerce, '一'.repeat(40));
+
+    expect(answers.product).toHaveLength(30);
+    expect(missingBriefField(ecommerce, answers)).toBeUndefined();
+    expect(missingBriefField(ecommerce, briefAnswers(ecommerce, ' ，'))?.label).toBe('商品名称');
+  });
+});
+
+describe('createSkillPlanner readBrief', () => {
+  const config = {
+    baseUrl: 'https://llm.test',
+    apiKey: 'test-key',
+    model: 'test-model',
+    timeoutMs: 1000,
+  };
+
+  it('keeps the words the chat model picked out, within the field limits', async () => {
+    const fetchImpl = vi.fn(async () =>
+      chatResponse(
+        JSON.stringify({
+          product: '山川明前绿茶',
+          points: '高山云雾',
+          price: '到手价 ¥199',
+          style: '赛博',
+          unknown: 'x',
+        }),
+      ),
+    );
+    const planner = createSkillPlanner({ ...config, fetchImpl });
+
+    const answers = await planner.readBrief(ecommerce, '山川明前绿茶，高山云雾，到手价 ¥199');
+
+    expect(answers).toEqual({
+      product: '山川明前绿茶',
+      points: ['高山云雾'],
+      price: '到手价 ¥199',
+    });
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    const body = JSON.parse(String(init.body)) as {
+      temperature: number;
+      messages: Array<{ content: string }>;
+    };
+    expect(body.temperature).toBe(0);
+    expect(body.messages[1]?.content).toContain('- product（商品名称，文字，不超过 30 字，必填）');
+    expect(body.messages[1]?.content).not.toContain('style');
+  });
+
+  it('reads the brief plainly when the model skips the subject or fails', async () => {
+    const skipping = createSkillPlanner({
+      ...config,
+      fetchImpl: vi.fn(async () => chatResponse('{"points": ["高山云雾"]}')),
+    });
+    expect(await skipping.readBrief(ecommerce, '绿茶，高山云雾')).toEqual({
+      product: '绿茶',
+      points: ['高山云雾'],
+    });
+
+    const failing = createSkillPlanner({
+      ...config,
+      fetchImpl: vi.fn(async () => chatResponse('', 500)),
+    });
+    expect(await failing.readBrief(ecommerce, '绿茶，高山云雾')).toEqual(
+      briefAnswers(ecommerce, '绿茶，高山云雾'),
     );
   });
 });

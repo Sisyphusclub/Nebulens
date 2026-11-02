@@ -7,7 +7,6 @@ import { afterEach, expect, it, vi } from 'vitest';
 
 import { LandingSkillDeck } from '@/components/landing/LandingSkills';
 import { LANDING_SKILLS } from '@/data/landingSkills';
-import { ASPECT_CHOICES } from '@/types/image';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -64,11 +63,10 @@ it('holds the featured skill while the pointer rests on it', () => {
   expect(screen.getByRole('button', { name: `立即使用：${first!.label}` })).toBeInTheDocument();
 });
 
-it('only ships skills with a supported ratio, a prompt and an example image on disk', () => {
+it('only ships skills with a brief example and an example image on disk', () => {
   expect(LANDING_SKILLS.length).toBe(8);
   for (const skill of LANDING_SKILLS) {
-    expect(ASPECT_CHOICES).toContain(skill.aspect);
-    expect(skill.prompt.length).toBeGreaterThan(10);
+    expect(skill.briefExample.length).toBeGreaterThan(5);
     // The tiles have room for one short line.
     expect(skill.tagline.length).toBeLessThanOrEqual(10);
     expect(existsSync(resolve(process.cwd(), 'public', skill.image.slice(1)))).toBe(true);

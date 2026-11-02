@@ -760,6 +760,115 @@ export const SKILLS: readonly SkillDefinition[] = [
       '重绘只改画风不改内容：构图、人物姿态与表情、物体位置都与参考图一致，只改变笔触、上色和质感。',
     subject: (values) => values.text('extra') || '水彩、动漫、油画',
   },
+  {
+    id: 'storyboard',
+    label: '分镜脚本',
+    description: '说说故事和镜头，一次出分镜表和一张关键帧',
+    reference: 'optional',
+    referenceLabel: '角色或场景参考（可选）',
+    fields: [
+      {
+        id: 'title',
+        label: '片名或主题',
+        kind: 'text',
+        required: true,
+        maxLength: 16,
+        placeholder: '如：雨夜重逢',
+      },
+      {
+        id: 'shots',
+        label: '镜头',
+        kind: 'list',
+        required: true,
+        maxItems: 6,
+        maxLength: 12,
+        placeholder: '如：车站远景',
+      },
+      {
+        id: 'style',
+        label: '风格',
+        kind: 'choice',
+        options: ['电影实拍', '手绘线稿', '动画'],
+        defaultValue: '电影实拍',
+      },
+    ],
+    outputs: [
+      {
+        id: 'board',
+        label: '分镜表',
+        aspect: '16:9',
+        brief:
+          '多格分镜表，按镜头顺序从左到右、从上到下排列，每格一个画面并在下方标注镜头内容，人物和场景前后一致',
+        texts: (values) => [values.text('title'), ...values.list('shots')],
+      },
+      {
+        id: 'keyframe',
+        label: '关键帧',
+        aspect: '16:9',
+        brief:
+          '这段故事最有张力的一个镜头，宽银幕构图，电影级光影和景深，可直接作为概念图或视频首帧',
+      },
+    ],
+    expertise:
+      '分镜要讲清楚故事：景别有远中近的变化，视线和动作方向连贯，同一角色的服装和外貌保持一致，每格只表达一个动作。',
+    subject: (values) => values.text('title'),
+  },
+  {
+    id: 'character',
+    label: '角色设定',
+    description: '说说角色和外貌，一次出三视图、半身像和表情图',
+    reference: 'optional',
+    referenceLabel: '角色参考图（可选）',
+    fields: [
+      {
+        id: 'name',
+        label: '角色身份',
+        kind: 'text',
+        required: true,
+        maxLength: 16,
+        placeholder: '如：赛博朋克女黑客',
+      },
+      {
+        id: 'looks',
+        label: '外貌和服装',
+        kind: 'text',
+        required: true,
+        maxLength: 40,
+        placeholder: '如：银色短发，黑色机能风外套',
+      },
+      {
+        id: 'style',
+        label: '风格',
+        kind: 'choice',
+        options: ['写实 3D', '日系动画', '国风插画'],
+        defaultValue: '写实 3D',
+      },
+    ],
+    outputs: [
+      {
+        id: 'turnaround',
+        label: '三视图',
+        aspect: '16:9',
+        brief:
+          '角色设定三视图，同一角色的正面、侧面、背面全身站姿并排，纯色背景，比例和服装细节完全一致',
+      },
+      {
+        id: 'portrait',
+        label: '半身像',
+        aspect: '3:4',
+        brief: '角色半身肖像，突出面部特征和气质，有氛围感的光影，可作为头像或封面',
+      },
+      {
+        id: 'expressions',
+        label: '表情图',
+        aspect: '1:1',
+        brief: '同一角色的四宫格头部特写，分别是平静、微笑、惊讶、愤怒四种表情，五官和发型保持一致',
+      },
+    ],
+    expertise:
+      '角色设定的重点是一致性：每张图的脸型、发型、配色和服装细节都相同，轮廓有辨识度，背景简洁不抢主体，方便后续生成图片和视频时复用。',
+    subject: (values) => values.text('name'),
+  },
 ];
 
 const PLATFORM_ASPECTS: Record<string, AspectRatio> = {

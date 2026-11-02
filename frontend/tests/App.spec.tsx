@@ -389,10 +389,10 @@ describe('React application routes', () => {
 
     const shortcuts = await screen.findByRole('group', { name: '常用技能' });
     expect(within(shortcuts).getAllByRole('button')).toHaveLength(8);
-    await user.click(within(shortcuts).getByRole('button', { name: '架构图' }));
+    await user.click(within(shortcuts).getByRole('button', { name: '分镜脚本' }));
 
-    expect(await screen.findByRole('group', { name: '技能：架构图' })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('架构图');
+    expect(await screen.findByRole('group', { name: '技能：分镜脚本' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('分镜脚本');
     // The skill bar takes over while a skill is picked.
     expect(screen.queryByRole('group', { name: '常用技能' })).not.toBeInTheDocument();
   });

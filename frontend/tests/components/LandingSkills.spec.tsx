@@ -23,8 +23,8 @@ it('shows every skill as a tile with its tagline and example', async () => {
     expect(tile).toHaveTextContent(skill.tagline);
     expect(tile.querySelector('img')).toHaveAttribute('src', skill.image);
   }
-  await user.click(within(deck).getByRole('button', { name: '使用技能：产线场景' }));
-  expect(onSelect).toHaveBeenCalledWith(LANDING_SKILLS.find((skill) => skill.id === 'factory'));
+  await user.click(within(deck).getByRole('button', { name: '使用技能：角色设定' }));
+  expect(onSelect).toHaveBeenCalledWith(LANDING_SKILLS.find((skill) => skill.id === 'character'));
 });
 
 it('features one skill at a time, picked by its dot or in turn every few seconds', () => {
@@ -64,7 +64,7 @@ it('holds the featured skill while the pointer rests on it', () => {
 });
 
 it('only ships skills with a brief example and an example image on disk', () => {
-  expect(LANDING_SKILLS.length).toBe(12);
+  expect(LANDING_SKILLS.length).toBe(14);
   expect(EVERYDAY_SKILLS.length).toBe(8);
   for (const skill of LANDING_SKILLS) {
     expect(skill.briefExample.length).toBeGreaterThan(5);

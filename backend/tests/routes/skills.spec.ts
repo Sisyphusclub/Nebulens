@@ -41,6 +41,8 @@ describe('GET /api/skills', () => {
       'infographic',
       'product',
       'restyle',
+      'storyboard',
+      'character',
     ]);
     expect(skills[0]?.fields.length).toBeGreaterThan(0);
   });

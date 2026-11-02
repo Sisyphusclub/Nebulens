@@ -57,7 +57,7 @@ describe('publicSkill', () => {
       { id: 'points', label: '卖点图' },
     ]);
     expect(JSON.stringify(skill)).not.toContain(ecommerce.expertise);
-    expect(SKILLS).toHaveLength(12);
+    expect(SKILLS).toHaveLength(14);
   });
 });
 
@@ -301,5 +301,36 @@ describe('enterprise skills', () => {
     expect(fallbackPrompt(infographic, infographic.outputs[0]!, values, false)).toContain(
       '版式：时间线里程碑',
     );
+  });
+});
+
+describe('creator skills', () => {
+  it('quotes the storyboard shots and keeps the keyframe free of text', () => {
+    const storyboard = findSkill('storyboard')!;
+    const values = readSkillValues(
+      storyboard,
+      briefAnswers(storyboard, '雨夜重逢，车站远景、撑伞走近'),
+      false,
+    );
+    const [board, keyframe] = storyboard.outputs;
+
+    expect(fallbackPrompt(storyboard, board!, values, false)).toContain(
+      '“雨夜重逢”、“车站远景”、“撑伞走近”',
+    );
+    expect(fallbackPrompt(storyboard, keyframe!, values, false)).toContain(
+      '画面中不要出现任何文字',
+    );
+  });
+
+  it('reads a character brief into identity and looks', () => {
+    const character = findSkill('character')!;
+    const answers = briefAnswers(character, '赛博朋克女黑客，银色短发');
+
+    expect(answers).toMatchObject({ name: '赛博朋克女黑客', looks: '银色短发' });
+    expect(character.outputs.map((output) => output.id)).toEqual([
+      'turnaround',
+      'portrait',
+      'expressions',
+    ]);
   });
 });

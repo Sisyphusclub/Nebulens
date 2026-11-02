@@ -21,12 +21,13 @@ export function TextCheckNotice({
         <span>文字核对无误</span>
         <Button
           type="button"
-          variant="ghost"
+          variant="secondary"
           size="compact"
           className="text-check__redraw"
           disabled={disabled}
           onClick={onFix}
         >
+          <Wand2 aria-hidden="true" />
           重画文字
         </Button>
       </div>

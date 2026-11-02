@@ -4742,12 +4742,26 @@ video {
 .text-check--issues .button {
   justify-self: start;
 }
+/* A real button next to the quiet verdict, so redrawing the text is easy to find. */
 .text-check--passed .text-check__redraw {
-  height: 24px;
+  min-height: 28px;
+  gap: 5px;
   margin-left: auto;
-  padding: 0 8px;
-  color: var(--muted-foreground);
+  border-color: var(--border-strong);
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--card) 80%, transparent);
+  padding: 0 12px;
+  color: var(--foreground);
   font-size: 12px;
+  font-weight: 500;
+}
+.text-check--passed .text-check__redraw:hover:not(:disabled) {
+  border-color: color-mix(in oklch, var(--primary) 60%, var(--border-strong));
+  background: var(--surface-hover);
+}
+.text-check--passed .text-check__redraw svg {
+  width: 13px;
+  height: 13px;
 }
 .session-result__media {
   position: relative;
@@ -8908,9 +8922,6 @@ video {
 .app-shell--generate .sidebar-account-area {
   display: none;
 }
-.app-shell--generate .generation-console.has-results::after {
-  left: var(--sidebar-width);
-}
 @media (min-width: 861px) {
   .app-shell--generate .generation-console.has-results .studio-create-bar {
     left: 50%;
@@ -8934,9 +8945,6 @@ video {
   }
   .app-shell--generate .generation-console.has-results .session-feed {
     padding-top: 64px;
-  }
-  .app-shell--generate .generation-console.has-results::after {
-    left: 0;
   }
 }
 

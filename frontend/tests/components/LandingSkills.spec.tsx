@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, expect, it, vi } from 'vitest';
 
 import { LandingSkillDeck } from '@/components/landing/LandingSkills';
-import { LANDING_SKILLS } from '@/data/landingSkills';
+import { EVERYDAY_SKILLS, LANDING_SKILLS } from '@/data/landingSkills';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -18,20 +18,20 @@ it('shows every skill as a tile with its tagline and example', async () => {
   render(<LandingSkillDeck onSelect={onSelect} />);
 
   const deck = screen.getByRole('region', { name: '技能' });
-  for (const skill of LANDING_SKILLS) {
+  for (const skill of EVERYDAY_SKILLS) {
     const tile = within(deck).getByRole('button', { name: `使用技能：${skill.label}` });
     expect(tile).toHaveTextContent(skill.tagline);
     expect(tile.querySelector('img')).toHaveAttribute('src', skill.image);
   }
-  await user.click(within(deck).getByRole('button', { name: '使用技能：风格重绘' }));
-  expect(onSelect).toHaveBeenCalledWith(LANDING_SKILLS.find((skill) => skill.id === 'restyle'));
+  await user.click(within(deck).getByRole('button', { name: '使用技能：产线场景' }));
+  expect(onSelect).toHaveBeenCalledWith(LANDING_SKILLS.find((skill) => skill.id === 'factory'));
 });
 
 it('features one skill at a time, picked by its dot or in turn every few seconds', () => {
   vi.useFakeTimers();
   const onSelect = vi.fn();
   render(<LandingSkillDeck onSelect={onSelect} />);
-  const [first, second, third] = LANDING_SKILLS;
+  const [first, second, third] = EVERYDAY_SKILLS;
 
   fireEvent.click(screen.getByRole('button', { name: `立即使用：${first!.label}` }));
   expect(onSelect).toHaveBeenCalledWith(first);
@@ -52,7 +52,7 @@ it('features one skill at a time, picked by its dot or in turn every few seconds
 it('holds the featured skill while the pointer rests on it', () => {
   vi.useFakeTimers();
   render(<LandingSkillDeck onSelect={vi.fn()} />);
-  const [first] = LANDING_SKILLS;
+  const [first] = EVERYDAY_SKILLS;
   const cta = screen.getByRole('button', { name: `立即使用：${first!.label}` });
 
   fireEvent.mouseEnter(cta.closest('.landing-deck__feature')!);
@@ -64,7 +64,8 @@ it('holds the featured skill while the pointer rests on it', () => {
 });
 
 it('only ships skills with a brief example and an example image on disk', () => {
-  expect(LANDING_SKILLS.length).toBe(8);
+  expect(LANDING_SKILLS.length).toBe(12);
+  expect(EVERYDAY_SKILLS.length).toBe(8);
   for (const skill of LANDING_SKILLS) {
     expect(skill.briefExample.length).toBeGreaterThan(5);
     // The tiles have room for one short line.

@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ClipboardEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -195,5 +195,46 @@ describe('AgentChatInput streaming placeholder', () => {
     expect(placeholder?.tagName).not.toBe('BUTTON');
     expect(placeholder).toHaveAttribute('aria-hidden', 'true');
     expect(queryByRole('button', { name: '复制当前提示词示例' })).not.toBeInTheDocument();
+  });
+});
+
+describe('AgentChatInput skills', () => {
+  const icon = <svg data-testid="skill-icon" />;
+  const skill = { id: 'architecture', label: '架构图', description: '分层架构图', icon };
+  const baseProps = {
+    ariaLabel: '图像提示词',
+    models: [],
+    reasoningLevels: [],
+    speedModes: [],
+    agents: [],
+  };
+
+  it('shows shortcuts as icon and text inside the input', () => {
+    const onSkillShortcut = vi.fn();
+    render(
+      <AgentChatInput
+        {...baseProps}
+        skills={[skill]}
+        skillShortcuts={[skill]}
+        onSkillShortcut={onSkillShortcut}
+      />,
+    );
+
+    const button = within(screen.getByRole('group', { name: '常用技能' })).getByRole('button', {
+      name: '架构图',
+    });
+    expect(button.querySelector('svg')).toBeInTheDocument();
+    fireEvent.click(button);
+    expect(onSkillShortcut).toHaveBeenCalledWith('architecture');
+  });
+
+  it('shows a picked skill as icon and text while its value stays "/label"', () => {
+    const { container } = render(
+      <AgentChatInput {...baseProps} skills={[skill]} value="/架构图 产业平台" />,
+    );
+
+    const pill = container.querySelector<HTMLElement>('[data-skill-id="architecture"]');
+    expect(pill).toHaveTextContent(/^架构图$/);
+    expect(pill?.querySelector('svg')).toBeInTheDocument();
   });
 });

@@ -540,6 +540,8 @@ export function AgentChatInput({
   onAgentChange,
   skills = DEFAULT_SKILLS,
   skillIds,
+  skillShortcuts = [],
+  onSkillShortcut,
   defaultSkillIds = [],
   onSkillIdsChange,
   attachments,
@@ -785,6 +787,23 @@ export function AgentChatInput({
           onPreview={setPreviewAttachmentId}
           onRemove={removeAttachment}
         />
+
+        {skillShortcuts.length ? (
+          <div className="agent-chat-input__skill-shortcuts" role="group" aria-label="常用技能">
+            {skillShortcuts.map((skill) => (
+              <button
+                key={skill.id}
+                type="button"
+                disabled={disabled}
+                title={skill.description}
+                onClick={() => onSkillShortcut?.(skill.id)}
+              >
+                <span aria-hidden="true">{skill.icon ?? <WandSparkles />}</span>
+                {skill.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         <div className={cn('agent-chat-input__toolbar', classNames?.toolbar)}>
           <div className="agent-chat-input__toolbar-group">

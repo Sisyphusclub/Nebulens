@@ -1,12 +1,16 @@
 import {
   Box,
   ChartColumn,
+  Factory,
   Megaphone,
+  Network,
   Palette,
   PenTool,
+  Presentation,
   Replace,
   ShoppingBag,
   Smartphone,
+  Target,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -21,10 +25,55 @@ export interface LandingSkill {
   image: string;
   /** A one-line brief to type after the skill in the composer, shown as the example. */
   briefExample: string;
+  /** Used across the company day to day: shown in the composer and on the Discover page. */
+  everyday?: boolean;
 }
 
-/** Skills in order of everyday use, which is also their order on the Discover page. */
+/**
+ * Every skill, offered in the composer's + menu and after typing "/". The everyday ones
+ * come first, in the order they appear in the composer and on the Discover page.
+ */
 export const LANDING_SKILLS: readonly LandingSkill[] = [
+  {
+    id: 'report',
+    label: '汇报封面',
+    tagline: '封面目录过渡页',
+    description: '说说主题和章节，一次出封面、目录页和章节过渡页',
+    icon: Presentation,
+    image: '/media/templates/gpt-image2/desktop-analytics-dashboard-operations.webp',
+    briefExample: '2026 年度经营汇报，市场拓展、产品进展、项目交付、明年规划',
+    everyday: true,
+  },
+  {
+    id: 'architecture',
+    label: '架构图',
+    tagline: '分层总览两张图',
+    description: '说说系统和各层模块，一次出分层架构图和模块总览图',
+    icon: Network,
+    image: '/media/templates/gpt-image2/agent-architecture.webp',
+    briefExample: '产业数智平台，设备接入层、数据中台、智能应用、运营门户',
+    everyday: true,
+  },
+  {
+    id: 'solution',
+    label: '方案主视觉',
+    tagline: '售前物料一次出',
+    description: '说说方案和核心能力，一次出主视觉、能力图和传播方图',
+    icon: Target,
+    image: '/media/templates/gpt-image2/data-sankey.webp',
+    briefExample: '机器人柔性产线方案，换产更快、节拍稳定、远程运维',
+    everyday: true,
+  },
+  {
+    id: 'factory',
+    label: '产线场景',
+    tagline: '车间工位特写',
+    description: '说说设备和场景，一次出车间全景、工位中景和细节特写',
+    icon: Factory,
+    image: '/media/templates/gpt-image2/biophilic-biotech-lab-render.webp',
+    briefExample: '六轴焊接机器人',
+    everyday: true,
+  },
   {
     id: 'ecommerce',
     label: '电商主图',
@@ -42,6 +91,7 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
     icon: Megaphone,
     image: '/media/skills/poster.jpg',
     briefExample: '周年庆典，全场第二件半价，11月1日至11月7日，山川茶事',
+    everyday: true,
   },
   {
     id: 'background',
@@ -60,6 +110,7 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
     icon: Smartphone,
     image: '/media/skills/social.jpg',
     briefExample: '周末去哪儿，5 个城市近郊好去处',
+    everyday: true,
   },
   {
     id: 'logo',
@@ -78,6 +129,7 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
     icon: ChartColumn,
     image: '/media/skills/infographic.jpg',
     briefExample: '三步完成注册，下载应用、填写手机号、设置密码',
+    everyday: true,
   },
   {
     id: 'product',
@@ -87,6 +139,7 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
     icon: Box,
     image: '/media/skills/product.jpg',
     briefExample: '无线降噪耳机，标签写 Pro Series',
+    everyday: true,
   },
   {
     id: 'restyle',
@@ -98,3 +151,5 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
     briefExample: '色调偏暖，保留人物表情',
   },
 ];
+
+export const EVERYDAY_SKILLS = LANDING_SKILLS.filter((skill) => skill.everyday);

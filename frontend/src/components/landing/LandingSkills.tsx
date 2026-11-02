@@ -2,13 +2,13 @@ import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { LANDING_SKILLS, type LandingSkill } from '@/data/landingSkills';
+import { EVERYDAY_SKILLS, type LandingSkill } from '@/data/landingSkills';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 const FEATURE_INTERVAL_MS = 5000;
 
 /**
- * Every skill across the full width right under the composer, after Kling and Jimeng:
+ * The everyday skills across the full width right under the composer, after Kling and Jimeng:
  * a full-bleed feature card that rotates through the skills' examples, beside a compact
  * tile for each skill. It all sits in the first screen, so the images load right away.
  * Rotation stops while the feature is hovered or focused, and for people who prefer
@@ -18,12 +18,12 @@ export function LandingSkillDeck({ onSelect }: { onSelect: (skill: LandingSkill)
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const [featured, setFeatured] = useState(0);
   const [paused, setPaused] = useState(false);
-  const feature = LANDING_SKILLS[featured] ?? LANDING_SKILLS[0]!;
+  const feature = EVERYDAY_SKILLS[featured] ?? EVERYDAY_SKILLS[0]!;
 
   useEffect(() => {
     if (reducedMotion || paused) return undefined;
     const timer = window.setInterval(
-      () => setFeatured((current) => (current + 1) % LANDING_SKILLS.length),
+      () => setFeatured((current) => (current + 1) % EVERYDAY_SKILLS.length),
       FEATURE_INTERVAL_MS,
     );
     return () => window.clearInterval(timer);
@@ -39,7 +39,7 @@ export function LandingSkillDeck({ onSelect }: { onSelect: (skill: LandingSkill)
           onFocus={() => setPaused(true)}
           onBlur={() => setPaused(false)}
         >
-          {LANDING_SKILLS.map((skill, index) => (
+          {EVERYDAY_SKILLS.map((skill, index) => (
             <img
               key={skill.id}
               className="landing-deck__feature-image"
@@ -64,7 +64,7 @@ export function LandingSkillDeck({ onSelect }: { onSelect: (skill: LandingSkill)
             </Button>
           </div>
           <div className="landing-deck__dots" role="group" aria-label="切换推荐技能">
-            {LANDING_SKILLS.map((skill, index) => (
+            {EVERYDAY_SKILLS.map((skill, index) => (
               <Button
                 key={skill.id}
                 type="button"
@@ -77,7 +77,7 @@ export function LandingSkillDeck({ onSelect }: { onSelect: (skill: LandingSkill)
             ))}
           </div>
         </div>
-        {LANDING_SKILLS.map((skill) => {
+        {EVERYDAY_SKILLS.map((skill) => {
           const Icon = skill.icon;
           return (
             <Button

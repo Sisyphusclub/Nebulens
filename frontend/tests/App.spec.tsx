@@ -158,6 +158,12 @@ import {
   resetGenerationSessionsForTests,
 } from '@/hooks/useGenerationSessions';
 
+/** Less common skills are not on the Discover page; they stay in the composer's + menu. */
+async function pickSkillFromMenu(user: ReturnType<typeof userEvent.setup>, label: string) {
+  await user.click(await screen.findByRole('button', { name: '添加参考图或技能' }));
+  await user.click(await screen.findByRole('menuitemcheckbox', { name: label }));
+}
+
 const SKILL_FORMS = [
   {
     id: 'ecommerce',
@@ -357,11 +363,10 @@ describe('React application routes', () => {
     const user = userEvent.setup();
     renderRoute('/');
 
-    const skills = await screen.findByRole('region', { name: '技能' });
-    await user.click(within(skills).getByRole('button', { name: '使用技能：电商主图' }));
+    await pickSkillFromMenu(user, '电商主图');
     const bar = await screen.findByRole('group', { name: '技能：电商主图' });
 
-    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('/电商主图');
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('电商主图');
     expect(within(bar).getByLabelText('将生成')).toHaveTextContent('主图');
     expect(within(bar).getByText(/如：山川明前绿茶/u)).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: '电商主图' })).not.toBeInTheDocument();
@@ -370,16 +375,29 @@ describe('React application routes', () => {
 
     expect(screen.queryByRole('group', { name: '技能：电商主图' })).not.toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).not.toHaveTextContent(
-      '/电商主图',
+      '电商主图',
     );
+  });
+
+  it('starts a skill from the icon-and-text shortcuts in the composer', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+
+    const shortcuts = await screen.findByRole('group', { name: '常用技能' });
+    expect(within(shortcuts).getAllByRole('button')).toHaveLength(8);
+    await user.click(within(shortcuts).getByRole('button', { name: '架构图' }));
+
+    expect(await screen.findByRole('group', { name: '技能：架构图' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('架构图');
+    // The skill bar takes over while a skill is picked.
+    expect(screen.queryByRole('group', { name: '常用技能' })).not.toBeInTheDocument();
   });
 
   it('asks for the image a reference-based skill works from before it plans anything', async () => {
     const user = userEvent.setup();
     renderRoute('/');
 
-    const gallery = await screen.findByRole('region', { name: '技能' });
-    await user.click(within(gallery).getByRole('button', { name: '使用技能：商品换背景' }));
+    await pickSkillFromMenu(user, '商品换背景');
     const bar = await screen.findByRole('group', { name: '技能：商品换背景' });
     await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '海边礁石');
 
@@ -427,8 +445,7 @@ describe('React application routes', () => {
     });
     renderRoute('/');
 
-    const skills = await screen.findByRole('region', { name: '技能' });
-    await user.click(within(skills).getByRole('button', { name: '使用技能：电商主图' }));
+    await pickSkillFromMenu(user, '电商主图');
     const bar = await screen.findByRole('group', { name: '技能：电商主图' });
     await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '山川绿茶，高山云雾');
     await user.click(within(bar).getByRole('button', { name: '风格' }));

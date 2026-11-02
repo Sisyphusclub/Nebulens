@@ -1,6 +1,7 @@
 'use client';
 
 import type { ClipboardEvent, KeyboardEvent } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import {
   forwardRef,
   useCallback,
@@ -62,8 +63,15 @@ function buildPill(skill: AgentChatSkill) {
   pill.contentEditable = 'false';
   pill.setAttribute('role', 'img');
   pill.setAttribute('aria-label', `Skill: ${skill.label}`);
-  pill.className = 'font-medium text-accent';
-  pill.textContent = `/${skill.label}`;
+  pill.className = 'agent-chat-input__skill-pill font-medium text-accent';
+  if (skill.icon) {
+    // The icon is app-provided markup; the label stays plain text.
+    const icon = document.createElement('span');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.innerHTML = renderToStaticMarkup(skill.icon);
+    pill.appendChild(icon);
+  }
+  pill.appendChild(document.createTextNode(skill.icon ? skill.label : `/${skill.label}`));
   return pill;
 }
 

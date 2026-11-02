@@ -3915,6 +3915,7 @@ video {
   position: absolute;
   inset: -15%;
   width: 130%;
+  max-width: none;
   height: 130%;
   object-fit: cover;
   filter: blur(96px) saturate(1.35);

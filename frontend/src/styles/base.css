@@ -11791,39 +11791,7 @@ video {
   }
 }
 
-/* Skills inside the composer: icon and text, in the shortcut row and in the typed pill. */
-.agent-chat-input__skill-shortcuts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 0 12px 8px;
-}
-.agent-chat-input__skill-shortcuts button {
-  display: inline-flex;
-  height: 28px;
-  flex: none;
-  align-items: center;
-  gap: 5px;
-  border: 1px solid rgb(255 255 255 / 0.12);
-  border-radius: var(--radius-full);
-  background: rgb(255 255 255 / 0.05);
-  color: rgb(242 244 247 / 0.82);
-  padding: 0 10px;
-  font-size: 12.5px;
-  white-space: nowrap;
-  transition:
-    background-color 160ms var(--ease-out-expo),
-    border-color 160ms var(--ease-out-expo);
-}
-.agent-chat-input__skill-shortcuts button:hover:not(:disabled) {
-  border-color: rgb(255 255 255 / 0.26);
-  background: rgb(255 255 255 / 0.1);
-  color: #fff;
-}
-.agent-chat-input__skill-shortcuts span {
-  display: inline-flex;
-}
-.agent-chat-input__skill-shortcuts svg,
+/* A picked skill inside the composer: icon and text in the typed pill. */
 .agent-chat-input__skill-pill svg {
   width: 14px;
   height: 14px;
@@ -11836,14 +11804,4 @@ video {
 }
 .agent-chat-input__skill-pill > span {
   display: inline-flex;
-}
-@media (max-width: 760px) {
-  .agent-chat-input__skill-shortcuts {
-    /* Scrolls inside the input instead of widening it to fit every skill. */
-    width: 0;
-    min-width: 100%;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
 }

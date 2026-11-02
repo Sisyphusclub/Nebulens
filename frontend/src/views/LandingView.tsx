@@ -24,7 +24,7 @@ import type {
 } from '@/components/premium/agent-chat-input/types';
 import { templatesAcrossCategories, type CreationTemplate } from '@/data/creationTemplates';
 import { IMAGE_PROMPT_EXAMPLES } from '@/data/imagePromptExamples';
-import { EVERYDAY_SKILLS, LANDING_SKILLS, type LandingSkill } from '@/data/landingSkills';
+import { LANDING_SKILLS, type LandingSkill } from '@/data/landingSkills';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { useImageQuota } from '@/hooks/useImageQuota';
@@ -77,10 +77,6 @@ const COMPOSER_SKILLS: AgentChatSkill[] = LANDING_SKILLS.map((skill) => {
     icon: <Icon aria-hidden="true" />,
   };
 });
-
-const COMPOSER_SHORTCUTS = COMPOSER_SKILLS.filter((skill) =>
-  EVERYDAY_SKILLS.some((everyday) => everyday.id === skill.id),
-);
 
 /** The skill whose "/name" pill is in the composer; while there is one, it is in skill mode. */
 function skillInPrompt(prompt: string): LandingSkill | undefined {
@@ -414,11 +410,6 @@ export function LandingView() {
                     )
                   }
                   skills={COMPOSER_SKILLS}
-                  skillShortcuts={activeSkill === undefined ? COMPOSER_SHORTCUTS : []}
-                  onSkillShortcut={(skillId) => {
-                    const skill = LANDING_SKILLS.find((candidate) => candidate.id === skillId);
-                    if (skill) selectSkill(skill);
-                  }}
                   models={[]}
                   defaultModel="gpt-image-2"
                   agents={[]}

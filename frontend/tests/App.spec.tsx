@@ -383,17 +383,14 @@ describe('React application routes', () => {
     );
   });
 
-  it('starts a skill from the icon-and-text shortcuts in the composer', async () => {
+  it('starts a skill from its tile under the composer, with no second row inside the input', async () => {
     const user = userEvent.setup();
     renderRoute('/');
 
-    const shortcuts = await screen.findByRole('group', { name: '常用技能' });
-    expect(within(shortcuts).getAllByRole('button')).toHaveLength(8);
-    await user.click(within(shortcuts).getByRole('button', { name: '分镜脚本' }));
+    await user.click(await screen.findByRole('button', { name: '使用技能：分镜脚本' }));
 
     expect(await screen.findByRole('group', { name: '技能：分镜脚本' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('分镜脚本');
-    // The skill bar takes over while a skill is picked.
     expect(screen.queryByRole('group', { name: '常用技能' })).not.toBeInTheDocument();
   });
 

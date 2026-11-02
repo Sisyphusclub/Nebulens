@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import type { ClipboardEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -208,25 +208,6 @@ describe('AgentChatInput skills', () => {
     speedModes: [],
     agents: [],
   };
-
-  it('shows shortcuts as icon and text inside the input', () => {
-    const onSkillShortcut = vi.fn();
-    render(
-      <AgentChatInput
-        {...baseProps}
-        skills={[skill]}
-        skillShortcuts={[skill]}
-        onSkillShortcut={onSkillShortcut}
-      />,
-    );
-
-    const button = within(screen.getByRole('group', { name: '常用技能' })).getByRole('button', {
-      name: '架构图',
-    });
-    expect(button.querySelector('svg')).toBeInTheDocument();
-    fireEvent.click(button);
-    expect(onSkillShortcut).toHaveBeenCalledWith('architecture');
-  });
 
   it('shows a picked skill as icon and text while its value stays "/label"', () => {
     const { container } = render(

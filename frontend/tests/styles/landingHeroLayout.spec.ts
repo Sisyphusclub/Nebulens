@@ -28,6 +28,10 @@ describe('landing nebula backdrop', () => {
   it('pins the video and its overlay behind the whole page', () => {
     expect(rule('.landing-hero__video,\n.landing-hero__overlay')).toContain('position: fixed;');
     expect(rule('.landing-hero__video')).toContain('object-fit: cover;');
+    // The vortex's inner ring, not the frame, is what lines up with the composer.
+    expect(rule('.landing-hero__video')).toContain('left: 50%;');
+    expect(rule('.landing-hero__video')).toContain('transform: translateX(-48.2%);');
+    expect(rule('.landing-hero__content')).toContain('left: 50%;');
   });
 
   it('only shades the edges, keeping the area around the composer bright', () => {

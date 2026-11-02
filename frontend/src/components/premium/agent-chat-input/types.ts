@@ -84,6 +84,8 @@ export interface AgentChatInputProps {
   defaultAgent?: string;
   onAgentChange?: (agent: string) => void;
   skills?: readonly AgentChatSkill[];
+  /** Rendered at the top of the input's surface, above the text. */
+  header?: ReactNode;
   /** Shown as icon-and-text buttons inside the input, one click from using a skill. */
   skillShortcuts?: readonly AgentChatSkill[];
   onSkillShortcut?: (skillId: string) => void;

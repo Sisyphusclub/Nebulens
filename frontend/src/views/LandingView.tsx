@@ -395,6 +395,24 @@ export function LandingView() {
                   onSubmit={({ text, attachments: selectedAttachments }) =>
                     submitPrompt(text, selectedAttachments)
                   }
+                  header={
+                    activeSkill === undefined ? undefined : (
+                      <LandingSkillBar
+                        skill={activeSkill}
+                        form={activeForm}
+                        loadError={skillFormsError}
+                        choices={skillChoices}
+                        showExample={withoutSkills(prompt).length === 0}
+                        onChoiceChange={(fieldId, value) =>
+                          setSkillChoices((current) => ({ ...current, [fieldId]: value }))
+                        }
+                        onUseExample={() =>
+                          setPrompt(`/${activeSkill.label} ${activeSkill.briefExample}`)
+                        }
+                        onExit={exitSkill}
+                      />
+                    )
+                  }
                   skills={COMPOSER_SKILLS}
                   skillShortcuts={activeSkill === undefined ? COMPOSER_SHORTCUTS : []}
                   onSkillShortcut={(skillId) => {
@@ -470,18 +488,7 @@ export function LandingView() {
                 onUndo: promptEnhancer.undo,
               }}
             />
-          ) : (
-            <LandingSkillBar
-              skill={activeSkill}
-              form={activeForm}
-              loadError={skillFormsError}
-              choices={skillChoices}
-              onChoiceChange={(fieldId, value) =>
-                setSkillChoices((current) => ({ ...current, [fieldId]: value }))
-              }
-              onExit={exitSkill}
-            />
-          )}
+          ) : null}
           {recommendations.length > 0 ? (
             <LandingRecommendations
               recommendations={recommendations}

@@ -540,6 +540,7 @@ export function AgentChatInput({
   onAgentChange,
   skills = DEFAULT_SKILLS,
   skillIds,
+  header,
   skillShortcuts = [],
   onSkillShortcut,
   defaultSkillIds = [],
@@ -756,6 +757,7 @@ export function AgentChatInput({
         onDrop={handleDrop}
         onPaste={handlePaste}
       >
+        {header}
         {streamingPlaceholders.length ? (
           <StreamingPlaceholder
             active={text.length === 0}

@@ -368,7 +368,11 @@ describe('React application routes', () => {
 
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('电商主图');
     expect(within(bar).getByLabelText('将生成')).toHaveTextContent('主图');
-    expect(within(bar).getByText(/如：山川明前绿茶/u)).toBeInTheDocument();
+    await user.click(within(bar).getByRole('button', { name: /试试：山川明前绿茶/u }));
+    expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
+      '山川明前绿茶',
+    );
+    expect(within(bar).queryByRole('button', { name: /试试：/u })).not.toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: '电商主图' })).not.toBeInTheDocument();
 
     await user.click(within(bar).getByRole('button', { name: '退出技能：电商主图' }));

@@ -507,19 +507,12 @@ video {
   position: fixed;
   inset: 0;
 }
-/* Widened by the rail so the vortex centres on the composer, not the window. The
-   video is narrower than most screens, so shifting it would bare the left edge. */
+/* Centred on the window, like the headline and composer in front of it. */
 .landing-hero__video {
-  width: calc(100% + 128px);
+  width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: 50% 40%;
-}
-/* Without the rail the composer is centred, and so is the vortex. */
-@media (max-width: 860px) {
-  .landing-hero__video {
-    width: 100%;
-  }
 }
 /* The video is dark already, so the overlay only shades the edges behind the rail
    and header; the area around the composer stays bright. */
@@ -940,17 +933,18 @@ video {
 }
 .landing-hero__content {
   position: relative;
-  left: calc(50% + 64px);
+  left: 50%;
   z-index: 9;
   display: flex;
-  width: min(940px, calc(100% - 144px));
+  /* Centred on the window; the side margins keep it clear of the rail at any width. */
+  width: min(940px, calc(100% - 288px));
   flex-direction: column;
   align-items: center;
   justify-items: center;
   gap: 0;
   /* Use a margin offset instead of transform so docked composers can escape
      this content container and remain fixed to the viewport while scrolling. */
-  margin-left: calc(-1 * min(470px, (100% - 144px) / 2));
+  margin-left: calc(-1 * min(470px, (100% - 288px) / 2));
   text-align: center;
 }
 /* A light, widely tracked Song headline in plain white. 'halt' sets the comma half
@@ -11355,8 +11349,7 @@ video {
 .landing-deck {
   position: relative;
   padding-block: 0 72px;
-  padding-left: calc(var(--workspace-sidebar-rail, 128px) + 32px);
-  padding-right: max(32px, env(safe-area-inset-right, 0px));
+  padding-inline: calc(var(--workspace-sidebar-rail, 128px) + 32px);
 }
 .landing-deck__grid {
   display: grid;
@@ -11629,8 +11622,7 @@ video {
   gap: 24px;
   background: linear-gradient(180deg, transparent, rgb(5 6 10 / 0.6) 160px);
   padding-block: 16px 120px;
-  padding-left: calc(var(--workspace-sidebar-rail, 128px) + 32px);
-  padding-right: max(32px, env(safe-area-inset-right, 0px));
+  padding-inline: calc(var(--workspace-sidebar-rail, 128px) + 32px);
 }
 .landing-showcase .landing-section-header,
 .landing-showcase__masonry {

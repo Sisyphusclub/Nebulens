@@ -328,12 +328,12 @@ describe('React application routes', () => {
     expect(original).toContain('/media/templates/');
   });
 
-  it('names templates in Chinese with the English original as a subtitle', async () => {
+  it('names templates in Chinese only, while their English titles still find them', async () => {
     const user = userEvent.setup();
     renderRoute('/templates');
 
     const card = await screen.findByRole('button', { name: '预览模板：亲自然生物科技实验室' });
-    expect(card).toHaveTextContent('Biophilic Biotech Lab');
+    expect(card).not.toHaveTextContent('Biophilic Biotech Lab');
 
     // The English title still finds the template.
     await user.type(screen.getByRole('searchbox', { name: '搜索创作模板' }), 'Biophilic');

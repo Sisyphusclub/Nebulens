@@ -1,6 +1,6 @@
 /**
  * Chinese display titles for the creation templates, keyed by template id. The
- * manifest keeps each template's original English title, shown as a subtitle.
+ * manifest keeps each template's original English title, which search still matches.
  */
 export const CREATION_TEMPLATE_TITLES_ZH: Readonly<Record<string, string>> = {
   'gpt-image2-anime-arcade-stockings-fashion': '霓虹街机动漫时装肖像',

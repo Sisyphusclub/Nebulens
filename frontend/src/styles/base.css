@@ -2031,12 +2031,12 @@ video {
 }
 /* Save and a small delete on the top row, the rest in pairs below. No delete, and save
    takes the row; an odd action out takes its own. */
-.image-detail .detail-actions {
+.detail-actions--stack {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-.image-detail .detail-actions .button {
+.detail-actions--stack .button {
   order: 2;
   min-width: 0;
   min-height: 40px;
@@ -2045,7 +2045,7 @@ video {
   padding-inline: 10px;
   white-space: nowrap;
 }
-.image-detail .detail-actions .button--primary {
+.detail-actions--stack .button--primary {
   order: 0;
   flex: 1 1 calc(100% - 48px);
 }
@@ -2054,24 +2054,24 @@ video {
   order: 1;
   flex: none;
 }
-.image-detail .detail-actions .button--danger {
+.detail-actions--stack .button--danger {
   width: 40px;
   flex: none;
   padding: 0;
 }
-.image-detail .detail-actions :is(.button--secondary, .button--ghost) {
+.detail-actions--stack :is(.button--secondary, .button--ghost) {
   border-color: transparent;
   background: rgb(255 255 255 / 0.07);
   color: rgb(240 243 248 / 0.92);
 }
-.image-detail .detail-actions :is(.button--secondary, .button--ghost):hover {
+.detail-actions--stack :is(.button--secondary, .button--ghost):hover {
   background: rgb(255 255 255 / 0.13);
 }
-.image-detail .detail-actions .button--danger {
+.detail-actions--stack .button--danger {
   border-color: transparent;
   background: rgb(255 255 255 / 0.07);
 }
-.image-detail .detail-actions .button--danger:hover:not(:disabled) {
+.detail-actions--stack .button--danger:hover:not(:disabled) {
   background: color-mix(in oklch, var(--destructive) 14%, transparent);
 }
 @media (min-width: 861px) {
@@ -5204,13 +5204,6 @@ video {
   font-weight: 600;
 }
 /* The template's original English title, quietly under the Chinese one. */
-.template-tile__subtitle {
-  overflow: hidden;
-  color: oklch(0.96 0 0 / 0.62);
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .template-tile__actions {
   position: absolute;
   top: 10px;
@@ -5246,11 +5239,7 @@ video {
 .template-detail-modal {
   width: fit-content !important;
   max-width: 1660px !important;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg) !important;
-  background: var(--card);
   scrollbar-width: none;
-  box-shadow: var(--shadow-modal);
 }
 .template-detail-modal::-webkit-scrollbar {
   display: none;
@@ -5261,18 +5250,35 @@ video {
   grid-template-columns: minmax(0, 1fr);
 }
 .template-detail__media {
+  display: flex;
   min-width: 0;
   min-height: 0;
+  align-items: center;
+  justify-content: center;
 }
 .template-detail__media img {
   display: block;
   width: 100%;
   height: auto;
+  border-radius: 14px;
   object-fit: contain;
 }
-.template-detail > .dialog__close {
+.template-detail > .template-detail__close {
+  position: absolute;
   z-index: 2;
-  background: var(--card);
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 0.07);
+  color: rgb(240 243 248 / 0.92);
+}
+.template-detail > .template-detail__close:hover {
+  background: rgb(255 255 255 / 0.13);
 }
 .template-detail__body {
   position: relative;
@@ -5281,94 +5287,84 @@ video {
   min-height: 0;
   flex-direction: column;
   gap: 10px;
-  padding: 34px 24px 20px;
-}
-.template-detail__body > span {
-  color: var(--muted-foreground);
-  font-size: 11px;
-}
-.template-detail__body .template-detail__subtitle {
-  margin: -4px 0 0;
-  color: var(--muted-foreground);
-  font-size: 13px;
+  padding: 12px 12px 12px 14px;
 }
 .template-detail__body h2 {
   margin: 0;
-  font-size: 22px;
-  line-height: 1.25;
+  padding-right: 40px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 32px;
 }
-.template-detail__body > p {
+.template-detail__body .metadata-grid {
+  flex: none;
+}
+/* As tall as the prompt: a short one leaves no empty box, a long one scrolls in what is left. */
+.template-detail__prompt {
+  min-height: 72px;
   margin: 0;
+  flex: 0 1 auto;
+  overflow: auto;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.05);
+  padding: 10px 12px;
+  color: rgb(240 243 248 / 0.86);
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  scrollbar-width: thin;
+  white-space: pre-wrap;
 }
 .template-detail__source {
   display: inline-flex;
+  flex: none;
   align-items: center;
   align-self: flex-start;
-  gap: 7px;
-  color: var(--accent-cyan);
+  gap: 6px;
+  color: rgb(240 243 248 / 0.56);
   font-size: 12px;
   line-height: 1.4;
   text-decoration: none;
 }
 .template-detail__source:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: rgb(240 243 248 / 0.92);
 }
 .template-detail__source svg {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   flex: 0 0 auto;
 }
-.template-settings {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0;
-  border-top: 1px solid var(--border);
-  padding-top: 12px;
-}
-.template-settings div {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 12px;
-}
-.template-settings dt {
-  color: var(--muted-foreground);
-}
-.template-settings dd {
-  margin: 0;
+.template-detail__body .detail-actions {
+  flex: none;
 }
 
 @media (min-width: 861px) {
   .template-detail-modal {
     overflow: hidden;
   }
+  /* The image takes the most room its ratio allows, and the dialog wraps it, with the same
+     12px around the image as around the panel's contents. */
   .template-detail {
-    /* Reserve the 420px detail rail, 64px viewport gutters, and 2px border. */
     --template-media-width: min(
       1238px,
       calc(100vw - 486px),
       calc(min(900px, 100svh - 144px) * var(--template-image-ratio))
     );
-    width: calc(var(--template-media-width) + 420px);
-    height: calc(var(--template-media-width) / var(--template-image-ratio));
-    grid-template-columns: minmax(0, 1fr) 420px;
+    width: calc(var(--template-media-width) + 12px + 400px);
+    height: max(
+      min(580px, calc(100svh - 2rem)),
+      calc(var(--template-media-width) / var(--template-image-ratio) + 24px)
+    );
+    grid-template-columns: minmax(0, 1fr) 400px;
+  }
+  .template-detail__media {
+    padding: 12px 0 12px 12px;
   }
   .template-detail__body {
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-  }
-  .template-detail__body .detail-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .template-detail__body .detail-actions .button {
-    gap: 6px;
-    padding-inline: 8px;
-    white-space: nowrap;
   }
 }
 
@@ -5786,18 +5782,40 @@ video {
   .template-detail-modal {
     inset: 0 !important;
     width: 100% !important;
+    height: 100svh !important;
     max-height: 100svh !important;
-    border: 0;
+    border-width: 0;
     border-radius: 0 !important;
   }
+  .template-detail-modal > div {
+    height: 100%;
+  }
   .template-detail {
+    height: 100%;
     grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
   }
   .template-detail__media {
-    aspect-ratio: var(--template-image-ratio);
+    height: min(50svh, 72vw);
+    padding: 12px 12px 0;
   }
-  .template-detail > .dialog__close {
-    position: fixed;
+  .template-detail__media img {
+    width: auto;
+    max-width: 100%;
+    max-height: 100%;
+  }
+  /* Details scroll as one; the actions stay in reach below them. */
+  .template-detail__body {
+    overflow: hidden;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+  }
+  .template-detail__prompt {
+    flex: 1 1 0;
+  }
+  /* Over the image here, so it needs the glass. */
+  .template-detail > .template-detail__close {
+    background: rgb(38 42 52 / 0.72);
+    backdrop-filter: blur(14px);
   }
   .asset-toolbar .asset-search {
     width: 100%;
@@ -5906,9 +5924,6 @@ video {
   .template-tile--wide .template-tile__preview {
     min-height: 360px;
     aspect-ratio: 4 / 5;
-  }
-  .template-detail__body {
-    padding: 28px 18px 20px;
   }
   .templates-page,
   .assets-page {
@@ -10926,8 +10941,9 @@ video {
       0 28px 64px -26px rgb(0 0 0 / 0.85) !important;
     color: rgb(240 243 248 / 0.92);
   }
-  /* The image detail is the same surface, scaled up for a full dialog. */
-  .image-detail-modal.image-detail-modal {
+  /* The image and template details are the same surface, scaled up for a full dialog. */
+  .image-detail-modal.image-detail-modal,
+  .template-detail-modal.template-detail-modal {
     border: 1px solid rgb(255 255 255 / 0.08);
     background: linear-gradient(180deg, rgb(50 54 64 / 0.94), rgb(34 38 46 / 0.97));
     box-shadow:

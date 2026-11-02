@@ -32,11 +32,11 @@ describe('image detail panel', () => {
 
   it('keeps the title small and pairs the secondary actions under the main one', () => {
     expect(ruleBody(baseStyles, '.image-detail__body h2')).toContain('font-size: 15px;');
-    expect(ruleBody(baseStyles, '.image-detail .detail-actions')).toContain('flex-wrap: wrap;');
-    expect(ruleBody(baseStyles, '.image-detail .detail-actions .button--primary')).toContain(
+    expect(ruleBody(baseStyles, '.detail-actions--stack')).toContain('flex-wrap: wrap;');
+    expect(ruleBody(baseStyles, '.detail-actions--stack .button--primary')).toContain(
       'flex: 1 1 calc(100% - 48px);',
     );
-    expect(ruleBody(baseStyles, '.image-detail .detail-actions .button--danger')).toContain(
+    expect(ruleBody(baseStyles, '.detail-actions--stack .button--danger')).toContain(
       'width: 40px;',
     );
   });
@@ -44,10 +44,10 @@ describe('image detail panel', () => {
 
 describe('image detail surface', () => {
   it('matches the generation panel instead of a flat card with square controls', () => {
-    const surface = ruleBody(baseStyles, '.image-detail-modal.image-detail-modal');
+    const surface = ruleBody(baseStyles, '.template-detail-modal.template-detail-modal');
 
     expect(surface).toContain('linear-gradient(180deg, rgb(50 54 64 / 0.94)');
-    expect(ruleBody(baseStyles, '.image-detail .detail-actions .button')).toContain(
+    expect(ruleBody(baseStyles, '.detail-actions--stack .button')).toContain(
       'border-radius: var(--radius-full);',
     );
     expect(ruleBody(baseStyles, '.image-detail__close .icon-button')).toContain(

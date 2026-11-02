@@ -190,7 +190,6 @@ export function TemplatesView() {
                     <span className="template-tile__label">
                       <small>{used ? '最近使用' : template.category}</small>
                       <strong>{template.title}</strong>
-                      <span className="template-tile__subtitle">{template.englishTitle}</span>
                     </span>
                   </Button>
                 </MorphicCard>
@@ -264,6 +263,7 @@ export function TemplatesView() {
               onClose={closePreview}
               className="template-detail-modal"
               sharedLayout={false}
+              radius={24}
             >
               <section
                 className="template-detail"
@@ -278,7 +278,7 @@ export function TemplatesView() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="icon-button dialog__close"
+                  className="icon-button template-detail__close"
                   aria-label="关闭模板预览"
                   onClick={closePreview}
                 >
@@ -293,20 +293,13 @@ export function TemplatesView() {
                   />
                 </div>
                 <div className="template-detail__body">
-                  <span>{selected.category}</span>
                   <h2 id="template-detail-title">{selected.title}</h2>
-                  <p className="template-detail__subtitle">{selected.englishTitle}</p>
-                  <p>{selected.prompt}</p>
-                  <a
-                    className="template-detail__source"
-                    href={selected.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <ExternalLink aria-hidden="true" />
-                    查看 GPT Image 2 Prompt Gallery 来源
-                  </a>
-                  <dl className="template-settings">
+                  <p className="template-detail__prompt">{selected.prompt}</p>
+                  <dl className="metadata-grid">
+                    <div>
+                      <dt>分类</dt>
+                      <dd>{selected.category}</dd>
+                    </div>
                     <div>
                       <dt>比例</dt>
                       <dd>{ASPECT_RATIO_LABELS[selected.settings.aspectRatio]}</dd>
@@ -320,7 +313,16 @@ export function TemplatesView() {
                       <dd>{IMAGE_RESOLUTION_LABELS[selected.settings.resolution]}</dd>
                     </div>
                   </dl>
-                  <div className="detail-actions">
+                  <a
+                    className="template-detail__source"
+                    href={selected.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <ExternalLink aria-hidden="true" />
+                    查看来源
+                  </a>
+                  <div className="detail-actions detail-actions--stack">
                     <Button type="button" onClick={() => applyTemplate(selected)}>
                       使用模板
                       <ArrowUpRight aria-hidden="true" />

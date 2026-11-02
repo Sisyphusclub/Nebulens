@@ -49,19 +49,19 @@ describe('template detail sizing contract', () => {
     expect(contract).toContain('@media (min-width: 861px)');
     expect(contract).toContain('calc(min(900px, 100svh - 144px) * var(--template-image-ratio))');
     expect(contract).toContain('calc(100vw - 486px)');
-    expect(contract).toContain('width: calc(var(--template-media-width) + 420px);');
+    expect(contract).toContain('width: calc(var(--template-media-width) + 12px + 400px);');
     expect(contract).toContain(
-      'height: calc(var(--template-media-width) / var(--template-image-ratio));',
+      'calc(var(--template-media-width) / var(--template-image-ratio) + 24px)',
     );
-    expect(contract).toContain('grid-template-columns: minmax(0, 1fr) 420px;');
+    expect(contract).toContain('grid-template-columns: minmax(0, 1fr) 400px;');
     expect(contract).toContain('object-fit: contain;');
     expect(ruleBody(contract, '.template-detail__media img')).toContain('height: auto;');
     const desktopBodyRule = ruleBody(contract, '.template-detail__body');
     expect(desktopBodyRule).not.toContain('margin-top: 58px;');
     expect(contract).toMatch(/\.template-detail__body\s*{[^}]*overflow-y:\s*auto;/s);
     expect(contract).toContain('overflow-y: auto;');
-    expect(ruleBody(mobileContract, '.template-detail__media')).toBe(
-      'aspect-ratio: var(--template-image-ratio);',
+    expect(ruleBody(mobileContract, '.template-detail__media')).toContain(
+      'height: min(50svh, 72vw);',
     );
     expect(contract).not.toContain('min-height: 620px;');
     expect(contract).not.toContain('line-clamp:');

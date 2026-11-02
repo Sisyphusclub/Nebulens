@@ -187,7 +187,7 @@ export function ImageDetailModal({
               </ul>
             ) : null}
           </div>
-          <div className="detail-actions flex-shrink-0">
+          <div className="detail-actions detail-actions--stack flex-shrink-0">
             <Button type="button" onClick={() => void downloadUrl(entry.imageUrl, filename)}>
               <Download aria-hidden="true" />
               保存图片

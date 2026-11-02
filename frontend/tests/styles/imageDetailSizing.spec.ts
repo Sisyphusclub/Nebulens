@@ -44,6 +44,20 @@ describe('image detail panel', () => {
   });
 });
 
+describe('image detail surface', () => {
+  it('matches the generation panel instead of a flat card with square controls', () => {
+    const surface = ruleBody(baseStyles, '.image-detail-modal.image-detail-modal');
+
+    expect(surface).toContain('linear-gradient(180deg, rgb(50 54 64 / 0.94)');
+    expect(ruleBody(baseStyles, '.image-detail .detail-actions .button')).toContain(
+      'border-radius: var(--radius-full);',
+    );
+    expect(ruleBody(baseStyles, '.image-detail__close .icon-button')).toContain(
+      'border-radius: var(--radius-full);',
+    );
+  });
+});
+
 describe('image detail sizing contract', () => {
   it('uses dynamic desktop sizing and preserves mobile overrides', () => {
     const desktopStart = baseStyles.indexOf(
@@ -77,13 +91,12 @@ describe('image detail sizing contract', () => {
     expect(mediaRule).toContain('display: flex;');
     expect(mediaRule).toContain('align-items: center;');
     expect(mediaRule).toContain('justify-content: center;');
-    expect(mediaRule).toContain('background: rgb(0 0 0 / 0.4);');
     expect(mediaRule).toContain('overflow: hidden;');
     expect(imageRule).toContain('width: auto;');
     expect(imageRule).toContain('height: 100%;');
-    expect(imageRule).toContain('max-width: calc(92vw - 360px);');
+    expect(imageRule).toContain('max-width: calc(92vw - 380px);');
     expect(imageRule).toContain('max-height: 100%;');
-    expect(imageRule).toContain('border-radius: 0;');
+    expect(imageRule).toContain('border-radius: 14px;');
     expect(imageRule).toContain('box-shadow: none;');
     expect(imageRule).toContain('object-fit: contain;');
     expect(desktopContract).toContain('aspect-ratio: auto;');

@@ -1883,12 +1883,10 @@ video {
   width: 100%;
   gap: 0;
   overflow: hidden;
-  border: 1px solid color-mix(in oklch, var(--border-strong) 88%, transparent);
+  border: 0;
   border-radius: inherit;
-  background: var(--card);
-  box-shadow:
-    0 28px 80px -42px rgb(0 0 0 / 0.96),
-    0 0 0 1px rgb(255 255 255 / 0.025);
+  background: transparent;
+  box-shadow: none;
   padding: 0;
 }
 .image-detail-modal {
@@ -1906,14 +1904,14 @@ video {
   z-index: 4;
 }
 .image-detail__close .icon-button {
-  border: 1px solid var(--border-strong);
-  background: color-mix(in oklch, var(--surface-raised) 88%, transparent);
-  color: var(--foreground);
-  box-shadow: 0 12px 32px -24px rgb(0 0 0 / 0.9);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: rgb(38 42 52 / 0.72);
+  color: rgb(240 243 248 / 0.92);
   backdrop-filter: blur(14px);
 }
 .image-detail__close .icon-button:hover {
-  background: var(--surface-hover);
+  background: rgb(66 72 86 / 0.82);
 }
 .image-detail__media {
   display: flex;
@@ -1923,18 +1921,17 @@ video {
   justify-content: center;
   min-width: 0;
   min-height: 0;
-  border-right: 1px solid color-mix(in oklch, var(--border) 92%, transparent);
   flex: 0 1 auto;
-  background: rgb(0 0 0 / 0.4);
+  padding: 12px 0 12px 12px;
   overflow: hidden;
 }
 .image-detail__media img {
   display: block;
   width: auto;
   height: 100%;
-  max-width: calc(92vw - 360px);
+  max-width: calc(92vw - 380px);
   max-height: 100%;
-  border-radius: 0;
+  border-radius: 14px;
   box-shadow: none;
   object-fit: contain;
 }
@@ -1946,10 +1943,10 @@ video {
   flex-direction: column;
   gap: 15px;
   overflow: hidden;
-  background: color-mix(in oklch, var(--card) 94%, var(--surface-raised));
+  background: transparent;
   width: 340px;
   flex-shrink: 0;
-  padding: 20px;
+  padding: 18px;
 }
 .image-detail__body-content {
   min-height: 0;
@@ -1982,10 +1979,10 @@ video {
   list-style: none;
 }
 .image-detail__tags li {
-  border: 1px solid var(--border);
   border-radius: var(--radius-full);
-  padding: 1px 9px;
-  color: var(--muted-foreground);
+  background: rgb(255 255 255 / 0.07);
+  padding: 2px 10px;
+  color: rgb(240 243 248 / 0.72);
   font-size: 12px;
 }
 .image-detail__prompt {
@@ -1994,7 +1991,10 @@ video {
   max-height: 150px;
   overflow: auto;
   margin: 0;
-  color: color-mix(in oklch, var(--foreground) 82%, var(--background));
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.05);
+  padding: 10px 12px;
+  color: rgb(240 243 248 / 0.86);
   font-size: 13px;
   line-height: 1.6;
   overflow-wrap: anywhere;
@@ -2006,22 +2006,22 @@ video {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin: 8px 0 0;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-hairline-light);
+  margin: 0;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.05);
+  padding: 12px;
 }
 .metadata-grid div {
   display: grid;
   gap: 3px;
 }
 .metadata-grid dt {
-  color: color-mix(in oklch, var(--foreground) 66%, var(--background));
-  font-size: 10px;
-  text-transform: uppercase;
+  color: rgb(240 243 248 / 0.56);
+  font-size: 11px;
 }
 .metadata-grid dd {
   margin: 0;
-  color: color-mix(in oklch, var(--foreground) 90%, var(--background));
+  color: rgb(240 243 248 / 0.92);
   font-size: 12px;
 }
 .detail-actions {
@@ -2043,8 +2043,17 @@ video {
 .image-detail .detail-actions .button {
   min-width: 0;
   min-height: 40px;
+  border-radius: var(--radius-full);
   padding-inline: 10px;
   white-space: nowrap;
+}
+.image-detail .detail-actions :is(.button--secondary, .button--ghost) {
+  border-color: transparent;
+  background: rgb(255 255 255 / 0.07);
+  color: rgb(240 243 248 / 0.92);
+}
+.image-detail .detail-actions :is(.button--secondary, .button--ghost):hover {
+  background: rgb(255 255 255 / 0.13);
 }
 .image-detail .detail-actions .button--danger {
   border-color: transparent;
@@ -2071,7 +2080,7 @@ video {
     gap: 12px;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    padding: 20px;
+    padding: 18px;
   }
   .image-detail__body-content {
     display: flex;
@@ -2086,36 +2095,34 @@ video {
   .image-detail__body-content > :not(.image-detail__prompt) {
     flex: none;
   }
-  /* A quiet corner button: in the panel, there is no image behind it to stand out from. */
   .image-detail__close {
-    top: 16px;
-    right: 16px;
+    top: 14px;
+    right: 14px;
   }
+  /* In the panel, not over the image: small, on the same soft fill as the other controls. */
   .image-detail__close .icon-button {
     width: 32px;
     min-width: 32px;
     height: 32px;
     min-height: 32px;
-    border-color: transparent;
-    background: transparent;
-    box-shadow: none;
+    background: rgb(255 255 255 / 0.07);
     backdrop-filter: none;
   }
+  .image-detail__close .icon-button:hover {
+    background: rgb(255 255 255 / 0.13);
+  }
   .image-detail .metadata-grid {
-    gap: 8px;
-    margin-top: 4px;
-    padding-top: 12px;
+    gap: 10px 12px;
   }
   .image-detail__media {
     height: 100%;
     aspect-ratio: auto;
     flex: 0 1 auto;
-    background: rgb(0 0 0 / 0.4);
   }
   .image-detail__media img {
     width: auto;
     height: 100%;
-    max-width: calc(92vw - 360px);
+    max-width: calc(92vw - 380px);
     max-height: 100%;
   }
 }
@@ -3271,8 +3278,6 @@ video {
     flex: 0 0 auto;
     aspect-ratio: auto;
     padding: 0;
-    border-right: 0;
-    border-bottom: 1px solid color-mix(in oklch, var(--border) 92%, transparent);
   }
   .image-detail__media img {
     width: auto;
@@ -10827,6 +10832,15 @@ video {
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.08),
       0 28px 64px -26px rgb(0 0 0 / 0.85) !important;
+    color: rgb(240 243 248 / 0.92);
+  }
+  /* The image detail is the same surface, scaled up for a full dialog. */
+  .image-detail-modal.image-detail-modal {
+    border: 1px solid rgb(255 255 255 / 0.08);
+    background: linear-gradient(180deg, rgb(50 54 64 / 0.94), rgb(34 38 46 / 0.97));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.08),
+      0 28px 64px -26px rgb(0 0 0 / 0.85);
     color: rgb(240 243 248 / 0.92);
   }
   .generation-model-menu.generation-control-panel {

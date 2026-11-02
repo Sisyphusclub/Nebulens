@@ -41,6 +41,8 @@ export interface MorphicCardModalProps {
   backdropClassName?: string;
   /** Disable shared-layout morphing when the source card and detail view have different structures. */
   sharedLayout?: boolean;
+  /** Corner radius in pixels; inline so the morph can animate it. */
+  radius?: number;
 }
 
 /**
@@ -83,6 +85,7 @@ export function MorphicCardModal({
   className,
   backdropClassName,
   sharedLayout = true,
+  radius = 8,
 }: MorphicCardModalProps) {
   'use no memo';
   const reduce = useReducedMotion();
@@ -190,7 +193,7 @@ export function MorphicCardModal({
             initial={reduce || sharedLayout ? false : { opacity: 0 }}
             animate={sharedLayout ? false : { opacity: 1 }}
             exit={reduce || sharedLayout ? {} : { opacity: 0 }}
-            style={{ borderRadius: 8, transformOrigin: 'center center' }}
+            style={{ borderRadius: radius, transformOrigin: 'center center' }}
             className={cn(
               // The morph box is the scroller itself. Avoid an h-fit flex column
               // with flex-1 children: Safari resolves that to 0 height and the

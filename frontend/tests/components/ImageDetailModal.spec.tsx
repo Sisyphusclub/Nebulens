@@ -18,6 +18,16 @@ const baseEntry: HistoryEntry = {
   imageUrl: '/detail.png',
 };
 
+describe('ImageDetailModal surface', () => {
+  it('rounds the dialog itself, where the modal sets its corners inline', () => {
+    render(<ImageDetailModal entry={baseEntry} onClose={vi.fn()} />);
+
+    const surface = screen.getByRole('dialog', { name: '图片详情' }).closest('.image-detail-modal');
+
+    expect(surface).toHaveStyle({ borderRadius: '24px' });
+  });
+});
+
 describe('ImageDetailModal media framing', () => {
   it.each([
     ['square', 1024, 1024],

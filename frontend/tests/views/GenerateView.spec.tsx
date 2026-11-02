@@ -1009,12 +1009,14 @@ it('opens the right history flyout, searches, and loads a selected batch', async
 
   const rail = screen.getByRole('button', { name: '展开生成历史' });
   await waitFor(() =>
-    expect(document.querySelectorAll('.generation-history-track__mark')).toHaveLength(2),
+    expect(document.querySelectorAll('.generation-history-track__mark')).toHaveLength(1),
   );
   const generationResults = screen.getByRole('region', { name: '本次创作结果' });
   expect(generationResults).toHaveTextContent('海边灯塔');
-  // Batches outside this session stay in the history panel only.
+  // Batches outside this session stay in the history panel only: a mark for one would have
+  // nothing on the page to jump to.
   expect(generationResults).not.toHaveTextContent('山间木屋');
+  expect(screen.queryByRole('button', { name: '查看生成记录：山间木屋' })).not.toBeInTheDocument();
   await user.click(rail);
   const panel = await screen.findByRole('complementary', { name: '生成历史' });
   expect(panel).toBeVisible();

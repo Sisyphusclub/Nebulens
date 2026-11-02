@@ -1,4 +1,4 @@
-import { ChevronRight, CircleAlert, Search, Sparkles, X } from 'lucide-react';
+import { CircleAlert, Search, Sparkles, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -245,9 +245,8 @@ export function GenerationHistoryFlyout({
   const getTickLength = (index: number) => {
     if (focusIndex < 0) return 12;
     const distance = Math.abs(index - focusIndex);
-    if (distance === 0) return 22;
-    if (distance === 1) return 18;
-    if (distance === 2) return 15;
+    if (distance === 0) return 20;
+    if (distance === 1) return 15;
     return 12;
   };
   // Marks share the track evenly, with no gaps for the pointer to fall through.
@@ -257,7 +256,7 @@ export function GenerationHistoryFlyout({
   const previewOffset =
     previewIndex < 0 || trackBatches.length <= 1
       ? trackHeight / 2
-      : 8 + (previewIndex / (trackBatches.length - 1)) * (trackHeight - 16);
+      : 6 + (previewIndex + 0.5) * tickSlot;
 
   const closeTransientHistory = () => {
     clearCloseTimer();
@@ -381,16 +380,9 @@ export function GenerationHistoryFlyout({
               tabIndex={previewBatch && !isOpen ? 0 : -1}
               onClick={() => handleNavigate(previewBatch)}
             >
-              <span className="generation-history-preview__content">
-                <strong>{previewBatch.prompt.trim() || '未命名任务'}</strong>
-                <span className="generation-history-preview__summary">
-                  {imageModelLabel(previewBatch.model)} · {formatClockTime(previewBatch.createdAt)}
-                  <br />
-                  {ASPECT_RATIO_LABELS[previewBatch.settings.aspectRatio]} ·{' '}
-                  {previewBatch.settings.count} 张
-                </span>
+              <span className="generation-history-preview__prompt">
+                {previewBatch.prompt.trim() || '未命名任务'}
               </span>
-              <ChevronRight aria-hidden="true" />
             </Button>
           ) : null}
         </section>

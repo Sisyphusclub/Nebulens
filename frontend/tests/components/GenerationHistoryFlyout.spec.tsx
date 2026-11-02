@@ -92,10 +92,8 @@ describe('GenerationHistoryFlyout', () => {
     const preview = document.querySelector<HTMLElement>('.generation-history-preview');
     expect(preview).toHaveClass('is-visible');
     expect(preview).toHaveAttribute('aria-hidden', 'false');
-    expect(preview).toHaveTextContent('雨夜列车');
-    expect(preview).toHaveTextContent('gpt-image-2');
-    expect(preview).toHaveTextContent('16:9（宽屏） · 2 张');
-    expect(preview).not.toHaveTextContent('可见');
+    // Just the prompt, to tell the marks apart; the panel has the details.
+    expect(preview).toHaveTextContent(/^雨夜列车$/);
     expect(hoveredTick).toHaveClass('is-previewed');
     expect(panelTrigger).toHaveAttribute('aria-expanded', 'false');
     expect(panel).toHaveAttribute('aria-hidden', 'true');

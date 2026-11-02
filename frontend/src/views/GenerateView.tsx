@@ -258,10 +258,8 @@ export function GenerateView() {
       right.createdAt.localeCompare(left.createdAt),
     );
   }, [feed, history.batches]);
-  const visibleHistoryBatchIds = useMemo(
-    () => [...generationHistoryBatches].reverse().map((batch) => batch.batchId),
-    [generationHistoryBatches],
-  );
+  /** The rail marks only what this session shows, so every mark has somewhere to jump to. */
+  const visibleHistoryBatchIds = useMemo(() => feed.map((item) => item.id), [feed]);
   const viewedBatchId = useViewedBatchId(feed);
   const releaseJumpTarget = useCallback(
     () => setActiveHistoryBatchId(null),

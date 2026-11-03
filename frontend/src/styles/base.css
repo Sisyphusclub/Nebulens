@@ -7144,15 +7144,13 @@ video.landing-hero__video[data-playing='false'] {
 .agent-chat-input__streaming-placeholder[data-active='true'] {
   opacity: 1;
 }
+/* A plain dim hint, so a rotating example never passes for text the user typed. */
 .agent-chat-input__streaming-placeholder-text {
-  color: transparent;
-  background: linear-gradient(90deg, #f3f5fa 0%, #c5d9f2 52%, #efc9ac 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: rgb(240 243 248 / 0.4);
 }
+/* A blinking caret made the box look focused and filled in. */
 .agent-chat-input__streaming-placeholder-caret {
-  display: inline-block;
+  display: none;
   width: 1px;
   height: 1.05em;
   margin-left: 3px;
@@ -9334,13 +9332,6 @@ video.landing-hero__video[data-playing='false'] {
 .liquid-glass-frame > .generation-composer .agent-chat-input__submit:disabled {
   background: rgb(255 255 255 / 0.07);
   color: rgb(236 240 246 / 0.5);
-}
-.landing-composer-hero .landing-composer .agent-chat-input__streaming-placeholder-text {
-  color: transparent;
-  background: linear-gradient(90deg, #f3f5fa 0%, #c5d9f2 52%, #efc9ac 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 .landing-composer-hero .landing-composer .agent-chat-input__textarea[data-empty='true'] {
   caret-color: transparent;

@@ -15,4 +15,17 @@ describe('streaming placeholder style contract', () => {
     expect(rule).toContain('pointer-events: none;');
     expect(rule).not.toContain('cursor:');
   });
+
+  it('reads as a hint, not as text already typed into the box', () => {
+    const text =
+      baseStyles.match(/\n\.agent-chat-input__streaming-placeholder-text \{([^}]+)\}/)?.[1] ?? '';
+    const caret =
+      baseStyles.match(/\n\.agent-chat-input__streaming-placeholder-caret \{([^}]+)\}/)?.[1] ?? '';
+
+    // A dim flat grey, not the bright gradient real-looking text had.
+    expect(text).toContain('color: rgb(240 243 248 / 0.4);');
+    expect(text).not.toContain('gradient');
+    // A blinking caret made it look as if the box had focus and content.
+    expect(caret).toContain('display: none;');
+  });
 });

@@ -36,6 +36,8 @@ export interface GenerateImageOptions {
   quality?: ImageQuality;
   isPublic?: boolean;
   demoPresetId?: string;
+  /** Called once reference files are uploaded, so a retry can reuse them if generation fails. */
+  onReferencesUploaded?: (referenceIds: string[]) => void;
 }
 
 function normalizeIds(ids?: string[], id?: string): string[] {
@@ -155,6 +157,7 @@ export function useImageGeneration() {
             (upload) => upload.id,
           );
           assertCurrentAuthContext(requestContext, authContext.current, controller);
+          options.onReferencesUploaded?.(referenceIds);
         }
         setStatusMessage(
           referenceIds.length ? '正在结合参考图生成图片。' : '正在根据提示词生成图片。',

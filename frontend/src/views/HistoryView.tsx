@@ -204,10 +204,12 @@ export function HistoryView() {
   const reuse = (entry: HistoryEntry): void => {
     const params = new URLSearchParams({
       prompt: entry.record.prompt,
+      model: entry.record.model,
       aspect: entry.record.aspectRatio ?? DEFAULT_ASPECT_RATIO,
       count: String(entry.record.count ?? DEFAULT_COUNT),
       resolution: entry.record.resolution ?? DEFAULT_IMAGE_RESOLUTION,
     });
+    if (entry.record.quality !== undefined) params.set('quality', entry.record.quality);
     const referenceIds =
       entry.record.referenceIds ?? (entry.record.referenceId ? [entry.record.referenceId] : []);
     referenceIds.forEach((id) => params.append('referenceId', id));

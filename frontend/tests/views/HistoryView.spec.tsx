@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { HistoryEntry } from '@/types/image';
@@ -194,6 +194,47 @@ describe('HistoryView asset workflows', () => {
       }),
     );
     expect(screen.getAllByRole('button', { name: /查看图片：/ })).toHaveLength(2);
+  });
+
+  it('carries model, quality and references into the generator when reusing settings', async () => {
+    historyMocks.entries = [
+      {
+        record: {
+          ...portraitEntry.record,
+          model: 'gpt-image-2.5-flare',
+          quality: 'high',
+          resolution: '2k',
+          count: 3,
+          referenceIds: ['ref-a', 'ref-b'],
+        },
+        imageUrl: '/image-three.png',
+      },
+    ];
+    function GenerateProbe() {
+      return <output aria-label="生成页参数">{useLocation().search}</output>;
+    }
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/history']}>
+        <ToastProvider>
+          <Routes>
+            <Route path="/history" element={<HistoryView />} />
+            <Route path="/generate" element={<GenerateProbe />} />
+          </Routes>
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getAllByRole('button', { name: '复用设置' })[0]!);
+
+    const params = new URLSearchParams(screen.getByLabelText('生成页参数').textContent ?? '');
+    expect(params.get('prompt')).toBe('纵向建筑');
+    expect(params.get('model')).toBe('gpt-image-2.5-flare');
+    expect(params.get('quality')).toBe('high');
+    expect(params.get('aspect')).toBe('9:16');
+    expect(params.get('count')).toBe('3');
+    expect(params.get('resolution')).toBe('2k');
+    expect(params.getAll('referenceId')).toEqual(['ref-a', 'ref-b']);
   });
 
   it('uses the beUI Archive drawer for a truly empty asset library', async () => {

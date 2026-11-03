@@ -228,6 +228,8 @@ export function useGenerationFeed({
       setActiveHistoryBatchId(replaceItem.id);
     };
 
+    // Ids of references uploaded for this run, so a failed card retries with them.
+    let uploadedReferenceIds: string[] = [];
     try {
       const result = await generation.generate({
         prompt: settings.prompt,
@@ -238,6 +240,9 @@ export function useGenerationFeed({
         ...(settings.quality === undefined ? {} : { quality: settings.quality }),
         referenceIds: [...settings.referenceIds],
         ...(referenceFiles.length ? { referenceFiles: [...referenceFiles] } : {}),
+        onReferencesUploaded: (ids) => {
+          uploadedReferenceIds = ids;
+        },
       });
       if (generationUserId === null || currentUserIdRef.current !== generationUserId) {
         throw new Error(GENERATION_STOPPED_MESSAGE);
@@ -304,7 +309,13 @@ export function useGenerationFeed({
       }
       if (replaceItem) restoreReplacedItem();
       else {
-        const failedItem = { ...pendingItem, error: message };
+        const failedItem: FeedItem = {
+          ...pendingItem,
+          error: message,
+          ...(uploadedReferenceIds.length
+            ? { settings: { ...pendingItem.settings, referenceIds: uploadedReferenceIds } }
+            : {}),
+        };
         upsertGenerationTask(generationSessionId, persistedTaskFromFeedItem(failedItem));
         setFeed((current) => current.map((item) => (item.id === pendingId ? failedItem : item)));
       }

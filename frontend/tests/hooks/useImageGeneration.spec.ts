@@ -46,6 +46,29 @@ beforeEach(() => {
 });
 
 describe('useImageGeneration', () => {
+  it('reports uploaded reference ids even when the generation then fails', async () => {
+    api.uploadReferenceImages.mockResolvedValue([{ id: 'ref-up-1' }, { id: 'ref-up-2' }]);
+    api.generateImage.mockRejectedValue(new Error('upstream failed'));
+    const onReferencesUploaded = vi.fn();
+    const { result } = renderHook(() => useImageGeneration());
+
+    await act(async () => {
+      await expect(
+        result.current.generate({
+          prompt: '雨夜',
+          referenceFiles: [new File(['a'], 'a.png', { type: 'image/png' })],
+          onReferencesUploaded,
+        }),
+      ).rejects.toThrow();
+    });
+
+    expect(onReferencesUploaded).toHaveBeenCalledWith(['ref-up-1', 'ref-up-2']);
+    expect(api.generateImage).toHaveBeenCalledWith(
+      expect.objectContaining({ referenceIds: ['ref-up-1', 'ref-up-2'] }),
+      expect.anything(),
+    );
+  });
+
   it('preserves quality for supported models and strips it from gpt-image-2', async () => {
     api.generateImage.mockResolvedValue({
       batchId: 'batch-quality',

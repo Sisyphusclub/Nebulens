@@ -1433,6 +1433,42 @@ it('replaces pending skeletons with a retryable error card on failure', async ()
   expect(within(errorCard).getByRole('button', { name: '重试' })).toBeEnabled();
 });
 
+it('keeps the uploaded reference images when a failed generation is retried', async () => {
+  generation.generate.mockImplementationOnce(
+    (options: { onReferencesUploaded?: (ids: string[]) => void }) => {
+      options.onReferencesUploaded?.(['ref-up-1']);
+      return Promise.reject(new Error('上游生成失败'));
+    },
+  );
+  const user = userEvent.setup();
+  const file = new File(['reference'], 'retry-reference.png', { type: 'image/png' });
+  const { container } = render(
+    <MemoryRouter initialEntries={['/generate?prompt=%E6%99%A8%E9%9B%BE']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+  const surface = container.querySelector('.studio-agent-input .agent-chat-input__surface');
+  fireEvent.drop(surface!, {
+    dataTransfer: { files: [file], types: ['Files'], dropEffect: 'none' },
+  });
+  expect(await screen.findByText('retry-reference.png')).toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: '生成图片' }));
+  const errorCard = await waitFor(() => {
+    const card = container.querySelector<HTMLElement>('.generation-error-card');
+    expect(card).toBeInTheDocument();
+    return card!;
+  });
+  await user.click(within(errorCard).getByRole('button', { name: '重试' }));
+
+  await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(2));
+  expect(generation.generate).toHaveBeenLastCalledWith(
+    expect.objectContaining({ referenceIds: ['ref-up-1'] }),
+  );
+});
+
 it('retries a failed generation in place of its error card', async () => {
   generation.generate.mockRejectedValueOnce(new Error('上游生成失败'));
   const user = userEvent.setup();

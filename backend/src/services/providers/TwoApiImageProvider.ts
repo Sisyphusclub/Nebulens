@@ -7,7 +7,6 @@ import {
   DEFAULT_ASPECT_RATIO,
   DEFAULT_COUNT,
   DEFAULT_IMAGE_RESOLUTION,
-  GEMINI_IMAGE_MODEL,
   aspectSizeForResolution,
   type AspectRatio,
   type GenerateImageItem,
@@ -24,7 +23,6 @@ import type {
 } from './ImageGenerationProvider.js';
 import {
   buildUrl,
-  sendGeminiImageRequests,
   sendOpenAIImageRequest,
   type FetchImpl,
   type ProviderImageRequest,
@@ -184,7 +182,6 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       input.signal === undefined ? timeoutSignal : AbortSignal.any([input.signal, timeoutSignal]);
 
     const start = Date.now();
-    const isGemini = model === GEMINI_IMAGE_MODEL;
     const request: ProviderImageRequest = {
       baseUrl,
       apiKey,
@@ -194,16 +191,12 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
       count,
       size: sizing.size,
       quality: input.quality,
-      aspectRatio,
-      resolution,
       signal: requestSignal,
       requestId: input.requestId,
     };
     let responses: Response[];
     try {
-      responses = isGemini
-        ? await sendGeminiImageRequests(this.fetchImpl, request)
-        : [await sendOpenAIImageRequest(this.fetchImpl, request)];
+      responses = [await sendOpenAIImageRequest(this.fetchImpl, request)];
     } catch (err) {
       if (input.signal?.aborted === true) {
         throw new AppError('REQUEST_ABORTED', 'Image generation request was cancelled', 499, err);
@@ -226,7 +219,7 @@ export class TwoApiImageProvider implements ImageGenerationProvider {
 
     let imageData: ProviderImageData[];
     try {
-      imageData = await extractImageData(responses, isGemini);
+      imageData = await extractImageData(responses);
     } catch (err) {
       if (input.signal?.aborted === true) {
         throw new AppError('REQUEST_ABORTED', 'Image generation request was cancelled', 499, err);

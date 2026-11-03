@@ -26,10 +26,18 @@ describe('useGenerationSettings', () => {
     });
     expect(result.current.count).toBe(2);
 
-    rerender({ params: new URLSearchParams('count=3&model=gemini-3-pro-image') });
+    rerender({ params: new URLSearchParams('count=3&model=gpt-image-2.5-sunburst') });
 
     expect(result.current.count).toBe(3);
-    expect(result.current.model).toBe('gemini-3-pro-image');
+    expect(result.current.model).toBe('gpt-image-2.5-sunburst');
+  });
+
+  it('falls back to the default model for the retired Nano Banana Pro', () => {
+    const { result } = renderHook(() =>
+      useGenerationSettings(new URLSearchParams('model=gemini-3-pro-image')),
+    );
+
+    expect(result.current.model).toBe(DEFAULT_IMAGE_MODEL);
   });
 
   it('applies a snapshot and builds one back, omitting quality for unsupported models', async () => {

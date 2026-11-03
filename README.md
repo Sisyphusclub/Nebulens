@@ -16,7 +16,7 @@
 
 - **提示词生图**：支持模型、画质、分辨率、比例、数量和公开状态配置。
 - **参考图生图**：最多上传 14 张参考图，支持复用历史参考图。
-- **多模型接入**：支持 `gpt-image-2`、`gpt-image-2.5-flare`、`gpt-image-2.5-sunburst` 和 Nano Banana Pro。
+- **多模型接入**：支持 `gpt-image-2`、`gpt-image-2.5-flare` 和 `gpt-image-2.5-sunburst`。
 - **生成会话**：保留成功、失败和进行中任务，按创建时间恢复结果顺序。
 - **资产历史**：按日期、模型、可见性和收藏状态筛选，支持预览、编辑、下载和删除。
 - **公开画廊**：通过公开开关控制作品是否进入发现页。
@@ -50,7 +50,6 @@ cp .env.docker.example .env
 ```env
 IMAGE_API_BASE_URL=https://api.example.com
 IMAGE_API_KEY=replace-me
-GEMINI_IMAGE_API_KEY=replace-me
 USER_API_KEY_ENCRYPTION_KEY=replace-with-a-base64-encoded-32-byte-key
 OPENAI_COMPAT_API_KEY=replace-me
 BETTER_AUTH_SECRET=replace-with-a-random-secret
@@ -183,7 +182,6 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 | ----------------------------- | ---- | ------------------------------------------------------ |
 | `IMAGE_API_BASE_URL`          | 是   | 标准图像生成上游                                       |
 | `IMAGE_API_KEY`               | 是   | 标准图像生成密钥                                       |
-| `GEMINI_IMAGE_API_KEY`        | 是   | Nano Banana Pro 上游密钥                               |
 | `USER_API_KEY_ENCRYPTION_KEY` | 是   | AES-256-GCM 用户 Key 加密主密钥                        |
 | `OPENAI_COMPAT_API_KEY`       | 是   | OpenAI-compatible API 调用密钥                         |
 | `BETTER_AUTH_SECRET`          | 是   | 会话签名密钥                                           |

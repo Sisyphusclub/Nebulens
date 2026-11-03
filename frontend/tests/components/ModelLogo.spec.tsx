@@ -4,11 +4,11 @@ import { describe, expect, it } from 'vitest';
 import { ModelLogo } from '@/components/premium/agent-chat-input/model-logo';
 
 describe('ModelLogo', () => {
-  it('uses the local Gemini artwork for Gemini image models', () => {
-    const { container } = render(<ModelLogo modelId="gemini-3-pro-image" />);
+  it('draws the OpenAI mark for gpt image models', () => {
+    const { container } = render(<ModelLogo modelId="gpt-image-2.5-flare" />);
 
-    expect(container.firstElementChild).toHaveStyle({
-      backgroundImage: 'url("/brand/gemini.svg")',
-    });
+    expect((container.firstElementChild as HTMLElement).style.backgroundImage).toContain(
+      'OpenAI_logo',
+    );
   });
 });

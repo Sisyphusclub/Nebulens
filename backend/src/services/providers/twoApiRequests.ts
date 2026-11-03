@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { logger } from '../../logger.js';
 import { mimeFromExt } from '../../storage/localStorage.js';
-import type { AspectRatio, ImageQuality, ImageResolution } from '../../types/image.js';
+import type { ImageQuality } from '../../types/image.js';
 
 export type FetchImpl = typeof globalThis.fetch;
 
@@ -18,8 +18,6 @@ export interface ProviderImageRequest {
   /** OpenAI-style `WIDTHxHEIGHT` size. */
   size: string;
   quality: ImageQuality | undefined;
-  aspectRatio: AspectRatio;
-  resolution: ImageResolution;
   signal: AbortSignal;
   requestId: string | undefined;
 }
@@ -37,67 +35,6 @@ export function sendOpenAIImageRequest(
   return request.referencePaths.length > 0
     ? callEdits(fetchImpl, request)
     : callGenerations(fetchImpl, request);
-}
-
-/** Gemini generateContent returns one image per call, so `count` requests run in parallel. */
-export function sendGeminiImageRequests(
-  fetchImpl: FetchImpl,
-  request: ProviderImageRequest,
-): Promise<Response[]> {
-  return Promise.all(
-    Array.from({ length: request.count }, () =>
-      request.referencePaths.length > 0
-        ? callGeminiEdits(fetchImpl, request)
-        : callGemini(fetchImpl, request, [{ text: request.prompt }]),
-    ),
-  );
-}
-
-async function callGeminiEdits(
-  fetchImpl: FetchImpl,
-  request: ProviderImageRequest,
-): Promise<Response> {
-  const referenceFiles = await Promise.all(
-    request.referencePaths.map((referencePath) => readReferenceFile(referencePath)),
-  );
-  const parts = [
-    { text: request.prompt },
-    ...referenceFiles.map((file) => ({
-      inlineData: { mimeType: file.mime, data: file.buffer.toString('base64') },
-    })),
-  ];
-  return callGemini(fetchImpl, request, parts);
-}
-
-async function callGemini(
-  fetchImpl: FetchImpl,
-  request: ProviderImageRequest,
-  parts: Array<Record<string, unknown>>,
-): Promise<Response> {
-  const { baseUrl, apiKey, model, aspectRatio, resolution, signal, requestId } = request;
-  const url = buildUrl(baseUrl, `v1beta/models/${encodeURIComponent(model)}:generateContent`);
-  logger.info(
-    { requestId, model, promptLength: parts.length, url, aspectRatio, resolution },
-    'image generation: provider request (gemini generateContent)',
-  );
-  return fetchImpl(url, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts }],
-      generationConfig: {
-        responseModalities: ['IMAGE'],
-        imageConfig: {
-          aspectRatio,
-          imageSize: geminiImageSize(resolution),
-        },
-      },
-    }),
-    signal,
-  });
 }
 
 async function callGenerations(
@@ -194,10 +131,4 @@ async function readReferenceFile(
   const cleanExt = ext === 'jpg' ? 'jpeg' : ext;
   const mime = mimeFromExt(cleanExt);
   return { buffer, basename, mime };
-}
-
-function geminiImageSize(resolution: ImageResolution): '1K' | '2K' | '4K' {
-  if (resolution === '4k') return '4K';
-  if (resolution === '2k') return '2K';
-  return '1K';
 }

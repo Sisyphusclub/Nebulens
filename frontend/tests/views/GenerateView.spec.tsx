@@ -293,7 +293,7 @@ it('offers the default model and all upstream models', async () => {
   expect(screen.getByRole('menuitemradio', { name: 'gpt-image-2' })).toBeInTheDocument();
   expect(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-flare' })).toBeInTheDocument();
   expect(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-sunburst' })).toBeInTheDocument();
-  expect(screen.getByRole('menuitemradio', { name: 'Nano Banana Pro' })).toBeInTheDocument();
+  expect(screen.queryByRole('menuitemradio', { name: 'Nano Banana Pro' })).not.toBeInTheDocument();
 });
 
 it.each(['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'] as const)(
@@ -337,28 +337,28 @@ it.each(['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'] as const)(
   },
 );
 
-it.each([
-  ['gpt-image-2', 'gpt-image-2'],
-  ['gemini-3-pro-image', 'Nano Banana Pro'],
-] as const)('does not expose or submit quality for %s', async (model, label) => {
-  const user = userEvent.setup();
-  render(
-    <MemoryRouter initialEntries={[`/generate?prompt=雨夜建筑&quality=max&model=${model}`]}>
-      <ToastProvider>
-        <GenerateView />
-      </ToastProvider>
-    </MemoryRouter>,
-  );
+it.each([['gpt-image-2', 'gpt-image-2']] as const)(
+  'does not expose or submit quality for %s',
+  async (model, label) => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={[`/generate?prompt=雨夜建筑&quality=max&model=${model}`]}>
+        <ToastProvider>
+          <GenerateView />
+        </ToastProvider>
+      </MemoryRouter>,
+    );
 
-  expect(screen.getByRole('button', { name: '选择模型' })).toHaveTextContent(label);
-  await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
-  expect(screen.queryByRole('group', { name: '质量' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '选择模型' })).toHaveTextContent(label);
+    await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
+    expect(screen.queryByRole('group', { name: '质量' })).not.toBeInTheDocument();
 
-  await user.click(screen.getByRole('button', { name: '生成图片' }));
-  await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
-  expect(generation.generate).toHaveBeenCalledWith(expect.objectContaining({ model }));
-  expect(generation.generate.mock.calls[0]?.[0]).not.toHaveProperty('quality');
-});
+    await user.click(screen.getByRole('button', { name: '生成图片' }));
+    await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
+    expect(generation.generate).toHaveBeenCalledWith(expect.objectContaining({ model }));
+    expect(generation.generate.mock.calls[0]?.[0]).not.toHaveProperty('quality');
+  },
+);
 
 it('opens the generation settings panel above its trigger', async () => {
   const user = userEvent.setup();

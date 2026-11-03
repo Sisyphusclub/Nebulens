@@ -150,7 +150,6 @@ export const IMAGE_MODELS = [
   'gpt-image-2',
   'gpt-image-2.5-flare',
   'gpt-image-2.5-sunburst',
-  'gemini-3-pro-image',
 ] as const;
 export type ImageModel = (typeof IMAGE_MODELS)[number];
 export const DEFAULT_IMAGE_MODEL: ImageModel = 'gpt-image-2.5-flare';
@@ -158,7 +157,6 @@ export const IMAGE_MODEL_LABELS: Record<ImageModel, string> = {
   'gpt-image-2': 'gpt-image-2',
   'gpt-image-2.5-flare': 'gpt-image-2.5-flare',
   'gpt-image-2.5-sunburst': 'gpt-image-2.5-sunburst',
-  'gemini-3-pro-image': 'Nano Banana Pro',
 };
 export const IMAGE_QUALITIES = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
 export type ImageQuality = (typeof IMAGE_QUALITIES)[number];
@@ -170,7 +168,6 @@ export const QUALITY_CAPABLE_IMAGE_MODELS = [
 export const STANDARD_IMAGE_GENERATION_CREDIT_COST = 1;
 export const HIGH_RES_IMAGE_GENERATION_CREDIT_COST = 3;
 export const SUNBURST_HIGH_RES_IMAGE_GENERATION_CREDIT_COST = 4;
-export const GEMINI_IMAGE_GENERATION_CREDIT_COST = 4;
 export const DEFAULT_COUNT = 1;
 export const MIN_COUNT = 1;
 export const MAX_COUNT = 4;
@@ -211,7 +208,6 @@ export function supportsImageQuality(model: string | null | undefined): boolean 
 }
 
 export function imageGenerationCreditCost(resolution: ImageResolution, model?: string): number {
-  if (model === 'gemini-3-pro-image') return GEMINI_IMAGE_GENERATION_CREDIT_COST;
   if (resolution === DEFAULT_IMAGE_RESOLUTION) return STANDARD_IMAGE_GENERATION_CREDIT_COST;
   return model === 'gpt-image-2.5-sunburst'
     ? SUNBURST_HIGH_RES_IMAGE_GENERATION_CREDIT_COST

@@ -86,6 +86,18 @@ describe('imageGeneration.service', () => {
     expect(provider.generate).not.toHaveBeenCalled();
   });
 
+  it('rejects the retired Nano Banana Pro model before provider work', async () => {
+    const provider = fakeProvider();
+    await expect(
+      generateImage({ prompt: 'p', model: 'gemini-3-pro-image' }, { provider }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      status: 400,
+      details: { model: 'gemini-3-pro-image' },
+    });
+    expect(provider.generate).not.toHaveBeenCalled();
+  });
+
   it('honours explicit count and aspectRatio', async () => {
     const provider = fakeProvider();
     const result = await generateImage(

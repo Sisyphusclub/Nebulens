@@ -619,7 +619,9 @@ describe('React application routes', () => {
     expect(
       screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-sunburst' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('menuitemradio', { name: 'Nano Banana Pro' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('menuitemradio', { name: 'Nano Banana Pro' }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows the current generation credit cost in the homepage submit action', async () => {

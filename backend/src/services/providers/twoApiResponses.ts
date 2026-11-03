@@ -6,16 +6,6 @@ interface OpenAIImageResponse {
   data?: Array<{ b64_json?: string; revised_prompt?: string }>;
 }
 
-interface GeminiImageResponse {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{
-        inlineData?: { data?: string; mimeType?: string };
-      }>;
-    };
-  }>;
-}
-
 export interface ProviderImageData {
   /** Base64-encoded image bytes. */
   data: string;
@@ -88,25 +78,20 @@ export async function throwForFailedResponse(
   );
 }
 
-/** Reads image payloads from successful OpenAI- or Gemini-shaped responses. */
+/** Reads image payloads from successful OpenAI-shaped responses. */
 export async function extractImageData(
   responses: readonly Response[],
-  isGemini: boolean,
 ): Promise<ProviderImageData[]> {
   const imageData: ProviderImageData[] = [];
   for (const candidate of responses) {
-    const parsed = (await candidate.json()) as OpenAIImageResponse | GeminiImageResponse;
-    if (isGemini) {
-      imageData.push(...extractGeminiImageData(parsed as GeminiImageResponse));
-    } else {
-      imageData.push(
-        ...((parsed as OpenAIImageResponse).data ?? []).flatMap((item) =>
-          typeof item.b64_json === 'string' && item.b64_json.length > 0
-            ? [{ data: item.b64_json }]
-            : [],
-        ),
-      );
-    }
+    const parsed = (await candidate.json()) as OpenAIImageResponse;
+    imageData.push(
+      ...(parsed.data ?? []).flatMap((item) =>
+        typeof item.b64_json === 'string' && item.b64_json.length > 0
+          ? [{ data: item.b64_json }]
+          : [],
+      ),
+    );
   }
   return imageData;
 }
@@ -115,22 +100,6 @@ export function extensionForMime(mimeType: string | undefined): 'png' | 'jpeg' |
   if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') return 'jpeg';
   if (mimeType === 'image/webp') return 'webp';
   return 'png';
-}
-
-function extractGeminiImageData(response: GeminiImageResponse): ProviderImageData[] {
-  return (response.candidates ?? []).flatMap((candidate) =>
-    (candidate.content?.parts ?? []).flatMap((part) => {
-      const inlineData = part.inlineData;
-      return inlineData?.data
-        ? [
-            {
-              data: inlineData.data,
-              ...(inlineData.mimeType ? { mimeType: inlineData.mimeType } : {}),
-            },
-          ]
-        : [];
-    }),
-  );
 }
 
 function isPromptRejectionStatus(status: number): boolean {

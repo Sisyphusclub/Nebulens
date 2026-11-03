@@ -12,7 +12,7 @@ const config: TwoApiRoutingConfig = {
   highResBaseUrl: 'https://high-res.example',
   apiKey: 'server-standard',
   highResApiKey: 'server-high-res',
-  modelApiKeys: { 'gemini-3-pro-image': 'server-gemini' },
+  modelApiKeys: { 'dedicated-model': 'server-dedicated' },
   defaultModel: 'gpt-image-2',
   highResModel: 'codex-gpt-image-2',
 };
@@ -39,7 +39,7 @@ describe('resolveBaseUrl', () => {
     expect(resolveBaseUrl(config, 'gpt-image-2', 'standard', undefined)).toBe(
       'https://standard.example',
     );
-    expect(resolveBaseUrl(config, 'gemini-3-pro-image', '4k', undefined)).toBe(
+    expect(resolveBaseUrl(config, 'dedicated-model', '4k', undefined)).toBe(
       'https://standard.example',
     );
   });
@@ -78,8 +78,8 @@ describe('resolveApiKey', () => {
   });
 
   it('prefers a per-model server key, then the standard or high-res server key', () => {
-    expect(resolveApiKey(config, 'gemini-3-pro-image', '4k', undefined, undefined)).toBe(
-      'server-gemini',
+    expect(resolveApiKey(config, 'dedicated-model', '4k', undefined, undefined)).toBe(
+      'server-dedicated',
     );
     expect(resolveApiKey(config, 'gpt-image-2', 'standard', undefined, undefined)).toBe(
       'server-standard',

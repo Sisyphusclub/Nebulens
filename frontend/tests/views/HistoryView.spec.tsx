@@ -158,7 +158,7 @@ describe('HistoryView asset workflows', () => {
     const user = userEvent.setup();
     historyMocks.entries = [
       entries[0]!,
-      { ...entries[1]!, record: { ...entries[1]!.record, model: 'gemini-3-pro-image' } },
+      { ...entries[1]!, record: { ...entries[1]!.record, model: 'gpt-image-2.5-sunburst' } },
     ];
     renderView();
 
@@ -179,11 +179,11 @@ describe('HistoryView asset workflows', () => {
 
     expect(screen.queryByRole('button', { name: '可见范围筛选' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Nano Banana Pro' }));
+    await user.click(screen.getByRole('button', { name: 'gpt-image-2.5-sunburst' }));
 
     expect(screen.getByLabelText('当前显示 1 项，共 2 项')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /查看图片：/ })).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Nano Banana Pro' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'gpt-image-2.5-sunburst' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );

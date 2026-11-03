@@ -15,6 +15,7 @@ import {
   MAX_REFERENCE_IMAGES,
   MIN_COUNT,
   imageGenerationCreditCost,
+  RETIRED_IMAGE_MODELS,
   supportsImageQuality,
   isAspectRatioSupportedForResolution,
   type AspectRatio,
@@ -120,6 +121,15 @@ export async function generateImage(
       400,
       undefined,
       { aspectRatio, resolution },
+    );
+  }
+  if (input.model !== undefined && RETIRED_IMAGE_MODELS.includes(input.model)) {
+    throw new AppError(
+      'BAD_REQUEST',
+      `Image model ${input.model} is no longer available`,
+      400,
+      undefined,
+      { model: input.model },
     );
   }
   if (input.quality !== undefined && !supportsImageQuality(input.model)) {

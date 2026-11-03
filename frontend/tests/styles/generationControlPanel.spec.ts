@@ -20,8 +20,21 @@ describe('generation control panels', () => {
     expect(panel).toContain('@layer utilities');
     expect(panel).toContain('.generation-control-panel.generation-control-panel {');
     expect(panel).toContain('border-radius: 20px !important;');
-    expect(panel).toContain('backdrop-filter: blur(24px) saturate(1.3);');
     expect(controls).not.toContain('!bg-popover');
+  });
+
+  it('take their glass from the shared floating surface', () => {
+    const surface = baseStyles.match(/^\.floating-surface\s*\{([^}]+)\}/m)?.[1] ?? '';
+    const selectMenu = readFileSync(
+      resolve(process.cwd(), 'src/components/ui/select-menu.tsx'),
+      'utf8',
+    );
+
+    expect(surface).toContain('background: var(--surface-floating);');
+    expect(surface).toContain('backdrop-filter: blur(24px) saturate(1.3);');
+    expect(surface).toContain('--color-muted: var(--muted);');
+    expect(selectMenu).toContain('floating-surface');
+    expect(selectMenu).not.toContain('!bg-background');
   });
 
   it('draws option groups as segmented tracks with a light selected pill', () => {

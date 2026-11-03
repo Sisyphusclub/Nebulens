@@ -408,7 +408,7 @@ export const AnimatedDropdownContent = forwardRef<
         }}
         className={cn(
           MOTION_CLASS,
-          'relative isolate z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-56 overflow-y-auto rounded-xl border border-border bg-background p-1.5 text-foreground outline-none',
+          'relative isolate z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-56 overflow-y-auto rounded-xl floating-surface p-1.5 outline-none',
           className,
         )}
         {...props}
@@ -680,7 +680,7 @@ export const AnimatedDropdownSubContent = forwardRef<
         }}
         className={cn(
           SUB_MOTION_CLASS,
-          'relative isolate z-50 max-h-[var(--radix-popper-available-height)] min-w-48 overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-background p-1.5 text-foreground outline-none',
+          'relative isolate z-50 max-h-[var(--radix-popper-available-height)] min-w-48 overflow-x-hidden overflow-y-auto rounded-xl floating-surface p-1.5 outline-none',
           className,
         )}
         {...props}

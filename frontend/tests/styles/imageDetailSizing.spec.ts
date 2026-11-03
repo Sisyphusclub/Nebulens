@@ -56,14 +56,20 @@ describe('image detail surface', () => {
   });
 
   it('shares its slate glass with the login, API key and confirm dialogs', () => {
-    const dialogs = ruleBody(
-      baseStyles,
-      '.auth-modal-surface,\n.image-api-key-modal-surface,\n.confirm-action-modal',
-    );
+    const floating = ruleBody(baseStyles, '.floating-surface');
 
-    expect(dialogs).toContain('background: var(--surface-floating);');
-    expect(dialogs).toContain('box-shadow: var(--shadow-floating);');
-    expect(dialogs).toContain('--card: rgb(255 255 255 / 0.06);');
+    expect(floating).toContain('background: var(--surface-floating);');
+    expect(floating).toContain('box-shadow: var(--shadow-floating);');
+    expect(floating).toContain('--card: rgb(255 255 255 / 0.06);');
+    for (const file of [
+      'src/components/auth/LoginModal.tsx',
+      'src/components/settings/ImageApiKeySettingsDialog.tsx',
+      'src/components/common/ConfirmActionModal.tsx',
+    ]) {
+      expect(readFileSync(resolve(process.cwd(), file), 'utf8')).toContain(
+        'className="floating-surface ',
+      );
+    }
   });
 });
 

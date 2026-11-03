@@ -155,7 +155,7 @@ export function LoginModal() {
       open={isOpen}
       onClose={closeModal}
       sharedLayout={false}
-      className="auth-modal-surface"
+      className="floating-surface auth-modal-surface"
       backdropClassName="auth-backdrop"
     >
       <section

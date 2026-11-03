@@ -63,7 +63,7 @@ export function SelectMenu<T extends string>({
       <AnimatedDropdownContent
         align="start"
         className={cn(
-          '!min-w-[var(--radix-dropdown-menu-trigger-width)] !rounded-[4px] !border-border !bg-background !p-1 !shadow-none',
+          'floating-surface !min-w-[var(--radix-dropdown-menu-trigger-width)] !rounded-[4px] !p-1',
           contentClassName,
         )}
       >

@@ -807,12 +807,6 @@ video.landing-hero__video[data-playing='false'] {
 }
 .landing-account-popover {
   width: 302px;
-  border-color: rgb(255 255 255 / 0.12) !important;
-  background: rgb(17 18 24 / 0.94) !important;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.05),
-    0 24px 60px -28px rgb(0 0 0 / 0.96);
-  backdrop-filter: blur(24px) saturate(1.14);
 }
 .landing-account-popover::before {
   position: absolute;
@@ -821,9 +815,10 @@ video.landing-hero__video[data-playing='false'] {
   width: 12px;
   height: 12px;
   rotate: 45deg;
-  border-top: 1px solid rgb(255 255 255 / 0.1);
-  border-left: 1px solid rgb(255 255 255 / 0.1);
-  background: rgb(17 18 24 / 0.94);
+  border-top: 1px solid var(--border-floating);
+  border-left: 1px solid var(--border-floating);
+  /* Top stop of --surface-floating, so the caret joins the panel seamlessly. */
+  background: rgb(50 54 64 / 0.94);
   content: '';
 }
 .landing-check-in-popover {
@@ -1199,9 +1194,6 @@ video.landing-hero__video[data-playing='false'] {
 .agent-chat-input__agent-menu,
 .agent-chat-input__settings-menu,
 .agent-chat-input__actions-menu {
-  border-color: var(--border-strong) !important;
-  background: var(--popover) !important;
-  box-shadow: var(--shadow-float);
   padding: 6px;
 }
 /* React Bits scrolls generic card content, while the beUI composer owns menus
@@ -1768,6 +1760,23 @@ video.landing-hero__video[data-playing='false'] {
 .image-tile:focus-within .image-tile__remove {
   opacity: 1;
 }
+/* One slate glass for everything that floats over the page: dialogs, menus,
+   popovers, toasts and the mobile drawer. Nested controls read the semantic
+   tokens (and Tailwind's resolved --color-* copies), so tint them for this
+   surface instead of letting near-black fills punch holes in it. */
+.floating-surface {
+  --card: rgb(255 255 255 / 0.06);
+  --muted: rgb(255 255 255 / 0.07);
+  --surface-raised: rgb(255 255 255 / 0.06);
+  --surface-hover: rgb(255 255 255 / 0.11);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  border: 1px solid var(--border-floating);
+  background: var(--surface-floating);
+  box-shadow: var(--shadow-floating);
+  color: var(--foreground);
+  backdrop-filter: blur(24px) saturate(1.3);
+}
 .dialog-backdrop {
   position: fixed;
   inset: 0;
@@ -2228,10 +2237,7 @@ video.landing-hero__video[data-playing='false'] {
   min-width: 260px;
   max-width: 380px;
   margin: 0;
-  border: 1px solid var(--color-hairline-light);
   border-radius: var(--radius-control);
-  background: var(--popover);
-  color: var(--foreground);
   padding: 14px 16px;
   font-size: 13px;
 }
@@ -3254,9 +3260,9 @@ video.landing-hero__video[data-playing='false'] {
   }
   .landing-sidebar [data-sidebar='sidebar'][data-mobile='true'] {
     border: 0;
-    border-right: 1px solid var(--border-strong);
+    border-right: 1px solid var(--border-floating);
     border-radius: 0;
-    background: color-mix(in oklch, var(--popover) 98%, transparent);
+    background: var(--surface-floating);
     box-shadow: 24px 0 70px -38px rgb(0 0 0 / 0.96);
   }
   .landing-sidebar__mobile-footer {
@@ -4298,21 +4304,10 @@ video.landing-hero__video[data-playing='false'] {
 .auth-backdrop {
   background: var(--overlay);
 }
-/* Dialogs share the slate glass of the detail views and composer popovers.
-   Nested controls read the semantic tokens, so tint them for this surface
-   instead of letting near-black card fills punch holes in it. */
-.auth-modal-surface,
-.image-api-key-modal-surface,
-.confirm-action-modal {
-  --card: rgb(255 255 255 / 0.06);
+/* Dialogs share the slate glass of the detail views and composer popovers;
+   the tab track sits recessed in it rather than as a lighter strip. */
+.auth-modal-surface {
   --muted: rgb(0 0 0 / 0.2);
-  --surface-raised: rgb(255 255 255 / 0.06);
-  --surface-hover: rgb(255 255 255 / 0.11);
-  border: 1px solid var(--border-floating);
-  background: var(--surface-floating);
-  box-shadow: var(--shadow-floating);
-  color: var(--foreground);
-  backdrop-filter: blur(24px) saturate(1.3);
 }
 .auth-modal-surface {
   width: min(100%, 420px) !important;
@@ -6511,8 +6506,6 @@ video.landing-hero__video[data-playing='false'] {
   width: min(360px, calc(100vw - 96px)) !important;
   max-width: min(360px, calc(100vw - 96px)) !important;
   overflow: visible !important;
-  border: 0 !important;
-  background: transparent !important;
   padding: 0 !important;
   transform: none !important;
 }
@@ -6759,13 +6752,7 @@ video.landing-hero__video[data-playing='false'] {
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid color-mix(in oklch, var(--border-strong) 88%, var(--foreground) 12%);
   border-radius: 16px;
-  background: color-mix(in oklch, var(--card) 96%, var(--background));
-  box-shadow:
-    0 24px 68px -30px rgb(0 0 0 / 0.92),
-    0 0 0 1px rgb(255 255 255 / 0.05);
-  backdrop-filter: blur(18px) saturate(112%);
 }
 .generation-history-panel__header {
   display: flex;
@@ -10981,14 +10968,7 @@ video.landing-hero__video[data-playing='false'] {
    overrides live in the same cascade layer and win on a doubled class. */
 @layer utilities {
   .generation-control-panel.generation-control-panel {
-    border: 1px solid rgb(255 255 255 / 0.08) !important;
     border-radius: 20px !important;
-    background: linear-gradient(180deg, rgb(50 54 64 / 0.9), rgb(34 38 46 / 0.94)) !important;
-    backdrop-filter: blur(24px) saturate(1.3);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.08),
-      0 28px 64px -26px rgb(0 0 0 / 0.85) !important;
-    color: rgb(240 243 248 / 0.92);
   }
   /* The image and template details are the same surface, scaled up for a full dialog. */
   .image-detail-modal.image-detail-modal,

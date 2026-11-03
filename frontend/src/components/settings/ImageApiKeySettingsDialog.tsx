@@ -75,7 +75,7 @@ export function ImageApiKeySettingsDialog({ open, onClose }: ImageApiKeySettings
       open={open}
       onClose={close}
       sharedLayout={false}
-      className="image-api-key-modal-surface"
+      className="floating-surface image-api-key-modal-surface"
     >
       <section
         className="image-api-key-dialog"

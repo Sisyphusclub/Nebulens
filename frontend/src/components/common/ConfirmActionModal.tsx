@@ -36,7 +36,7 @@ export function ConfirmActionModal({
       id={`confirm-${id}`}
       open={open}
       onClose={close}
-      className="confirm-action-modal"
+      className="floating-surface confirm-action-modal"
     >
       <section
         className="confirm-action-dialog"

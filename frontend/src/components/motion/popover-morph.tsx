@@ -247,7 +247,7 @@ export function MorphPopoverContent({
             aria-hidden={!context.open}
             variants={clipVariants}
             style={{ borderRadius: radius, pointerEvents: context.open ? 'auto' : 'none' }}
-            className={cn('overflow-hidden border border-border bg-background', className)}
+            className={cn('floating-surface overflow-hidden', className)}
           >
             {children}
           </motion.div>

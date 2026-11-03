@@ -49,7 +49,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
       {children}
       <div className="toast-region" aria-live="polite" aria-atomic="true">
         {toast ? (
-          <div className={`toast toast--${toast.tone}`}>
+          <div className={`floating-surface toast toast--${toast.tone}`}>
             <p>{toast.message}</p>
             {toast.action ? (
               <Button

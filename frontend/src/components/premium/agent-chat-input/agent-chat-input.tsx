@@ -843,6 +843,8 @@ export function AgentChatInput({
               type="button"
               disabled={disabled || (!busy && !canSubmit)}
               aria-label={busy ? '停止生成' : submitLabel}
+              aria-keyshortcuts={busy ? undefined : 'Enter'}
+              title={busy ? undefined : '发送（Enter）· 换行用 Shift+Enter'}
               onClick={busy ? onStop : submit}
               whileTap={reduce ? {} : { scale: 0.94 }}
               transition={SPRING_PRESS}

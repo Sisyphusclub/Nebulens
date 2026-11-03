@@ -209,6 +209,14 @@ describe('AgentChatInput skills', () => {
     agents: [],
   };
 
+  it('tells which keys send and which start a new line', () => {
+    const { container } = render(<AgentChatInput {...baseProps} value="海报" />);
+    const submit = container.querySelector<HTMLButtonElement>('.agent-chat-input__submit');
+
+    expect(submit).toHaveAttribute('aria-keyshortcuts', 'Enter');
+    expect(submit).toHaveAttribute('title', '发送（Enter）· 换行用 Shift+Enter');
+  });
+
   it('shows a picked skill as icon and text while its value stays "/label"', () => {
     const { container } = render(
       <AgentChatInput {...baseProps} skills={[skill]} value="/架构图 产业平台" />,

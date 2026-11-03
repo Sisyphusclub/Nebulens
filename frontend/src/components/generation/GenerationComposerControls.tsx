@@ -21,6 +21,7 @@ import {
   IMAGE_MODEL_LABELS,
   IMAGE_MODELS,
   IMAGE_QUALITIES,
+  IMAGE_QUALITY_LABELS,
   IMAGE_RESOLUTIONS,
   IMAGE_RESOLUTION_LABELS,
   MAX_COUNT,
@@ -83,7 +84,7 @@ export function GenerationComposerControls({
   const parameterSummary = [
     visibleAspect,
     IMAGE_RESOLUTION_LABELS[resolution],
-    ...(qualitySupported ? [quality] : []),
+    ...(qualitySupported ? [IMAGE_QUALITY_LABELS[quality]] : []),
     `${count}张`,
   ].join(' · ');
 
@@ -175,7 +176,7 @@ export function GenerationComposerControls({
               {qualitySupported ? (
                 <ParameterGroup
                   label="质量"
-                  value={quality}
+                  value={IMAGE_QUALITY_LABELS[quality]}
                   className="generation-custom-group--quality"
                 >
                   <AnimatedDropdownRadioGroup
@@ -192,7 +193,7 @@ export function GenerationComposerControls({
                         onSelect={keepCustomPanelOpen}
                       >
                         <AnimatedDropdownItemText className="generation-custom-option__text group-data-[highlighted]:translate-x-0">
-                          {value}
+                          {IMAGE_QUALITY_LABELS[value]}
                         </AnimatedDropdownItemText>
                       </AnimatedDropdownRadioItem>
                     ))}

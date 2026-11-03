@@ -316,13 +316,14 @@ it.each(['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'] as const)(
       within(qualityGroup)
         .getAllByRole('menuitemradio')
         .map((option) => option.textContent),
-    ).toEqual(['low', 'medium', 'high', 'xhigh', 'max']);
-    expect(within(qualityGroup).getByRole('menuitemradio', { name: 'medium' })).toHaveAttribute(
+    ).toEqual(['草稿', '标准', '精细', '超精细', '极致']);
+    expect(within(qualityGroup).getByRole('menuitemradio', { name: '标准' })).toHaveAttribute(
       'aria-checked',
       'true',
     );
-    await user.click(within(qualityGroup).getByRole('menuitemradio', { name: 'max' }));
-    expect(customTrigger).toHaveTextContent('max');
+    await user.click(within(qualityGroup).getByRole('menuitemradio', { name: '极致' }));
+    expect(customTrigger).toHaveTextContent('极致');
+    expect(customTrigger).not.toHaveTextContent('max');
 
     await user.click(screen.getByRole('button', { name: '生成图片' }));
     await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));

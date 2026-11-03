@@ -131,6 +131,15 @@ export const DEFAULT_ASPECT_CHOICE: AspectChoice = 'auto';
 export const DEFAULT_ASPECT_RATIO: AspectRatio = '1:1';
 export const IMAGE_RESOLUTIONS = ['standard', '2k', '4k'] as const;
 export type ImageResolution = (typeof IMAGE_RESOLUTIONS)[number];
+/** What each quality level is called in the interface; the API keeps the model's own names. */
+export const IMAGE_QUALITY_LABELS: Record<ImageQuality, string> = {
+  low: '草稿',
+  medium: '标准',
+  high: '精细',
+  xhigh: '超精细',
+  max: '极致',
+};
+
 export const IMAGE_RESOLUTION_LABELS: Record<ImageResolution, string> = {
   standard: '1K',
   '2k': '2K',

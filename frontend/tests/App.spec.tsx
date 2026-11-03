@@ -716,7 +716,7 @@ describe('React application routes', () => {
     await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
     await user.click(
       within(screen.getByRole('group', { name: '质量' })).getByRole('menuitemradio', {
-        name: 'xhigh',
+        name: '超精细',
       }),
     );
     await user.click(
@@ -756,7 +756,7 @@ describe('React application routes', () => {
     );
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('16:9');
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K');
-    expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('xhigh');
+    expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('超精细');
     expect(screen.getByRole('status', { name: '2 张' })).toBeInTheDocument();
   });
 

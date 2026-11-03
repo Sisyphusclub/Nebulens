@@ -174,7 +174,7 @@ export const GEMINI_IMAGE_GENERATION_CREDIT_COST = 4;
 export const DEFAULT_COUNT = 1;
 export const MIN_COUNT = 1;
 export const MAX_COUNT = 4;
-export const MAX_REFERENCE_IMAGES = 4;
+export const MAX_REFERENCE_IMAGES = 14;
 
 export function isAspectChoice(value: string | null): value is AspectChoice {
   return value !== null && (ASPECT_CHOICES as readonly string[]).includes(value);

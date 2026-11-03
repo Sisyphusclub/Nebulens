@@ -576,6 +576,34 @@ describe('POST /api/images/generate', () => {
     expect(quota.body.remaining).toBe(17);
   });
 
+  it('accepts up to 14 reference images and passes every one to the provider', async () => {
+    const harness = fakeProvider();
+    const userId = `fourteen-references-${randomUUID()}`;
+    const app = buildApp(harness.provider, stubAuth(userId));
+    const referenceIds: string[] = [];
+    for (let index = 0; index < 15; index += 1) {
+      const upload = await request(app)
+        .post('/api/images/upload')
+        .attach('image', Buffer.concat([PNG_PREFIX, Buffer.alloc(32, index)]), 'ref.png');
+      expect(upload.status).toBe(200);
+      referenceIds.push(upload.body.id as string);
+    }
+
+    const tooMany = await request(app)
+      .post('/api/images/generate')
+      .send({ prompt: '十五张参考图', referenceIds });
+    expect(tooMany.status).toBe(400);
+    expect(harness.provider.generate).not.toHaveBeenCalled();
+
+    const fourteen = await request(app)
+      .post('/api/images/generate')
+      .send({ prompt: '十四张参考图', referenceIds: referenceIds.slice(0, 14) });
+    expect(fourteen.status).toBe(200);
+    expect(fourteen.body.generationMode).toBe('image-to-image');
+    const input = vi.mocked(harness.provider.generate).mock.calls[0]?.[0];
+    expect(input?.referencePaths).toHaveLength(14);
+  });
+
   it('passes reference ids through dedicated high-resolution image-to-image calls', async () => {
     const harness = fakeProvider();
     const userId = `high-res-reference-${randomUUID()}`;

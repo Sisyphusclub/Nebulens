@@ -698,7 +698,7 @@ describe('React application routes', () => {
     const user = userEvent.setup();
     const { container } = renderRoute('/');
     const referenceFiles = Array.from(
-      { length: 5 },
+      { length: 15 },
       (_, index) =>
         new File([`reference-${index + 1}`], `reference-${index + 1}.png`, { type: 'image/png' }),
     );
@@ -707,9 +707,9 @@ describe('React application routes', () => {
     const fileInput = container.querySelector<HTMLInputElement>('input[type="file"]');
     expect(fileInput).toHaveAttribute('accept', 'image/png,image/jpeg,image/webp');
     await user.upload(fileInput!, referenceFiles);
-    expect(screen.getByText('参考图最多支持 4 张，已保留前 4 张。')).toBeInTheDocument();
-    expect(screen.getByText('reference-4.png')).toBeInTheDocument();
-    expect(screen.queryByText('reference-5.png')).not.toBeInTheDocument();
+    expect(screen.getByText('参考图最多支持 14 张，已保留前 14 张。')).toBeInTheDocument();
+    expect(screen.getByText('reference-14.png')).toBeInTheDocument();
+    expect(screen.queryByText('reference-15.png')).not.toBeInTheDocument();
 
     await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '雨夜的未来城市');
     await user.click(screen.getByRole('button', { name: '选择模型' }));
@@ -748,7 +748,7 @@ describe('React application routes', () => {
         count: 2,
         resolution: '2k',
         quality: 'xhigh',
-        referenceFiles: referenceFiles.slice(0, 4),
+        referenceFiles: referenceFiles.slice(0, 14),
       }),
     );
     expect(generation.generate.mock.calls[0]?.[0]).not.toHaveProperty('isPublic');

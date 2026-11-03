@@ -1198,6 +1198,8 @@ video.landing-hero__video[data-playing='false'] {
 /* React Bits scrolls generic card content, while the beUI composer owns menus
    and attachment previews that must remain visible outside its frame. */
 .agent-chat-input.border-glow-card > .border-glow-inner {
+  /* As a grid item it would otherwise grow to fit a long thumbnail row. */
+  min-width: 0;
   overflow: visible;
 }
 /* Keep an open beUI menu above the composer's gradient edge layers. */

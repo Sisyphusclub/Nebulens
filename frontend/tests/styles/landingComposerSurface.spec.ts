@@ -20,6 +20,17 @@ describe('landing composer surface contract', () => {
     );
   });
 
+  it('keeps a long row of reference thumbnails scrolling inside the composer width', () => {
+    const inner =
+      baseStyles.match(
+        /\n\.agent-chat-input\.border-glow-card > \.border-glow-inner \{([^}]+)\}/,
+      )?.[1] ?? '';
+
+    // A grid item defaults to min-width: auto, so 14 thumbnails would widen the
+    // composer past its frame instead of scrolling the tray.
+    expect(inner).toContain('min-width: 0;');
+  });
+
   it('keeps the generation action after the controls in the desktop toolbar', () => {
     const sharedComposerStart = baseStyles.indexOf(
       '/* Shared image-generation composer contract for Discover and Generate. */',

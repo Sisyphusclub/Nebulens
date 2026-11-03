@@ -62,6 +62,7 @@ import {
 import type { SkillForm } from '@/types/skill';
 import { resolveAspectChoice } from '@/utils/imageAspect';
 import { recentCreations, type RecentCreation } from '@/utils/recentCreations';
+import { expectsRecentCreations, rememberRecentCreations } from '@/utils/recentSlot';
 import type { SkillRunRequest } from '@/utils/skillRun';
 
 /** Templates that top up the inspiration feed when the team has shared little. */
@@ -97,7 +98,7 @@ export function LandingView() {
   const { quota, isLoading: quotaLoading, checkIn } = useImageQuota();
   const imageApiKey = useImageApiKey();
   const { notify } = useToast();
-  const { batches: historyBatches } = useImageHistory();
+  const { batches: historyBatches, isHydrated: historyHydrated } = useImageHistory();
   const { sessions, create: createSession } = useGenerationSessions();
   const [selectedRecommendation, setSelectedRecommendation] = useState<TeamRecommendation | null>(
     null,
@@ -116,6 +117,12 @@ export function LandingView() {
     () => recentCreations(historyBatches, sessions),
     [historyBatches, sessions],
   );
+  const [reserveRecentRow] = useState(expectsRecentCreations);
+  // Once the account and its history are known, remember whether there was anything to continue.
+  useEffect(() => {
+    if (authLoading || (isAuthenticated && !historyHydrated)) return;
+    rememberRecentCreations(recent.length > 0);
+  }, [authLoading, historyHydrated, isAuthenticated, recent.length]);
   const [prompt, setPrompt] = useState('');
   const activeSkill = skillInPrompt(prompt);
   const { items: recommendations } = useTeamRecommendations(
@@ -482,7 +489,10 @@ export function LandingView() {
               }}
             />
           ) : null}
-          <div className="landing-hero__secondary">
+          <div
+            className="landing-hero__secondary"
+            data-reserve={reserveRecentRow ? 'true' : undefined}
+          >
             {recommendations.length > 0 ? (
               <LandingRecommendations
                 recommendations={recommendations}

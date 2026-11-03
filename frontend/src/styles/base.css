@@ -11292,10 +11292,13 @@ video.landing-hero__video[data-playing='false'] {
 }
 
 /* Landing hero: the signed-in user's latest sessions, one tap from resuming */
-/* Holds the row's height before the history arrives, so the skills below stay put. */
+/* For someone who had something to continue last time, holds the row's height before the
+   history arrives, so the skills below stay put; nobody else gets an empty gap. */
 .landing-hero__secondary {
   width: 100%;
   max-width: 940px;
+}
+.landing-hero__secondary[data-reserve='true'] {
   min-height: 60px;
 }
 .landing-recent {

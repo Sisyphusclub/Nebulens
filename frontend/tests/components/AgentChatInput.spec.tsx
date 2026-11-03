@@ -209,6 +209,27 @@ describe('AgentChatInput skills', () => {
     agents: [],
   };
 
+  it('opens the file picker straight from + without a menu in between', () => {
+    const { container, getByRole, queryByRole } = render(
+      <AgentChatInput {...baseProps} skills={[skill]} />,
+    );
+    const fileInput = container.querySelector<HTMLInputElement>('input[type="file"]');
+    const pick = vi.spyOn(fileInput!, 'click');
+
+    fireEvent.click(getByRole('button', { name: '添加参考图' }));
+
+    expect(pick).toHaveBeenCalledOnce();
+    expect(queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('leaves + out when uploads are off', () => {
+    const { queryByRole } = render(
+      <AgentChatInput {...baseProps} skills={[skill]} allowFileUpload={false} />,
+    );
+
+    expect(queryByRole('button', { name: '添加参考图' })).not.toBeInTheDocument();
+  });
+
   it('tells which keys send and which start a new line', () => {
     const { container } = render(<AgentChatInput {...baseProps} value="海报" />);
     const submit = container.querySelector<HTMLButtonElement>('.agent-chat-input__submit');

@@ -160,10 +160,10 @@ import {
   resetGenerationSessionsForTests,
 } from '@/hooks/useGenerationSessions';
 
-/** Less common skills are not on the Discover page; they stay in the composer's + menu. */
-async function pickSkillFromMenu(user: ReturnType<typeof userEvent.setup>, label: string) {
-  await user.click(await screen.findByRole('button', { name: '添加参考图或技能' }));
-  await user.click(await screen.findByRole('menuitemcheckbox', { name: label }));
+/** Less common skills are not on the Discover page; they are picked by typing "/". */
+async function pickSkillBySlash(user: ReturnType<typeof userEvent.setup>, label: string) {
+  await user.type(await screen.findByRole('textbox', { name: '首页创作提示词' }), `/${label}`);
+  await user.click(await screen.findByRole('button', { name: new RegExp(`^${label}`) }));
 }
 
 const SKILL_FORMS = [
@@ -365,7 +365,7 @@ describe('React application routes', () => {
     const user = userEvent.setup();
     renderRoute('/');
 
-    await pickSkillFromMenu(user, '电商主图');
+    await pickSkillBySlash(user, '电商主图');
     const bar = await screen.findByRole('group', { name: '技能：电商主图' });
 
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('电商主图');
@@ -400,7 +400,7 @@ describe('React application routes', () => {
     const user = userEvent.setup();
     renderRoute('/');
 
-    await pickSkillFromMenu(user, '商品换背景');
+    await pickSkillBySlash(user, '商品换背景');
     const bar = await screen.findByRole('group', { name: '技能：商品换背景' });
     await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '海边礁石');
 
@@ -448,7 +448,7 @@ describe('React application routes', () => {
     });
     renderRoute('/');
 
-    await pickSkillFromMenu(user, '电商主图');
+    await pickSkillBySlash(user, '电商主图');
     const bar = await screen.findByRole('group', { name: '技能：电商主图' });
     await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '山川绿茶，高山云雾');
     await user.click(within(bar).getByRole('button', { name: '风格' }));
@@ -703,8 +703,7 @@ describe('React application routes', () => {
         new File([`reference-${index + 1}`], `reference-${index + 1}.png`, { type: 'image/png' }),
     );
 
-    await user.click(await screen.findByRole('button', { name: '添加参考图或技能' }));
-    await user.click(screen.getByRole('menuitem', { name: '添加参考图' }));
+    await user.click(await screen.findByRole('button', { name: '添加参考图' }));
     const fileInput = container.querySelector<HTMLInputElement>('input[type="file"]');
     expect(fileInput).toHaveAttribute('accept', 'image/png,image/jpeg,image/webp');
     await user.upload(fileInput!, referenceFiles);

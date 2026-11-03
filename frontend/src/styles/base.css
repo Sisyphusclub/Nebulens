@@ -1192,8 +1192,7 @@ video.landing-hero__video[data-playing='false'] {
   transform: translateY(-50%);
 }
 .agent-chat-input__agent-menu,
-.agent-chat-input__settings-menu,
-.agent-chat-input__actions-menu {
+.agent-chat-input__settings-menu {
   padding: 6px;
 }
 /* React Bits scrolls generic card content, while the beUI composer owns menus
@@ -1203,8 +1202,7 @@ video.landing-hero__video[data-playing='false'] {
 }
 /* Keep an open beUI menu above the composer's gradient edge layers. */
 .agent-chat-input.border-glow-card:has(.agent-chat-input__agent-menu) > .border-glow-inner,
-.agent-chat-input.border-glow-card:has(.agent-chat-input__settings-menu) > .border-glow-inner,
-.agent-chat-input.border-glow-card:has(.agent-chat-input__actions-menu) > .border-glow-inner {
+.agent-chat-input.border-glow-card:has(.agent-chat-input__settings-menu) > .border-glow-inner {
   z-index: 4;
 }
 .agent-chat-input__agent-menu {
@@ -1323,32 +1321,6 @@ video.landing-hero__video[data-playing='false'] {
 }
 .agent-chat-input__option.is-selected > svg {
   opacity: 1;
-}
-.agent-chat-input__actions-menu {
-  display: grid;
-  width: 208px;
-  gap: 2px;
-}
-.agent-chat-input__actions-menu > button {
-  display: flex;
-  min-height: 40px;
-  align-items: center;
-  gap: 9px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  padding: 0 9px;
-  color: var(--foreground);
-  font-size: 12px;
-  text-align: left;
-}
-.agent-chat-input__actions-menu > button:hover {
-  background: var(--muted);
-}
-.agent-chat-input__actions-menu svg {
-  width: 15px;
-  height: 15px;
-  color: var(--muted-foreground);
 }
 .agent-chat-input__queued-message {
   display: flex;

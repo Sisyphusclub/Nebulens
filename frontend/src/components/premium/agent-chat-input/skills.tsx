@@ -45,7 +45,7 @@ export function SkillSelector({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={reduce ? {} : { opacity: 0, y: 4, scale: 0.98 }}
       transition={reduce ? { duration: 0 } : SPRING_LAYOUT}
-      className="-top-2 absolute right-2 left-2 z-[70] max-h-80 -translate-y-full overflow-hidden rounded-2xl border border-border-strong/50 bg-background/20 p-1.5 shadow-[0_16px_48px_-28px_rgb(0_0_0_/_0.55),inset_0_1px_0_rgb(255_255_255_/_0.06),inset_0_0_22px_-18px_color-mix(in_oklch,var(--foreground)_32%,transparent)] backdrop-blur-xl"
+      className="floating-surface -top-2 absolute right-2 left-2 z-[70] max-h-80 -translate-y-full overflow-hidden rounded-2xl p-1.5"
     >
       <p className="px-2 py-1.5 font-medium text-muted-foreground text-xs">Skills</p>
       <div className="max-h-64 overflow-y-auto">
@@ -62,7 +62,7 @@ export function SkillSelector({
                 onClick={() => onSelect(skill.id)}
                 className={cn(
                   'flex min-h-9 w-full items-center gap-2 rounded-lg px-1.5 text-left text-sm transition-colors',
-                  active && 'bg-primary/5',
+                  active && 'bg-muted',
                 )}
               >
                 <span className="grid size-6 shrink-0 place-items-center text-muted-foreground">

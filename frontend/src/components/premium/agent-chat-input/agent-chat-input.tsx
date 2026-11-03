@@ -7,12 +7,10 @@ import {
   ChevronDown,
   CornerUpLeft,
   Mic,
-  Paperclip,
   Pencil,
   Plus,
   Square,
   Trash2,
-  WandSparkles,
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
@@ -283,82 +281,27 @@ function ModelSettings({
   );
 }
 
-interface ActionMenuProps {
-  allowFileUpload: boolean;
-  skills: AgentChatInputProps['skills'];
-  selectedSkillIds: readonly string[];
+interface AttachButtonProps {
   disabled: boolean;
   reduce: boolean;
-  menuClassName?: string | undefined;
   onAttach: () => void;
-  onSkillSelect: (id: string) => void;
 }
 
-function ActionMenu({
-  allowFileUpload,
-  skills = [],
-  selectedSkillIds,
-  disabled,
-  reduce,
-  menuClassName,
-  onAttach,
-  onSkillSelect,
-}: ActionMenuProps) {
-  const [open, setOpen] = useState(false);
-
-  if (!allowFileUpload && skills.length === 0) return null;
-
+/** + opens the file picker directly; skills are picked from the tiles or by typing "/". */
+function AttachButton({ disabled, reduce, onAttach }: AttachButtonProps) {
   return (
-    <MorphPopover open={open} onOpenChange={setOpen}>
-      <MorphPopoverTrigger>
-        <motion.button
-          type="button"
-          disabled={disabled}
-          aria-label="添加参考图或技能"
-          whileTap={reduce ? {} : { scale: 0.92 }}
-          transition={SPRING_PRESS}
-          className="agent-chat-input__icon-button"
-        >
-          <Plus aria-hidden="true" />
-        </motion.button>
-      </MorphPopoverTrigger>
-      <MorphPopoverContent
-        side="top"
-        align="start"
-        sideOffset={6}
-        radius={12}
-        className={cn('agent-chat-input__actions-menu', menuClassName)}
-      >
-        {allowFileUpload ? (
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              onAttach();
-              setOpen(false);
-            }}
-          >
-            <Paperclip aria-hidden="true" />
-            <span>添加参考图</span>
-          </button>
-        ) : null}
-        {skills.map((skill) => (
-          <button
-            key={skill.id}
-            type="button"
-            role="menuitemcheckbox"
-            aria-checked={selectedSkillIds.includes(skill.id)}
-            onClick={() => {
-              onSkillSelect(skill.id);
-              setOpen(false);
-            }}
-          >
-            <span aria-hidden="true">{skill.icon ?? <WandSparkles />}</span>
-            <span>{skill.label}</span>
-          </button>
-        ))}
-      </MorphPopoverContent>
-    </MorphPopover>
+    <motion.button
+      type="button"
+      disabled={disabled}
+      aria-label="添加参考图"
+      title="添加参考图"
+      whileTap={reduce ? {} : { scale: 0.92 }}
+      transition={SPRING_PRESS}
+      className="agent-chat-input__icon-button"
+      onClick={onAttach}
+    >
+      <Plus aria-hidden="true" />
+    </motion.button>
   );
 }
 
@@ -790,16 +733,13 @@ export function AgentChatInput({
 
         <div className={cn('agent-chat-input__toolbar', classNames?.toolbar)}>
           <div className="agent-chat-input__toolbar-group">
-            <ActionMenu
-              allowFileUpload={allowFileUpload}
-              skills={skills}
-              selectedSkillIds={selectedSkillIds}
-              disabled={disabled}
-              reduce={reduce}
-              menuClassName={classNames?.menu}
-              onAttach={() => fileInputRef.current?.click()}
-              onSkillSelect={skillCommand.select}
-            />
+            {allowFileUpload ? (
+              <AttachButton
+                disabled={disabled}
+                reduce={reduce}
+                onAttach={() => fileInputRef.current?.click()}
+              />
+            ) : null}
             <AgentSelector
               agents={agents}
               selectedAgent={selectedAgent}

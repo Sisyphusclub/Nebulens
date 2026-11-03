@@ -1,5 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { Link, MemoryRouter } from 'react-router-dom';
 import { expect, it, vi } from 'vitest';
 
 import { AppRoutes } from '@/router';
@@ -7,6 +7,9 @@ import { AppRoutes } from '@/router';
 // Never resolves, so the route stays on its loading fallback.
 vi.mock('@/views/LandingView', () => new Promise(() => undefined));
 vi.mock('@/views/TemplatesView', () => new Promise(() => undefined));
+vi.mock('@/views/HistoryView', () => ({
+  HistoryView: () => <Link to="/somewhere-else">离开</Link>,
+}));
 
 it('holds the home page on its backdrop while it loads, with no skeleton blocks', () => {
   const { container } = render(
@@ -51,4 +54,21 @@ it.each([
   );
 
   await waitFor(() => expect(document.title).toBe(title));
+});
+
+it('opens the next page at its top instead of where the last page was scrolled to', async () => {
+  const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+  render(
+    <MemoryRouter initialEntries={['/history']}>
+      <AppRoutes />
+    </MemoryRouter>,
+  );
+  const leave = await screen.findByRole('link', { name: '离开' });
+  expect(scrollTo).not.toHaveBeenCalled();
+
+  fireEvent.click(leave);
+
+  await screen.findByRole('heading', { name: '页面不存在' });
+  expect(scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: 'auto' });
+  scrollTo.mockRestore();
 });

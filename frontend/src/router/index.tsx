@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router-dom';
 
 import { HERO_BACKDROP_POSTER } from '@/components/landing/LandingHeroBackdrop';
@@ -39,6 +39,15 @@ export function AppRoutes() {
   useEffect(() => {
     const page = pathname === '/' ? null : (PAGE_TITLES[pathname] ?? '页面不存在');
     document.title = page === null ? SITE_TITLE : `${page} · Nebulens`;
+  }, [pathname]);
+
+  // The window keeps the last page's scroll, so a switched-to page starts at its top. A layout
+  // effect lands before the pages' own scroll effects; the first load keeps the browser's restore.
+  const shownPathname = useRef(pathname);
+  useLayoutEffect(() => {
+    if (shownPathname.current === pathname) return;
+    shownPathname.current = pathname;
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [pathname]);
 
   return (

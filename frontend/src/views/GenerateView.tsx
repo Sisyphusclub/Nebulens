@@ -64,7 +64,8 @@ import { readSkillRun } from '@/utils/skillRun';
 import { useReleaseJumpTarget, useViewedBatchId } from '@/hooks/useViewedBatchId';
 import { prefersReducedMotion, scrollToGenerationBatch } from '@/utils/generationScroll';
 
-type DeleteTarget = { kind: 'entry'; entry: HistoryEntry } | { kind: 'batch'; item: FeedItem };
+/** Whole batches are confirmed first; a single image is deleted at once and can be undone. */
+type DeleteTarget = { kind: 'batch'; item: FeedItem };
 
 export function GenerateView() {
   const [searchParams] = useSearchParams();
@@ -267,6 +268,20 @@ export function GenerateView() {
     [setActiveHistoryBatchId],
   );
   useReleaseJumpTarget(activeHistoryBatchId, releaseJumpTarget);
+  /** The feed without images still inside their undo window. */
+  const visibleFeed = useMemo(() => {
+    const pending = history.pendingRemovalIds;
+    if (pending.length === 0) return feed;
+    return feed
+      .map((item) => ({
+        ...item,
+        entries: item.entries.filter((entry) => !pending.includes(entry.record.id)),
+      }))
+      .filter(
+        (item, index) =>
+          item.entries.length > 0 || item.error || (feed[index]?.entries.length ?? 0) === 0,
+      );
+  }, [feed, history.pendingRemovalIds]);
   const latestBatch = feed[feed.length - 1];
   /** While a new batch is still generating, the backdrop keeps the previous image. */
   const ambientImageUrl = [...feed].reverse().find((item) => item.entries.length > 0)
@@ -495,26 +510,22 @@ export function GenerateView() {
     }
   };
 
-  const deleteEntry = async (entry: HistoryEntry): Promise<void> => {
-    setMutatingId(entry.record.id);
-    try {
-      await history.remove(entry.record.id);
-      setFeed((current) =>
-        current
-          .map((item) => ({
-            ...item,
-            entries: item.entries.filter((candidate) => candidate.record.id !== entry.record.id),
-          }))
-          .filter((item) => item.entries.length > 0 || item.error),
-      );
-      if (selected?.record.id === entry.record.id) setSelected(null);
-      notify('图片已删除。');
-      setDeleteTarget(null);
-    } catch (error) {
-      notify(error instanceof Error ? error.message : '删除失败，请稍后重试。', 'error');
-    } finally {
-      setMutatingId(null);
-    }
+  const deleteEntry = (entry: HistoryEntry): void => {
+    if (selected?.record.id === entry.record.id) setSelected(null);
+    const undo = history.removeWithUndo(entry.record.id, {
+      onCommitted: () =>
+        setFeed((current) =>
+          current
+            .map((item) => ({
+              ...item,
+              entries: item.entries.filter((candidate) => candidate.record.id !== entry.record.id),
+            }))
+            .filter((item) => item.entries.length > 0 || item.error),
+        ),
+      onFailed: (error) =>
+        notify(error instanceof Error ? error.message : '删除失败，请稍后重试。', 'error'),
+    });
+    notify('图片已删除。', 'success', { action: { label: '撤销', onAction: undo } });
   };
 
   const downloadBatch = async (item: FeedItem): Promise<void> => {
@@ -528,9 +539,7 @@ export function GenerateView() {
   };
 
   const confirmDeletion = async (): Promise<void> => {
-    if (!deleteTarget) return;
-    if (deleteTarget.kind === 'batch') await deleteBatch(deleteTarget.item);
-    else await deleteEntry(deleteTarget.entry);
+    if (deleteTarget) await deleteBatch(deleteTarget.item);
   };
 
   const navigateToHistoryBatch = (batch: GroupedBatch): void => {
@@ -609,7 +618,7 @@ export function GenerateView() {
 
   return (
     <section
-      className={`generation-console ${feed.length ? 'has-results' : 'is-empty'}`}
+      className={`generation-console ${visibleFeed.length ? 'has-results' : 'is-empty'}`}
       data-view="generate"
       aria-label="图像生成工作区"
     >
@@ -665,7 +674,7 @@ export function GenerateView() {
         onNavigateBatch={navigateToHistoryBatch}
         onInteractionLeave={() => setActiveHistoryBatchId(null)}
       />
-      {!feed.length ? (
+      {!visibleFeed.length ? (
         <div className="generation-empty-state" aria-label="开始你的创作">
           <div className="generation-empty-state__art" aria-hidden="true">
             <ImagePlus className="generation-empty-state__image-icon" />
@@ -810,18 +819,18 @@ export function GenerateView() {
         </LiquidGlassFrame>
       </div>
 
-      {feed.length ? (
+      {visibleFeed.length ? (
         <section
           ref={sessionFeedRef}
           className="session-feed"
           aria-label="本次创作结果"
           aria-busy={generation.isLoading}
         >
-          {feed.map((item, index) => (
+          {visibleFeed.map((item, index) => (
             <GenerationBatch
               key={item.id}
               item={item}
-              articleRef={index === feed.length - 1 ? latestBatchRef : undefined}
+              articleRef={index === visibleFeed.length - 1 ? latestBatchRef : undefined}
               isGenerating={generation.isLoading}
               statusMessage={generation.statusMessage}
               mutatingId={mutatingId}
@@ -840,7 +849,7 @@ export function GenerateView() {
               onOpenEntry={setSelected}
               onUseAsReference={(entry) => void addAsReference(entry)}
               onFixText={(entry) => void fixText(item, entry)}
-              onDeleteEntry={(entry) => setDeleteTarget({ kind: 'entry', entry })}
+              onDeleteEntry={deleteEntry}
             />
           ))}
         </section>
@@ -861,10 +870,7 @@ export function GenerateView() {
           setSelected(null);
         }}
         onUseAsReference={(entry) => void addAsReference(entry).then(() => setSelected(null))}
-        onDelete={(entry) => {
-          setSelected(null);
-          setDeleteTarget({ kind: 'entry', entry });
-        }}
+        onDelete={deleteEntry}
       />
       <ImageDetailModal
         entry={selectedInspirationEntry}
@@ -877,13 +883,9 @@ export function GenerateView() {
       <ConfirmActionModal
         id="generation-delete"
         open={deleteTarget !== null}
-        title={deleteTarget?.kind === 'batch' ? '删除整组图片' : '删除图片'}
-        description={
-          deleteTarget?.kind === 'batch'
-            ? `将永久删除这组中的 ${deleteTarget.item.entries.length} 张图片。`
-            : '将永久删除这张图片。'
-        }
-        confirmLabel={deleteTarget?.kind === 'batch' ? '删除整组' : '删除图片'}
+        title="删除整组图片"
+        description={`将永久删除这组中的 ${deleteTarget?.item.entries.length ?? 0} 张图片。`}
+        confirmLabel="删除整组"
         isPending={mutatingId !== null}
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDeletion}

@@ -48,6 +48,38 @@ const store = createExternalStore<HistoryState>({
 let hydratedUserId: string | null = null;
 let requestGeneration = 0;
 
+/** How long a single deleted image can still be brought back. */
+export const UNDO_WINDOW_MS = 5_000;
+/** Images deleted but still inside their undo window: hidden, not yet gone. */
+const pendingRemovalStore = createExternalStore<readonly string[]>([]);
+const pendingRemovals = new Map<string, ReturnType<typeof setTimeout>>();
+
+function setPendingRemoval(id: string, pending: boolean): void {
+  pendingRemovalStore.set((current) =>
+    pending
+      ? [...current.filter((item) => item !== id), id]
+      : current.filter((item) => item !== id),
+  );
+}
+
+/** Drops every pending delete without sending it, as when the account changes. */
+function cancelPendingRemovals(): void {
+  pendingRemovals.forEach((timer) => clearTimeout(timer));
+  pendingRemovals.clear();
+  pendingRemovalStore.set([]);
+}
+
+// Closing the page must not quietly undo a delete; send what is still waiting.
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => {
+    pendingRemovals.forEach((timer, id) => {
+      clearTimeout(timer);
+      void deleteHistoryRecord(id, { keepalive: true }).catch(() => undefined);
+    });
+    pendingRemovals.clear();
+  });
+}
+
 const ANALYSIS_POLL_MS = 3_000;
 /** Images older than this are not waited on; their analysis can be fetched on the next visit. */
 export const ANALYSIS_POLL_WINDOW_MS = 5 * 60_000;
@@ -96,6 +128,7 @@ function imageUrlFor(record: ImageRecord): string {
 
 function resetForUser(userId: string | null): void {
   stopAnalysisPoll();
+  cancelPendingRemovals();
   requestGeneration += 1;
   hydratedUserId = null;
   store.set({ ownerUserId: userId, records: [], isHydrating: false, hydrateError: null });
@@ -151,9 +184,24 @@ export function addImageRecord(record: ImageRecord): HistoryEntry {
 
 export function useImageHistory() {
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  const pendingRemovalIds = useSyncExternalStore(
+    pendingRemovalStore.subscribe,
+    pendingRemovalStore.getSnapshot,
+    pendingRemovalStore.getSnapshot,
+  );
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const userId = isAuthenticated ? (user?.id ?? null) : null;
-  const visibleState = state.ownerUserId === userId ? state : EMPTY_HISTORY_STATE;
+  const ownedState = state.ownerUserId === userId ? state : EMPTY_HISTORY_STATE;
+  const visibleState = useMemo(
+    () =>
+      pendingRemovalIds.length === 0
+        ? ownedState
+        : {
+            ...ownedState,
+            records: ownedState.records.filter((record) => !pendingRemovalIds.includes(record.id)),
+          },
+    [ownedState, pendingRemovalIds],
+  );
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -226,6 +274,54 @@ export function useImageHistory() {
         ...current,
         records: current.records.filter((record) => record.id !== id),
       }));
+    },
+    [userId],
+  );
+  /**
+   * Hides the image now and deletes it once the undo window closes. The returned function
+   * brings it back while it still can, and says whether it did.
+   */
+  const removeWithUndo = useCallback(
+    (
+      id: string,
+      callbacks: { onCommitted?: () => void; onFailed?: (error: unknown) => void } = {},
+    ): (() => boolean) => {
+      const mutationUserId = userId;
+      const mutationGeneration = requestGeneration;
+      setPendingRemoval(id, true);
+      const timer = setTimeout(() => {
+        pendingRemovals.delete(id);
+        void deleteHistoryRecord(id).then(
+          () => {
+            setPendingRemoval(id, false);
+            if (
+              mutationUserId === null ||
+              mutationGeneration !== requestGeneration ||
+              store.getSnapshot().ownerUserId !== mutationUserId
+            ) {
+              return;
+            }
+            store.set((current) => ({
+              ...current,
+              records: current.records.filter((record) => record.id !== id),
+            }));
+            callbacks.onCommitted?.();
+          },
+          (error: unknown) => {
+            setPendingRemoval(id, false);
+            callbacks.onFailed?.(error);
+          },
+        );
+      }, UNDO_WINDOW_MS);
+      pendingRemovals.set(id, timer);
+      return () => {
+        const pending = pendingRemovals.get(id);
+        if (pending === undefined) return false;
+        clearTimeout(pending);
+        pendingRemovals.delete(id);
+        setPendingRemoval(id, false);
+        return true;
+      };
     },
     [userId],
   );
@@ -325,6 +421,8 @@ export function useImageHistory() {
     refresh,
     add: addImageRecord,
     remove,
+    removeWithUndo,
+    pendingRemovalIds,
     removeBatch,
     removeMany,
     update,
@@ -336,6 +434,7 @@ export function useImageHistory() {
 
 export function resetImageHistoryForTests(): void {
   stopAnalysisPoll();
+  cancelPendingRemovals();
   requestGeneration += 1;
   hydratedUserId = null;
   store.set({ ownerUserId: null, records: [], isHydrating: false, hydrateError: null });

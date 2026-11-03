@@ -115,9 +115,14 @@ export async function fetchOwnImageMatches(
   return payload.matches as Array<{ id: string; reason: string }>;
 }
 
-export async function deleteHistoryRecord(id: string): Promise<void> {
+export async function deleteHistoryRecord(
+  id: string,
+  options: { keepalive?: boolean } = {},
+): Promise<void> {
   const response = await authedFetch(buildApiUrl(`/api/history/${encodeURIComponent(id)}`), {
     method: 'DELETE',
+    // Lets the request outlive the page, for a delete sent as the page is closing.
+    ...(options.keepalive ? { keepalive: true } : {}),
   });
   if (!response.ok && response.status !== 204) {
     const payload = await parseJsonResponse(response);

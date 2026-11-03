@@ -130,6 +130,8 @@ vi.mock('@/hooks/useImageHistory', () => ({
     refresh: vi.fn(),
     add: vi.fn(),
     remove: vi.fn(),
+    removeWithUndo: vi.fn(() => () => true),
+    pendingRemovalIds: [],
     removeBatch: vi.fn(),
     getEntry: vi.fn(),
     getBatch: vi.fn(),

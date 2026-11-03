@@ -71,6 +71,8 @@ const historyMocks = vi.hoisted(() => ({
   isHydrated: true,
   removeBatch: vi.fn(),
   remove: vi.fn(),
+  removeWithUndo: vi.fn(),
+  pendingRemovalIds: [] as string[],
   update: vi.fn(),
 }));
 
@@ -129,6 +131,8 @@ vi.mock('@/hooks/useImageHistory', () => ({
     hydrateError: null,
     removeBatch: historyMocks.removeBatch,
     remove: historyMocks.remove,
+    removeWithUndo: historyMocks.removeWithUndo,
+    pendingRemovalIds: historyMocks.pendingRemovalIds,
     update: historyMocks.update,
   }),
 }));
@@ -1551,9 +1555,9 @@ it('restores supported settings and preserves high-resolution snapshots', async 
   expect(screen.queryByRole('switch', { name: '发布到发现页' })).not.toBeInTheDocument();
 });
 
-it('confirms single-image deletion with the beUI modal and supports cancel', async () => {
-  const pendingDelete = deferred<void>();
-  historyMocks.remove.mockReturnValueOnce(pendingDelete.promise);
+it('deletes a single image at once and lets the user undo it from the toast', async () => {
+  const undo = vi.fn(() => true);
+  historyMocks.removeWithUndo.mockReturnValueOnce(undo);
   const user = userEvent.setup();
   render(
     <MemoryRouter initialEntries={['/generate?prompt=雨夜建筑']}>
@@ -1564,32 +1568,14 @@ it('confirms single-image deletion with the beUI modal and supports cancel', asy
   );
 
   await user.click(screen.getByRole('button', { name: '生成图片' }));
-  const deleteTrigger = await screen.findByRole('button', { name: '删除图片' });
-  await user.click(deleteTrigger);
+  await user.click(await screen.findByRole('button', { name: '删除图片' }));
 
-  let dialog = screen.getByRole('alertdialog', { name: '删除图片' });
+  // No confirmation step for one image: the toast's undo is the safety net instead.
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  expect(historyMocks.removeWithUndo).toHaveBeenCalledWith('result-one.png', expect.any(Object));
   expect(historyMocks.remove).not.toHaveBeenCalled();
-  await user.click(within(dialog).getByRole('button', { name: '取消' }));
-  await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
-  await waitFor(() => expect(deleteTrigger).toHaveFocus());
-  expect(historyMocks.remove).not.toHaveBeenCalled();
-
-  await user.click(deleteTrigger);
-  dialog = screen.getByRole('alertdialog', { name: '删除图片' });
-  await user.click(within(dialog).getByRole('button', { name: '删除图片' }));
-
-  await waitFor(() => expect(historyMocks.remove).toHaveBeenCalledWith('result-one.png'));
-  await waitFor(() => {
-    expect(within(dialog).getByRole('button', { name: '取消' })).toBeDisabled();
-    expect(within(dialog).getByRole('button', { name: '处理中' })).toBeDisabled();
-  });
-
-  await act(async () => {
-    pendingDelete.resolve(undefined);
-    await pendingDelete.promise;
-  });
-  await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
-  expect(screen.getByRole('region', { name: '图像生成工作区' })).toHaveClass('is-empty');
+  await user.click(screen.getByRole('button', { name: '撤销' }));
+  expect(undo).toHaveBeenCalledOnce();
 });
 
 it('keeps a failed batch confirmation open and supports retry', async () => {

@@ -141,3 +141,86 @@ describe('analysis polling', () => {
     }
   });
 });
+
+describe('removing an image with undo', () => {
+  it('hides the image at once but deletes it only when the undo window closes', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    api.fetchHistory.mockResolvedValueOnce([record('keep.png'), record('gone.png')]);
+    api.deleteHistoryRecord.mockReset().mockResolvedValue(undefined);
+    const committed = vi.fn();
+    const { result } = renderHook(() => useImageHistory());
+    await waitFor(() => expect(result.current.records).toHaveLength(2));
+
+    act(() => {
+      result.current.removeWithUndo('gone.png', { onCommitted: committed });
+    });
+    expect(result.current.records.map((item) => item.id)).toEqual(['keep.png']);
+    expect(result.current.pendingRemovalIds).toEqual(['gone.png']);
+    expect(api.deleteHistoryRecord).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5_000);
+    });
+    expect(api.deleteHistoryRecord).toHaveBeenCalledWith('gone.png');
+    await waitFor(() => expect(committed).toHaveBeenCalledOnce());
+    expect(result.current.pendingRemovalIds).toEqual([]);
+    vi.useRealTimers();
+  });
+
+  it('brings the image back untouched when undone in time', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    api.fetchHistory.mockResolvedValueOnce([record('oops.png')]);
+    api.deleteHistoryRecord.mockReset().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useImageHistory());
+    await waitFor(() => expect(result.current.records).toHaveLength(1));
+
+    let undo!: () => boolean;
+    act(() => {
+      undo = result.current.removeWithUndo('oops.png');
+    });
+    act(() => {
+      expect(undo()).toBe(true);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10_000);
+    });
+
+    expect(result.current.records.map((item) => item.id)).toEqual(['oops.png']);
+    expect(api.deleteHistoryRecord).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('restores the image and reports the failure when the delete does not go through', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    api.fetchHistory.mockResolvedValueOnce([record('stuck.png')]);
+    api.deleteHistoryRecord.mockReset().mockRejectedValue(new Error('删除失败'));
+    const failed = vi.fn();
+    const { result } = renderHook(() => useImageHistory());
+    await waitFor(() => expect(result.current.records).toHaveLength(1));
+
+    act(() => {
+      result.current.removeWithUndo('stuck.png', { onFailed: failed });
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5_000);
+    });
+
+    await waitFor(() => expect(failed).toHaveBeenCalledOnce());
+    expect(result.current.records.map((item) => item.id)).toEqual(['stuck.png']);
+    vi.useRealTimers();
+  });
+
+  it('sends a pending delete before the page goes away, so leaving does not undo it', async () => {
+    api.fetchHistory.mockResolvedValueOnce([record('leaving.png')]);
+    api.deleteHistoryRecord.mockReset().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useImageHistory());
+    await waitFor(() => expect(result.current.records).toHaveLength(1));
+
+    act(() => {
+      result.current.removeWithUndo('leaving.png');
+    });
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(api.deleteHistoryRecord).toHaveBeenCalledWith('leaving.png', { keepalive: true });
+  });
+});

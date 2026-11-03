@@ -2239,6 +2239,26 @@ video.landing-hero__video[data-playing='false'] {
   border-color: color-mix(in oklch, var(--destructive) 42%, transparent);
   color: var(--color-danger);
 }
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.toast p {
+  margin: 0;
+  flex: 1;
+}
+.toast .toast__action {
+  min-height: 30px;
+  flex: none;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 0.1);
+  padding-inline: 12px;
+  color: var(--foreground);
+}
+.toast .toast__action:hover {
+  background: rgb(255 255 255 / 0.18);
+}
 
 /* Generation */
 .generate-workspace {

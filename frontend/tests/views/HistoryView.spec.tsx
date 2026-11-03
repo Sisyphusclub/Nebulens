@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,6 +10,7 @@ const historyMocks = vi.hoisted(() => ({
   update: vi.fn(),
   updateMany: vi.fn(),
   remove: vi.fn(),
+  removeWithUndo: vi.fn(),
   removeMany: vi.fn(),
   refresh: vi.fn(),
   isHydrating: false,
@@ -108,6 +109,7 @@ vi.mock('@/hooks/useImageHistory', () => ({
     update: historyMocks.update,
     updateMany: historyMocks.updateMany,
     remove: historyMocks.remove,
+    removeWithUndo: historyMocks.removeWithUndo,
     removeMany: historyMocks.removeMany,
     refresh: historyMocks.refresh,
   }),
@@ -115,16 +117,6 @@ vi.mock('@/hooks/useImageHistory', () => ({
 
 import { ToastProvider } from '@/components/common/ToastProvider';
 import { HistoryView } from '@/views/HistoryView';
-
-function deferred<T>() {
-  let resolve!: (value: T | PromiseLike<T>) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise;
-    reject = rejectPromise;
-  });
-  return { promise, reject, resolve };
-}
 
 function renderView() {
   return render(
@@ -319,21 +311,17 @@ describe('HistoryView asset workflows', () => {
     });
   });
 
-  it('confirms single deletion with the beUI modal and supports cancel', async () => {
-    const pendingDelete = deferred<void>();
-    historyMocks.remove.mockReturnValueOnce(pendingDelete.promise);
+  it('deletes a single image at once, from the grid or the detail view, with undo', async () => {
+    const undo = vi.fn(() => true);
+    historyMocks.removeWithUndo.mockReturnValue(undo);
     const user = userEvent.setup();
     renderView();
 
-    const deleteTrigger = screen.getByRole('button', { name: '删除图片 image-one.png' });
-    await user.click(deleteTrigger);
-    let dialog = screen.getByRole('alertdialog', { name: '删除图片' });
-    expect(historyMocks.remove).not.toHaveBeenCalled();
-
-    await user.click(within(dialog).getByRole('button', { name: '取消' }));
-    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
-    await waitFor(() => expect(deleteTrigger).toHaveFocus());
-    expect(historyMocks.remove).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: '删除图片 image-one.png' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(historyMocks.removeWithUndo).toHaveBeenCalledWith('image-one.png', expect.any(Object));
+    await user.click(screen.getByRole('button', { name: '撤销' }));
+    expect(undo).toHaveBeenCalledOnce();
 
     await user.click(screen.getByRole('button', { name: '查看图片：雨夜城市' }));
     const detail = screen.getByRole('dialog', { name: '图片详情' });
@@ -341,21 +329,8 @@ describe('HistoryView asset workflows', () => {
     await waitFor(() =>
       expect(screen.queryByRole('dialog', { name: '图片详情' })).not.toBeInTheDocument(),
     );
-
-    dialog = screen.getByRole('alertdialog', { name: '删除图片' });
-    await user.click(within(dialog).getByRole('button', { name: '删除图片' }));
-
-    await waitFor(() => expect(historyMocks.remove).toHaveBeenCalledWith('image-one.png'));
-    await waitFor(() => {
-      expect(within(dialog).getByRole('button', { name: '取消' })).toBeDisabled();
-      expect(within(dialog).getByRole('button', { name: '处理中' })).toBeDisabled();
-    });
-
-    await act(async () => {
-      pendingDelete.resolve(undefined);
-      await pendingDelete.promise;
-    });
-    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    expect(historyMocks.removeWithUndo).toHaveBeenCalledTimes(2);
+    expect(historyMocks.remove).not.toHaveBeenCalled();
   });
 
   it('preserves the bulk target and selection across cancel and a failed attempt', async () => {

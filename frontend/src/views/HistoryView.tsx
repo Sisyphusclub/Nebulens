@@ -45,7 +45,8 @@ import { formatDateTime } from '@/utils/format';
 type AssetSort = 'newest' | 'oldest' | 'prompt';
 type DateFilter = 'all' | 'today' | 'week' | 'month';
 type AssetView = 'grid' | 'list';
-type DeleteTarget = { kind: 'entry'; entry: HistoryEntry } | { kind: 'bulk'; ids: string[] };
+/** Several images at once are confirmed first; a single image is deleted at once and can be undone. */
+type DeleteTarget = { kind: 'bulk'; ids: string[] };
 
 const SORT_OPTIONS: readonly { value: AssetSort; label: string }[] = [
   { value: 'newest', label: '最新优先' },
@@ -182,18 +183,13 @@ export function HistoryView() {
     }
   };
 
-  const removeEntry = async (entry: HistoryEntry): Promise<void> => {
-    setMutating(true);
-    try {
-      await history.remove(entry.record.id);
-      if (selected?.record.id === entry.record.id) setSelected(null);
-      notify('图片已删除。');
-      setDeleteTarget(null);
-    } catch (error) {
-      notify(error instanceof Error ? error.message : '删除失败，请稍后重试。', 'error');
-    } finally {
-      setMutating(false);
-    }
+  const removeEntry = (entry: HistoryEntry): void => {
+    if (selected?.record.id === entry.record.id) setSelected(null);
+    const undo = history.removeWithUndo(entry.record.id, {
+      onFailed: (error) =>
+        notify(error instanceof Error ? error.message : '删除失败，请稍后重试。', 'error'),
+    });
+    notify('图片已删除。', 'success', { action: { label: '撤销', onAction: undo } });
   };
 
   const copyPrompt = async (entry: HistoryEntry): Promise<void> => {
@@ -280,9 +276,7 @@ export function HistoryView() {
   };
 
   const confirmDeletion = async (): Promise<void> => {
-    if (!deleteTarget) return;
-    if (deleteTarget.kind === 'bulk') await bulkDelete(deleteTarget.ids);
-    else await removeEntry(deleteTarget.entry);
+    if (deleteTarget) await bulkDelete(deleteTarget.ids);
   };
 
   const allFilteredSelected =
@@ -573,7 +567,7 @@ export function HistoryView() {
                 onToggleShared={(entry) =>
                   void updateEntry(entry, { isShared: !entry.record.isShared })
                 }
-                onRemove={(entry) => setDeleteTarget({ kind: 'entry', entry })}
+                onRemove={removeEntry}
               />
             ) : (
               <div className="asset-list" role="table" aria-label="资产紧凑列表">
@@ -691,7 +685,7 @@ export function HistoryView() {
                           variant="ghost"
                           size="icon"
                           aria-label="删除图片"
-                          onClick={() => setDeleteTarget({ kind: 'entry', entry })}
+                          onClick={() => removeEntry(entry)}
                         >
                           <Trash2 aria-hidden="true" />
                         </Button>
@@ -714,21 +708,14 @@ export function HistoryView() {
         onReuse={reuse}
         onCategoryChange={(entry, next) => void updateEntry(entry, { category: next })}
         onToggleShared={(entry) => void updateEntry(entry, { isShared: !entry.record.isShared })}
-        onDelete={(entry) => {
-          setSelected(null);
-          setDeleteTarget({ kind: 'entry', entry });
-        }}
+        onDelete={removeEntry}
       />
       <ConfirmActionModal
         id="asset-delete"
         open={deleteTarget !== null}
-        title={deleteTarget?.kind === 'bulk' ? '删除所选图片' : '删除图片'}
-        description={
-          deleteTarget?.kind === 'bulk'
-            ? `将永久删除所选的 ${deleteTarget.ids.length} 张图片。`
-            : '将永久删除这张图片。'
-        }
-        confirmLabel={deleteTarget?.kind === 'bulk' ? '删除所选' : '删除图片'}
+        title="删除所选图片"
+        description={`将永久删除所选的 ${deleteTarget?.ids.length ?? 0} 张图片。`}
+        confirmLabel="删除所选"
         isPending={mutating}
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDeletion}

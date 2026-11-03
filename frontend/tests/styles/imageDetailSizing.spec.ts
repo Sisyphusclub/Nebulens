@@ -46,13 +46,24 @@ describe('image detail surface', () => {
   it('matches the generation panel instead of a flat card with square controls', () => {
     const surface = ruleBody(baseStyles, '.template-detail-modal.template-detail-modal');
 
-    expect(surface).toContain('linear-gradient(180deg, rgb(50 54 64 / 0.94)');
+    expect(surface).toContain('background: var(--surface-floating);');
     expect(ruleBody(baseStyles, '.detail-actions--stack .button')).toContain(
       'border-radius: var(--radius-full);',
     );
     expect(ruleBody(baseStyles, '.image-detail__close .icon-button')).toContain(
       'border-radius: var(--radius-full);',
     );
+  });
+
+  it('shares its slate glass with the login, API key and confirm dialogs', () => {
+    const dialogs = ruleBody(
+      baseStyles,
+      '.auth-modal-surface,\n.image-api-key-modal-surface,\n.confirm-action-modal',
+    );
+
+    expect(dialogs).toContain('background: var(--surface-floating);');
+    expect(dialogs).toContain('box-shadow: var(--shadow-floating);');
+    expect(dialogs).toContain('--card: rgb(255 255 255 / 0.06);');
   });
 });
 

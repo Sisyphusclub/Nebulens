@@ -1409,6 +1409,36 @@ it('restores the original generation when an edited prompt fails', async () => {
   expect(historyMocks.removeBatch).not.toHaveBeenCalled();
 });
 
+it('shows the sent reference images with the prompt while generating', async () => {
+  generation.generate.mockImplementationOnce(() => new Promise(() => undefined));
+  const user = userEvent.setup();
+  const file = new File(['reference'], 'device.png', { type: 'image/png' });
+  const { container } = render(
+    <MemoryRouter
+      initialEntries={['/generate?prompt=%E4%BC%98%E5%8C%96%E8%AE%BE%E5%A4%87%E5%9B%BE']}
+    >
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+  const surface = container.querySelector('.studio-agent-input .agent-chat-input__surface');
+  fireEvent.drop(surface!, {
+    dataTransfer: { files: [file], types: ['Files'], dropEffect: 'none' },
+  });
+  expect(await screen.findByText('device.png')).toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: '生成图片' }));
+
+  const batch = await waitFor(() => {
+    const element = container.querySelector<HTMLElement>('[data-generation-batch]');
+    expect(element).toBeInTheDocument();
+    return element!;
+  });
+  expect(within(batch).getByRole('img', { name: '参考图 1' })).toBeInTheDocument();
+  expect(within(batch).getByText('优化设备图')).toBeInTheDocument();
+});
+
 it('replaces pending skeletons with a retryable error card on failure', async () => {
   generation.generate.mockRejectedValueOnce(new Error('上游生成失败'));
   const user = userEvent.setup();

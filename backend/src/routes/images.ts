@@ -37,6 +37,10 @@ export function buildImagesRouter(deps: ImagesRouterDeps): Router {
       void controller.upload(req, res, next);
     },
   );
+  // GET /api/images/references/:id -> the caller's own uploaded reference image.
+  router.get('/references/:id', (req, res, next) => {
+    void controller.reference(req, res, next);
+  });
   router.post('/generate', deps.generationRateLimiter ?? passThrough, (req, res, next) => {
     void controller.generate(req, res, next);
   });

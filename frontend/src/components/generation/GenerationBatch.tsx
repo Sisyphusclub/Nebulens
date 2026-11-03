@@ -12,6 +12,7 @@ import type { Ref } from 'react';
 import { EditablePromptBubble } from '@/components/generation/EditablePromptBubble';
 import { GenerationElapsed } from '@/components/generation/GenerationElapsed';
 import { ImageGenerationPlaceholder } from '@/components/generation/ImageGenerationPlaceholder';
+import { PromptReferenceImages } from '@/components/generation/PromptReferenceImages';
 import { SessionResultPreview } from '@/components/generation/SessionResultPreview';
 import { TextCheckNotice, TextCheckProgress } from '@/components/generation/TextCheckNotice';
 import { Button } from '@/components/ui/button';
@@ -82,6 +83,7 @@ export function GenerationBatch({
         }
       }}
     >
+      <PromptReferenceImages item={item} />
       <header className="session-batch__header">
         <EditablePromptBubble
           item={item}

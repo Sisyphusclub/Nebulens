@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+
 import type { NextFunction, Request, Response } from 'express';
 import { z, ZodError } from 'zod';
 
@@ -21,13 +23,22 @@ import {
 import type { AnalysisQueue } from '../services/imageAnalysis.service.js';
 import type { ImageGenerationProvider } from '../services/providers/ImageGenerationProvider.js';
 import type { DailyCheckInResult, QuotaSnapshot } from '../services/quota.service.js';
-import { recordReferenceUpload } from '../services/referenceUpload.service.js';
+import {
+  findReferenceUploadOwner,
+  recordReferenceUpload,
+} from '../services/referenceUpload.service.js';
 import type { UserQuotaService } from '../services/userQuota.service.js';
 import type {
   UserImageApiKeyGroup,
   UserImageApiKeyService,
 } from '../services/userImageApiKey.service.js';
-import { removeOutput, removeUpload, saveUpload } from '../storage/localStorage.js';
+import {
+  mimeFromExt,
+  removeOutput,
+  removeUpload,
+  resolveUploadPath,
+  saveUpload,
+} from '../storage/localStorage.js';
 import {
   ASPECT_RATIOS,
   DEFAULT_COUNT,
@@ -121,6 +132,7 @@ function normalizeReferenceIds(
 
 export function buildImagesController(deps: ImagesControllerDeps): {
   upload: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  reference: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   generate: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   generateHighRes: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   quota: (req: Request, res: Response, next: NextFunction) => Promise<void>;
@@ -143,6 +155,44 @@ export function buildImagesController(deps: ImagesControllerDeps): {
         const user = requireUser(req);
         const body: DailyCheckInResult = deps.userQuota.forUser(user.id).checkIn();
         res.status(200).json(body);
+      } catch (err) {
+        next(err);
+      }
+    },
+
+    /** Serves a reference image back to the user who uploaded it, for the generation feed. */
+    async reference(req, res, next) {
+      try {
+        const user = requireUser(req);
+        const referenceId = req.params['id'] ?? '';
+        const { absolutePath, ext } = resolveUploadPath(referenceId);
+        const ownerId = findReferenceUploadOwner(referenceId);
+        if (ownerId === undefined) {
+          throw new AppError('NOT_FOUND', `Reference not found: ${referenceId}`, 404, undefined, {
+            referenceId,
+          });
+        }
+        if (ownerId !== user.id) {
+          throw new AppError(
+            'FORBIDDEN',
+            'Reference image is not available to this user',
+            403,
+            undefined,
+            { referenceId },
+          );
+        }
+        let image: Buffer;
+        try {
+          image = await readFile(absolutePath);
+        } catch (err) {
+          throw new AppError('NOT_FOUND', `Reference not found: ${referenceId}`, 404, err, {
+            referenceId,
+          });
+        }
+        res.status(200);
+        res.setHeader('Content-Type', mimeFromExt(ext));
+        res.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+        res.send(image);
       } catch (err) {
         next(err);
       }

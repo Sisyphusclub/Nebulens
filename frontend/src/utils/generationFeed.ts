@@ -8,6 +8,8 @@ export interface FeedItem {
   entries: HistoryEntry[];
   settings: GenerationSettingsSnapshot;
   error?: string;
+  /** Local object URLs of reference files still being uploaded; never persisted. */
+  referencePreviewUrls?: string[];
 }
 
 export function feedItemFromBatch(batch: GroupedBatch): FeedItem {
@@ -27,6 +29,13 @@ export function feedItemFromPersistedTask(task: PersistedGenerationTask): FeedIt
     settings: task.settings,
     ...(task.error === undefined ? {} : { error: task.error }),
   };
+}
+
+/** The item once its references are on the server, so the local previews can be released. */
+export function withoutReferencePreviews(item: FeedItem): FeedItem {
+  const saved = { ...item };
+  delete saved.referencePreviewUrls;
+  return saved;
 }
 
 export function persistedTaskFromFeedItem(item: FeedItem): PersistedGenerationTask {

@@ -25,6 +25,7 @@ import {
   persistedTaskFromFeedItem,
   sameFeed,
   splitGenerationError,
+  withoutReferencePreviews,
   type FeedItem,
 } from '@/utils/generationFeed';
 
@@ -189,11 +190,19 @@ export function useGenerationFeed({
     }
     const generationSessionBatchIds = generationSession?.batchIds ?? [];
     const pendingId = `pending-${crypto.randomUUID()}`;
+    // Files not yet uploaded show as local previews beside the prompt until they have ids.
+    const referencePreviewUrls = settings.referenceIds.length
+      ? []
+      : referenceFiles.map((file) => URL.createObjectURL(file));
+    const releaseReferencePreviews = (): void => {
+      referencePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
     const pendingItem: FeedItem = {
       id: pendingId,
       createdAt: new Date().toISOString(),
       entries: [],
       settings,
+      ...(referencePreviewUrls.length ? { referencePreviewUrls } : {}),
     };
     if (replaceItem) {
       // Results stay in time order: the replacement is queued as the newest item and the
@@ -267,12 +276,18 @@ export function useGenerationFeed({
         current.flatMap((item) => {
           if (item.id === pendingId) {
             return [
-              { ...item, id: result.batchId, entries: result.entries, settings: completedSettings },
+              {
+                ...withoutReferencePreviews(item),
+                id: result.batchId,
+                entries: result.entries,
+                settings: completedSettings,
+              },
             ];
           }
           return item.id === result.batchId ? [] : [item];
         }),
       );
+      releaseReferencePreviews();
       removeGenerationTask(generationSessionId, pendingId);
       replaceGenerationBatch(generationSessionId, pendingId, result.batchId);
       setActiveHistoryBatchId(result.batchId);
@@ -299,6 +314,7 @@ export function useGenerationFeed({
     } catch (error) {
       const message = error instanceof Error ? error.message : '生成失败，请稍后重试。';
       if (message === GENERATION_STOPPED_MESSAGE) {
+        releaseReferencePreviews();
         if (replaceItem) restoreReplacedItem();
         else {
           removeGenerationBatch(generationSessionId, pendingId);
@@ -307,15 +323,19 @@ export function useGenerationFeed({
         notify(message);
         return;
       }
-      if (replaceItem) restoreReplacedItem();
-      else {
-        const failedItem: FeedItem = {
-          ...pendingItem,
-          error: message,
-          ...(uploadedReferenceIds.length
-            ? { settings: { ...pendingItem.settings, referenceIds: uploadedReferenceIds } }
-            : {}),
-        };
+      if (replaceItem) {
+        releaseReferencePreviews();
+        restoreReplacedItem();
+      } else {
+        // Once uploaded, the server copies replace the local previews.
+        if (uploadedReferenceIds.length) releaseReferencePreviews();
+        const failedItem: FeedItem = uploadedReferenceIds.length
+          ? {
+              ...withoutReferencePreviews(pendingItem),
+              error: message,
+              settings: { ...pendingItem.settings, referenceIds: uploadedReferenceIds },
+            }
+          : { ...pendingItem, error: message };
         upsertGenerationTask(generationSessionId, persistedTaskFromFeedItem(failedItem));
         setFeed((current) => current.map((item) => (item.id === pendingId ? failedItem : item)));
       }

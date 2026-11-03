@@ -8,18 +8,23 @@ export function recordReferenceUpload(filename: string, userId: string): void {
   db.insert(referenceUploads).values({ filename, userId, createdAt: new Date() }).run();
 }
 
-export function assertReferenceUploadOwnedBy(filename: string, userId: string): void {
-  const upload = db
+/** The id of the user who uploaded this reference, or undefined when it was never recorded. */
+export function findReferenceUploadOwner(filename: string): string | undefined {
+  return db
     .select({ userId: referenceUploads.userId })
     .from(referenceUploads)
     .where(eq(referenceUploads.filename, filename))
-    .get();
-  if (upload === undefined) {
+    .get()?.userId;
+}
+
+export function assertReferenceUploadOwnedBy(filename: string, userId: string): void {
+  const ownerId = findReferenceUploadOwner(filename);
+  if (ownerId === undefined) {
     throw new AppError('BAD_REQUEST', `Reference id not found: ${filename}`, 400, undefined, {
       referenceId: filename,
     });
   }
-  if (upload.userId !== userId) {
+  if (ownerId !== userId) {
     throw new AppError(
       'FORBIDDEN',
       'Reference image is not available to this user',

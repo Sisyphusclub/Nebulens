@@ -7738,6 +7738,45 @@ video.landing-hero__video[data-playing='false'] {
   background: transparent;
   padding: 0;
 }
+/* Reference images sent with the prompt sit right above it, like a chat attachment. */
+.session-batch__references {
+  display: flex;
+  max-width: min(100%, 580px);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  justify-self: end;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.session-batch__references li {
+  width: 88px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--border-strong) 54%, transparent);
+  border-radius: 12px;
+  background: var(--surface-media);
+}
+.session-batch__references img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* A single reference shows whole, at a size that still reads as an attachment. */
+.session-batch__references li:only-child {
+  width: auto;
+  max-width: 180px;
+  aspect-ratio: auto;
+}
+.session-batch__references li:only-child img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 180px;
+  object-fit: contain;
+}
 .session-batch__prompt {
   position: relative;
   width: max-content;

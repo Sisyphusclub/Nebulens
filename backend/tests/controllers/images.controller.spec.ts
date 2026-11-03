@@ -172,6 +172,54 @@ describe('POST /api/images/upload', () => {
   });
 });
 
+describe('GET /api/images/references/:id', () => {
+  it('serves an uploaded reference image back to its owner', async () => {
+    const { provider } = fakeProvider();
+    const app = buildApp(provider);
+    const bytes = Buffer.concat([PNG_PREFIX, Buffer.alloc(48, 0x5a)]);
+    const upload = await request(app).post('/api/images/upload').attach('image', bytes, 'ref.png');
+    expect(upload.status).toBe(200);
+
+    const res = await request(app)
+      .get(`/api/images/references/${upload.body.id as string}`)
+      .buffer(true)
+      .parse((response, callback) => {
+        const chunks: Buffer[] = [];
+        response.on('data', (chunk: Buffer) => chunks.push(chunk));
+        response.on('end', () => callback(null, Buffer.concat(chunks)));
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('image/png');
+    expect(res.headers['cache-control']).toContain('private');
+    expect(Buffer.compare(res.body as Buffer, bytes)).toBe(0);
+  });
+
+  it("keeps other users' reference images private", async () => {
+    const { provider } = fakeProvider();
+    const owner = buildApp(provider);
+    const upload = await request(owner)
+      .post('/api/images/upload')
+      .attach('image', Buffer.concat([PNG_PREFIX, Buffer.alloc(16)]), 'ref.png');
+
+    const res = await request(buildApp(provider)).get(
+      `/api/images/references/${upload.body.id as string}`,
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  it('answers 404 for an unknown reference and 400 for a malformed id', async () => {
+    const app = buildApp(fakeProvider().provider);
+
+    const unknown = await request(app).get(`/api/images/references/${randomUUID()}.png`);
+    const malformed = await request(app).get('/api/images/references/..%2Fsecret.png');
+
+    expect(unknown.status).toBe(404);
+    expect(malformed.status).toBe(400);
+  });
+});
+
 describe('POST /api/images/quota/check-in', () => {
   it('grants the daily reward once and returns an idempotent result afterwards', async () => {
     const { provider } = fakeProvider();

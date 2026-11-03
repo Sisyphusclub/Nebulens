@@ -10287,6 +10287,10 @@ video.landing-hero__video[data-playing='false'] {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  /* The cell's label, on a row of its own above the two buttons. */
+  .admin-page .admin-actions::before {
+    grid-column: 1 / -1;
+  }
   .admin-page .admin-actions .button {
     width: 100%;
   }

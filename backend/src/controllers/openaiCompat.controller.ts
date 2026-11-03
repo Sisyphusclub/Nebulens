@@ -19,6 +19,7 @@ import {
   parseBody,
   rejectUnsupportedStreaming,
   aspectRatioForSize,
+  qualityForModel,
 } from './openaiCompat.schemas.js';
 import {
   extractChatScene,
@@ -71,12 +72,14 @@ export function buildOpenAICompatController(deps: OpenAICompatControllerDeps): {
         );
         rejectUnsupportedStreaming(parsed.stream, parsed.partial_images);
 
+        const quality = qualityForModel(parsed.model, parsed.quality);
         const result = await generateImage(
           buildGenerateInput({
             prompt: parsed.prompt,
             count: parsed.n ?? DEFAULT_COUNT,
             aspectRatio: aspectRatioForSize(parsed.size),
             ...(parsed.model !== undefined ? { model: parsed.model } : {}),
+            ...(quality !== undefined ? { quality } : {}),
           }),
           { provider: deps.provider },
         );
@@ -100,18 +103,23 @@ export function buildOpenAICompatController(deps: OpenAICompatControllerDeps): {
         }
         rejectUnsupportedStreaming(parsed.stream, parsed.partial_images);
 
-        if (!req.file) {
+        const files = Array.isArray(req.files) ? req.files : [];
+        if (files.length === 0) {
           throw new AppError('BAD_REQUEST', 'Missing "image" form field with a file', 400);
         }
 
-        const reference = await saveUpload(req.file.buffer);
+        const quality = qualityForModel(parsed.model, parsed.quality);
+        const aspectRatio = aspectRatioForSize(parsed.size);
+        const references = [];
+        for (const file of files) references.push(await saveUpload(file.buffer));
         const result = await generateImage(
           buildGenerateInput({
             prompt: parsed.prompt,
-            referenceId: reference.filename,
+            referenceIds: references.map((reference) => reference.filename),
             count: parsed.n ?? DEFAULT_COUNT,
-            aspectRatio: aspectRatioForSize(parsed.size),
+            aspectRatio,
             ...(parsed.model !== undefined ? { model: parsed.model } : {}),
+            ...(quality !== undefined ? { quality } : {}),
           }),
           { provider: deps.provider },
         );
@@ -140,7 +148,7 @@ export function buildOpenAICompatController(deps: OpenAICompatControllerDeps): {
             prompt: scene.prompt,
             count: parsed.n ?? DEFAULT_COUNT,
             aspectRatio: aspectRatioForSize(parsed.size),
-            ...(scene.referenceId !== undefined ? { referenceId: scene.referenceId } : {}),
+            ...(scene.referenceIds.length > 0 ? { referenceIds: scene.referenceIds } : {}),
             ...(parsed.model !== undefined ? { model: parsed.model } : {}),
           }),
           { provider: deps.provider },
@@ -193,13 +201,15 @@ export function buildOpenAICompatController(deps: OpenAICompatControllerDeps): {
         const scene = await extractResponsesScene(parsed.input);
         const model = imageTool?.model ?? parsed.model;
         const size = imageTool?.size ?? parsed.size;
+        const quality = qualityForModel(model, imageTool?.quality);
         const result = await generateImage(
           buildGenerateInput({
             prompt: scene.prompt,
             count: parsed.n ?? DEFAULT_COUNT,
             aspectRatio: aspectRatioForSize(size),
-            ...(scene.referenceId !== undefined ? { referenceId: scene.referenceId } : {}),
+            ...(scene.referenceIds.length > 0 ? { referenceIds: scene.referenceIds } : {}),
             ...(model !== undefined ? { model } : {}),
+            ...(quality !== undefined ? { quality } : {}),
           }),
           { provider: deps.provider },
         );

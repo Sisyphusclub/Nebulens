@@ -210,6 +210,41 @@ describe('POST /v1/images/generations', () => {
     });
   });
 
+  it('forwards quality to quality-capable models and drops it for the rest', async () => {
+    const harness = fakeProvider();
+    const app = buildApp(harness.provider);
+
+    const capable = await request(app)
+      .post('/v1/images/generations')
+      .set('Authorization', AUTH_HEADER)
+      .send({ prompt: 'quality capable', model: 'gpt-image-2.5-flare', quality: 'high' });
+    const plain = await request(app)
+      .post('/v1/images/generations')
+      .set('Authorization', AUTH_HEADER)
+      .send({ prompt: 'quality ignored', model: 'gpt-image-2', quality: 'high' });
+    const auto = await request(app)
+      .post('/v1/images/generations')
+      .set('Authorization', AUTH_HEADER)
+      .send({ prompt: 'quality auto', model: 'gpt-image-2.5-flare', quality: 'auto' });
+
+    expect([capable.status, plain.status, auto.status]).toEqual([200, 200, 200]);
+    const calls = harness.generate.mock.calls.map((call) => call[0] as GenerateInput);
+    expect(calls[0]?.quality).toBe('high');
+    expect(calls[1]).not.toHaveProperty('quality');
+    expect(calls[2]).not.toHaveProperty('quality');
+  });
+
+  it('rejects unknown quality values with a typed 400 error', async () => {
+    const harness = fakeProvider();
+    const res = await request(buildApp(harness.provider))
+      .post('/v1/images/generations')
+      .set('Authorization', AUTH_HEADER)
+      .send({ prompt: 'bad quality', model: 'gpt-image-2.5-flare', quality: 'ultra' });
+
+    expectBadRequest(res);
+    expect(harness.generate).not.toHaveBeenCalled();
+  });
+
   it('supports url response_format with absolute output URLs', async () => {
     const harness = fakeProvider();
     const app = buildApp(harness.provider);
@@ -360,17 +395,59 @@ describe('POST /v1/images/edits', () => {
     expect(harness.generate).not.toHaveBeenCalled();
   });
 
-  it('rejects multiple image files with a typed 400 error', async () => {
+  it('passes every image to the provider, whether sent as image or image[]', async () => {
     const harness = fakeProvider();
-    const res = await request(buildApp(harness.provider))
+    const app = buildApp(harness.provider);
+
+    const repeated = await request(app)
       .post('/v1/images/edits')
       .set('Authorization', AUTH_HEADER)
-      .field('prompt', 'too many refs')
+      .field('prompt', 'three refs')
+      .field('model', 'gpt-image-2.5-flare')
+      .field('quality', 'medium')
       .attach('image', pngBytes(4), { filename: 'ref-a.png', contentType: 'image/png' })
-      .attach('image', pngBytes(5), { filename: 'ref-b.png', contentType: 'image/png' });
+      .attach('image', pngBytes(5), { filename: 'ref-b.png', contentType: 'image/png' })
+      .attach('image', pngBytes(6), { filename: 'ref-c.png', contentType: 'image/png' });
+    const bracketed = await request(app)
+      .post('/v1/images/edits')
+      .set('Authorization', AUTH_HEADER)
+      .field('prompt', 'two refs')
+      .attach('image[]', pngBytes(7), { filename: 'ref-d.png', contentType: 'image/png' })
+      .attach('image[]', pngBytes(8), { filename: 'ref-e.png', contentType: 'image/png' });
 
-    expectBadRequest(res);
-    expect(harness.generate).not.toHaveBeenCalled();
+    expect(repeated.status).toBe(200);
+    expect(bracketed.status).toBe(200);
+    const [first, second] = harness.generate.mock.calls.map((call) => call[0] as GenerateInput);
+    expect(first?.referencePaths).toHaveLength(3);
+    expect(first?.quality).toBe('medium');
+    expect(second?.referencePaths).toHaveLength(2);
+  });
+
+  it('accepts 14 images and rejects a 15th with a typed 400 error', async () => {
+    const harness = fakeProvider();
+    const app = buildApp(harness.provider);
+    const withImages = (count: number) => {
+      let req = request(app)
+        .post('/v1/images/edits')
+        .set('Authorization', AUTH_HEADER)
+        .field('prompt', `${count} refs`);
+      for (let index = 0; index < count; index += 1) {
+        req = req.attach('image', pngBytes(index), {
+          filename: `ref-${index}.png`,
+          contentType: 'image/png',
+        });
+      }
+      return req;
+    };
+
+    const fourteen = await withImages(14);
+    expect(fourteen.status).toBe(200);
+    const call = harness.generate.mock.calls[0]?.[0] as GenerateInput | undefined;
+    expect(call?.referencePaths).toHaveLength(14);
+
+    const fifteen = await withImages(15);
+    expectBadRequest(fifteen);
+    expect(harness.generate).toHaveBeenCalledOnce();
   });
 
   it('rejects unsupported upload bytes with UNSUPPORTED_MEDIA_TYPE', async () => {
@@ -480,6 +557,29 @@ describe('POST /v1/chat/completions', () => {
     expect(res.status).toBe(200);
     const call = harness.generate.mock.calls[0]?.[0] as GenerateInput | undefined;
     expect(call?.referencePaths?.[0]).toMatch(/[0-9a-f-]{36}\.png$/u);
+  });
+
+  it('passes every data image in the user message as a reference', async () => {
+    const harness = fakeProvider();
+    const res = await request(buildApp(harness.provider))
+      .post('/v1/chat/completions')
+      .set('Authorization', AUTH_HEADER)
+      .send({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'blend these' },
+              { type: 'image_url', image_url: { url: dataImageUrl() } },
+              { type: 'image_url', image_url: { url: dataImageUrl() } },
+            ],
+          },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    const call = harness.generate.mock.calls[0]?.[0] as GenerateInput | undefined;
+    expect(call?.referencePaths).toHaveLength(2);
   });
 
   it('rejects remote image URLs even after a data reference', async () => {
@@ -605,6 +705,26 @@ describe('POST /v1/responses', () => {
     expect(res.status).toBe(200);
     const call = harness.generate.mock.calls[0]?.[0] as GenerateInput | undefined;
     expect(call?.referencePaths?.[0]).toMatch(/[0-9a-f-]{36}\.png$/u);
+  });
+
+  it('passes every input_image and the image tool quality to the provider', async () => {
+    const harness = fakeProvider();
+    const res = await request(buildApp(harness.provider))
+      .post('/v1/responses')
+      .set('Authorization', AUTH_HEADER)
+      .send({
+        input: [
+          { type: 'input_text', text: 'blend these' },
+          { type: 'input_image', image_url: dataImageUrl() },
+          { type: 'input_image', image_url: dataImageUrl() },
+        ],
+        tools: [{ type: 'image_generation', model: 'gpt-image-2.5-flare', quality: 'high' }],
+      });
+
+    expect(res.status).toBe(200);
+    const call = harness.generate.mock.calls[0]?.[0] as GenerateInput | undefined;
+    expect(call?.referencePaths).toHaveLength(2);
+    expect(call?.quality).toBe('high');
   });
 
   it('rejects remote input_image URLs even after a data reference', async () => {

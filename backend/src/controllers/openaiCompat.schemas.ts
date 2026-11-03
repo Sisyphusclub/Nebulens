@@ -1,13 +1,17 @@
 import { z, ZodError } from 'zod';
 
 import { AppError } from '../errors/AppError.js';
+import { env } from '../config/env.js';
 import {
   ASPECT_RATIOS,
   ASPECT_SIZE_MAP,
   DEFAULT_ASPECT_RATIO,
+  IMAGE_QUALITIES,
   MAX_COUNT,
   MIN_COUNT,
+  supportsImageQuality,
   type AspectRatio,
+  type ImageQuality,
 } from '../types/image.js';
 
 export const MODEL_CREATED_AT = 1_710_000_000;
@@ -43,12 +47,18 @@ export type ImageResponseFormat = z.infer<typeof imageResponseFormatSchema>;
 
 export const promptSchema = z.string().trim().min(1).max(2000);
 
+/** OpenAI's `auto` plus this gateway's own quality levels. */
+export const compatQualitySchema = z.enum(['auto', ...IMAGE_QUALITIES]);
+
+export type CompatQuality = z.infer<typeof compatQualitySchema>;
+
 export const generationBodySchema = z
   .object({
     prompt: promptSchema,
     model: z.string().min(1).max(100).optional(),
     n: z.number().int().min(MIN_COUNT).max(MAX_COUNT).optional(),
     size: z.string().min(1).optional(),
+    quality: compatQualitySchema.optional(),
     response_format: imageResponseFormatSchema.optional(),
     stream: z.boolean().optional(),
     partial_images: z.unknown().optional(),
@@ -64,6 +74,7 @@ export const editsBodySchema = z
       z.number().int().min(MIN_COUNT).max(MAX_COUNT).optional(),
     ),
     size: z.preprocess(singleFormValue, z.string().min(1).optional()),
+    quality: z.preprocess(singleFormValue, compatQualitySchema.optional()),
     response_format: z.preprocess(singleFormValue, imageResponseFormatSchema.optional()),
     mask: z.unknown().optional(),
     stream: z.preprocess(coerceOptionalFormBoolean, z.boolean().optional()),
@@ -145,6 +156,18 @@ export function rejectUnsupportedStreaming(
   if (partialImages !== undefined) {
     throw new AppError('BAD_REQUEST', 'Partial image streaming is not supported', 400);
   }
+}
+
+/**
+ * OpenAI clients send `quality` whatever the model; only quality-capable models get it,
+ * and `auto` means "let the provider decide", so neither reaches the provider.
+ */
+export function qualityForModel(
+  model: string | undefined,
+  quality: CompatQuality | undefined,
+): ImageQuality | undefined {
+  if (quality === undefined || quality === 'auto') return undefined;
+  return supportsImageQuality(model ?? env.IMAGE_MODEL) ? quality : undefined;
 }
 
 export function aspectRatioForSize(size: string | undefined): AspectRatio {

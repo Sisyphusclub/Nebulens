@@ -3,18 +3,37 @@ import type { z } from 'zod';
 import { env } from '../config/env.js';
 import { AppError } from '../errors/AppError.js';
 import { saveUpload } from '../storage/localStorage.js';
+import { MAX_REFERENCE_IMAGES } from '../types/image.js';
 import { isRecord } from '../utils/narrowing.js';
 
-import type { chatMessageSchema } from './openaiCompat.schemas.js';
+import {
+  compatQualitySchema,
+  type CompatQuality,
+  type chatMessageSchema,
+} from './openaiCompat.schemas.js';
 
 export interface SceneInput {
   prompt: string;
-  referenceId?: string;
+  /** Every data image in the message, in order. */
+  referenceIds: string[];
 }
 
 export interface ImageGenerationToolSelection {
   model?: string;
   size?: string;
+  quality?: CompatQuality;
+}
+
+function assertReferenceRoom(referenceIds: readonly string[]): void {
+  if (referenceIds.length >= MAX_REFERENCE_IMAGES) {
+    throw new AppError(
+      'BAD_REQUEST',
+      `At most ${MAX_REFERENCE_IMAGES} reference images are supported`,
+      400,
+      undefined,
+      { max: MAX_REFERENCE_IMAGES },
+    );
+  }
 }
 
 export async function extractChatScene(
@@ -29,7 +48,7 @@ export async function extractChatScene(
 
 export async function extractChatContentScene(content: unknown): Promise<SceneInput> {
   if (typeof content === 'string') {
-    return { prompt: validatePrompt(content, 'messages[].content') };
+    return { prompt: validatePrompt(content, 'messages[].content'), referenceIds: [] };
   }
   if (!Array.isArray(content)) {
     throw new AppError(
@@ -40,7 +59,7 @@ export async function extractChatContentScene(content: unknown): Promise<SceneIn
   }
 
   const textParts: string[] = [];
-  let referenceId: string | undefined;
+  const referenceIds: string[] = [];
   for (const part of content) {
     if (!isRecord(part)) continue;
     const type = readStringProperty(part, 'type');
@@ -56,14 +75,13 @@ export async function extractChatContentScene(content: unknown): Promise<SceneIn
       if (isRemoteImageUrl(url)) {
         throw new AppError('BAD_REQUEST', 'Remote image URLs are not supported', 400);
       }
-      if (referenceId === undefined) {
-        referenceId = await saveDataImageUrl(url);
-      }
+      assertReferenceRoom(referenceIds);
+      referenceIds.push(await saveDataImageUrl(url));
     }
   }
 
   const prompt = validatePrompt(textParts.join('\n'), 'messages[].content[].text');
-  return referenceId !== undefined ? { prompt, referenceId } : { prompt };
+  return { prompt, referenceIds };
 }
 
 export function readChatImageUrl(part: Record<string, unknown>): string {
@@ -80,7 +98,7 @@ export function readChatImageUrl(part: Record<string, unknown>): string {
 
 export async function extractResponsesScene(input: unknown): Promise<SceneInput> {
   const textParts: string[] = [];
-  let referenceId: string | undefined;
+  const referenceIds: string[] = [];
 
   async function visit(value: unknown): Promise<void> {
     if (typeof value === 'string') {
@@ -109,9 +127,8 @@ export async function extractResponsesScene(input: unknown): Promise<SceneInput>
       if (isRemoteImageUrl(imageUrl)) {
         throw new AppError('BAD_REQUEST', 'Remote image URLs are not supported', 400);
       }
-      if (referenceId === undefined) {
-        referenceId = await saveDataImageUrl(imageUrl);
-      }
+      assertReferenceRoom(referenceIds);
+      referenceIds.push(await saveDataImageUrl(imageUrl));
       return;
     }
 
@@ -123,7 +140,7 @@ export async function extractResponsesScene(input: unknown): Promise<SceneInput>
 
   await visit(input);
   const prompt = validatePrompt(textParts.join('\n'), 'input');
-  return referenceId !== undefined ? { prompt, referenceId } : { prompt };
+  return { prompt, referenceIds };
 }
 
 export async function saveDataImageUrl(url: string): Promise<string> {
@@ -195,6 +212,18 @@ export function selectImageGenerationTool(
       }
       selection.size = size;
     }
+    const quality = tool['quality'];
+    if (quality !== undefined) {
+      const parsed = compatQualitySchema.safeParse(quality);
+      if (!parsed.success) {
+        throw new AppError(
+          'BAD_REQUEST',
+          `image_generation tool quality must be one of ${compatQualitySchema.options.join(', ')}`,
+          400,
+        );
+      }
+      selection.quality = parsed.data;
+    }
     return selection;
   }
 
@@ -208,6 +237,7 @@ export function buildResponseTool(
     type: 'image_generation',
     ...(selection?.model !== undefined ? { model: selection.model } : {}),
     ...(selection?.size !== undefined ? { size: selection.size } : {}),
+    ...(selection?.quality !== undefined ? { quality: selection.quality } : {}),
   };
 }
 

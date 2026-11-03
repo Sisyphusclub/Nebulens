@@ -2,7 +2,7 @@ import { Router, type RequestHandler } from 'express';
 
 import { buildOpenAICompatController } from '../controllers/openaiCompat.controller.js';
 import { openaiCompatAuth } from '../middlewares/openaiCompatAuth.js';
-import { uploadImageMiddleware } from '../middlewares/upload.js';
+import { uploadImagesMiddleware } from '../middlewares/upload.js';
 import type { ImageGenerationProvider } from '../services/providers/ImageGenerationProvider.js';
 
 export interface OpenAICompatRouterDeps {
@@ -29,7 +29,7 @@ export function buildOpenAICompatRouter(deps: OpenAICompatRouterDeps): Router {
   });
 
   // POST /v1/images/edits (auth: bearer, multipart image + prompt) -> OpenAI ImagesResponse.
-  router.post('/images/edits', uploadImageMiddleware, (req, res, next) => {
+  router.post('/images/edits', uploadImagesMiddleware, (req, res, next) => {
     void controller.edits(req, res, next);
   });
 

@@ -159,22 +159,23 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 
 ### API 入口
 
-| 方法     | 路径                            | 用途                       |
-| -------- | ------------------------------- | -------------------------- |
-| `GET`    | `/api/health/live`              | 进程存活检查               |
-| `GET`    | `/api/health/ready`             | 数据库与存储就绪检查       |
-| `POST`   | `/api/images/generate`          | 标准生图                   |
-| `POST`   | `/api/images/generate/high-res` | 2K/4K 生图                 |
-| `GET`    | `/api/history`                  | 当前用户历史记录           |
-| `GET`    | `/api/settings/image-api-key`   | 当前用户 Key 状态          |
-| `PUT`    | `/api/settings/image-api-key`   | 保存当前用户 Key           |
-| `DELETE` | `/api/settings/image-api-key`   | 删除当前用户 Key           |
-| `GET`    | `/api/auth/me`                  | 当前用户资料与权限         |
-| `GET`    | `/api/admin/users`              | 管理员读取用户列表         |
-| `POST`   | `/api/admin/users`              | 管理员创建用户             |
-| `PATCH`  | `/api/admin/users/:id/quota`    | 设置用户额度               |
-| `DELETE` | `/api/admin/users/:id`          | 删除普通用户               |
-| `POST`   | `/v1/images/generations`        | OpenAI-compatible 生图接口 |
+| 方法     | 路径                            | 用途                                                             |
+| -------- | ------------------------------- | ---------------------------------------------------------------- |
+| `GET`    | `/api/health/live`              | 进程存活检查                                                     |
+| `GET`    | `/api/health/ready`             | 数据库与存储就绪检查                                             |
+| `POST`   | `/api/images/generate`          | 标准生图                                                         |
+| `POST`   | `/api/images/generate/high-res` | 2K/4K 生图                                                       |
+| `GET`    | `/api/history`                  | 当前用户历史记录                                                 |
+| `GET`    | `/api/settings/image-api-key`   | 当前用户 Key 状态                                                |
+| `PUT`    | `/api/settings/image-api-key`   | 保存当前用户 Key                                                 |
+| `DELETE` | `/api/settings/image-api-key`   | 删除当前用户 Key                                                 |
+| `GET`    | `/api/auth/me`                  | 当前用户资料与权限                                               |
+| `GET`    | `/api/admin/users`              | 管理员读取用户列表                                               |
+| `POST`   | `/api/admin/users`              | 管理员创建用户                                                   |
+| `PATCH`  | `/api/admin/users/:id/quota`    | 设置用户额度                                                     |
+| `DELETE` | `/api/admin/users/:id`          | 删除普通用户                                                     |
+| `POST`   | `/v1/images/generations`        | OpenAI-compatible 生图接口                                       |
+| `POST`   | `/v1/images/edits`              | OpenAI-compatible 参考图生图（`image` 或 `image[]`，最多 14 张） |
 
 ## 配置参考
 

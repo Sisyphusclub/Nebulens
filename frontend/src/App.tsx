@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom';
 
 import { LoginModal } from '@/components/auth/LoginModal';
+import { AppErrorBoundary } from '@/components/common/AppErrorBoundary';
 import { AppHeader } from '@/components/common/AppHeader';
 import { useImageDetailModalState } from '@/hooks/useImageDetailModalState';
 import { cn } from '@/lib/utils';
@@ -29,7 +30,10 @@ export function App() {
         aria-label={isLanding ? 'Nebulens 首页' : 'Nebulens 工作区'}
       >
         <div className={cn('app-workspace', !isLanding && 'app-workspace--studio')}>
-          <AppRoutes />
+          {/* Keyed by route, so moving to another page clears a crash on this one. */}
+          <AppErrorBoundary key={location.pathname}>
+            <AppRoutes />
+          </AppErrorBoundary>
         </div>
       </main>
       <LoginModal />

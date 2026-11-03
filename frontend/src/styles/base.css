@@ -2204,6 +2204,29 @@ video.landing-hero__video[data-playing='false'] {
     backdrop-filter: blur(14px);
   }
 }
+.app-error {
+  display: grid;
+  max-width: 420px;
+  justify-items: center;
+  gap: 10px;
+  margin: 18vh auto 0;
+  padding: 0 24px;
+  text-align: center;
+}
+.app-error strong {
+  font-size: 18px;
+}
+.app-error p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.app-error__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
 .toast-region {
   position: fixed;
   top: 20px;

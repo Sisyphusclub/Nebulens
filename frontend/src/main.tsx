@@ -13,8 +13,14 @@ import { MorphicTooltipProvider } from '@/components/premium/morphic-tooltip';
 import { AuthProvider } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { registerUnauthorizedHandler } from '@/services/api/imagesApi';
+import { reloadForNewBuild } from '@/utils/staleBuild';
 
 registerUnauthorizedHandler(openAuthModal);
+
+// Vite reports a page file that failed to preload, as after a new release; reload to get it.
+window.addEventListener('vite:preloadError', (event) => {
+  if (reloadForNewBuild()) event.preventDefault();
+});
 
 const root = document.getElementById('app');
 if (!root) throw new Error('找不到应用挂载节点。');

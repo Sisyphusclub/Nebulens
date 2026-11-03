@@ -10,6 +10,7 @@ import {
 import type { Ref } from 'react';
 
 import { EditablePromptBubble } from '@/components/generation/EditablePromptBubble';
+import { GenerationElapsed } from '@/components/generation/GenerationElapsed';
 import { ImageGenerationPlaceholder } from '@/components/generation/ImageGenerationPlaceholder';
 import { SessionResultPreview } from '@/components/generation/SessionResultPreview';
 import { TextCheckNotice, TextCheckProgress } from '@/components/generation/TextCheckNotice';
@@ -197,6 +198,7 @@ export function GenerationBatch({
               />
             ))}
           </div>
+          <GenerationElapsed startedAt={item.createdAt} />
         </div>
       )}
       {item.entries.length ? (

@@ -6357,6 +6357,12 @@ video.landing-hero__video[data-playing='false'] {
 .session-batch.is-generating .session-batch__actions:empty {
   display: none;
 }
+.generation-elapsed {
+  margin: 8px 0 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
 .generation-pending {
   width: 100%;
 }

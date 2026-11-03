@@ -367,6 +367,8 @@ export interface GenerateResponse {
   aspectRatio: AspectRatio;
   generationMode: GenerationMode;
   images: GenerateResponseItem[];
+  /** Set when the server queued these images for analysis. */
+  analysisStatus?: AnalysisStatus;
 }
 
 export interface ApiErrorBody {

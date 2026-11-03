@@ -12,7 +12,7 @@ import type { Ref } from 'react';
 import { EditablePromptBubble } from '@/components/generation/EditablePromptBubble';
 import { ImageGenerationPlaceholder } from '@/components/generation/ImageGenerationPlaceholder';
 import { SessionResultPreview } from '@/components/generation/SessionResultPreview';
-import { TextCheckNotice } from '@/components/generation/TextCheckNotice';
+import { TextCheckNotice, TextCheckProgress } from '@/components/generation/TextCheckNotice';
 import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
 import type { AspectRatio, HistoryEntry } from '@/types/image';
@@ -180,7 +180,9 @@ export function GenerationBatch({
                   disabled={isGenerating}
                   onFix={() => onFixText(entry)}
                 />
-              ) : null}
+              ) : (
+                <TextCheckProgress record={entry.record} />
+              )}
             </article>
           ))}
         </div>

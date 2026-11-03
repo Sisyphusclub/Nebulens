@@ -196,6 +196,9 @@ export function useImageGeneration() {
             isFavorite: false,
             ...(referenceIds[0] === undefined ? {} : { referenceId: referenceIds[0] }),
             ...(referenceIds.length ? { referenceIds } : {}),
+            ...(generated.analysisStatus === undefined
+              ? {}
+              : { analysisStatus: generated.analysisStatus }),
           };
           return addImageRecord(record);
         });

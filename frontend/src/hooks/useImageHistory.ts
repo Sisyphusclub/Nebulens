@@ -48,9 +48,9 @@ const store = createExternalStore<HistoryState>({
 let hydratedUserId: string | null = null;
 let requestGeneration = 0;
 
-const ANALYSIS_POLL_MS = 5_000;
+const ANALYSIS_POLL_MS = 3_000;
 /** Images older than this are not waited on; their analysis can be fetched on the next visit. */
-const ANALYSIS_POLL_WINDOW_MS = 5 * 60_000;
+export const ANALYSIS_POLL_WINDOW_MS = 5 * 60_000;
 let analysisPollTimer: ReturnType<typeof setTimeout> | null = null;
 
 function awaitsAnalysis(record: ImageRecord, now: number): boolean {

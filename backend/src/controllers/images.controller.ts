@@ -323,7 +323,11 @@ async function persistAndRespond(
     requestId: request.requestId,
   });
   analysis?.enqueue(result.images.map((image) => image.filename));
-  res.status(200).json(responseFromGeneratedResult(result));
+  res.status(200).json({
+    ...responseFromGeneratedResult(result),
+    // Lets the client show the check as running straight away, not after its next history fetch.
+    ...(analysis !== undefined ? { analysisStatus: 'pending' as const } : {}),
+  });
 }
 
 function abortableHandler(

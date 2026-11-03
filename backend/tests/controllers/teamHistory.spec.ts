@@ -236,6 +236,8 @@ describe('analysis after generation', () => {
 
     const ids = res.body.images.map((image: { id: string }) => image.id);
     expect(queue.enqueue).toHaveBeenCalledWith(ids);
+    // The client shows the check as running from this response, before any history fetch.
+    expect(res.body.analysisStatus).toBe('pending');
     const history = await request(app).get('/api/history');
     expect(
       history.body.records
@@ -249,6 +251,8 @@ describe('analysis after generation', () => {
       provider: fakeProvider(),
       authMiddleware: stubAuth(`analysis-off-${randomUUID()}`),
     });
+    const generated = await request(app).post('/api/images/generate').send({ prompt: '无分析' });
+    expect(generated.body).not.toHaveProperty('analysisStatus');
     const id = await generate(app, { prompt: '无分析' });
     const history = await request(app).get('/api/history');
     expect(

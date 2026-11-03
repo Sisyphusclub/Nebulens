@@ -4923,6 +4923,19 @@ video.landing-hero__video[data-playing='false'] {
   height: 14px;
   flex: 0 0 auto;
 }
+.text-check__spinner {
+  animation: text-check-spin 1s linear infinite;
+}
+@keyframes text-check-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .text-check__spinner {
+    animation: none;
+  }
+}
 .text-check--passed {
   display: flex;
   align-items: center;

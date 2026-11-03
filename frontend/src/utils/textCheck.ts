@@ -1,5 +1,22 @@
 import type { TextCheckResult, TextCheckSegment } from '@/types/image';
 
+const QUOTE_PAIRS: ReadonlyArray<readonly [string, string]> = [
+  ['“', '”'],
+  ['「', '」'],
+  ['『', '』'],
+  ['"', '"'],
+];
+
+/** Whether the prompt quotes text for the image, which is what the server's check looks for. */
+export function promptQuotesText(prompt: string): boolean {
+  return QUOTE_PAIRS.some(([open, close]) => {
+    const start = prompt.indexOf(open);
+    if (start === -1) return false;
+    const end = prompt.indexOf(close, start + open.length);
+    return end !== -1 && prompt.slice(start + open.length, end).trim().length > 0;
+  });
+}
+
 /** Wrong or missing text, as opposed to correct text that is merely hard to read. */
 function isMisspelled(segment: TextCheckSegment): boolean {
   return !segment.ok;

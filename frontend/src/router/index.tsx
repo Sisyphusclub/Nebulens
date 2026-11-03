@@ -1,7 +1,17 @@
-import { lazy, Suspense } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { Link, Route, Routes, useLocation } from 'react-router-dom';
 
 import { HERO_BACKDROP_POSTER } from '@/components/landing/LandingHeroBackdrop';
+import { Button } from '@/components/ui/button';
+
+const SITE_TITLE = 'Nebulens｜AI 图像创作工作台';
+const PAGE_TITLES: Readonly<Record<string, string>> = {
+  '/generate': '生图',
+  '/templates': '创作模板',
+  '/history': '资产',
+  '/team': '成果库',
+  '/admin/users': '用户管理',
+};
 
 const LandingView = lazy(() =>
   import('@/views/LandingView').then((module) => ({ default: module.LandingView })),
@@ -24,6 +34,13 @@ const AdminUsersView = lazy(() =>
 
 export function AppRoutes() {
   const { pathname } = useLocation();
+
+  // Each page names its tab, so several open tabs can be told apart.
+  useEffect(() => {
+    const page = pathname === '/' ? null : (PAGE_TITLES[pathname] ?? '页面不存在');
+    document.title = page === null ? SITE_TITLE : `${page} · Nebulens`;
+  }, [pathname]);
+
   return (
     <Suspense fallback={pathname === '/' ? <LandingFallback /> : <PageSkeleton />}>
       <Routes>
@@ -33,9 +50,24 @@ export function AppRoutes() {
         <Route path="/history" element={<HistoryView />} />
         <Route path="/team" element={<TeamView />} />
         <Route path="/admin/users" element={<AdminUsersView />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
+  );
+}
+
+/** An unknown address says so, rather than quietly landing on the home page. */
+function NotFound() {
+  return (
+    <div className="app-error">
+      <h1>页面不存在</h1>
+      <p>链接可能已经失效，或者地址输入有误。</p>
+      <div className="app-error__actions">
+        <Button asChild>
+          <Link to="/">返回首页</Link>
+        </Button>
+      </div>
+    </div>
   );
 }
 

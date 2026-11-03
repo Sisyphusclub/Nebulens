@@ -2213,8 +2213,11 @@ video.landing-hero__video[data-playing='false'] {
   padding: 0 24px;
   text-align: center;
 }
-.app-error strong {
+.app-error strong,
+.app-error h1 {
+  margin: 0;
   font-size: 18px;
+  font-weight: 600;
 }
 .app-error p {
   margin: 0;

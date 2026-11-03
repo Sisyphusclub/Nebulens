@@ -32,6 +32,7 @@ import {
   useGenerationSessions,
 } from '@/hooks/useGenerationSessions';
 import { useImageGeneration } from '@/hooks/useImageGeneration';
+import { useLeaveWarning } from '@/hooks/useLeaveWarning';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { useImageHistory, type GroupedBatch } from '@/hooks/useImageHistory';
 import { useGenerationFeed } from '@/hooks/useGenerationFeed';
@@ -466,6 +467,8 @@ export function GenerateView() {
     notify,
   });
   const startSkillRun = skillRun.start;
+  // Leaving now would lose the images still being made.
+  useLeaveWarning(generation.isLoading || skillRun.isRunning);
 
   // A skill planned on the homepage arrives as navigation state, in its own session.
   useEffect(() => {

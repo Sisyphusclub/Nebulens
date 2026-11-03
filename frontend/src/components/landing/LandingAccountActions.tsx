@@ -1,4 +1,4 @@
-import { Bell, BookOpen, Check, KeyRound, LogIn, LogOut, Sparkles } from 'lucide-react';
+import { BookOpen, Check, KeyRound, LogIn, LogOut, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -83,30 +83,9 @@ export function LandingAccountActions({
         </Button>
       </IconTooltip>
 
-      {/* Notifications and credits only mean something once there is an account. */}
+      {/* Credits only mean something once there is an account. */}
       {isAuthPending ? null : isAuthenticated ? (
         <>
-          <MorphPopover>
-            <MorphPopoverTrigger>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="landing-account-actions__icon"
-                aria-label="查看通知"
-              >
-                <Bell aria-hidden="true" />
-              </Button>
-            </MorphPopoverTrigger>
-            <MorphPopoverContent
-              className="landing-account-popover landing-notification-popover"
-              radius={16}
-            >
-              <strong>通知</strong>
-              <p>暂无新通知</p>
-            </MorphPopoverContent>
-          </MorphPopover>
-
           <MorphPopover open={checkInOpen} onOpenChange={setCheckInOpen}>
             <MorphPopoverTrigger>
               <Button

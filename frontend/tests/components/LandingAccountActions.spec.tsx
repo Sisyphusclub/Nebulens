@@ -99,3 +99,9 @@ it('uses the profile image for the authenticated account trigger and menu', asyn
     'https://images.example/google-profile.png',
   );
 });
+
+it('offers no notification bell while there is nothing it could ever show', () => {
+  renderActions({ isAuthenticated: true });
+
+  expect(screen.queryByRole('button', { name: '查看通知' })).not.toBeInTheDocument();
+});

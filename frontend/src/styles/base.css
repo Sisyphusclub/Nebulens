@@ -839,8 +839,7 @@ video.landing-hero__video[data-playing='false'] {
   min-width: 0;
   gap: 5px;
 }
-.landing-check-in-popover strong,
-.landing-notification-popover strong {
+.landing-check-in-popover strong {
   color: var(--foreground);
   font-size: 16px;
   font-weight: 650;
@@ -879,17 +878,6 @@ video.landing-hero__video[data-playing='false'] {
 .landing-check-in-popover > .button svg {
   width: 16px;
   height: 16px;
-}
-.landing-notification-popover {
-  display: grid;
-  width: 220px;
-  gap: 6px;
-  padding: 18px;
-}
-.landing-notification-popover p {
-  margin: 0;
-  color: rgb(220 226 238 / 0.62);
-  font-size: 12px;
 }
 .landing-profile-popover {
   display: grid;

@@ -7126,9 +7126,28 @@ video.landing-hero__video[data-playing='false'] {
 .agent-chat-input__streaming-placeholder[data-active='true'] {
   opacity: 1;
 }
-/* A plain dim hint, so a rotating example never passes for text the user typed. */
+/* The example streams in the brand gradient, a touch dimmed so it still reads as a
+   hint; hovering brightens it to show a click fills it in. */
 .agent-chat-input__streaming-placeholder-text {
-  color: rgb(240 243 248 / 0.4);
+  display: inline;
+  border: 0;
+  padding: 0;
+  background: linear-gradient(90deg, #f3f5fa 0%, #c5d9f2 52%, #efc9ac 100%);
+  background-clip: text;
+  color: transparent;
+  font: inherit;
+  text-align: left;
+  opacity: 0.72;
+  -webkit-text-fill-color: transparent;
+  transition: opacity 160ms var(--ease-out-expo);
+}
+.agent-chat-input__streaming-placeholder[data-active='true']
+  .agent-chat-input__streaming-placeholder-text {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.agent-chat-input__streaming-placeholder-text:hover {
+  opacity: 1;
 }
 /* A blinking caret made the box look focused and filled in. */
 .agent-chat-input__streaming-placeholder-caret {

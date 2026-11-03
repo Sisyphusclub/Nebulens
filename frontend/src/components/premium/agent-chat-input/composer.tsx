@@ -22,6 +22,8 @@ export type AgentChatComposerHandle = {
   focus: () => void;
   clear: () => void;
   insertSkill: (skill: AgentChatSkill) => void;
+  /** Replace the content, then focus with the caret at the end so typing continues it. */
+  fill: (text: string) => void;
   serialize: () => ComposerValue;
   getSlashQuery: () => string | null;
 };
@@ -403,6 +405,21 @@ export const AgentChatComposer = forwardRef<AgentChatComposerHandle, AgentChatCo
           if (editor) {
             insertSkillAtCaret(editor, skill, emit);
           }
+        },
+        fill: (text) => {
+          const editor = editorRef.current;
+          if (!editor) {
+            return;
+          }
+          seedEditor(editor, text, skillsRef.current);
+          editor.focus();
+          const caret = document.createRange();
+          caret.selectNodeContents(editor);
+          caret.collapse(false);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(caret);
+          emit();
         },
         serialize: () =>
           editorRef.current ? serializeEditor(editorRef.current) : { text: '', skillIds: [] },

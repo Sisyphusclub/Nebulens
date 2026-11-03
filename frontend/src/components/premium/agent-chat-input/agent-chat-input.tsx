@@ -386,10 +386,13 @@ interface StreamingPlaceholderProps {
   active: boolean;
   examples: readonly string[];
   reduce: boolean;
+  onPick: (prompt: string) => void;
 }
 
-function StreamingPlaceholder({ active, examples, reduce }: StreamingPlaceholderProps) {
-  const textRef = useRef<HTMLSpanElement>(null);
+function StreamingPlaceholder({ active, examples, reduce, onPick }: StreamingPlaceholderProps) {
+  const textRef = useRef<HTMLButtonElement>(null);
+  // The example being streamed, so a click fills it in whole, not the half typed so far.
+  const currentRef = useRef(examples[0] ?? '');
   const signature = examples.join('\u0000');
 
   useEffect(() => {
@@ -399,6 +402,7 @@ function StreamingPlaceholder({ active, examples, reduce }: StreamingPlaceholder
       if (target) target.textContent = '';
       return;
     }
+    currentRef.current = prompts[0] ?? '';
     if (reduce) {
       target.textContent = prompts[0] ?? '';
       return;
@@ -425,6 +429,7 @@ function StreamingPlaceholder({ active, examples, reduce }: StreamingPlaceholder
       } else if (deleting && characterCount === 0) {
         deleting = false;
         promptIndex = (promptIndex + 1) % prompts.length;
+        currentRef.current = prompts[promptIndex] ?? '';
         delay = 260;
       }
       timeoutId = window.setTimeout(renderNextFrame, delay);
@@ -435,14 +440,22 @@ function StreamingPlaceholder({ active, examples, reduce }: StreamingPlaceholder
   }, [active, reduce, signature]);
 
   return (
-    // Decorative only: clicks fall through to the prompt editor underneath.
+    // Clicks on empty space fall through to the prompt editor underneath; only the
+    // example text takes the click, and fills the editor with it.
     <span
       className="agent-chat-input__streaming-placeholder"
       data-active={active ? 'true' : undefined}
-      aria-hidden="true"
     >
-      <span ref={textRef} className="agent-chat-input__streaming-placeholder-text" />
-      <span className="agent-chat-input__streaming-placeholder-caret" />
+      <button
+        ref={textRef}
+        type="button"
+        tabIndex={-1}
+        aria-label="填入示例提示词"
+        title="点击填入这条示例"
+        className="agent-chat-input__streaming-placeholder-text"
+        onClick={() => onPick(currentRef.current)}
+      />
+      <span className="agent-chat-input__streaming-placeholder-caret" aria-hidden="true" />
     </span>
   );
 }
@@ -704,6 +717,7 @@ export function AgentChatInput({
             active={text.length === 0}
             examples={streamingPlaceholders}
             reduce={reduce}
+            onPick={(prompt) => composerRef.current?.fill(prompt)}
           />
         ) : null}
         <AgentChatComposer

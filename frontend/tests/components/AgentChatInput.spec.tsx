@@ -177,8 +177,31 @@ describe('AgentChatInput text paste', () => {
 });
 
 describe('AgentChatInput streaming placeholder', () => {
-  it('renders example prompts as passive placeholder text, not a control', () => {
-    const { container, queryByRole } = render(
+  it('fills the editor with the whole example when it is clicked', () => {
+    const onValueChange = vi.fn();
+    const { getByRole } = render(
+      <AgentChatInput
+        ariaLabel="图像提示词"
+        models={[]}
+        reasoningLevels={[]}
+        speedModes={[]}
+        agents={[]}
+        skills={[]}
+        streamingPlaceholders={['银色礼服舞者悬浮在深海中']}
+        onValueChange={onValueChange}
+      />,
+    );
+
+    fireEvent.click(getByRole('button', { name: '填入示例提示词' }));
+
+    expect(getByRole('textbox', { name: '图像提示词' })).toHaveTextContent(
+      '银色礼服舞者悬浮在深海中',
+    );
+    expect(onValueChange).toHaveBeenLastCalledWith('银色礼服舞者悬浮在深海中');
+  });
+
+  it('keeps the example out of the tab order so Tab still lands in the editor', () => {
+    const { getByRole } = render(
       <AgentChatInput
         ariaLabel="图像提示词"
         models={[]}
@@ -189,12 +212,8 @@ describe('AgentChatInput streaming placeholder', () => {
         streamingPlaceholders={['银色礼服舞者悬浮在深海中']}
       />,
     );
-    const placeholder = container.querySelector('.agent-chat-input__streaming-placeholder');
 
-    expect(placeholder).toBeInTheDocument();
-    expect(placeholder?.tagName).not.toBe('BUTTON');
-    expect(placeholder).toHaveAttribute('aria-hidden', 'true');
-    expect(queryByRole('button', { name: '复制当前提示词示例' })).not.toBeInTheDocument();
+    expect(getByRole('button', { name: '填入示例提示词' })).toHaveAttribute('tabindex', '-1');
   });
 });
 

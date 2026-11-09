@@ -56,7 +56,7 @@ it('opens authentication directly from an explicit login button', async () => {
   expect(login).not.toHaveAttribute('aria-haspopup');
   expect(screen.queryByRole('button', { name: /账户：/ })).not.toBeInTheDocument();
   // Notifications and credits wait until there is an account.
-  expect(screen.queryByRole('button', { name: '查看通知' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /公告与更新/ })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /个人积分/ })).not.toBeInTheDocument();
 
   await user.click(login);
@@ -100,8 +100,8 @@ it('uses the profile image for the authenticated account trigger and menu', asyn
   );
 });
 
-it('offers no notification bell while there is nothing it could ever show', () => {
+it('shows the announcement bell once there is an account', () => {
   renderActions({ isAuthenticated: true });
 
-  expect(screen.queryByRole('button', { name: '查看通知' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /^公告与更新/ })).toBeInTheDocument();
 });

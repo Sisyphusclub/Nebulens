@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { AccountAvatar } from '@/components/common/AccountAvatar';
+import { AnnouncementCenter } from '@/components/common/AnnouncementCenter';
 import {
   MorphPopover,
   MorphPopoverContent,
@@ -86,6 +87,7 @@ export function LandingAccountActions({
       {/* Credits only mean something once there is an account. */}
       {isAuthPending ? null : isAuthenticated ? (
         <>
+          <AnnouncementCenter />
           <MorphPopover open={checkInOpen} onOpenChange={setCheckInOpen}>
             <MorphPopoverTrigger>
               <Button

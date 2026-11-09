@@ -821,6 +821,92 @@ video.landing-hero__video[data-playing='false'] {
   background: rgb(50 54 64 / 0.94);
   content: '';
 }
+/* Announcements: a small dot on the bell while something is unread, and a scrolling list
+   of dated notes in the same floating panel as the account menus. */
+.landing-account-actions .announcement-bell {
+  position: relative;
+}
+.announcement-bell__dot {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid rgb(26 30 40);
+  border-radius: 50%;
+  background: #ff5a5f;
+}
+.announcement-popover {
+  width: 340px;
+  padding: 14px 6px 6px;
+}
+.announcement-popover__title {
+  margin: 0 12px 8px;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 650;
+}
+.announcement-list {
+  display: grid;
+  max-height: min(420px, 62vh);
+  overflow-y: auto;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overscroll-behavior: contain;
+}
+.announcement-list__item {
+  border-radius: 12px;
+  padding: 10px 12px 12px;
+}
+.announcement-list__item + .announcement-list__item {
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+}
+.announcement-list__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgb(220 226 238 / 0.56);
+  font-size: 11px;
+}
+.announcement-list__kind {
+  border-radius: var(--radius-full);
+  background: rgb(120 170 255 / 0.16);
+  color: rgb(186 210 255);
+  padding: 1px 7px;
+  font-weight: 600;
+}
+.announcement-list__kind[data-kind='notice'] {
+  background: rgb(255 196 120 / 0.14);
+  color: rgb(255 214 160);
+}
+.announcement-list__new {
+  margin-left: auto;
+  color: #ff8a8d;
+  font-weight: 700;
+}
+.announcement-list__item h3 {
+  margin: 6px 0 4px;
+  color: var(--foreground);
+  font-size: 13.5px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+.announcement-list__item ul {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding-left: 16px;
+  color: rgb(220 226 238 / 0.76);
+  font-size: 12px;
+  line-height: 1.5;
+}
+@media (max-width: 560px) {
+  .announcement-popover {
+    width: min(340px, calc(100vw - 32px));
+  }
+}
 .landing-check-in-popover {
   display: flex;
   min-height: 84px;

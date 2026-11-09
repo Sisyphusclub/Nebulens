@@ -81,7 +81,7 @@
   color: color-mix(in oklch, var(--muted-foreground) 90%, var(--foreground));
   padding: 3px 8px;
   backdrop-filter: blur(4px);
-  font-size: 10px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
   white-space: nowrap;

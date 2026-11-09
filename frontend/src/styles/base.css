@@ -213,12 +213,12 @@ video {
   align-items: center;
   gap: 11px;
   padding: 0 8px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
 }
 .app-brand img {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
 }
 .app-nav {
@@ -348,7 +348,7 @@ video {
 }
 .workspace-heading h1 {
   margin: 0;
-  font-size: 36px;
+  font-size: 22px;
   font-weight: 550;
   line-height: 1.12;
 }
@@ -364,7 +364,7 @@ video {
   gap: 9px;
 }
 .page-count strong {
-  font-size: 30px;
+  font-size: 22px;
   font-weight: 400;
 }
 .page-count span {
@@ -439,7 +439,7 @@ video {
 .auth-gate h2,
 .empty-stage h3 {
   margin: 0;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 500;
 }
 .auth-gate p,
@@ -515,14 +515,14 @@ video {
   padding: 0 10px;
   color: var(--foreground);
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: 15px;
   font-variation-settings: 'wght' 650;
   font-weight: 650;
   white-space: nowrap;
 }
 .landing-sidebar__brand img {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   flex: 0 0 auto;
   object-fit: contain;
 }
@@ -540,7 +540,7 @@ video {
   border-radius: var(--radius-sm);
   padding: 0 12px;
   color: var(--text-2);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.1;
   transition:
     background-color 160ms var(--ease-out-expo),
@@ -773,7 +773,7 @@ video {
 .announcement-list__item h3 {
   margin: 6px 0 4px;
   color: var(--foreground);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 650;
   line-height: 1.4;
 }
@@ -807,7 +807,7 @@ video {
 }
 .landing-check-in-popover strong {
   color: var(--foreground);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 650;
   letter-spacing: 0;
 }
@@ -889,7 +889,7 @@ video {
 .landing-profile-popover > .button > small {
   margin-left: auto;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 11px;
   white-space: nowrap;
 }
 
@@ -1145,7 +1145,7 @@ video {
 }
 .agent-chat-input__agent-option small {
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 11px;
 }
 .agent-chat-input__agent-option > svg {
   width: 14px;
@@ -1173,7 +1173,7 @@ video {
   margin: 0;
   padding: 3px 7px;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
 }
 .agent-chat-input__option-group > div {
@@ -1214,7 +1214,7 @@ video {
 }
 .agent-chat-input__option small {
   color: var(--muted-foreground);
-  font-size: 9px;
+  font-size: 11px;
 }
 .agent-chat-input__option > svg {
   width: 13px;
@@ -1268,7 +1268,7 @@ video {
   background: transparent;
   color: var(--muted-foreground);
   padding: 0 6px;
-  font-size: 10px;
+  font-size: 11px;
 }
 .agent-chat-input__queued-message button:hover {
   background: var(--surface-raised);
@@ -1656,7 +1656,7 @@ video {
 }
 .login-dialog h2 {
   margin: 4px 0 0;
-  font-size: 30px;
+  font-size: 22px;
   font-weight: 400;
 }
 .login-dialog > p {
@@ -1806,7 +1806,7 @@ video {
 .image-detail__description {
   margin: 0;
   color: var(--muted-foreground);
-  font-size: 13.5px;
+  font-size: 13px;
   line-height: 1.6;
 }
 .image-detail__tags {
@@ -2060,7 +2060,7 @@ video {
 .app-error strong,
 .app-error h1 {
   margin: 0;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 600;
 }
 .app-error p {
@@ -2137,7 +2137,7 @@ video {
 }
 .history-rail h2 {
   margin: 4px 0 0;
-  font-size: 20px;
+  font-size: 15px;
   font-weight: 500;
 }
 .history-rail__list {
@@ -2153,7 +2153,7 @@ video {
 .history-rail__list h3 {
   margin: 0 0 6px 8px;
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
 }
 .history-rail__list button {
@@ -2178,7 +2178,7 @@ video {
 }
 .history-rail__list button small {
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
 }
 .history-rail > a {
   display: flex;
@@ -2236,7 +2236,7 @@ video {
 }
 .image-prompt-shell__label small {
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 400;
 }
 .image-prompt-editor {
@@ -2262,7 +2262,7 @@ video {
   border: 0;
   background: transparent;
   padding: 0;
-  font-size: 19px;
+  font-size: 16px;
   line-height: 1.55;
   outline: none;
 }
@@ -2294,7 +2294,7 @@ video {
 }
 .reference-uploader__add small {
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
 }
 .reference-list {
   display: flex;
@@ -2334,7 +2334,7 @@ video {
 .reference-list figcaption {
   margin-top: 3px;
   color: var(--danger);
-  font-size: 9px;
+  font-size: 11px;
 }
 .reused-references {
   display: flex;
@@ -2452,7 +2452,7 @@ video {
 }
 .beui-select-option small {
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.35;
 }
 .beui-select-check {
@@ -2506,7 +2506,7 @@ video {
 }
 .toggle-row small {
   color: var(--text-3);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 400;
 }
 .toggle-row input {
@@ -2524,7 +2524,7 @@ video {
 }
 .composer__footer > span {
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
 }
 .result-feed {
   display: grid;
@@ -2538,7 +2538,7 @@ video {
 }
 .result-feed h2 {
   margin: 4px 0 0;
-  font-size: 30px;
+  font-size: 22px;
   font-weight: 400;
 }
 .result-feed > header > span {
@@ -2573,7 +2573,7 @@ video {
 .result-batch header p {
   margin: 5px 0 0;
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
 }
 .result-actions {
   display: flex;
@@ -2587,7 +2587,7 @@ video {
   border: 1px solid var(--line-2);
   background: var(--card);
   padding: 0 8px;
-  font-size: 10px;
+  font-size: 11px;
 }
 .result-actions svg {
   width: 14px;
@@ -2622,7 +2622,7 @@ video {
   background: rgb(0 0 0 / 0.72);
   color: var(--foreground);
   padding: 5px 8px;
-  font-size: 9px;
+  font-size: 11px;
 }
 .result-grid span svg {
   width: 10px;
@@ -2720,7 +2720,7 @@ video {
   background: rgb(10 10 12 / 0.74);
   color: var(--foreground);
   padding: 6px 9px;
-  font-size: 10px;
+  font-size: 11px;
   backdrop-filter: blur(8px);
 }
 .template-card__content {
@@ -2731,7 +2731,7 @@ video {
 }
 .template-card__content h2 {
   margin: 0;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
   line-height: 1.3;
 }
@@ -2813,7 +2813,7 @@ video {
   border-radius: var(--radius-full);
   background: var(--fill-3);
   padding: 6px 10px;
-  font-size: 10px;
+  font-size: 11px;
 }
 .asset-library {
   display: grid;
@@ -2829,7 +2829,7 @@ video {
 }
 .asset-day h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 500;
 }
 .asset-day header span {
@@ -2871,7 +2871,7 @@ video {
 }
 .admin-create__intro small {
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
 }
 .admin-panel {
   margin-top: 34px;
@@ -2886,7 +2886,7 @@ video {
 }
 .admin-panel h2 {
   margin: 4px 0 3px;
-  font-size: 25px;
+  font-size: 22px;
   font-weight: 400;
 }
 .admin-panel header p:last-child {
@@ -2909,7 +2909,7 @@ video {
 .admin-table-toolbar > span {
   flex: 0 0 auto;
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
 }
 .admin-search {
   display: flex;
@@ -2953,7 +2953,7 @@ video {
 }
 .admin-row--head {
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -2980,14 +2980,14 @@ video {
   border-radius: var(--radius-full);
   background: var(--fill-3);
   padding: 3px 6px;
-  font-size: 8px;
+  font-size: 11px;
   font-style: normal;
 }
 .admin-identity small {
   grid-column: 1 / -1;
   overflow: hidden;
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
   text-overflow: ellipsis;
 }
 .admin-row time {
@@ -3007,7 +3007,7 @@ video {
   padding: 0 8px;
 }
 .admin-quota > span {
-  font-size: 10px;
+  font-size: 11px;
 }
 .admin-quota > div {
   grid-column: 1 / -1;
@@ -3048,7 +3048,7 @@ video {
 }
 .admin-pagination > span {
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
 }
 .admin-pagination > div {
   display: flex;
@@ -3183,13 +3183,13 @@ video {
     gap: 8px;
     padding: 0 9px;
     font-family: var(--font-display);
-    font-size: 14px;
+    font-size: 15px;
     font-variation-settings: 'wght' 650;
     font-weight: 650;
   }
   .landing-mobile-header__brand img {
-    width: 29px;
-    height: 29px;
+    width: 24px;
+    height: 24px;
     object-fit: contain;
   }
   .landing-mobile-header [data-sidebar='trigger'] {
@@ -3313,7 +3313,7 @@ video {
     border: 0;
     background: transparent;
     color: var(--text-3);
-    font-size: 9px;
+    font-size: 11px;
   }
   .mobile-bottom-nav svg {
     width: 18px;
@@ -3344,7 +3344,7 @@ video {
     align-items: flex-start;
   }
   .workspace-heading h1 {
-    font-size: 36px;
+    font-size: 22px;
   }
   .generate-workspace {
     display: block;
@@ -3405,7 +3405,7 @@ video {
     display: block;
     margin-bottom: 5px;
     color: var(--text-3);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
   }
@@ -3584,7 +3584,7 @@ video {
     margin-bottom: 22px;
   }
   .workspace-heading h1 {
-    font-size: 32px;
+    font-size: 22px;
   }
   .page-count {
     justify-self: start;
@@ -3734,11 +3734,11 @@ video {
   padding-right: 272px;
 }
 .workspace-heading--compact h1 {
-  font-size: 28px;
+  font-size: 22px;
   letter-spacing: 0;
 }
 .workspace-heading--compact .page-count strong {
-  font-size: 26px;
+  font-size: 22px;
 }
 .workspace-heading--compact .page-count span {
   font-size: 12px;
@@ -4075,7 +4075,7 @@ video {
 }
 .sidebar-quota span {
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 11px;
 }
 .sidebar-quota strong {
   font-size: 13px;
@@ -4160,7 +4160,7 @@ video {
 .login-dialog h2 {
   margin: 2px 0 0;
   font-family: var(--font-serif);
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 500;
   letter-spacing: 0.04em;
 }
@@ -4305,7 +4305,7 @@ video {
 }
 .image-api-key-dialog__heading h2 {
   color: var(--foreground);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 650;
   line-height: 1.3;
 }
@@ -4595,7 +4595,7 @@ video {
   background: transparent;
   padding: 0 7px;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 11px;
 }
 .studio-resolution-control button:first-child {
   border-left: 0;
@@ -4661,7 +4661,7 @@ video {
   display: block;
   margin-top: 5px;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 11px;
 }
 .session-batch__actions,
 .session-result__actions,
@@ -4761,7 +4761,7 @@ video {
   display: grid;
   gap: 6px;
   margin-top: 8px;
-  font-size: 12.5px;
+  font-size: 12px;
   line-height: 1.5;
 }
 .text-check svg {
@@ -5052,7 +5052,7 @@ video {
   color: oklch(0.96 0 0);
 }
 .template-tile__label small {
-  font-size: 10px;
+  font-size: 11px;
 }
 .template-tile__label strong {
   font-size: 15px;
@@ -5360,7 +5360,7 @@ video {
 }
 .asset-archive-empty__content h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   line-height: 1.35;
   letter-spacing: 0;
@@ -5447,7 +5447,7 @@ video {
 .asset-list__head {
   min-height: 42px;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 11px;
 }
 .asset-list__row {
   min-height: 76px;
@@ -5461,7 +5461,7 @@ video {
   display: block;
   margin-top: 3px;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 11px;
 }
 .asset-list__prompt {
   display: -webkit-box;
@@ -5548,7 +5548,7 @@ video {
 }
 .confirm-action-dialog__copy h2 {
   color: var(--foreground);
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 650;
   line-height: 1.35;
 }
@@ -5929,7 +5929,7 @@ video {
   min-height: 110px !important;
   max-height: 180px !important;
   padding: 16px 16px 8px !important;
-  font-size: 18px !important;
+  font-size: 16px !important;
 }
 .studio-create-bar__status {
   min-height: 32px;
@@ -5976,7 +5976,7 @@ video {
   .studio-agent-input .agent-chat-input__textarea {
     min-height: 92px !important;
     max-height: 150px !important;
-    font-size: 17px !important;
+    font-size: 16px !important;
   }
   .session-feed {
     padding-top: 14px;
@@ -6569,7 +6569,7 @@ video {
 .generation-history-panel__header h2 {
   margin: 4px 0 0;
   color: var(--foreground);
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 560;
   line-height: 1.2;
 }
@@ -6592,7 +6592,7 @@ video {
 }
 .generation-history-panel__eyebrow {
   color: color-mix(in oklch, var(--accent) 64%, var(--muted-foreground));
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 650;
   letter-spacing: 0.12em;
   line-height: 1;
@@ -6648,7 +6648,7 @@ video {
 .generation-history-group h3 {
   margin: 6px 8px 6px;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   line-height: 1.3;
 }
@@ -6719,7 +6719,7 @@ video {
 .generation-history-item__content small,
 .generation-history-item__date {
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.25;
 }
 .generation-history-item__date {
@@ -6773,7 +6773,7 @@ video {
 .generation-history-pending small {
   overflow: hidden;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -8176,7 +8176,7 @@ video {
 .generation-empty-state h2 {
   margin: 0;
   color: var(--text-1);
-  font-size: clamp(22px, 2vw, 28px);
+  font-size: 22px;
   font-weight: 520;
   letter-spacing: 0;
   line-height: 1.2;
@@ -8925,7 +8925,7 @@ video {
   max-width: 100%;
   overflow: hidden;
   color: var(--text-3);
-  font-size: 10px;
+  font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -8979,7 +8979,7 @@ video {
 .sidebar-account-area .account-avatar {
   width: 26px;
   height: 26px;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 /* Keep new generations in a calm chat-like sequence and make the pending
@@ -9783,7 +9783,7 @@ video {
 }
 .assets-page .asset-list__head {
   min-height: 40px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 550;
 }
 .assets-page .asset-list__row {
@@ -10023,7 +10023,7 @@ video {
     display: block;
     margin-bottom: 4px;
     color: var(--muted-foreground);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
   }
   .assets-page .asset-list__prompt,
@@ -10059,7 +10059,7 @@ video {
     display: block;
     margin-bottom: 5px;
     color: var(--muted-foreground);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: none;
   }
@@ -10983,7 +10983,7 @@ video {
   border-radius: 12px;
   background: transparent;
   color: var(--text-2);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1;
 }
@@ -11319,7 +11319,7 @@ video {
 }
 .generation-inspiration .landing-recommendations__prompt {
   color: var(--foreground);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 .generation-inspiration .landing-recommendations__reason {
   color: var(--muted-foreground);
@@ -11572,7 +11572,7 @@ video {
   padding: 0;
   background: transparent;
   color: var(--accent);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 400;
   text-align: left;
   text-overflow: ellipsis;
@@ -11726,7 +11726,7 @@ video {
   border-radius: 10px;
   padding: 0 60px 0 12px;
   color: var(--text-2);
-  font-size: 13.5px;
+  font-size: 13px;
 }
 .landing-sidebar .sidebar-history [data-sidebar='menu-button'] svg,
 [data-mobile='true'] .sidebar-history [data-sidebar='menu-button'] svg {
@@ -12366,7 +12366,7 @@ video.home-backdrop__media[data-playing='false'] {
   border-radius: var(--radius-full);
   background: linear-gradient(135deg, var(--brand-orange), var(--brand-blue));
   color: var(--text-1);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
 }
 .home-feed__empty {

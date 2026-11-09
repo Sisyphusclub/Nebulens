@@ -1,7 +1,7 @@
 import { ArrowUpRight, Copy, ExternalLink, Heart, Search, X } from 'lucide-react';
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useToast } from '@/components/common/ToastProvider';
 import { OperationalPageHeader } from '@/components/common/OperationalPageHeader';
@@ -30,6 +30,8 @@ const SORT_OPTIONS: readonly { value: TemplateSort; label: string }[] = [
   { value: 'title', label: '名称排序' },
 ];
 const INITIAL_TEMPLATE_COUNT = 24;
+/** The previewed template lives in the address, so a link or a refresh reopens it. */
+const TEMPLATE_PARAM = 'template';
 const TEMPLATE_BATCH_SIZE = 24;
 
 function templateSearchParams(template: CreationTemplate): string {
@@ -49,7 +51,12 @@ export function TemplatesView() {
   const [category, setCategory] = useState<(typeof TEMPLATE_CATEGORIES)[number]>('全部');
   const [sort, setSort] = useState<TemplateSort>('featured');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [selected, setSelected] = useState<CreationTemplate | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedId = searchParams.get(TEMPLATE_PARAM);
+  const selected = useMemo(
+    () => CREATION_TEMPLATES.find((template) => template.id === selectedId) ?? null,
+    [selectedId],
+  );
   const [visibleCount, setVisibleCount] = useState(INITIAL_TEMPLATE_COUNT);
 
   const filtered = useMemo(() => {
@@ -104,8 +111,19 @@ export function TemplatesView() {
     markUsed(template.id);
     void navigate(`/generate?${templateSearchParams(template)}`);
   };
+  const setSelectedId = (id: string | null): void => {
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        if (id === null) next.delete(TEMPLATE_PARAM);
+        else next.set(TEMPLATE_PARAM, id);
+        return next;
+      },
+      { replace: true },
+    );
+  };
   const closePreview = (): void => {
-    setSelected(null);
+    setSelectedId(null);
   };
 
   return (
@@ -165,7 +183,7 @@ export function TemplatesView() {
                     variant="ghost"
                     className="template-tile__preview"
                     aria-label={`预览模板：${template.title}`}
-                    onClick={() => setSelected(template)}
+                    onClick={() => setSelectedId(template.id)}
                   >
                     <img
                       src={templateThumbnailUrl(template.imageUrl)}

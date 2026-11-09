@@ -702,7 +702,7 @@ video {
   border-top: 1px solid var(--border-floating);
   border-left: 1px solid var(--border-floating);
   /* Top stop of --surface-floating, so the caret joins the panel seamlessly. */
-  background: rgb(50 54 64 / 0.94);
+  background: rgb(30 32 39 / 0.98);
   content: '';
 }
 /* Announcements: a small dot on the bell while something is unread, and a scrolling list

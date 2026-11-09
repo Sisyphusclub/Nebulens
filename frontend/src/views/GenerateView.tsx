@@ -13,7 +13,6 @@ import { StudioAmbient } from '@/components/generation/StudioAmbient';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
-import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { AgentChatInput } from '@/components/premium/agent-chat-input/agent-chat-input';
@@ -22,7 +21,6 @@ import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
-import { getAppNavigation } from '@/config/navigation';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import {
   attachGenerationBatch,
@@ -73,7 +71,7 @@ export function GenerateView() {
   const location = useLocation();
   const navigate = useNavigate();
   const { notify } = useToast();
-  const { user, isAuthenticated, isLoading: authLoading, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const history = useImageHistory();
   const { sessions, create: createSession } = useGenerationSessions();
   const { quota, isLoading: quotaLoading, refresh: refreshQuota, checkIn } = useImageQuota();
@@ -632,24 +630,6 @@ export function GenerateView() {
       aria-label="图像生成工作区"
     >
       <StudioAmbient imageUrl={ambientImageUrl} />
-      <LandingSidebar
-        accountImage={user?.image}
-        accountName={accountName}
-        brandLabel="Nebulens"
-        creditsRemaining={quota?.remaining ?? '—'}
-        ctaLabel="返回发现"
-        ctaTo="/"
-        checkedInToday={quota?.checkedInToday ?? false}
-        dailyCheckInReward={quota?.dailyCheckInReward ?? 5}
-        isAuthenticated={isAuthenticated}
-        imageApiKeyConfigured={imageApiKey.status?.configured === true}
-        items={getAppNavigation(isAdmin)}
-        logoSrc="/brand/logo.png"
-        onCheckIn={checkIn}
-        onLogin={openAuthModal}
-        onOpenImageApiKeySettings={() => setImageApiKeySettingsOpen(true)}
-        onNotify={notify}
-      />
       <LandingAccountActions
         accountImage={user?.image}
         accountName={accountName}

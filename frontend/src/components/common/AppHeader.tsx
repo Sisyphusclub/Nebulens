@@ -1,17 +1,15 @@
 import { useState } from 'react';
 
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
-import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { useImageQuota } from '@/hooks/useImageQuota';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
-import { getAppNavigation } from '@/config/navigation';
 
 export function AppHeader() {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const { quota, checkIn } = useImageQuota();
   const imageApiKey = useImageApiKey();
   const { notify } = useToast();
@@ -20,24 +18,6 @@ export function AppHeader() {
 
   return (
     <>
-      <LandingSidebar
-        accountImage={user?.image}
-        accountName={accountName}
-        brandLabel="Nebulens"
-        creditsRemaining={quota?.remaining ?? '—'}
-        ctaLabel="返回发现"
-        ctaTo="/"
-        checkedInToday={quota?.checkedInToday ?? false}
-        dailyCheckInReward={quota?.dailyCheckInReward ?? 5}
-        isAuthenticated={isAuthenticated}
-        imageApiKeyConfigured={imageApiKey.status?.configured === true}
-        items={getAppNavigation(isAdmin)}
-        logoSrc="/brand/logo.png"
-        onCheckIn={checkIn}
-        onLogin={openAuthModal}
-        onOpenImageApiKeySettings={() => setImageApiKeySettingsOpen(true)}
-        onNotify={notify}
-      />
       <LandingAccountActions
         accountImage={user?.image}
         accountName={accountName}

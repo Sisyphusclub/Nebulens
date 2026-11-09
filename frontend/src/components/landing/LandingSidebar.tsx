@@ -1,8 +1,18 @@
-import { Check, KeyRound, LogIn, Sparkles, X, type LucideIcon } from 'lucide-react';
+import {
+  Check,
+  KeyRound,
+  LogIn,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Sparkles,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { AccountAvatar } from '@/components/common/AccountAvatar';
+import { SidebarCreationHistory } from '@/components/landing/SidebarCreationHistory';
 import { Button } from '@/components/ui/button';
 import type { DailyCheckInResponse } from '@/types/image';
 import {
@@ -19,6 +29,10 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
+import {
+  setWorkbenchSidebarExpanded,
+  useWorkbenchSidebarExpanded,
+} from '@/hooks/useWorkbenchSidebar';
 
 export interface LandingSidebarItem {
   icon: LucideIcon;
@@ -75,7 +89,7 @@ function LandingSidebarContent({
   onNotify,
 }: LandingSidebarProps) {
   const location = useLocation();
-  const { setOpenMobile } = useSidebar();
+  const { open, setOpenMobile, toggleSidebar } = useSidebar();
   const [checkingIn, setCheckingIn] = useState(false);
 
   useEffect(() => {
@@ -139,6 +153,18 @@ function LandingSidebarContent({
               <span>{brandLabel}</span>
             </Link>
             <Button
+              className="landing-sidebar__collapse"
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={open ? '收起侧栏' : '展开侧栏'}
+              title={open ? '收起侧栏' : '展开侧栏'}
+              aria-expanded={open}
+              onClick={toggleSidebar}
+            >
+              {open ? <PanelLeftClose aria-hidden="true" /> : <PanelLeftOpen aria-hidden="true" />}
+            </Button>
+            <Button
               className="landing-sidebar__mobile-close"
               type="button"
               variant="ghost"
@@ -159,6 +185,7 @@ function LandingSidebarContent({
               <SidebarGroupContent>{renderItems(utilityItems)}</SidebarGroupContent>
             </SidebarGroup>
           </nav>
+          <SidebarCreationHistory onNavigate={closeMobile} />
         </SidebarContent>
         <SidebarFooter className="landing-sidebar__mobile-footer">
           {!isAuthenticated ? (
@@ -216,13 +243,19 @@ function LandingSidebarContent({
 }
 
 export function LandingSidebar(props: LandingSidebarProps) {
+  const expanded = useWorkbenchSidebarExpanded();
   const sidebarStyle: SidebarVariables = {
-    '--sidebar-width': '14rem',
+    '--sidebar-width': '15rem',
     '--sidebar-width-icon': '6.875rem',
   };
 
   return (
-    <SidebarProvider defaultOpen={false} className="landing-navigation-shell" style={sidebarStyle}>
+    <SidebarProvider
+      open={expanded}
+      onOpenChange={setWorkbenchSidebarExpanded}
+      className="landing-navigation-shell"
+      style={sidebarStyle}
+    >
       <LandingSidebarContent {...props} />
     </SidebarProvider>
   );

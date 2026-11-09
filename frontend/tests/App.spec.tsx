@@ -159,6 +159,7 @@ import {
   rememberGenerationSession,
   resetGenerationSessionsForTests,
 } from '@/hooks/useGenerationSessions';
+import { resetWorkbenchSidebarForTests } from '@/hooks/useWorkbenchSidebar';
 
 /** Less common skills are not on the Discover page; they are picked by typing "/". */
 async function pickSkillBySlash(user: ReturnType<typeof userEvent.setup>, label: string) {
@@ -276,6 +277,7 @@ function RouteFixture({ entry }: { entry: TestRouteEntry }) {
 beforeEach(() => {
   vi.clearAllMocks();
   resetGenerationSessionsForTests();
+  resetWorkbenchSidebarForTests();
   authMocks.user = {
     id: 'admin',
     email: 'admin@example.com',
@@ -798,16 +800,47 @@ describe('React application routes', () => {
     expect(generate.queryByRole('region', { name: '本次创作结果' })).not.toBeInTheDocument();
   });
 
-  it('uses the discovery navigation state without the workspace session controls', () => {
-    renderRoute('/generate');
+  it('lists the creation history in the sidebar and opens a new creation from it', () => {
+    const session = createGenerationSession('雾中的未来车站');
+    attachGenerationBatch(session.id, 'sidebar-batch', '雾中的未来车站');
+    historyMocks.batches = [mockHistoryBatch('sidebar-batch', '雾中的未来车站')];
+    renderRoute(`/generate?session=${session.id}`);
 
     const navigation = screen.getByRole('navigation', { name: '首页导航' });
     expect(within(navigation).getByRole('link', { name: '生图' })).toHaveAttribute(
       'aria-current',
       'page',
     );
-    expect(screen.queryByRole('region', { name: '最近会话' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: '新建生成' })).not.toBeInTheDocument();
+    const history = within(screen.getByRole('list', { name: '创作记录' }));
+    expect(history.getByRole('link', { name: '雾中的未来车站' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.getByRole('link', { name: '新建创作' })).toHaveAttribute(
+      'href',
+      '/generate?prompt=',
+    );
+  });
+
+  it('opens the sidebar expanded and remembers when it is collapsed', async () => {
+    const user = userEvent.setup();
+    const { container } = renderRoute('/templates');
+    const shell = container.querySelector('.app-shell');
+    expect(shell).toHaveAttribute('data-sidebar-rail', 'expanded');
+
+    await user.click(screen.getByRole('button', { name: '收起侧栏' }));
+
+    expect(shell).toHaveAttribute('data-sidebar-rail', 'collapsed');
+    expect(window.localStorage.getItem('nebulens-workbench-sidebar-expanded-v1')).toBe('false');
+    expect(screen.getByRole('button', { name: '展开侧栏' })).toBeInTheDocument();
+  });
+
+  it('hides the creation history from signed-out visitors', () => {
+    authMocks.user = null;
+    authMocks.isAuthenticated = false;
+    renderRoute('/');
+
+    expect(screen.queryByRole('link', { name: '新建创作' })).not.toBeInTheDocument();
   });
 
   it('keeps generated results when submitting multiple prompts in the active session', async () => {

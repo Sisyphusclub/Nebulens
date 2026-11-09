@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
 import { LandingHeroBackdrop } from '@/components/landing/LandingHeroBackdrop';
-import { LandingSidebar } from '@/components/landing/LandingSidebar';
 import { LandingGenerationControls } from '@/components/landing/LandingGenerationControls';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
@@ -39,7 +38,6 @@ import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
 import { useTeamShowcase } from '@/hooks/useTeamShowcase';
 import { buildApiUrl, uploadReferenceImages } from '@/services/api/imagesApi';
 import { fetchSkillForms, planSkill } from '@/services/api/skillsApi';
-import { getAppNavigation } from '@/config/navigation';
 import type {
   AspectChoice,
   GenerationSettingsSnapshot,
@@ -96,7 +94,7 @@ function withoutSkills(prompt: string): string {
 export function LandingView() {
   const navigate = useNavigate();
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const { user, isAuthenticated, isLoading: authLoading, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { quota, isLoading: quotaLoading, checkIn } = useImageQuota();
   const imageApiKey = useImageApiKey();
   const { notify } = useToast();
@@ -354,24 +352,6 @@ export function LandingView() {
       <section className="landing-hero" data-layout="media-stage" aria-labelledby="landing-title">
         <LandingHeroBackdrop reducedMotion={reducedMotion} />
         <div className="landing-hero__overlay" aria-hidden="true" />
-        <LandingSidebar
-          accountImage={user?.image}
-          accountName={accountName}
-          brandLabel="Nebulens"
-          creditsRemaining={quota?.remaining ?? '—'}
-          ctaLabel={isAuthenticated ? '进入工作台' : '开始创作'}
-          ctaTo="/generate"
-          checkedInToday={quota?.checkedInToday ?? false}
-          dailyCheckInReward={quota?.dailyCheckInReward ?? 5}
-          isAuthenticated={isAuthenticated}
-          imageApiKeyConfigured={imageApiKey.status?.configured === true}
-          items={getAppNavigation(isAdmin)}
-          logoSrc="/brand/logo.png"
-          onCheckIn={checkIn}
-          onLogin={openAuthModal}
-          onOpenImageApiKeySettings={() => setImageApiKeySettingsOpen(true)}
-          onNotify={notify}
-        />
         <LandingAccountActions
           isAuthPending={authLoading}
           accountImage={user?.image}

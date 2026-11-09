@@ -4090,6 +4090,7 @@ video.landing-hero__video[data-playing='false'] {
 /* Every template category stays in view as a chip, in the assets page's glass chip style;
    a narrow screen scrolls the one row sideways instead of stacking it. */
 .template-category-chips {
+  position: relative;
   display: flex;
   min-width: 0;
   flex-wrap: wrap;

@@ -1,5 +1,5 @@
 import { ArrowUpRight, Copy, ExternalLink, Heart, Search, X } from 'lucide-react';
-import { type CSSProperties, useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -77,6 +77,7 @@ export function TemplatesView() {
     [selectedId],
   );
   const [visibleCount, setVisibleCount] = useState(INITIAL_TEMPLATE_COUNT);
+  const categoryChipsRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('zh-CN');
@@ -103,6 +104,17 @@ export function TemplatesView() {
   useEffect(() => {
     setVisibleCount(INITIAL_TEMPLATE_COUNT);
   }, [category, favoritesOnly, query, sort]);
+
+  // On a narrow screen the chips scroll sideways; a category opened from a link stays in view.
+  useEffect(() => {
+    const chips = categoryChipsRef.current;
+    const active = chips?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!chips || !active) return;
+    chips.scrollTo?.({
+      left: active.offsetLeft - (chips.clientWidth - active.offsetWidth) / 2,
+      behavior: 'auto',
+    });
+  }, [category]);
 
   useEffect(() => {
     if (!selected) return;
@@ -184,7 +196,12 @@ export function TemplatesView() {
           </Button>
         </IconTooltip>
       </div>
-      <div className="template-category-chips" role="group" aria-label="模板分类">
+      <div
+        ref={categoryChipsRef}
+        className="template-category-chips"
+        role="group"
+        aria-label="模板分类"
+      >
         {CATEGORY_CHIPS.map((value) => (
           <Button
             key={value}

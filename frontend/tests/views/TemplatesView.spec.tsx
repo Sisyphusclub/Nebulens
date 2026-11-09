@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
-import { beforeEach, expect, it } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vitest';
 
 import { ToastProvider } from '@/components/common/ToastProvider';
 import { CREATION_TEMPLATES, orderTemplatesWithAnimeLast } from '@/data/creationTemplates';
@@ -117,4 +117,17 @@ it('falls back to every template for a category that does not exist', () => {
     within(screen.getByRole('group', { name: '模板分类' })).getByRole('button', { name: '全部' }),
   ).toHaveAttribute('aria-pressed', 'true');
   expect(screen.getByText(`${CREATION_TEMPLATES.length} 个模板`)).toBeInTheDocument();
+});
+
+it('scrolls the chip row so a linked category is in view on a narrow screen', () => {
+  const scrollTo = vi.fn();
+  Object.defineProperty(HTMLElement.prototype, 'scrollTo', { configurable: true, value: scrollTo });
+  try {
+    renderView(`/templates?category=${encodeURIComponent('产品美食')}`);
+
+    expect(scrollTo).toHaveBeenCalled();
+    expect(scrollTo.mock.contexts.at(-1)).toBe(screen.getByRole('group', { name: '模板分类' }));
+  } finally {
+    Reflect.deleteProperty(HTMLElement.prototype, 'scrollTo');
+  }
 });

@@ -1,4 +1,4 @@
-import { Sparkles, Undo2, WandSparkles } from 'lucide-react';
+import { ChevronUp, Sparkles, Undo2, WandSparkles } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { IMAGE_CATEGORY_LABELS, type ImageResolution } from '@/types/image';
@@ -16,6 +16,8 @@ export function AiInsightBar({
   resolution,
   canUse2k,
   similarCount,
+  similarOpen = false,
+  onToggleSimilar,
   onUse2k,
   enhance,
 }: {
@@ -24,6 +26,9 @@ export function AiInsightBar({
   /** A 2K/4K key or enough quota for one 2K image. */
   canUse2k: boolean;
   similarCount: number;
+  /** Whether the similar work is shown; with `onToggleSimilar`, its count opens and closes it. */
+  similarOpen?: boolean;
+  onToggleSimilar?: () => void;
   onUse2k: () => void;
   /** AI polishing of the prompt; omitted where polishing is unavailable. */
   enhance?: {
@@ -38,7 +43,6 @@ export function AiInsightBar({
   const facts = [
     ...(insight.category ? [`识别为${IMAGE_CATEGORY_LABELS[insight.category]}`] : []),
     ...(insight.texts.length > 0 ? [`${insight.texts.length} 段画面文字`] : []),
-    ...(similarCount > 0 ? [`成果库有 ${similarCount} 个相似作品`] : []),
     ...(enhance?.canUndo ? ['已润色'] : []),
   ];
   const adviseResolution = insight.dense && resolution === 'standard';
@@ -53,15 +57,31 @@ export function AiInsightBar({
           <Sparkles aria-hidden="true" />
           AI
         </span>
-        {facts.length > 0 ? (
-          facts.map((fact) => (
-            <span className="ai-insight__fact" key={fact}>
-              {fact}
-            </span>
-          ))
-        ) : (
+        {facts.map((fact) => (
+          <span className="ai-insight__fact" key={fact}>
+            {fact}
+          </span>
+        ))}
+        {similarCount > 0 ? (
+          onToggleSimilar ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="compact"
+              className="ai-insight__fact ai-insight__fact--toggle"
+              aria-expanded={similarOpen}
+              onClick={onToggleSimilar}
+            >
+              {`成果库有 ${similarCount} 个相似作品`}
+              <ChevronUp aria-hidden="true" />
+            </Button>
+          ) : (
+            <span className="ai-insight__fact">{`成果库有 ${similarCount} 个相似作品`}</span>
+          )
+        ) : null}
+        {facts.length === 0 && similarCount === 0 ? (
           <span className="ai-insight__tip">用引号写出要出现在图中的文字，AI 会逐字核对。</span>
-        )}
+        ) : null}
         {adviseResolution ? (
           <span className="ai-insight__tip ai-insight__tip--warn">
             {canUse2k ? '小字较多' : '小字较多，生成后可重画文字'}

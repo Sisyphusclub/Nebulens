@@ -128,3 +128,11 @@ describe('image detail over the sidebar', () => {
     );
   });
 });
+
+describe('generate composer', () => {
+  it('shows four lines of a long prompt at most, so it cannot cover the results', () => {
+    expect(rule('.studio-create-bar .generation-composer .agent-chat-input__textarea')).toContain(
+      'max-height: 126px !important;',
+    );
+  });
+});

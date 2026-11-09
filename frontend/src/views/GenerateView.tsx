@@ -87,8 +87,11 @@ export function GenerateView() {
   const skillRunHandled = useRef(false);
   const bareRouteRestoreHandled = useRef(false);
   const [prompt, setPrompt] = useState(searchParams.get('prompt') ?? '');
-  /** The prompt the inspiration panel was closed for; it returns once the prompt changes. */
-  const [dismissedInspirationFor, setDismissedInspirationFor] = useState<string | null>(null);
+  /**
+   * Similar team work stays folded behind its count in the AI strip until asked for, so the
+   * dock does not grow over the results while writing.
+   */
+  const [inspirationOpen, setInspirationOpen] = useState(false);
   const [selectedInspiration, setSelectedInspiration] = useState<TeamRecommendation | null>(null);
   const {
     model,
@@ -132,8 +135,12 @@ export function GenerateView() {
   const promptEnhancer = usePromptEnhancer({ prompt, setPrompt, isAuthenticated, notify });
   const { items: inspiration } = useTeamRecommendations(
     prompt,
-    isAuthenticated && !generation.isLoading && prompt.trim() !== dismissedInspirationFor,
+    isAuthenticated && !generation.isLoading,
   );
+  // A sent or cleared prompt folds the panel again for the next one.
+  useEffect(() => {
+    if (prompt.trim() === '') setInspirationOpen(false);
+  }, [prompt]);
   const selectedInspirationEntry = useMemo<HistoryEntry | null>(
     () =>
       selectedInspiration === null
@@ -149,7 +156,8 @@ export function GenerateView() {
     if (recommendation.record.aspectRatio !== undefined) {
       setAspect(normalizeAspectChoiceForResolution(recommendation.record.aspectRatio, resolution));
     }
-    setDismissedInspirationFor(recommendation.record.prompt.trim());
+    // The borrowed prompt is in the composer now; the panel folds away.
+    setInspirationOpen(false);
     setSelectedInspiration(null);
   };
   const activeImageApiKeyConfigured =
@@ -701,13 +709,13 @@ export function GenerateView() {
             </IconTooltip>
           </div>
         ) : null}
-        {inspiration.length > 0 ? (
+        {inspirationOpen && inspiration.length > 0 ? (
           <LandingRecommendations
             className="generation-inspiration"
             recommendations={inspiration.slice(0, 3)}
             onOpen={setSelectedInspiration}
             onUsePrompt={applyInspiration}
-            onDismiss={() => setDismissedInspirationFor(prompt.trim())}
+            onDismiss={() => setInspirationOpen(false)}
           />
         ) : null}
         <AiInsightBar
@@ -715,6 +723,8 @@ export function GenerateView() {
           resolution={resolution}
           canUse2k={canUse2k}
           similarCount={inspiration.length}
+          similarOpen={inspirationOpen}
+          onToggleSimilar={() => setInspirationOpen((open) => !open)}
           onUse2k={() => updateResolution('2k')}
           enhance={{
             enhancing: promptEnhancer.enhancing,

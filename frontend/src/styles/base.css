@@ -11397,6 +11397,36 @@ video {
   padding: 3px 8px;
   line-height: 1.4;
 }
+/* The similar-work count opens the panel above it, so it reads as a link-coloured chip. */
+.ai-insight .ai-insight__fact--toggle {
+  display: inline-flex;
+  height: auto;
+  min-height: 0;
+  align-items: center;
+  gap: 3px;
+  border: 0;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.06);
+  padding: 3px 6px 3px 8px;
+  color: #c9c4ff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.ai-insight .ai-insight__fact--toggle:hover,
+.ai-insight .ai-insight__fact--toggle:focus-visible,
+.ai-insight .ai-insight__fact--toggle[aria-expanded='true'] {
+  background: rgb(184 178 255 / 0.16);
+  color: #fff;
+}
+.ai-insight__fact--toggle svg {
+  width: 13px;
+  height: 13px;
+  transition: transform 160ms var(--ease-out-expo);
+}
+.ai-insight__fact--toggle[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
 .ai-insight__tip {
   color: rgb(242 244 247 / 0.5);
 }
@@ -11443,6 +11473,11 @@ video {
 .home-hero .ai-insight {
   width: 100%;
   margin: 12px 0 0;
+}
+/* While writing on the generate page the composer shows four lines at most and scrolls
+   inside, so a long prompt, put back by "reuse settings" say, does not cover the results. */
+.studio-create-bar .generation-composer .agent-chat-input__textarea {
+  max-height: 126px !important;
 }
 /* On the generate page results scroll underneath the dock, so the strip gets the same dark
    glass as the panel above it instead of floating bare over an image. */

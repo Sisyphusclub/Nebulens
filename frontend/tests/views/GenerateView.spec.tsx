@@ -2270,6 +2270,7 @@ it('offers similar teammate work above the composer and reuses its prompt', asyn
   );
 
   await user.type(screen.getByRole('textbox', { name: '图像提示词' }), '周年庆海报');
+  await user.click(await screen.findByRole('button', { name: '成果库有 1 个相似作品' }));
   const panel = await screen.findByRole('region', { name: '成果库里相似的作品' });
   await user.click(within(panel).getByRole('button', { name: '用这个提示词' }));
 
@@ -2279,7 +2280,7 @@ it('offers similar teammate work above the composer and reuses its prompt', asyn
   expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('3:4');
 });
 
-it('lets the inspiration be dismissed until the prompt changes, and hides it while generating', async () => {
+it('keeps similar work folded behind its count until asked for, and hides it while generating', async () => {
   const user = userEvent.setup();
   recommendationMocks.items = [teamRecommendation];
   const { rerender } = render(
@@ -2289,13 +2290,20 @@ it('lets the inspiration be dismissed until the prompt changes, and hides it whi
       </ToastProvider>
     </MemoryRouter>,
   );
-  const editor = screen.getByRole('textbox', { name: '图像提示词' });
-  await user.type(editor, '周年庆海报');
-  await user.click(await screen.findByRole('button', { name: '关闭成果库推荐' }));
+  await user.type(screen.getByRole('textbox', { name: '图像提示词' }), '周年庆海报');
+
+  // Folded, it only takes the count in the AI strip, so the dock stays short.
+  const toggle = await screen.findByRole('button', { name: '成果库有 1 个相似作品' });
+  expect(toggle).toHaveAttribute('aria-expanded', 'false');
   expect(screen.queryByRole('region', { name: '成果库里相似的作品' })).not.toBeInTheDocument();
 
-  await user.type(editor, '设计');
-  expect(await screen.findByRole('region', { name: '成果库里相似的作品' })).toBeInTheDocument();
+  await user.click(toggle);
+  expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  expect(screen.getByRole('region', { name: '成果库里相似的作品' })).toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: '关闭成果库推荐' }));
+  expect(screen.queryByRole('region', { name: '成果库里相似的作品' })).not.toBeInTheDocument();
+  expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
   generation.isLoading = true;
   rerender(

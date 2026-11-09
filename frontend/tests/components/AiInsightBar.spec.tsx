@@ -112,3 +112,22 @@ it('lets the user undo a polish', async () => {
   await user.click(screen.getByRole('button', { name: '撤销润色' }));
   expect(onUndo).toHaveBeenCalledTimes(1);
 });
+
+it('turns the similar-work count into a toggle for the panel when asked to', async () => {
+  const user = userEvent.setup();
+  const onToggleSimilar = vi.fn();
+  renderBar({ similarCount: 2, similarOpen: false, onToggleSimilar });
+
+  const toggle = screen.getByRole('button', { name: '成果库有 2 个相似作品' });
+  expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await user.click(toggle);
+  expect(onToggleSimilar).toHaveBeenCalledTimes(1);
+});
+
+it('names similar work without the writing tip when it is all there is to say', () => {
+  renderBar({ prompt: '一只猫在窗边晒太阳', similarCount: 3 });
+
+  const bar = screen.getByRole('status', { name: 'AI 理解' });
+  expect(bar).toHaveTextContent('成果库有 3 个相似作品');
+  expect(bar).not.toHaveTextContent('用引号写出');
+});

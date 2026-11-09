@@ -33,8 +33,7 @@ describe('generate canvas dot contract', () => {
   it('matches the operational canvas dot color, radius, position, and responsive size', () => {
     const operationalSelector = '.app-main:not(.app-main--landing):not(.app-main--generate)';
     const generateSelector = '.app-shell--generate .generation-console';
-    const expectedDots =
-      'radial-gradient(circle, color-mix(in oklch, var(--border-strong) 46%, transparent) 0.9px, transparent 1px)';
+    const expectedDots = 'radial-gradient(circle, var(--fill-2) 0.9px, transparent 1px)';
     const operationalDots = declarationsForSelector(
       baseStyles,
       operationalSelector,

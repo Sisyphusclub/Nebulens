@@ -44,8 +44,8 @@ describe('generation control panels', () => {
       '';
 
     expect(track).toContain('border-radius: 16px;');
-    expect(track).toContain('background: rgb(255 255 255 / 0.05);');
-    expect(checked).toContain('background: rgb(255 255 255 / 0.14);');
-    expect(checked).toContain('color: #fff;');
+    expect(track).toContain('background: var(--fill-1);');
+    expect(checked).toContain('background: var(--fill-4);');
+    expect(checked).toContain('color: var(--text-1);');
   });
 });

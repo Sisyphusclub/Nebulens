@@ -680,7 +680,8 @@ export function AgentChatInput({
       animated={false}
       backgroundColor="var(--muted)"
       borderRadius={20}
-      colors={['#ffb51b', '#12c8f4', '#1464ff']}
+      // The logo ribbon's --brand-orange, --brand-cyan and --brand-blue; the glow parses hex.
+      colors={['#f9931b', '#00a3fe', '#005bf9']}
       coneSpread={22}
       edgeSensitivity={24}
       fillOpacity={0}

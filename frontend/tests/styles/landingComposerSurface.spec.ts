@@ -123,7 +123,7 @@ describe('landing composer surface contract', () => {
     expect(glass).toContain('border-radius: 28px;');
     // Controls inside the glass are glass pills, including the send button.
     expect(glass).toMatch(
-      /\.liquid-glass-frame > \.generation-composer \.agent-chat-input__submit\s*\{[^}]*background: rgb\(255 255 255 \/ 0\.14\)/s,
+      /\.liquid-glass-frame > \.generation-composer \.agent-chat-input__submit\s*\{[^}]*background: var\(--fill-4\)/s,
     );
     expect(baseStyles).not.toContain('border-glow-liquid-glass');
   });

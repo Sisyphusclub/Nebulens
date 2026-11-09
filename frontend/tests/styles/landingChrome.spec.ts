@@ -35,8 +35,8 @@ describe('landing navigation chrome', () => {
     const active = rule(".landing-sidebar [data-sidebar='menu-button'][data-active='true']");
     const item = rule(".landing-sidebar [data-sidebar='menu-button']");
 
-    expect(active).toContain('background: rgb(255 255 255 / 0.12);');
-    expect(item).toContain('color: rgb(242 244 247 / 0.78);');
+    expect(active).toContain('background: var(--fill-4);');
+    expect(item).toContain('color: var(--text-2);');
   });
 
   it('puts the header icon buttons on the same glass as the credits pill', () => {

@@ -5,7 +5,7 @@
   width: 100%;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid color-mix(in oklch, var(--border-strong) 64%, transparent);
+  border: 1px solid var(--line-2);
   border-radius: 15px;
   background: color-mix(in oklch, var(--surface-raised) 78%, var(--card));
   isolation: isolate;
@@ -75,7 +75,7 @@
   top: 10px;
   right: 10px;
   z-index: 2;
-  border: 1px solid color-mix(in oklch, var(--border) 72%, transparent);
+  border: 1px solid var(--line-1);
   border-radius: var(--radius-full);
   background: color-mix(in oklch, var(--card) 76%, transparent);
   color: color-mix(in oklch, var(--muted-foreground) 90%, var(--foreground));
@@ -341,7 +341,7 @@
 
   .image-generation__label {
     background: none;
-    color: color-mix(in oklch, var(--foreground) 86%, var(--muted-foreground));
+    color: var(--text-1);
     -webkit-text-fill-color: currentColor;
   }
 }

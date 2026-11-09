@@ -901,6 +901,7 @@ video.landing-hero__video[data-playing='false'] {
   color: rgb(220 226 238 / 0.76);
   font-size: 12px;
   line-height: 1.5;
+  list-style: disc;
 }
 @media (max-width: 560px) {
   .announcement-popover {

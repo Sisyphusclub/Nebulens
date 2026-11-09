@@ -2,10 +2,13 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { render, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
 
+import { LandingFeatureBanner } from '@/components/landing/LandingFeatureBanner';
 import { LandingSkillDeck } from '@/components/landing/LandingSkills';
+import { CREATION_TEMPLATES } from '@/data/creationTemplates';
 import { EVERYDAY_SKILLS, LANDING_SKILLS } from '@/data/landingSkills';
 
 it('shows every skill as a tile with its tagline and example', async () => {
@@ -48,4 +51,30 @@ it('only ships skills with a brief example and an example image on disk', () => 
     expect(skill.tagline.length).toBeLessThanOrEqual(10);
     expect(existsSync(resolve(process.cwd(), 'public', skill.image.slice(1)))).toBe(true);
   }
+});
+
+it('leads the deck with a templates card when there is nothing to continue', () => {
+  render(
+    <MemoryRouter>
+      <LandingSkillDeck
+        feature={
+          <LandingFeatureBanner
+            recent={undefined}
+            template={CREATION_TEMPLATES[0]}
+            templateCount={CREATION_TEMPLATES.length}
+            onOpenRecent={vi.fn()}
+          />
+        }
+        onSelect={vi.fn()}
+      />
+    </MemoryRouter>,
+  );
+
+  const deck = screen.getByRole('region', { name: '技能' });
+  expect(within(deck).getByRole('link', { name: '浏览创作模板' })).toHaveAttribute(
+    'href',
+    '/templates',
+  );
+  expect(deck).toHaveTextContent(`${CREATION_TEMPLATES.length} 套精选模板`);
+  expect(within(deck).queryByRole('navigation', { name: '继续上次创作' })).toBeNull();
 });

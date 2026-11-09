@@ -11474,71 +11474,10 @@ video.landing-hero__video[data-playing='false'] {
   }
 }
 
-/* Landing hero: the signed-in user's latest sessions, one tap from resuming */
-/* For someone who had something to continue last time, holds the row's height before the
-   history arrives, so the skills below stay put; nobody else gets an empty gap. */
+/* Landing hero: suggestions shown under the composer while typing */
 .landing-hero__secondary {
   width: 100%;
   max-width: 940px;
-}
-.landing-hero__secondary[data-reserve='true'] {
-  min-height: 60px;
-}
-.landing-recent {
-  animation: landing-recent-in 240ms var(--ease-out-expo) both;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  max-width: 940px;
-  margin-top: 12px;
-}
-@keyframes landing-recent-in {
-  from {
-    opacity: 0;
-  }
-}
-.landing-recent__label {
-  color: rgb(242 244 247 / 0.56);
-  font-size: 12px;
-  letter-spacing: 0.04em;
-}
-.landing-recent .landing-recent__item {
-  height: 36px;
-  max-width: 220px;
-  gap: 8px;
-  border: 1px solid rgb(242 244 247 / 0.12);
-  border-radius: 10px;
-  background: rgb(10 12 18 / 0.5);
-  color: rgb(242 244 247 / 0.86);
-  padding: 0 12px 0 4px;
-  font-size: 13px;
-  font-weight: 500;
-}
-.landing-recent .landing-recent__item:hover,
-.landing-recent .landing-recent__item:focus-visible {
-  border-color: rgb(242 244 247 / 0.3);
-  background: rgb(22 26 36 / 0.76);
-}
-.landing-recent__item img {
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
-  border-radius: 7px;
-  object-fit: cover;
-}
-.landing-recent__item span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-@media (max-width: 760px) {
-  .landing-recent .landing-recent__item {
-    max-width: 100%;
-  }
 }
 
 /* Landing hero: teammates' work matching the need being typed */
@@ -11819,9 +11758,9 @@ video.landing-hero__video[data-playing='false'] {
   width: 100%;
   max-width: 1760px;
   margin: 0 auto;
-  /* Twelve skills in two rows, so the whole set stays within the first screen. */
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  grid-auto-rows: 72px;
+  /* A feature card on the left, then the twelve skills in three rows of four. */
+  grid-template-columns: minmax(280px, 1.45fr) repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 84px;
   gap: 10px;
 }
 .landing-deck .landing-deck__tile {
@@ -11829,14 +11768,14 @@ video.landing-hero__video[data-playing='false'] {
   height: auto;
   min-width: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 12px;
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 0.12);
   border-top-color: rgb(255 255 255 / 0.2);
   border-radius: 14px;
   background: rgb(36 40 52 / 0.94);
-  padding: 8px 8px 8px 12px;
+  padding: 8px 12px 8px 8px;
   text-align: left;
   transition:
     border-color 160ms var(--ease-out-expo),
@@ -11876,13 +11815,98 @@ video.landing-hero__video[data-playing='false'] {
   white-space: nowrap;
 }
 .landing-deck__tile img {
-  width: 48px;
-  height: 48px;
+  width: 66px;
+  height: 66px;
   flex: none;
   border-radius: 10px;
   object-fit: cover;
 }
-/* Laptops: still two rows, giving up the icon and then the tagline before the name. */
+/* The feature card fills the three rows on the left: a cover image with its words on it. */
+.landing-feature {
+  grid-row: span 3;
+  min-width: 0;
+}
+.landing-feature .landing-feature__card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: flex-end;
+  justify-content: flex-start;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-top-color: rgb(255 255 255 / 0.2);
+  border-radius: 18px;
+  background: rgb(36 40 52 / 0.94);
+  padding: 0;
+  color: #fff;
+  text-align: left;
+  white-space: normal;
+  transition: border-color 160ms var(--ease-out-expo);
+}
+.landing-feature .landing-feature__card:hover,
+.landing-feature .landing-feature__card:focus-visible {
+  border-color: rgb(255 255 255 / 0.32);
+}
+.landing-feature__card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.landing-feature__card::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgb(5 6 10 / 0.86) 100%);
+  content: '';
+}
+.landing-feature__text {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  padding: 20px 22px;
+}
+.landing-feature__eyebrow {
+  color: rgb(242 244 247 / 0.7);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.landing-feature__title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.landing-feature__description {
+  color: rgb(242 244 247 / 0.72);
+  font-size: 13px;
+}
+.landing-feature__cta {
+  display: inline-flex;
+  width: max-content;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: #fff;
+  padding: 7px 14px;
+  color: #0b0d12;
+  font-size: 13px;
+  font-weight: 600;
+}
+.landing-feature__cta svg {
+  width: 14px;
+  height: 14px;
+}
+/* Laptops: still four columns, giving up the icon and then the tagline before the name. */
 @media (min-width: 1241px) and (max-width: 1400px) {
   .landing-deck__tile-title svg {
     display: none;
@@ -11891,19 +11915,18 @@ video.landing-hero__video[data-playing='false'] {
     font-size: 11px;
   }
   .landing-deck__tile img {
-    width: 44px;
-    height: 44px;
+    width: 56px;
+    height: 56px;
   }
 }
-@media (min-width: 1241px) and (max-width: 1360px) {
-  .landing-deck__tile-description {
-    display: none;
-  }
-}
-/* Beside the rail, six tiles would be too narrow for the name and the example. */
+/* Narrower windows put the feature card across the top and the skills three to a row. */
 @media (max-width: 1240px) {
   .landing-deck__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .landing-feature {
+    grid-column: 1 / -1;
+    grid-row: span 2;
   }
 }
 @media (max-width: 860px) {
@@ -12117,6 +12140,7 @@ video.landing-hero__video[data-playing='false'] {
 }
 @media (prefers-reduced-motion: reduce) {
   .landing-deck__tile,
+  .landing-feature__card,
   .landing-showcase__card img,
   .landing-showcase__cta {
     transition: none;

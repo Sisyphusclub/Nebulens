@@ -1182,7 +1182,7 @@ it('reveals a completed image only after its load event', async () => {
   expect(screen.getByRole('dialog', { name: '图片详情' })).toBeInTheDocument();
 });
 
-it('tints the page backdrop with the latest image once there is one', async () => {
+it('keeps the page backdrop plain, with no wash tinted by the latest image', async () => {
   const user = userEvent.setup();
   const { container } = render(
     <MemoryRouter initialEntries={['/generate?prompt=%E9%9B%A8%E5%A4%9C%E5%BB%BA%E7%AD%91']}>
@@ -1192,15 +1192,57 @@ it('tints the page backdrop with the latest image once there is one', async () =
     </MemoryRouter>,
   );
 
-  const ambient = container.querySelector('.studio-ambient');
-  expect(ambient).toHaveAttribute('aria-hidden', 'true');
-  expect(ambient?.querySelector('img')).toBeNull();
-
   await user.click(screen.getByRole('button', { name: '生成图片' }));
   await screen.findByRole('button', { name: '查看图片：雨夜建筑' });
-  expect(container.querySelector('.studio-ambient__image')).toHaveAttribute(
-    'src',
-    '/result-one.png',
+  // Behind an opaque sidebar the wash only coloured part of the window.
+  expect(container.querySelector('.studio-ambient')).toBeNull();
+});
+
+it('empties the composer as soon as a prompt is sent and refills it if the run is stopped', async () => {
+  const pending = deferred<Awaited<ReturnType<typeof generation.generate>>>();
+  generation.generate.mockReturnValueOnce(pending.promise);
+  const user = userEvent.setup();
+  const { container } = render(
+    <MemoryRouter initialEntries={['/generate?prompt=%E9%9B%A8%E5%A4%9C%E5%BB%BA%E7%AD%91']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await user.click(screen.getByRole('button', { name: '生成图片' }));
+  await waitFor(() => expect(generation.generate).toHaveBeenCalledOnce());
+
+  // A long prompt left in the composer made it tall enough to cover the result.
+  expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent('');
+  expect(container.querySelector('.session-batch')).toHaveTextContent('雨夜建筑');
+  expect(screen.queryByRole('status', { name: 'AI 理解' })).not.toBeInTheDocument();
+
+  // Stopping the run brings the text back, ready to edit and send again.
+  await act(async () => {
+    pending.reject(new Error('生成已停止。'));
+    await pending.promise.catch(() => undefined);
+  });
+  await waitFor(() =>
+    expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent('雨夜建筑'),
+  );
+});
+
+it('puts the prompt back in the composer when the generation fails', async () => {
+  generation.generate.mockRejectedValueOnce(new Error('上游生成失败'));
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter initialEntries={['/generate?prompt=%E6%99%A8%E9%9B%BE']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await user.click(screen.getByRole('button', { name: '生成图片' }));
+
+  await waitFor(() =>
+    expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent('晨雾'),
   );
 });
 
@@ -1976,13 +2018,17 @@ it('switches to the owning session when a history batch from another session is 
 });
 
 it('adds an orphan history batch to the current session when it is opened', async () => {
-  const scrolledBatchIds: Array<string | undefined> = [];
-  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
-    configurable: true,
-    value: vi.fn(function (this: HTMLElement) {
-      scrolledBatchIds.push(this.dataset.generationBatch);
-    }),
-  });
+  const rect = (top: number, bottom: number) =>
+    ({ top, bottom, left: 0, right: 0, x: 0, y: top, width: 0, height: bottom - top }) as DOMRect;
+  // The opened batch ends at 900px and the create bar starts at 600px.
+  const rects = vi
+    .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    .mockImplementation(function (this: HTMLElement) {
+      if (this.dataset.generationBatch === 'orphan-batch') return rect(700, 900);
+      if (this.classList.contains('studio-create-bar')) return rect(600, 760);
+      return rect(0, 0);
+    });
+  const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
   historyMocks.batches = [
     makeHistoryBatch('mine-batch', '海边灯塔', '2026-07-30T08:00:00.000Z'),
     makeHistoryBatch('orphan-batch', '旧设备作品', '2026-07-01T08:00:00.000Z'),
@@ -2002,7 +2048,7 @@ it('adds an orphan history batch to the current session when it is opened', asyn
     const results = () => screen.getByRole('region', { name: '本次创作结果' });
     await waitFor(() => expect(results()).toHaveTextContent('海边灯塔'));
     expect(results()).not.toHaveTextContent('旧设备作品');
-    scrolledBatchIds.length = 0;
+    scrollTo.mockClear();
 
     await openHistoryBatch('旧设备作品');
 
@@ -2014,9 +2060,13 @@ it('adds an orphan history batch to the current session when it is opened', asyn
     expect(stored.find((item) => item.id === currentSession.id)?.batchIds).toContain(
       'orphan-batch',
     );
-    await waitFor(() => expect(scrolledBatchIds).toContain('orphan-batch'));
+    // It is scrolled to end 24px above the create bar: 900 - (600 - 24).
+    await waitFor(() =>
+      expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 324 })),
+    );
   } finally {
-    delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    rects.mockRestore();
+    scrollTo.mockRestore();
   }
 });
 

@@ -9,7 +9,6 @@ import { GenerationHistoryFlyout } from '@/components/generation/GenerationHisto
 import { GenerationComposerControls } from '@/components/generation/GenerationComposerControls';
 import { GenerationBatch } from '@/components/generation/GenerationBatch';
 import { AiInsightBar } from '@/components/generation/AiInsightBar';
-import { StudioAmbient } from '@/components/generation/StudioAmbient';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
@@ -37,6 +36,7 @@ import { useGenerationFeed } from '@/hooks/useGenerationFeed';
 import { readReferenceIds, useGenerationSettings } from '@/hooks/useGenerationSettings';
 import { useImageQuota } from '@/hooks/useImageQuota';
 import { useCreateBarReserve } from '@/hooks/useCreateBarReserve';
+import { useFollowLatestResult } from '@/hooks/useFollowLatestResult';
 import { useSkillRun } from '@/hooks/useSkillRun';
 import { clearPromptDraftsWithText, readPromptDraft, usePromptDraft } from '@/hooks/usePromptDraft';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
@@ -61,7 +61,11 @@ import type { FeedItem } from '@/utils/generationFeed';
 import { readInitialReferenceFiles, requestsAutoGeneration } from '@/utils/generationRouteState';
 import { readSkillRun } from '@/utils/skillRun';
 import { useReleaseJumpTarget, useViewedBatchId } from '@/hooks/useViewedBatchId';
-import { prefersReducedMotion, scrollToGenerationBatch } from '@/utils/generationScroll';
+import {
+  prefersReducedMotion,
+  scrollGenerationBatchAboveComposer,
+  scrollToGenerationBatch,
+} from '@/utils/generationScroll';
 
 /** Whole batches are confirmed first; a single image is deleted at once and can be undone. */
 type DeleteTarget = { kind: 'batch'; item: FeedItem };
@@ -223,7 +227,10 @@ export function GenerateView() {
     const pendingId = pendingScrollId.current;
     if (!pendingId) return;
     pendingScrollId.current = null;
-    scrollToGenerationBatch(pendingId);
+    // A new batch ends just above the create bar; centred, the bar would cover its image.
+    if (!scrollGenerationBatchAboveComposer(pendingId, composerRef.current)) {
+      scrollToGenerationBatch(pendingId);
+    }
   }, [feed, pendingScrollId]);
 
   useEffect(() => {
@@ -290,9 +297,6 @@ export function GenerateView() {
       );
   }, [feed, history.pendingRemovalIds]);
   const latestBatch = feed[feed.length - 1];
-  /** While a new batch is still generating, the backdrop keeps the previous image. */
-  const ambientImageUrl = [...feed].reverse().find((item) => item.entries.length > 0)
-    ?.entries[0]?.imageUrl;
   const latestBatchVisibilityKey = latestBatch
     ? `${latestBatch.id}:${latestBatch.entries.length}:${latestBatch.error ? 'error' : 'ready'}`
     : null;
@@ -304,6 +308,7 @@ export function GenerateView() {
     feedRef: sessionFeedRef,
   });
   useCreateBarReserve(composerRef, feed.length > 0);
+  useFollowLatestResult(sessionFeedRef, feed.length > 0);
 
   const regenerateReplacingBatch = (item: FeedItem, promptValue: string): void => {
     const settings: GenerationSettingsSnapshot = {
@@ -326,7 +331,13 @@ export function GenerateView() {
     const files = initialReferenceFiles ?? upload.selectedFiles.map((item) => item.file);
     const generateCurrent = async (): Promise<void> => {
       const settings = await buildSnapshot(promptValue, reusedReferenceIds, files);
-      await performGeneration(settings, files, true);
+      // The new batch shows the prompt while it runs, so the composer empties at once instead
+      // of standing tall over the result; a run that fails or is stopped puts the text back.
+      setPrompt((current) => (current === promptValue ? '' : current));
+      const batchId = await performGeneration(settings, files, true);
+      if (batchId === undefined) {
+        setPrompt((current) => (current.trim() === '' ? promptValue : current));
+      }
     };
     if (authLoading) return;
     if (!isAuthenticated) {
@@ -629,7 +640,6 @@ export function GenerateView() {
       data-view="generate"
       aria-label="图像生成工作区"
     >
-      <StudioAmbient imageUrl={ambientImageUrl} />
       <LandingAccountActions
         accountImage={user?.image}
         accountName={accountName}

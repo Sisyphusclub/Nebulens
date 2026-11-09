@@ -14,6 +14,7 @@ import {
   CREATION_TEMPLATES,
   orderTemplatesWithAnimeLast,
   TEMPLATE_CATEGORIES,
+  templateMatchesQuery,
   type CreationTemplate,
 } from '@/data/creationTemplates';
 import { useTemplatePreferences } from '@/hooks/useTemplatePreferences';
@@ -80,16 +81,10 @@ export function TemplatesView() {
   const categoryChipsRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase('zh-CN');
     const items = CREATION_TEMPLATES.filter((template) => {
       if (category !== ALL_CATEGORIES && template.category !== category) return false;
       if (favoritesOnly && !favoriteIds.includes(template.id)) return false;
-      return (
-        !normalizedQuery ||
-        `${template.title} ${template.englishTitle} ${template.category} ${template.prompt} ${template.originalPrompt}`
-          .toLocaleLowerCase('zh-CN')
-          .includes(normalizedQuery)
-      );
+      return templateMatchesQuery(template, query);
     });
     if (sort === 'recent') {
       return [...items].sort((a, b) => (recent[b.id] ?? '').localeCompare(recent[a.id] ?? ''));

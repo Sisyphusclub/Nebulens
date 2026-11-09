@@ -1,15 +1,24 @@
-import { ArrowRight, ArrowUpRight } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { ArrowRight, ArrowUpRight, Search } from 'lucide-react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
-import type { CreationTemplate } from '@/data/creationTemplates';
+import { Input } from '@/components/ui/input';
+import {
+  CREATION_TEMPLATES,
+  orderTemplatesWithAnimeLast,
+  TEMPLATE_SHORTCUT_CATEGORIES,
+  templateMatchesQuery,
+  type CreationTemplate,
+} from '@/data/creationTemplates';
 import { buildApiUrl } from '@/services/api/imagesApi';
 import { IMAGE_CATEGORY_LABELS, type TeamImageRecord } from '@/types/image';
 import { templateThumbnailUrl, thumbnailUrl } from '@/utils/thumbnail';
 
 /** About four rows of the full-width masonry. */
 const FEED_SIZE = 24;
+const FEATURED = '精选';
+const TABS = [FEATURED, ...TEMPLATE_SHORTCUT_CATEGORIES];
 
 /**
  * Inspiration under the skills, like Kling's feed: the team's newest shared work first,
@@ -27,8 +36,38 @@ export function LandingShowcase({
   onUse: (record: TeamImageRecord) => void;
   onUseTemplate: (template: CreationTemplate) => void;
 }) {
-  const fill = templates.slice(0, Math.max(0, FEED_SIZE - records.length));
-  if (records.length === 0 && fill.length === 0) return null;
+  const [tab, setTab] = useState(FEATURED);
+  const [query, setQuery] = useState('');
+  const searching = query.trim() !== '';
+  const { shownRecords, shownTemplates } = useMemo(() => {
+    // Featured without a search keeps the curated mix: shared work first, topped up with
+    // varied templates. A category or a search looks through every template instead.
+    if (tab === FEATURED && !searching) {
+      return {
+        shownRecords: records,
+        shownTemplates: templates.slice(0, Math.max(0, FEED_SIZE - records.length)),
+      };
+    }
+    const normalizedQuery = query.trim().toLocaleLowerCase('zh-CN');
+    const matchingRecords =
+      tab === FEATURED
+        ? records.filter((record) =>
+            record.prompt.toLocaleLowerCase('zh-CN').includes(normalizedQuery),
+          )
+        : [];
+    const matchingTemplates = orderTemplatesWithAnimeLast(
+      CREATION_TEMPLATES.filter(
+        (template) =>
+          (tab === FEATURED || template.category === tab) && templateMatchesQuery(template, query),
+      ),
+    );
+    return {
+      shownRecords: matchingRecords.slice(0, FEED_SIZE),
+      shownTemplates: matchingTemplates.slice(0, Math.max(0, FEED_SIZE - matchingRecords.length)),
+    };
+  }, [query, records, searching, tab, templates]);
+  if (records.length === 0 && templates.length === 0) return null;
+  const empty = shownRecords.length === 0 && shownTemplates.length === 0;
   return (
     <section className="landing-showcase" aria-label="灵感">
       <header className="landing-section-header">
@@ -53,8 +92,35 @@ export function LandingShowcase({
           </Link>
         </div>
       </header>
+      <div className="landing-showcase__filters">
+        <div className="landing-showcase__tabs" role="group" aria-label="灵感分类">
+          {TABS.map((label) => (
+            <Button
+              key={label}
+              type="button"
+              variant="ghost"
+              className="landing-showcase__tab"
+              aria-pressed={tab === label}
+              onClick={() => setTab(label)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+        <label className="search-field landing-showcase__search">
+          <Search aria-hidden="true" />
+          <span className="sr-only">搜索灵感</span>
+          <Input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="搜索作品和模板"
+          />
+        </label>
+      </div>
+      {empty ? <p className="landing-showcase__empty">没有找到相关作品，换个关键词试试</p> : null}
       <div className="landing-showcase__masonry">
-        {records.map((record) => (
+        {shownRecords.map((record) => (
           <InspirationCard
             key={record.id}
             label={record.prompt}
@@ -68,7 +134,7 @@ export function LandingShowcase({
             onUse={() => onUse(record)}
           />
         ))}
-        {fill.map((template) => (
+        {shownTemplates.map((template) => (
           <InspirationCard
             key={template.id}
             label={template.title}

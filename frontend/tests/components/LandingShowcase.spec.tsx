@@ -78,3 +78,53 @@ it('tops the wall up to 24 pieces with templates, so it is never empty', async (
   await user.click(card);
   expect(onUseTemplate).toHaveBeenCalledWith(first);
 });
+
+function renderShowcase(records: TeamImageRecord[] = [tea]) {
+  return render(
+    <MemoryRouter>
+      <LandingShowcase
+        records={records}
+        templates={templates}
+        onUse={vi.fn()}
+        onUseTemplate={vi.fn()}
+      />
+    </MemoryRouter>,
+  );
+}
+
+it('narrows the wall to one template category from the tabs', async () => {
+  const user = userEvent.setup();
+  renderShowcase();
+  const section = screen.getByRole('region', { name: '灵感' });
+  const tabs = within(section).getByRole('group', { name: '灵感分类' });
+  expect(within(tabs).getByRole('button', { name: '精选' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+
+  await user.click(within(tabs).getByRole('button', { name: '电影风格' }));
+
+  const film = CREATION_TEMPLATES.filter((template) => template.category === '电影风格');
+  const cards = within(section).getAllByRole('button', { name: /^做同款：/ });
+  expect(cards).toHaveLength(Math.min(24, film.length));
+  // Shared work has its own categories, so a template category shows templates only.
+  expect(within(section).queryByRole('button', { name: `做同款：${tea.prompt}` })).toBeNull();
+  for (const card of cards) expect(card).toHaveTextContent('创作模板 · 电影风格');
+});
+
+it('searches shared work and every template, and says when nothing matches', async () => {
+  const user = userEvent.setup();
+  renderShowcase();
+  const section = screen.getByRole('region', { name: '灵感' });
+  const search = within(section).getByRole('searchbox', { name: '搜索灵感' });
+
+  await user.type(search, '奶茶');
+  expect(
+    within(section).getByRole('button', { name: `做同款：${tea.prompt}` }),
+  ).toBeInTheDocument();
+
+  await user.clear(search);
+  await user.type(search, 'zzzz不存在的内容');
+  expect(within(section).queryAllByRole('button', { name: /^做同款：/ })).toHaveLength(0);
+  expect(section).toHaveTextContent('没有找到相关作品，换个关键词试试');
+});

@@ -82,6 +82,17 @@ export const TEMPLATE_SHORTCUT_CATEGORIES: readonly string[] = [
   '产品美食',
 ];
 
+/** Whether a template matches a search, by its titles, category or either prompt. */
+export function templateMatchesQuery(template: CreationTemplate, query: string): boolean {
+  const normalizedQuery = query.trim().toLocaleLowerCase('zh-CN');
+  return (
+    !normalizedQuery ||
+    `${template.title} ${template.englishTitle} ${template.category} ${template.prompt} ${template.originalPrompt}`
+      .toLocaleLowerCase('zh-CN')
+      .includes(normalizedQuery)
+  );
+}
+
 export function orderTemplatesWithAnimeLast(
   templates: readonly CreationTemplate[],
 ): CreationTemplate[] {

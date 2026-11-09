@@ -147,7 +147,8 @@ describe('useGenerationFeed', () => {
     expect(hook.current.feed).toHaveLength(1);
     expect(hook.current.feed[0]?.error).toBe('上游失败（请求编号：req-1）');
     expect(onComposerSubmitted).not.toHaveBeenCalled();
-    expect(notify).toHaveBeenLastCalledWith('上游失败', 'error');
+    // The error card already shows the message, so no toast repeats it.
+    expect(notify).not.toHaveBeenCalled();
   });
 
   it('restores the replaced item when regeneration fails', async () => {

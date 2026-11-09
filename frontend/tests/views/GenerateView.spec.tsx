@@ -1462,6 +1462,7 @@ it('replaces pending skeletons with a retryable error card on failure', async ()
   expect(container.querySelector('.generation-skeleton')).not.toBeInTheDocument();
   expect(errorCard).toHaveStyle({ aspectRatio: '2 / 3' });
   expect(errorCard).toHaveTextContent('上游生成失败');
+  expect(container.querySelector('.toast')).not.toBeInTheDocument();
   expect(within(errorCard).getByRole('button', { name: '重试' })).toBeEnabled();
 });
 

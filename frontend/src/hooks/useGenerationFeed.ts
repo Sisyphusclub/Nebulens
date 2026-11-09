@@ -341,7 +341,9 @@ export function useGenerationFeed({
         upsertGenerationTask(generationSessionId, persistedTaskFromFeedItem(failedItem));
         setFeed((current) => current.map((item) => (item.id === pendingId ? failedItem : item)));
       }
-      notify(splitGenerationError(message).message, 'error');
+      // A new failure stays in the feed as an error card; only a failed regeneration, which
+      // restores the old result, has nowhere else to show the message.
+      if (replaceItem) notify(splitGenerationError(message).message, 'error');
     }
   };
 

@@ -222,7 +222,7 @@ function keepOpen(): void {}
 
 export function LandingSidebar(props: LandingSidebarProps) {
   const sidebarStyle: SidebarVariables = {
-    '--sidebar-width': '15rem',
+    '--sidebar-width': '17rem',
     '--sidebar-width-icon': '6.875rem',
   };
 

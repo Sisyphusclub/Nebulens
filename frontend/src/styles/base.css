@@ -11649,7 +11649,7 @@ video {
    page starts after it instead of running underneath. */
 @media (min-width: 861px) {
   .app-shell {
-    --workbench-sidebar-width: 15rem;
+    --workbench-sidebar-width: 17rem;
   }
   .app-shell .app-main {
     --workspace-sidebar-rail: 0px;

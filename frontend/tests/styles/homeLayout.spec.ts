@@ -89,7 +89,9 @@ describe('creation history rows', () => {
       baseStyles.match(
         /\.landing-sidebar \[data-sidebar='group'\]\.sidebar-history \{([^}]+)\}/,
       )?.[1] ?? '';
-    expect(historyGroup).toContain('padding: 14px 10px 8px;');
+    expect(historyGroup).toContain('padding: var(--space-3) var(--space-2-5) var(--space-2);');
+    // Space alone separates the history from the navigation.
+    expect(historyGroup).not.toContain('border-top');
   });
 
   it('leave room for the rename and remove actions in the phone menu, where they always show', () => {

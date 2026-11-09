@@ -11685,14 +11685,14 @@ video {
     font-weight: 600;
   }
 }
+/* Space alone separates the creation history from the navigation: no rule between them. */
 .sidebar-history,
 .landing-sidebar [data-sidebar='group'].sidebar-history {
   display: flex;
   min-height: 0;
   flex: 1 1 auto;
-  margin-top: 10px;
-  border-top: 1px solid var(--line-1);
-  padding: 14px 10px 8px;
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-2-5) var(--space-2);
 }
 .landing-sidebar .sidebar-history [data-sidebar='menu'] {
   gap: 4px;

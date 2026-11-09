@@ -12442,3 +12442,22 @@ video.landing-hero__video[data-playing='false'] {
   font-size: 12px;
   line-height: 1.6;
 }
+
+/* Workbench landing: the nebula is a dimmed banner behind the headline and composer that
+   scrolls away with them, instead of a full-screen wall the whole page runs over. */
+.landing-hero__video,
+.landing-hero__overlay {
+  position: absolute;
+}
+.landing-hero__video {
+  --hero-video-width: max(100%, 1180px);
+  top: -22%;
+  width: var(--hero-video-width);
+  filter: brightness(0.6) saturate(0.9);
+}
+.landing-hero__overlay {
+  inset: 0;
+  background:
+    radial-gradient(120% 70% at 50% 0%, transparent 35%, rgb(5 6 10 / 0.55) 100%),
+    linear-gradient(180deg, rgb(5 6 10 / 0.2) 0%, transparent 30%, var(--background) 100%);
+}

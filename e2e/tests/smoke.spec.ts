@@ -35,7 +35,9 @@ test('generates an image from a prompt', async ({ page }) => {
   await expect(page).toHaveURL(/[?&]session=/);
   await expect(batches(page)).toHaveCount(1);
   await expectLatestImage(page);
-  await expect(page.getByText('图片生成完成。')).toBeVisible();
+  await expect(
+    batches(page).last().getByRole('status').filter({ hasText: '生成完成' }),
+  ).toBeVisible();
 });
 
 test('retries a failed generation in place of its error card', async ({ page }) => {

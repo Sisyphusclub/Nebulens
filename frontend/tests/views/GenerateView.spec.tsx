@@ -1772,15 +1772,53 @@ it('keeps a failed batch confirmation open and supports retry', async () => {
   expect(screen.getByRole('region', { name: '图像生成工作区' })).toHaveClass('is-empty');
 });
 
-it('centres the latest batch once when entering a session with history', async () => {
-  const scrolledBatchIds: Array<string | undefined> = [];
-  const scrollIntoView = vi.fn(function (this: HTMLElement) {
-    scrolledBatchIds.push(this.dataset.generationBatch);
-  });
-  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
-    configurable: true,
-    value: scrollIntoView,
-  });
+/**
+ * Tells which batch each composer-aware scroll lands on: every batch reports a bottom edge of
+ * its own and the create bar starts at 600px, so a scroll top names the batch it aligns.
+ */
+function trackBatchScrolls() {
+  const scrolled: string[] = [];
+  const behaviors: Array<ScrollBehavior | undefined> = [];
+  const bottoms = new Map<string, number>();
+  const rect = (top: number, bottom: number) =>
+    ({ top, bottom, left: 0, right: 0, x: 0, y: top, width: 0, height: bottom - top }) as DOMRect;
+  const rects = vi
+    .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    .mockImplementation(function (this: HTMLElement) {
+      const id = this.dataset.generationBatch;
+      if (id !== undefined) {
+        if (!bottoms.has(id)) bottoms.set(id, 1000 + bottoms.size * 100);
+        const bottom = bottoms.get(id)!;
+        return rect(bottom - 80, bottom);
+      }
+      if (this.classList.contains('studio-create-bar')) return rect(600, 760);
+      return rect(0, 0);
+    });
+  const scrollTo = vi
+    .spyOn(window, 'scrollTo')
+    .mockImplementation((options?: ScrollToOptions | number) => {
+      if (typeof options !== 'object') return;
+      // The batch ends 24px above the bar: top = bottom - (600 - 24).
+      const bottom = (options.top ?? 0) + 576;
+      for (const [id, batchBottom] of bottoms) {
+        if (batchBottom === bottom) {
+          scrolled.push(id);
+          behaviors.push(options.behavior);
+        }
+      }
+    });
+  return {
+    scrolled,
+    behaviors,
+    restore: () => {
+      rects.mockRestore();
+      scrollTo.mockRestore();
+    },
+  };
+}
+
+it('puts the latest batch above the create bar once when entering a session with history', async () => {
+  const scrolls = trackBatchScrolls();
   const batch = (batchId: string, prompt: string, createdAt: string) => ({
     batchId,
     createdAt,
@@ -1831,22 +1869,17 @@ it('centres the latest batch once when entering a session with history', async (
       </MemoryRouter>,
     );
 
-    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
-    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'center' });
-    expect(new Set(scrolledBatchIds)).toEqual(new Set(['newer-batch']));
+    // Centred, a tall create bar (a saved draft, the AI strip) covered the batch's image.
+    await waitFor(() => expect(scrolls.scrolled.length).toBeGreaterThan(0));
+    expect(new Set(scrolls.scrolled)).toEqual(new Set(['newer-batch']));
+    expect(new Set(scrolls.behaviors)).toEqual(new Set(['auto']));
   } finally {
-    delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    scrolls.restore();
   }
 });
 
-it('centres the newest history batch after a refresh restores a session with failed tasks', async () => {
-  const scrolledBatchIds: Array<string | undefined> = [];
-  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
-    configurable: true,
-    value: vi.fn(function (this: HTMLElement) {
-      scrolledBatchIds.push(this.dataset.generationBatch);
-    }),
-  });
+it('shows the newest history batch after a refresh restores a session with failed tasks', async () => {
+  const scrolls = trackBatchScrolls();
   const session = createGenerationSession('海边灯塔');
   attachGenerationBatch(session.id, 'older-batch', '山间木屋');
   attachGenerationBatch(session.id, 'pending-failed', '失败任务');
@@ -1880,7 +1913,7 @@ it('centres the newest history batch after a refresh restores a session with fai
     await waitFor(() =>
       expect(document.querySelector('[data-generation-batch="pending-failed"]')).not.toBeNull(),
     );
-    expect(scrolledBatchIds).toEqual([]);
+    expect(scrolls.scrolled).toEqual([]);
 
     const batch = (batchId: string, prompt: string, createdAt: string) => ({
       batchId,
@@ -1922,10 +1955,10 @@ it('centres the newest history batch after a refresh restores a session with fai
     historyMocks.isHydrated = true;
     rerender(view());
 
-    await waitFor(() => expect(scrolledBatchIds).toContain('newer-batch'));
-    expect(scrolledBatchIds).toEqual(['newer-batch']);
+    await waitFor(() => expect(scrolls.scrolled).toContain('newer-batch'));
+    expect(scrolls.scrolled).toEqual(['newer-batch']);
   } finally {
-    delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    scrolls.restore();
   }
 });
 
@@ -1978,13 +2011,7 @@ async function openHistoryBatch(prompt: string) {
 }
 
 it('switches to the owning session when a history batch from another session is opened', async () => {
-  const scrolledBatchIds: Array<string | undefined> = [];
-  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
-    configurable: true,
-    value: vi.fn(function (this: HTMLElement) {
-      scrolledBatchIds.push(this.dataset.generationBatch);
-    }),
-  });
+  const scrolls = trackBatchScrolls();
   historyMocks.batches = [
     makeHistoryBatch('other-batch', '雪山日出', '2026-07-30T08:00:00.000Z'),
     makeHistoryBatch('mine-batch', '海边灯塔', '2026-07-29T08:00:00.000Z'),
@@ -2006,7 +2033,7 @@ it('switches to the owning session when a history batch from another session is 
     const results = () => screen.getByRole('region', { name: '本次创作结果' });
     await waitFor(() => expect(results()).toHaveTextContent('海边灯塔'));
     expect(results()).not.toHaveTextContent('雪山日出');
-    scrolledBatchIds.length = 0;
+    scrolls.scrolled.length = 0;
 
     await openHistoryBatch('雪山日出');
 
@@ -2015,10 +2042,10 @@ it('switches to the owning session when a history batch from another session is 
     );
     await waitFor(() => expect(results()).toHaveTextContent('雪山日出'));
     expect(results()).not.toHaveTextContent('海边灯塔');
-    await waitFor(() => expect(scrolledBatchIds).toContain('other-batch'));
-    expect(scrolledBatchIds.every((batchId) => batchId === 'other-batch')).toBe(true);
+    await waitFor(() => expect(scrolls.scrolled).toContain('other-batch'));
+    expect(scrolls.scrolled.every((batchId) => batchId === 'other-batch')).toBe(true);
   } finally {
-    delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    scrolls.restore();
   }
 });
 

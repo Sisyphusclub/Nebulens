@@ -16,15 +16,19 @@ describe('landing navigation chrome', () => {
     expect(baseStyles).not.toContain('.landing-sidebar__collapse');
   });
 
-  it('separates the utility group with an inset hairline that cannot widen the panel', () => {
-    const divider =
-      baseStyles.match(
-        /\.landing-sidebar\s+nav\s+\[data-sidebar='group'\]\s*\+\s*\[data-sidebar='group'\]::before\s*\{([^}]+)\}/,
-      )?.[1] ?? '';
+  it('draws no line between the main navigation and the admin entry', () => {
+    expect(baseStyles).not.toMatch(
+      /\.landing-sidebar\s+nav\s+\[data-sidebar='group'\]\s*\+\s*\[data-sidebar='group'\]/,
+    );
+  });
 
-    expect(divider).toContain('height: 1px;');
-    expect(divider).toContain('left: 20px;');
-    expect(divider).toContain('right: 20px;');
+  it('gives creation history rows room to breathe', () => {
+    const rows =
+      baseStyles.match(
+        /\.landing-sidebar \.sidebar-history \[data-sidebar='menu-button'\],\s*\[data-mobile='true'\] \.sidebar-history \[data-sidebar='menu-button'\] \{([^}]+)\}/,
+      )?.[1] ?? '';
+    expect(rows).toContain('height: 38px;');
+    expect(rule(".landing-sidebar .sidebar-history [data-sidebar='menu']")).toContain('gap: 4px;');
   });
 
   it('marks the active rail item with a light glass pill and keeps labels legible', () => {

@@ -629,7 +629,17 @@ export function GenerateView() {
     const entryFocus =
       sessionEntryFocus.current?.sessionId === activeSessionId ? sessionEntryFocus.current : null;
     const targetId = entryFocus?.batchId ?? feed[feed.length - 1]?.id;
-    if (!targetId || !scrollToGenerationBatch(targetId, 'auto')) return;
+    // Opening the page puts the batch just above the create bar, which a saved draft can make
+    // tall; centred, the bar would cover its image and the actions under it.
+    if (
+      !targetId ||
+      !(
+        scrollGenerationBatchAboveComposer(targetId, composerRef.current, 'auto') ||
+        scrollToGenerationBatch(targetId, 'auto')
+      )
+    ) {
+      return;
+    }
     initialLatestScrollSession.current = activeSessionId;
     sessionEntryFocus.current = null;
     setActiveHistoryBatchId(entryFocus?.batchId ?? null);

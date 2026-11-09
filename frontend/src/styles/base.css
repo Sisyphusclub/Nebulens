@@ -11689,27 +11689,6 @@ video {
   .group[data-state='expanded'] .landing-sidebar nav [data-sidebar='menu'] {
     gap: 2px;
   }
-  .group[data-state='expanded']
-    .landing-sidebar
-    nav
-    [data-sidebar='group']
-    + [data-sidebar='group'] {
-    margin-top: 6px;
-    padding-top: 9px;
-  }
-  .group[data-state='expanded']
-    .landing-sidebar
-    nav
-    [data-sidebar='group']
-    + [data-sidebar='group']::before {
-    position: absolute;
-    top: 0;
-    right: 20px;
-    left: 20px;
-    height: 1px;
-    background: rgb(255 255 255 / 0.06);
-    content: '';
-  }
   .group[data-state='expanded'] .landing-sidebar nav [data-sidebar='menu-button'] {
     height: 42px;
     gap: 12px;
@@ -11740,7 +11719,7 @@ video {
   padding: 14px 10px 8px;
 }
 .landing-sidebar .sidebar-history [data-sidebar='menu'] {
-  gap: 2px;
+  gap: 4px;
 }
 .sidebar-history [data-sidebar='group-label'] {
   height: 28px;
@@ -11767,11 +11746,12 @@ video {
    leaves room for them. */
 .landing-sidebar .sidebar-history [data-sidebar='menu-button'],
 [data-mobile='true'] .sidebar-history [data-sidebar='menu-button'] {
-  height: 34px;
+  height: 38px;
   gap: 10px;
+  border-radius: 10px;
   padding: 0 60px 0 12px;
-  color: rgb(242 244 247 / 0.7);
-  font-size: 13px;
+  color: rgb(242 244 247 / 0.72);
+  font-size: 13.5px;
 }
 .landing-sidebar .sidebar-history [data-sidebar='menu-button'] svg,
 [data-mobile='true'] .sidebar-history [data-sidebar='menu-button'] svg {
@@ -11790,7 +11770,7 @@ video {
   padding-right: 12px;
 }
 .sidebar-history__action {
-  top: 5px;
+  top: 7px;
   width: 24px;
   height: 24px;
   border-radius: 7px;
@@ -11810,7 +11790,7 @@ video {
 }
 .sidebar-history__rename {
   width: 100%;
-  height: 34px;
+  height: 38px;
   border: 1px solid color-mix(in oklch, var(--accent) 55%, transparent);
   border-radius: var(--radius-control);
   background: rgb(255 255 255 / 0.05);

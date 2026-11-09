@@ -70,6 +70,18 @@ export const TEMPLATE_CATEGORIES = [
   ...new Set(CREATION_TEMPLATES.map((template) => template.category)),
 ] as const;
 
+/**
+ * Template categories offered as one-tap shortcuts under the Discover composer: everyday
+ * design work rather than niche styles.
+ */
+export const TEMPLATE_SHORTCUT_CATEGORIES: readonly string[] = [
+  '海报字体',
+  '信息图表',
+  '电影风格',
+  '时尚编辑',
+  '产品美食',
+];
+
 export function orderTemplatesWithAnimeLast(
   templates: readonly CreationTemplate[],
 ): CreationTemplate[] {

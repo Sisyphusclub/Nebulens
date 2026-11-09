@@ -14,6 +14,7 @@ import { LandingRecentCreations } from '@/components/landing/LandingRecentCreati
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingShowcase } from '@/components/landing/LandingShowcase';
 import { LandingSkillBar } from '@/components/landing/LandingSkillBar';
+import { LandingTemplateShortcuts } from '@/components/landing/LandingTemplateShortcuts';
 import { LandingSkillDeck } from '@/components/landing/LandingSkills';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
@@ -474,6 +475,7 @@ export function LandingView() {
               </LiquidGlassFrame>
             </div>
           </div>
+          {activeSkill === undefined && prompt.trim() === '' ? <LandingTemplateShortcuts /> : null}
           {activeSkill === undefined ? (
             <AiInsightBar
               prompt={prompt}

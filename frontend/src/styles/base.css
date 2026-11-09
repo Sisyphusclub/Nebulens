@@ -11667,6 +11667,58 @@ video.landing-hero__video[data-playing='false'] {
   color: rgb(170 200 255 / 0.95);
 }
 
+/* Before anything is typed, the AI bar's slot offers template categories instead: quiet
+   links in the same muted tone, each opening the templates page filtered to it. */
+.landing-template-shortcuts {
+  display: flex;
+  width: 100%;
+  max-width: 940px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 6px;
+  margin: 14px 0 0;
+  color: rgb(242 244 247 / 0.6);
+  font-size: 12.5px;
+}
+.landing-template-shortcuts__lead {
+  margin-right: 4px;
+}
+.landing-template-shortcuts__link {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 0.04);
+  color: rgb(242 244 247 / 0.86);
+  padding: 0 11px;
+  text-decoration: none;
+  transition:
+    background-color 160ms var(--ease-out-expo),
+    border-color 160ms var(--ease-out-expo),
+    color 160ms var(--ease-out-expo);
+}
+.landing-template-shortcuts__link:hover {
+  border-color: rgb(255 255 255 / 0.22);
+  background: rgb(255 255 255 / 0.1);
+  color: #fff;
+}
+.landing-template-shortcuts__link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.landing-template-shortcuts__link--all {
+  border-color: transparent;
+  background: transparent;
+  color: rgb(170 200 255 / 0.95);
+}
+.landing-template-shortcuts__link--all svg {
+  width: 13px;
+  height: 13px;
+}
+
 /* Below the hero: a compact glass tile for each everyday skill across the full width,
    all within the first screen. */
 .landing-deck {

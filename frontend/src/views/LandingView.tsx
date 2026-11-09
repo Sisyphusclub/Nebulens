@@ -33,6 +33,7 @@ import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { attachGenerationBatch, useGenerationSessions } from '@/hooks/useGenerationSessions';
 import { useImageHistory } from '@/hooks/useImageHistory';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { usePromptDraft } from '@/hooks/usePromptDraft';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
 import { useTeamShowcase } from '@/hooks/useTeamShowcase';
@@ -125,6 +126,11 @@ export function LandingView() {
     rememberRecentCreations(recent.length > 0);
   }, [authLoading, historyHydrated, isAuthenticated, recent.length]);
   const [prompt, setPrompt] = useState('');
+  const { clear: clearPromptDraft } = usePromptDraft(
+    authLoading ? null : `landing:${(isAuthenticated ? user?.id : null) ?? 'guest'}`,
+    prompt,
+    setPrompt,
+  );
   const activeSkill = skillInPrompt(prompt);
   const { items: recommendations } = useTeamRecommendations(
     activeSkill === undefined ? prompt : '',
@@ -294,6 +300,7 @@ export function LandingView() {
     );
     const session = createSession(plan.title);
     const skillRun: SkillRunRequest = { skillLabel: skill.label, steps };
+    clearPromptDraft();
     void navigate(`/generate?${new URLSearchParams({ session: session.id }).toString()}`, {
       state: { skillRun },
     });
@@ -332,6 +339,8 @@ export function LandingView() {
       resolution,
     });
     if (supportsImageQuality(model)) nextSearch.set('quality', quality);
+    // The prompt travels in the address; the generate page keeps it from here on.
+    clearPromptDraft();
     void navigate(`/generate?${nextSearch.toString()}`, {
       state: {
         autoGenerate: true,

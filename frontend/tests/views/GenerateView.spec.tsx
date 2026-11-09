@@ -2273,3 +2273,31 @@ it('suggests 2K for a text-heavy prompt and switches the resolution', async () =
   expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K');
   expect(screen.queryByRole('button', { name: '切换到 2K' })).not.toBeInTheDocument();
 });
+
+it('keeps an unsent prompt through a remount and forgets it once it is generated', async () => {
+  const user = userEvent.setup();
+  const renderWorkspace = () =>
+    render(
+      <MemoryRouter initialEntries={['/generate']}>
+        <ToastProvider>
+          <GenerateView />
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+
+  const first = renderWorkspace();
+  await user.type(screen.getByRole('textbox', { name: '图像提示词' }), '雨夜建筑');
+  first.unmount();
+
+  const second = renderWorkspace();
+  await waitFor(() =>
+    expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent('雨夜建筑'),
+  );
+
+  await user.click(screen.getByRole('button', { name: '生成图片' }));
+  await screen.findByRole('button', { name: '查看图片：雨夜建筑' });
+  second.unmount();
+
+  renderWorkspace();
+  expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent('');
+});

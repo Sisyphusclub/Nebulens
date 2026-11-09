@@ -40,6 +40,7 @@ import { readReferenceIds, useGenerationSettings } from '@/hooks/useGenerationSe
 import { useImageQuota } from '@/hooks/useImageQuota';
 import { useCreateBarReserve } from '@/hooks/useCreateBarReserve';
 import { useSkillRun } from '@/hooks/useSkillRun';
+import { clearPromptDraftsWithText, readPromptDraft, usePromptDraft } from '@/hooks/usePromptDraft';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
 import {
@@ -123,6 +124,9 @@ export function GenerateView() {
   const previousSessionId = useRef<string | null>(activeSessionId);
   const accountName = user?.username ?? user?.name ?? '账户';
   const currentUserId = isAuthenticated ? (user?.id ?? null) : null;
+  /** Unsent text is kept per account and per session until sign-in is known. */
+  const draftKeyPrefix = `generate:${currentUserId ?? 'guest'}:`;
+  const draftKey = authLoading ? null : `${draftKeyPrefix}${activeSessionId ?? 'new'}`;
   const promptEnhancer = usePromptEnhancer({ prompt, setPrompt, isAuthenticated, notify });
   const { items: inspiration } = useTeamRecommendations(
     prompt,
@@ -187,6 +191,7 @@ export function GenerateView() {
           : current,
       ),
     onComposerSubmitted: (submittedPrompt) => {
+      clearPromptDraftsWithText(draftKeyPrefix, submittedPrompt);
       setPrompt((current) => (current.trim() === submittedPrompt ? '' : current));
       upload.clear();
       setReusedReferenceIds([]);
@@ -206,12 +211,15 @@ export function GenerateView() {
   useEffect(() => {
     if (!activeSessionId || previousSessionId.current === activeSessionId) return;
     previousSessionId.current = activeSessionId;
-    setPrompt(searchParams.get('prompt') ?? '');
+    setPrompt(
+      searchParams.get('prompt') ?? (draftKey === null ? null : readPromptDraft(draftKey)) ?? '',
+    );
     setSelected(null);
     setActiveHistoryBatchId(null);
     clearUpload();
     setReusedReferenceIds([]);
-  }, [activeSessionId, clearUpload, searchParams, setActiveHistoryBatchId]);
+  }, [activeSessionId, clearUpload, draftKey, searchParams, setActiveHistoryBatchId]);
+  usePromptDraft(draftKey, prompt, setPrompt);
 
   useLayoutEffect(() => {
     const pendingId = pendingScrollId.current;

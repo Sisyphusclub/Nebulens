@@ -163,6 +163,7 @@ export function GenerateView() {
     setFeed,
     activeHistoryBatchId,
     setActiveHistoryBatchId,
+    completedBatchId,
     pendingScrollId,
     performGeneration,
   } = useGenerationFeed({
@@ -832,6 +833,7 @@ export function GenerateView() {
               item={item}
               articleRef={index === visibleFeed.length - 1 ? latestBatchRef : undefined}
               isGenerating={generation.isLoading}
+              isCompleted={completedBatchId === item.id}
               statusMessage={generation.statusMessage}
               mutatingId={mutatingId}
               openEntryId={selected?.record.id ?? null}

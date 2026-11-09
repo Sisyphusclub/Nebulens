@@ -1,6 +1,7 @@
 import {
   ArrowDownToLine,
   CircleAlert,
+  CircleCheck,
   Copy,
   Download,
   ImagePlus,
@@ -29,6 +30,8 @@ interface GenerationBatchProps {
   item: FeedItem;
   articleRef?: Ref<HTMLElement> | undefined;
   isGenerating: boolean;
+  /** This batch just finished, so it shows the completion badge. */
+  isCompleted: boolean;
   statusMessage: string;
   /** Id of the batch or image currently being changed, which disables its actions. */
   mutatingId: string | null;
@@ -52,6 +55,7 @@ export function GenerationBatch({
   item,
   articleRef,
   isGenerating,
+  isCompleted,
   statusMessage,
   mutatingId,
   openEntryId,
@@ -85,6 +89,12 @@ export function GenerationBatch({
     >
       <PromptReferenceImages item={item} />
       <header className="session-batch__header">
+        {isCompleted ? (
+          <span className="session-batch__completion" role="status">
+            <CircleCheck aria-hidden="true" />
+            生成完成
+          </span>
+        ) : null}
         <EditablePromptBubble
           item={item}
           disabled={isGenerating || mutatingId === item.id}

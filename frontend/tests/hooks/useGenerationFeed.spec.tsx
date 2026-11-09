@@ -128,7 +128,8 @@ describe('useGenerationFeed', () => {
     expect(hook.current.feed.map((item) => item.id)).toEqual(['batch-1']);
     expect(hook.current.activeHistoryBatchId).toBe('batch-1');
     expect(onComposerSubmitted).toHaveBeenCalledWith('雨夜建筑');
-    expect(notify).toHaveBeenLastCalledWith('图片生成完成。');
+    expect(hook.current.completedBatchId).toBe('batch-1');
+    expect(notify).not.toHaveBeenCalled();
   });
 
   it('keeps a failed item with its error and reports the message without the request id', async () => {
@@ -265,7 +266,8 @@ describe('useGenerationFeed', () => {
     expect(hook.current.feed.map((item) => [item.id, item.error])).toEqual([
       ['batch-ok', undefined],
     ]);
-    expect(notify).toHaveBeenLastCalledWith('已重新生成并替换原结果。');
+    expect(hook.current.completedBatchId).toBe('batch-ok');
+    expect(notify).not.toHaveBeenCalled();
   });
 
   it('drops the result when the signed-in user changes mid-generation', async () => {

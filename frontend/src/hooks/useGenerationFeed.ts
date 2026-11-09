@@ -78,6 +78,8 @@ export function useGenerationFeed({
   const navigate = useNavigate();
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [activeHistoryBatchId, setActiveHistoryBatchId] = useState<string | null>(null);
+  // The batch that just finished, shown with an inline badge instead of a toast.
+  const [completedBatchId, setCompletedBatchId] = useState<string | null>(null);
   // The session and history snapshot `feed` was last rebuilt from. Until both match,
   // `feed` may still hold another session's items or only locally persisted tasks.
   const [syncedSource, setSyncedSource] = useState<{
@@ -166,6 +168,7 @@ export function useGenerationFeed({
       notify('请先描述你想生成的图片。', 'error');
       return;
     }
+    setCompletedBatchId(null);
     let generationSession = sessions.find((session) => session.id === activeSessionId);
     let generationSessionId = generationSession?.id;
     if (!generationSessionId) {
@@ -291,6 +294,7 @@ export function useGenerationFeed({
       removeGenerationTask(generationSessionId, pendingId);
       replaceGenerationBatch(generationSessionId, pendingId, result.batchId);
       setActiveHistoryBatchId(result.batchId);
+      setCompletedBatchId(result.batchId);
       let replacementCleanupFailed = false;
       // Failed items only ever lived in the local session; there is no server batch to delete.
       if (replaceItem && replaceItem.entries.length > 0) {
@@ -307,8 +311,6 @@ export function useGenerationFeed({
       await refreshQuota();
       if (replacementCleanupFailed) {
         notify('新结果已生成，但旧记录暂未清理，请稍后删除。', 'error');
-      } else {
-        notify(replaceItem ? '已重新生成并替换原结果。' : '图片生成完成。');
       }
       return result.batchId;
     } catch (error) {
@@ -351,6 +353,7 @@ export function useGenerationFeed({
     setFeed,
     activeHistoryBatchId,
     setActiveHistoryBatchId,
+    completedBatchId,
     pendingScrollId,
     performGeneration,
   };

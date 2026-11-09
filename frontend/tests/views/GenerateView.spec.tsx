@@ -1157,6 +1157,8 @@ it('reveals a completed image only after its load event', async () => {
 
   expect(batch).not.toBeNull();
   expect(batch).toHaveAttribute('data-count', '1');
+  expect(within(batch!).getByRole('status')).toHaveTextContent('生成完成');
+  expect(screen.queryByText('图片生成完成。')).not.toBeInTheDocument();
   expect(batch?.querySelector('.session-batch__prompt')).toHaveTextContent('雨夜建筑');
   const batchActions = within(batch!).getByRole('toolbar', { name: '整组操作' });
   expect(within(batchActions).getByRole('button', { name: '复用完整设置' })).toBeInTheDocument();
@@ -1532,7 +1534,9 @@ it('retries a failed generation in place of its error card', async () => {
   expect(batchIds).not.toContain(failedBatchId);
   expect(generation.generate).toHaveBeenCalledTimes(2);
   expect(historyMocks.removeBatch).not.toHaveBeenCalled();
-  expect(await screen.findByText('已重新生成并替换原结果。')).toBeInTheDocument();
+  const retriedBatch = container.querySelector<HTMLElement>('[data-generation-batch="batch-one"]');
+  expect(within(retriedBatch!).getByRole('status')).toHaveTextContent('生成完成');
+  expect(screen.queryByText('已重新生成并替换原结果。')).not.toBeInTheDocument();
 });
 
 it('preserves and submits every ratio at 4K resolution', async () => {

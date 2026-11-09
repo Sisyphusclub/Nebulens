@@ -1,23 +1,34 @@
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useToast } from '@/components/common/ToastProvider';
 import { Button } from '@/components/ui/button';
 import { LANDING_SKILLS, type LandingSkill } from '@/data/landingSkills';
 
+/** Shown when the canvas, which is not built yet, is picked. */
+const CANVAS_NOT_OPEN_MESSAGE = '画布暂未开放，敬请期待';
+
 /**
- * Two ways to start under the greeting: write a prompt here, or pick a template. The
- * home page is the first; the templates page is the second.
+ * Two ways to create under the greeting: generate from a prompt, which is this page, or a
+ * free canvas, which is not open yet and says so when picked.
  */
 export function LandingModeSwitch() {
+  const { notify } = useToast();
   return (
-    <nav className="home-mode-switch" aria-label="创作方式">
+    <div className="home-mode-switch" role="group" aria-label="创作方式">
       <span className="home-mode-switch__item" aria-current="page">
         生成
       </span>
-      <Link className="home-mode-switch__item" to="/templates">
-        模板
-      </Link>
-    </nav>
+      <Button
+        type="button"
+        variant="ghost"
+        className="home-mode-switch__item"
+        aria-disabled="true"
+        onClick={() => notify(CANVAS_NOT_OPEN_MESSAGE)}
+      >
+        画布
+      </Button>
+    </div>
   );
 }
 

@@ -11863,26 +11863,31 @@ video.home-backdrop__media[data-playing='false'] {
   background: rgb(255 255 255 / 0.07);
   padding: 4px;
 }
-.home-mode-switch__item {
+.home-mode-switch .home-mode-switch__item {
   display: inline-flex;
   width: clamp(120px, 11vw, 168px);
   height: 36px;
+  min-height: 0;
   align-items: center;
   justify-content: center;
+  border: 0;
   border-radius: var(--radius-full);
+  background: transparent;
+  padding: 0;
   color: rgb(242 244 247 / 0.7);
   font-size: 14px;
+  font-weight: 400;
   text-decoration: none;
   transition:
     background-color 160ms var(--ease-out-expo),
     color 160ms var(--ease-out-expo);
 }
-a.home-mode-switch__item:hover,
-a.home-mode-switch__item:focus-visible {
+.home-mode-switch button.home-mode-switch__item:hover,
+.home-mode-switch button.home-mode-switch__item:focus-visible {
   background: rgb(255 255 255 / 0.06);
   color: var(--foreground);
 }
-.home-mode-switch__item[aria-current='page'] {
+.home-mode-switch .home-mode-switch__item[aria-current='page'] {
   background: linear-gradient(100deg, #e9e4ff, #d7ecff 55%, #cdf3ee);
   color: #12141a;
   font-weight: 600;
@@ -12381,7 +12386,7 @@ a.home-mode-switch__item:focus-visible {
   .home-hero {
     padding-top: 84px;
   }
-  .home-mode-switch__item {
+  .home-mode-switch .home-mode-switch__item {
     width: 120px;
   }
   .home-skill-chips {

@@ -497,6 +497,19 @@ describe('React application routes', () => {
     );
   });
 
+  it('offers a canvas beside generating that says it is not open yet', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+    const modes = await screen.findByRole('group', { name: '创作方式' });
+
+    expect(within(modes).getByText('生成')).toHaveAttribute('aria-current', 'page');
+    expect(within(modes).queryByRole('link')).not.toBeInTheDocument();
+    await user.click(within(modes).getByRole('button', { name: '画布' }));
+
+    expect(await screen.findByText('画布暂未开放，敬请期待')).toBeInTheDocument();
+    expect(screen.getByLabelText('当前路由')).toHaveTextContent(/^\/$/);
+  });
+
   it('greets visitors with a Chinese headline', async () => {
     renderRoute('/');
 

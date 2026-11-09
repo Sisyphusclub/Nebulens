@@ -5,7 +5,6 @@ import { AppErrorBoundary } from '@/components/common/AppErrorBoundary';
 import { AppHeader } from '@/components/common/AppHeader';
 import { AppSidebar } from '@/components/common/AppSidebar';
 import { useImageDetailModalState } from '@/hooks/useImageDetailModalState';
-import { useWorkbenchSidebarExpanded } from '@/hooks/useWorkbenchSidebar';
 import { cn } from '@/lib/utils';
 import { AppRoutes } from '@/router';
 
@@ -14,7 +13,6 @@ export function App() {
   const isLanding = location.pathname === '/';
   const isGenerate = location.pathname === '/generate';
   const { isImageDetailModalOpen } = useImageDetailModalState();
-  const sidebarExpanded = useWorkbenchSidebarExpanded();
   return (
     <div
       className={cn(
@@ -22,7 +20,6 @@ export function App() {
         isLanding && 'app-shell--landing',
         isGenerate && 'app-shell--generate',
       )}
-      data-sidebar-rail={sidebarExpanded ? 'expanded' : 'collapsed'}
     >
       <AppSidebar />
       {!isLanding && !isGenerate && !isImageDetailModalOpen ? <AppHeader /> : null}

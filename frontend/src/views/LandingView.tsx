@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
 import { LandingGenerationControls } from '@/components/landing/LandingGenerationControls';
+import { LandingHeroBackdrop } from '@/components/landing/LandingHeroBackdrop';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { AiInsightBar } from '@/components/generation/AiInsightBar';
@@ -34,6 +35,7 @@ import { useImageQuota } from '@/hooks/useImageQuota';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { attachGenerationBatch, useGenerationSessions } from '@/hooks/useGenerationSessions';
 import { useImageHistory } from '@/hooks/useImageHistory';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { usePromptDraft } from '@/hooks/usePromptDraft';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
@@ -94,6 +96,7 @@ function withoutSkills(prompt: string): string {
 
 export function LandingView() {
   const navigate = useNavigate();
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { quota, isLoading: quotaLoading, checkIn } = useImageQuota();
   const imageApiKey = useImageApiKey();
@@ -364,6 +367,10 @@ export function LandingView() {
         onClose={() => setImageApiKeySettingsOpen(false)}
       />
       <section className="home-hero" aria-labelledby="landing-title">
+        <div className="home-backdrop" aria-hidden="true">
+          <LandingHeroBackdrop reducedMotion={reducedMotion} />
+          <div className="home-backdrop__overlay" />
+        </div>
         <h1 id="landing-title">今天，想把什么变成画面？</h1>
         <LandingModeSwitch />
         <div className="landing-composer-anchor">

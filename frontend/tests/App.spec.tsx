@@ -163,7 +163,6 @@ import {
   rememberGenerationSession,
   resetGenerationSessionsForTests,
 } from '@/hooks/useGenerationSessions';
-import { resetWorkbenchSidebarForTests } from '@/hooks/useWorkbenchSidebar';
 
 /** Less common skills are not on the Discover page; they are picked by typing "/". */
 async function pickSkillBySlash(user: ReturnType<typeof userEvent.setup>, label: string) {
@@ -281,7 +280,6 @@ function RouteFixture({ entry }: { entry: TestRouteEntry }) {
 beforeEach(() => {
   vi.clearAllMocks();
   resetGenerationSessionsForTests();
-  resetWorkbenchSidebarForTests();
   authMocks.user = {
     id: 'admin',
     email: 'admin@example.com',
@@ -828,17 +826,14 @@ describe('React application routes', () => {
     );
   });
 
-  it('opens the sidebar expanded and remembers when it is collapsed', async () => {
+  it('keeps the sidebar expanded with no way to fold it into a rail', async () => {
     const user = userEvent.setup();
     const { container } = renderRoute('/templates');
-    const shell = container.querySelector('.app-shell');
-    expect(shell).toHaveAttribute('data-sidebar-rail', 'expanded');
 
-    await user.click(screen.getByRole('button', { name: '收起侧栏' }));
+    expect(screen.queryByRole('button', { name: '收起侧栏' })).not.toBeInTheDocument();
+    await user.keyboard('{Meta>}b{/Meta}');
 
-    expect(shell).toHaveAttribute('data-sidebar-rail', 'collapsed');
-    expect(window.localStorage.getItem('nebulens-workbench-sidebar-expanded-v1')).toBe('false');
-    expect(screen.getByRole('button', { name: '展开侧栏' })).toBeInTheDocument();
+    expect(container.querySelector('.group.peer')).toHaveAttribute('data-state', 'expanded');
   });
 
   it('offers signed-out visitors a sign-in in place of the creation history', () => {

@@ -121,3 +121,19 @@ it('searches shared work and every template, and says when nothing matches', asy
   expect(within(section).queryAllByRole('button', { name: /^做同款：/ })).toHaveLength(0);
   expect(section).toHaveTextContent('没有找到相关作品，换个关键词试试');
 });
+
+it('titles a shared card by the start of its prompt and keeps the whole prompt for its name', () => {
+  const long: TeamImageRecord = {
+    ...tea,
+    id: 'team-long.png',
+    prompt: '3:4 竖版卖点详情图。商品为山川明前绿茶茶罐，置于浅色背景',
+  };
+  render(
+    <MemoryRouter>
+      <LandingShowcase records={[long]} onUse={vi.fn()} onUseTemplate={vi.fn()} />
+    </MemoryRouter>,
+  );
+
+  const card = screen.getByRole('button', { name: `做同款：${long.prompt}` });
+  expect(card.querySelector('.home-feed__title')).toHaveTextContent(/^竖版卖点详情图$/);
+});

@@ -13,6 +13,7 @@ import {
 } from '@/data/creationTemplates';
 import { buildApiUrl } from '@/services/api/imagesApi';
 import { IMAGE_CATEGORY_LABELS, type TeamImageRecord } from '@/types/image';
+import { promptTitle } from '@/utils/promptTitle';
 import { templateThumbnailUrl, thumbnailUrl } from '@/utils/thumbnail';
 
 /** Six rows of four for one category or a search. */
@@ -157,6 +158,7 @@ export function LandingShowcase({
                   <FeedCard
                     key={record.id}
                     label={record.prompt}
+                    title={promptTitle(record.prompt)}
                     author={record.ownerName}
                     meta={record.category ? IMAGE_CATEGORY_LABELS[record.category] : undefined}
                     imageUrl={thumbnailUrl(buildApiUrl(`/api/outputs/${record.id}`), 640)}
@@ -167,6 +169,7 @@ export function LandingShowcase({
                   <FeedCard
                     key={template.id}
                     label={template.title}
+                    title={template.title}
                     author="创作模板"
                     meta={template.category}
                     imageUrl={templateThumbnailUrl(template.imageUrl)}
@@ -184,12 +187,15 @@ export function LandingShowcase({
 
 function FeedCard({
   label,
+  title,
   author,
   meta,
   imageUrl,
   onUse,
 }: {
+  /** The whole prompt or title, for the accessible name. */
   label: string;
+  title: string;
   author: string;
   meta: string | undefined;
   imageUrl: string;
@@ -211,7 +217,9 @@ function FeedCard({
         </span>
       </span>
       <span className="home-feed__body">
-        <span className="home-feed__title">{label}</span>
+        <span className="home-feed__title" title={label}>
+          {title}
+        </span>
         <span className="home-feed__meta">
           <span className="home-feed__avatar" aria-hidden="true">
             {author.slice(0, 1)}

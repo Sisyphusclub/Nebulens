@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
@@ -10,6 +10,7 @@ import { LandingFeatureBanner } from '@/components/landing/LandingFeatureBanner'
 import { LandingSkillDeck } from '@/components/landing/LandingSkills';
 import { CREATION_TEMPLATES } from '@/data/creationTemplates';
 import { EVERYDAY_SKILLS, LANDING_SKILLS } from '@/data/landingSkills';
+import { templateThumbnailUrl } from '@/utils/thumbnail';
 
 it('shows every skill as a tile with its tagline and example', async () => {
   const user = userEvent.setup();
@@ -20,7 +21,7 @@ it('shows every skill as a tile with its tagline and example', async () => {
   for (const skill of EVERYDAY_SKILLS) {
     const tile = within(deck).getByRole('button', { name: `使用技能：${skill.label}` });
     expect(tile).toHaveTextContent(skill.tagline);
-    expect(tile.querySelector('img')).toHaveAttribute('src', skill.image);
+    expect(tile.querySelector('img')).toHaveAttribute('src', templateThumbnailUrl(skill.image));
   }
   await user.click(within(deck).getByRole('button', { name: '使用技能：角色设定' }));
   expect(onSelect).toHaveBeenCalledWith(LANDING_SKILLS.find((skill) => skill.id === 'character'));
@@ -106,4 +107,45 @@ it('switches slides from the dots', async () => {
     `/templates?${new URLSearchParams({ category: '海报字体' }).toString()}`,
   );
   expect(screen.queryByRole('link', { name: '浏览创作模板' })).toBeNull();
+});
+
+it('pages the tool cards with arrows when they run past the row', async () => {
+  const user = userEvent.setup();
+  const scrollBy = vi.fn();
+  const sizes = vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return this.classList.contains('landing-deck__scroller') ? 2000 : 0;
+  });
+  const width = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return this.classList.contains('landing-deck__scroller') ? 800 : 0;
+  });
+  Object.defineProperty(HTMLElement.prototype, 'scrollBy', {
+    configurable: true,
+    value: scrollBy,
+  });
+  try {
+    render(<LandingSkillDeck onSelect={vi.fn()} />);
+    const deck = screen.getByRole('region', { name: '技能' });
+
+    // At the start there is only a way forward.
+    expect(within(deck).queryByRole('button', { name: '上一组技能' })).toBeNull();
+    await user.click(within(deck).getByRole('button', { name: '下一组技能' }));
+    expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ left: 640 }));
+
+    const scroller = deck.querySelector('.landing-deck__scroller')!;
+    act(() => {
+      scroller.scrollLeft = 1200;
+      scroller.dispatchEvent(new Event('scroll'));
+    });
+    // At the end there is only a way back.
+    expect(within(deck).getByRole('button', { name: '上一组技能' })).toBeInTheDocument();
+    expect(within(deck).queryByRole('button', { name: '下一组技能' })).toBeNull();
+  } finally {
+    sizes.mockRestore();
+    width.mockRestore();
+    delete (HTMLElement.prototype as Partial<HTMLElement>).scrollBy;
+  }
 });

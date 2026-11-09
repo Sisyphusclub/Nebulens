@@ -21,17 +21,19 @@ describe('home layout', () => {
 
   it('puts the banner beside two rows of tool cards that scroll sideways', () => {
     expect(rule('.home-tools')).toContain(
-      'grid-template-columns: clamp(300px, 26vw, 400px) minmax(0, 1fr);',
+      'grid-template-columns: clamp(280px, 24vw, 400px) minmax(0, 1fr);',
     );
     const grid = rule('.landing-deck__grid');
     expect(grid).toContain('grid-auto-flow: column;');
     expect(grid).toContain('grid-template-rows: repeat(2, 101px);');
-    expect(rule('.landing-deck')).toContain('overflow-x: auto;');
+    expect(rule('.landing-deck__scroller')).toContain('overflow-x: auto;');
+    // A slice of the next column always shows.
+    expect(grid).toContain('grid-auto-columns: max(270px, calc((100% - 40px) / 4.4));');
   });
 
   it('lays the inspiration feed out in rows of four wide cards', () => {
     expect(rule('.home-feed__grid')).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
-    expect(rule('.home-feed__media')).toContain('aspect-ratio: 16 / 9;');
+    expect(rule('.home-feed__media')).toContain('aspect-ratio: 4 / 3;');
   });
 
   it('stacks the banner above the tool cards on narrow windows', () => {

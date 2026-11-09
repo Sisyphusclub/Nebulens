@@ -519,9 +519,6 @@ video {
   flex: 0 0 auto;
   object-fit: contain;
 }
-.group[data-state='collapsed'] .landing-sidebar__brand span {
-  display: none;
-}
 .landing-sidebar__mobile-close {
   display: none;
 }
@@ -546,64 +543,6 @@ video {
 .landing-sidebar [data-sidebar='menu-button'] svg {
   width: 20px;
   height: 20px;
-}
-.group[data-state='collapsed'] .landing-sidebar [data-sidebar='header'],
-.group[data-state='collapsed'] .landing-sidebar [data-sidebar='group'] {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu'] {
-  align-items: center;
-}
-/* The whole collapsed rail is one compact glass capsule, like the composer, so its
-   icons and small labels stay legible over the artwork wall. */
-.group[data-state='collapsed'] .landing-sidebar nav {
-  display: flex;
-  width: max-content;
-  flex-direction: column;
-  margin: 8px auto 0;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  border-top-color: rgb(255 255 255 / 0.2);
-  border-radius: 24px;
-  background: rgb(26 30 40 / 0.42);
-  padding: 8px;
-  box-shadow:
-    rgb(255 255 255 / 0.08) 0 0 2px 1px inset,
-    0 12px 30px -20px rgb(0 0 0 / 0.9);
-  backdrop-filter: blur(10px) saturate(1.2);
-}
-.group[data-state='collapsed'] .landing-sidebar nav [data-sidebar='group'] {
-  padding: 0;
-}
-.group[data-state='collapsed']
-  .landing-sidebar
-  nav
-  [data-sidebar='group']
-  + [data-sidebar='group'] {
-  margin-top: 8px;
-  border-top: 1px solid rgb(255 255 255 / 0.08);
-  padding-top: 8px;
-}
-.group[data-state='collapsed'] .landing-sidebar .landing-sidebar__brand {
-  width: 50px;
-  justify-content: center;
-  padding: 0;
-}
-.group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu-button'] {
-  min-width: 48px;
-  min-height: 52px;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  padding: 5px 0 4px;
-}
-.group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu-button'] > span {
-  display: block;
-  max-width: 48px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .landing-sidebar [data-sidebar='menu-button']:hover,
 .landing-sidebar [data-sidebar='menu-button']:focus-visible {
@@ -1568,40 +1507,11 @@ video {
   .landing-sidebar [data-sidebar='header'] {
     padding: 14px 14px 12px;
   }
-  .group[data-state='collapsed'] .landing-sidebar .landing-sidebar__brand {
-    width: 80px;
-    min-height: 56px;
-  }
-  .group[data-state='collapsed'] .landing-sidebar .landing-sidebar__brand img {
-    width: 36px;
-    height: 36px;
-  }
   .landing-sidebar [data-sidebar='group'] {
     padding: 8px 14px;
   }
   .landing-sidebar [data-sidebar='menu'] {
     gap: 12px;
-  }
-  .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu'] {
-    gap: 6px;
-  }
-  .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu-button'] {
-    width: 68px !important;
-    height: 62px !important;
-    min-width: 68px;
-    min-height: 62px;
-    gap: 6px;
-    border-radius: 16px;
-    padding: 7px 2px 6px !important;
-  }
-  .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu-button'] > span {
-    max-width: 64px;
-    font-size: 11px;
-    line-height: 1;
-  }
-  .group[data-state='collapsed'] .landing-sidebar [data-sidebar='menu-button'] svg {
-    width: 20px;
-    height: 20px;
   }
 }
 
@@ -10330,19 +10240,6 @@ video {
   }
 }
 
-/* The operational sidebar is the collapsed floating rail on desktop. Keep
-   the page canvas centered inside that rail plus the viewport, rather than
-   reserving the expanded sidebar width used by the legacy shell. */
-.app-main:not(.app-main--landing):not(.app-main--generate) {
-  padding-left: var(--workspace-sidebar-rail);
-}
-
-@media (max-width: 860px) {
-  .app-main:not(.app-main--landing):not(.app-main--generate) {
-    padding-left: 0;
-  }
-}
-
 /* Keep operational tables on one quiet surface, following the beUI Data Table
    hierarchy instead of stacking borders around every toolbar and section. */
 .assets-page .asset-workbench__chrome {
@@ -11679,85 +11576,82 @@ video {
   display: inline-flex;
 }
 
-/* Workbench sidebar: one shared sidebar that opens expanded with labelled navigation and
-   the creation history, and collapses back to the compact glass rail. While expanded the
+/* Workbench sidebar: one shared sidebar that is always expanded on desktop, with labelled
+   navigation and the creation history. It lies flat against the window edge, one
+   full-height panel a shade lighter than the page with a hairline on its right, and the
    page starts after it instead of running underneath. */
-.landing-sidebar__collapse {
-  display: none;
-}
 @media (min-width: 861px) {
-  /* The collapsed rail keeps only navigation; the history needs the labelled width. */
-  .group[data-state='collapsed'] .landing-sidebar .sidebar-history {
-    display: none;
-  }
   .app-shell {
     --workbench-sidebar-width: 15rem;
   }
-  .app-main {
-    transition: padding-left 200ms var(--ease-out-expo);
-  }
-  .app-shell[data-sidebar-rail='expanded'] .app-main {
+  .app-shell .app-main {
     --workspace-sidebar-rail: 0px;
     padding-left: var(--workbench-sidebar-width);
   }
-  .app-shell[data-sidebar-rail='expanded'] .generation-console.has-results .studio-create-bar {
+  .app-shell .generation-console.has-results .studio-create-bar {
     left: calc(var(--workbench-sidebar-width) + (100vw - var(--workbench-sidebar-width)) / 2);
     width: min(1060px, calc(100vw - var(--workbench-sidebar-width) - 80px));
   }
-  .app-shell[data-sidebar-rail='expanded'] .generation-console.has-results::after {
+  .app-shell .generation-console.has-results::after {
     left: var(--workbench-sidebar-width);
   }
 
-  .landing-sidebar__collapse {
-    display: inline-flex;
-    width: 32px;
-    height: 32px;
-    flex: 0 0 auto;
-    border-radius: var(--radius-control);
-    color: rgb(242 244 247 / 0.62);
+  .group[data-state='expanded'] .landing-sidebar {
+    padding: 0;
   }
-  .landing-sidebar__collapse:hover,
-  .landing-sidebar__collapse:focus-visible {
-    background: rgb(255 255 255 / 0.07);
-    color: var(--foreground);
-  }
-  .landing-sidebar__collapse svg {
-    width: 18px;
-    height: 18px;
-  }
-  .group[data-state='collapsed'] .landing-sidebar .landing-sidebar__header-row {
-    flex-direction: column;
-    gap: 6px;
-  }
-
   .group[data-state='expanded'] .landing-sidebar [data-sidebar='sidebar'] {
-    border: 1px solid rgb(255 255 255 / 0.08);
-    border-top-color: rgb(255 255 255 / 0.14);
-    border-radius: 22px;
-    background: color-mix(in oklch, var(--surface-raised) 86%, rgb(10 12 18));
-    box-shadow:
-      rgb(255 255 255 / 0.05) 0 0 2px 1px inset,
-      0 18px 50px -30px rgb(0 0 0 / 0.9);
-    backdrop-filter: blur(14px) saturate(1.15);
+    border: 0;
+    border-right: 1px solid rgb(255 255 255 / 0.06);
+    border-radius: 0;
+    background: color-mix(in oklch, var(--background) 82%, var(--surface-raised));
+    box-shadow: none;
+    backdrop-filter: none;
   }
   .group[data-state='expanded'] .landing-sidebar [data-sidebar='header'] {
-    padding: 10px 8px 4px 6px;
+    padding: 18px 12px 14px 14px;
   }
   .group[data-state='expanded'] .landing-sidebar [data-sidebar='group'] {
-    padding: 4px 8px;
+    padding: 2px 10px;
   }
   .group[data-state='expanded'] .landing-sidebar [data-sidebar='menu'] {
     gap: 2px;
   }
+  .group[data-state='expanded']
+    .landing-sidebar
+    nav
+    [data-sidebar='group']
+    + [data-sidebar='group'] {
+    margin-top: 6px;
+    padding-top: 9px;
+  }
+  .group[data-state='expanded']
+    .landing-sidebar
+    nav
+    [data-sidebar='group']
+    + [data-sidebar='group']::before {
+    position: absolute;
+    top: 0;
+    right: 20px;
+    left: 20px;
+    height: 1px;
+    background: rgb(255 255 255 / 0.06);
+    content: '';
+  }
   .group[data-state='expanded'] .landing-sidebar [data-sidebar='menu-button'] {
-    height: 40px;
+    height: 42px;
     gap: 12px;
+    border-radius: 10px;
     padding: 0 12px;
-    font-size: 14px;
+    font-size: 15px;
   }
   .group[data-state='expanded'] .landing-sidebar [data-sidebar='menu-button'] svg {
     width: 18px;
     height: 18px;
+  }
+  .group[data-state='expanded'] .landing-sidebar [data-sidebar='menu-button'][data-active='true'] {
+    background: rgb(255 255 255 / 0.09);
+    box-shadow: none;
+    font-weight: 600;
   }
 }
 .sidebar-history {
@@ -11847,8 +11741,8 @@ video {
 
 /* Home: a creation workbench. A short greeting, a switch between writing and templates,
    the wide composer with one row of skill chips, then a banner beside two rows of tool
-   cards, and an inspiration feed of large cards under category tabs. No artwork backdrop:
-   a faint dot grid at the top is the only decoration. */
+   cards, and an inspiration feed of large cards under category tabs. The dimmed nebula
+   sits behind the greeting and composer only, and scrolls away with them. */
 .home-page {
   --home-gutter: clamp(20px, 2.4vw, 44px);
   position: relative;
@@ -11857,22 +11751,11 @@ video {
   color: var(--foreground);
   padding: 0 var(--home-gutter) 72px calc(var(--workspace-sidebar-rail) + var(--home-gutter));
 }
-.home-page::before {
-  position: absolute;
-  inset: 0 0 auto;
-  z-index: 0;
-  height: 440px;
-  background-image: radial-gradient(rgb(255 255 255 / 0.08) 1px, transparent 1.2px);
-  background-size: 22px 22px;
-  content: '';
-  mask-image: linear-gradient(180deg, #000, transparent);
-  pointer-events: none;
-}
 .home-page > * {
   position: relative;
 }
-.home-page--loading {
-  display: block;
+.home-page--loading .home-hero {
+  min-height: clamp(520px, 62svh, 640px);
 }
 .home-page .landing-account-actions {
   position: absolute;
@@ -11886,7 +11769,44 @@ video {
   flex-direction: column;
   align-items: center;
   padding-top: clamp(76px, 10svh, 108px);
+  padding-bottom: 28px;
   text-align: center;
+}
+/* The nebula covers the hero from the sidebar to the window edge. Sized like `cover`, then
+   placed so the vortex's inner ring (at 48.2% of the frame's width) sits on the hero's
+   centre line, under the greeting and composer; the overlay darkens the edges and fades
+   the bottom into the page, so the tool cards below sit on a plain background. */
+.home-backdrop {
+  position: absolute;
+  inset: 0 calc(-1 * var(--home-gutter));
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.home-backdrop__media {
+  position: absolute;
+  top: -12%;
+  left: 50%;
+  width: max(100%, 1180px);
+  max-width: none;
+  height: auto;
+  aspect-ratio: 1280 / 908;
+  object-fit: cover;
+  filter: brightness(0.6) saturate(0.9);
+  transform: translateX(-48.2%);
+}
+video.home-backdrop__media {
+  transition: opacity 600ms var(--ease-out-expo);
+}
+video.home-backdrop__media[data-playing='false'] {
+  opacity: 0;
+}
+.home-backdrop__overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 70% at 50% 0%, transparent 35%, rgb(5 6 10 / 0.55) 100%),
+    linear-gradient(180deg, rgb(5 6 10 / 0.2) 0%, transparent 30%, var(--background) 100%);
 }
 .home-hero h1 {
   margin: 0;
@@ -11939,11 +11859,6 @@ a.home-mode-switch__item:focus-visible {
 .home-hero .landing-composer {
   max-width: none;
 }
-.home-hero .landing-composer-hero .generation-composer {
-  --card-bg: rgb(28 29 34 / 0.96) !important;
-  border-color: rgb(255 255 255 / 0.08);
-  box-shadow: 0 24px 60px -40px rgb(0 0 0 / 0.9);
-}
 .home-hero .landing-composer .agent-chat-input__textarea {
   min-height: 96px !important;
 }
@@ -11953,21 +11868,28 @@ a.home-mode-switch__item:focus-visible {
 }
 
 .home-skill-chips {
+  --chip-height: 36px;
   display: flex;
   width: 100%;
   max-width: 1180px;
   gap: 8px;
   margin-top: 16px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  mask-image: linear-gradient(90deg, #000 calc(100% - 48px), transparent);
 }
-.home-skill-chips::-webkit-scrollbar {
-  display: none;
+/* Only the chips that fit on one line show: the rest wrap onto a second line that is cut
+   off, so the row never needs a sideways scroll and "more" stays at its end. */
+.home-skill-chips__list {
+  display: flex;
+  height: var(--chip-height);
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+  overflow: hidden;
 }
 .home-skill-chips .home-skill-chips__chip {
   display: inline-flex;
-  height: 36px;
+  height: var(--chip-height);
+  min-height: var(--chip-height);
   flex: 0 0 auto;
   align-items: center;
   gap: 6px;
@@ -11999,9 +11921,9 @@ a.home-mode-switch__item:focus-visible {
 .home-tools {
   z-index: 1;
   display: grid;
-  grid-template-columns: clamp(300px, 26vw, 400px) minmax(0, 1fr);
+  grid-template-columns: clamp(280px, 24vw, 400px) minmax(0, 1fr);
   gap: 10px;
-  margin-top: 44px;
+  margin-top: 16px;
 }
 .landing-feature {
   position: relative;
@@ -12110,16 +12032,20 @@ a.home-mode-switch__item:focus-visible {
   background: #fff;
 }
 .landing-deck {
+  position: relative;
   min-width: 0;
+}
+.landing-deck__scroller {
   overflow-x: auto;
   scrollbar-width: none;
 }
-.landing-deck::-webkit-scrollbar {
+.landing-deck__scroller::-webkit-scrollbar {
   display: none;
 }
+/* Columns are sized so a slice of the next one always shows, a hint that the row scrolls. */
 .landing-deck__grid {
   display: grid;
-  grid-auto-columns: minmax(300px, calc((100% - 30px) / 4));
+  grid-auto-columns: max(270px, calc((100% - 40px) / 4.4));
   grid-auto-flow: column;
   grid-template-rows: repeat(2, 101px);
   gap: 10px;
@@ -12143,6 +12069,39 @@ a.home-mode-switch__item:focus-visible {
 .landing-deck .landing-deck__tile:focus-visible {
   background: rgb(255 255 255 / 0.09);
 }
+.landing-deck .landing-deck__arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  width: 36px;
+  min-width: 0;
+  height: 36px;
+  min-height: 0;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: var(--radius-full);
+  background: rgb(20 22 28 / 0.86);
+  padding: 0;
+  color: var(--foreground);
+  box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.8);
+  transform: translateY(-50%);
+  backdrop-filter: blur(8px);
+}
+.landing-deck .landing-deck__arrow:hover,
+.landing-deck .landing-deck__arrow:focus-visible {
+  background: rgb(44 47 56 / 0.95);
+}
+.landing-deck__arrow--back {
+  left: 8px;
+}
+.landing-deck__arrow--forward {
+  right: 8px;
+}
+.landing-deck__arrow svg {
+  width: 18px;
+  height: 18px;
+}
 .landing-deck__tile img {
   width: 46%;
   max-width: 168px;
@@ -12158,17 +12117,11 @@ a.home-mode-switch__item:focus-visible {
   gap: 6px;
 }
 .landing-deck__tile-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  overflow: hidden;
   font-size: 15px;
   font-weight: 600;
+  text-overflow: ellipsis;
   white-space: nowrap;
-}
-.landing-deck__tile-title svg {
-  width: 15px;
-  height: 15px;
-  opacity: 0.7;
 }
 .landing-deck__tile-description {
   overflow: hidden;
@@ -12273,10 +12226,12 @@ a.home-mode-switch__item:focus-visible {
   text-align: left;
   white-space: normal;
 }
+/* 4:3 rather than a video-wide frame: most pieces are posters and portraits, and a wide
+   crop would cut away their titles and faces. */
 .home-feed__media {
   position: relative;
   display: block;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
   background: var(--surface-raised);
 }
@@ -12389,6 +12344,9 @@ a.home-mode-switch__item:focus-visible {
   .home-mode-switch__item {
     width: 120px;
   }
+  .home-skill-chips {
+    --chip-height: 40px;
+  }
   .landing-deck__grid {
     grid-auto-columns: minmax(240px, 78%);
     grid-template-rows: repeat(2, 84px);
@@ -12420,39 +12378,9 @@ a.home-mode-switch__item:focus-visible {
   }
 }
 
-/* The workbench sidebar lies flat against the window edge while expanded: one full-height
-   panel a shade lighter than the page, with a hairline on its right. */
-@media (min-width: 861px) {
-  .group[data-state='expanded'] .landing-sidebar {
-    padding: 0;
-  }
-  .group[data-state='expanded'] .landing-sidebar [data-sidebar='sidebar'] {
-    border: 0;
-    border-right: 1px solid rgb(255 255 255 / 0.06);
-    border-radius: 0;
-    background: color-mix(in oklch, var(--background) 82%, var(--surface-raised));
-    box-shadow: none;
-    backdrop-filter: none;
-  }
-  .group[data-state='expanded'] .landing-sidebar [data-sidebar='header'] {
-    padding: 18px 12px 14px 14px;
-  }
-  .group[data-state='expanded'] .landing-sidebar [data-sidebar='group'] {
-    padding: 2px 10px;
-  }
-  .group[data-state='expanded'] .landing-sidebar [data-sidebar='menu-button'] {
-    height: 42px;
-    border-radius: 10px;
-    font-size: 15px;
-  }
-  .group[data-state='expanded'] .landing-sidebar [data-sidebar='menu-button'][data-active='true'] {
-    background: rgb(255 255 255 / 0.09);
-    box-shadow: none;
-    font-weight: 600;
-  }
-}
 .sidebar-history .sidebar-history__login {
   height: auto;
+  min-height: 0;
   justify-content: flex-start;
   margin: 2px 0 0;
   padding: 4px 12px;

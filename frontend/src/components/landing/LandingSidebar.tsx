@@ -1,13 +1,4 @@
-import {
-  Check,
-  KeyRound,
-  LogIn,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Sparkles,
-  X,
-  type LucideIcon,
-} from 'lucide-react';
+import { Check, KeyRound, LogIn, Sparkles, X, type LucideIcon } from 'lucide-react';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -29,10 +20,6 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import {
-  setWorkbenchSidebarExpanded,
-  useWorkbenchSidebarExpanded,
-} from '@/hooks/useWorkbenchSidebar';
 
 export interface LandingSidebarItem {
   icon: LucideIcon;
@@ -89,7 +76,7 @@ function LandingSidebarContent({
   onNotify,
 }: LandingSidebarProps) {
   const location = useLocation();
-  const { open, setOpenMobile, toggleSidebar } = useSidebar();
+  const { setOpenMobile } = useSidebar();
   const [checkingIn, setCheckingIn] = useState(false);
 
   useEffect(() => {
@@ -152,18 +139,6 @@ function LandingSidebarContent({
               <img src={logoSrc} alt="" />
               <span>{brandLabel}</span>
             </Link>
-            <Button
-              className="landing-sidebar__collapse"
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={open ? '收起侧栏' : '展开侧栏'}
-              title={open ? '收起侧栏' : '展开侧栏'}
-              aria-expanded={open}
-              onClick={toggleSidebar}
-            >
-              {open ? <PanelLeftClose aria-hidden="true" /> : <PanelLeftOpen aria-hidden="true" />}
-            </Button>
             <Button
               className="landing-sidebar__mobile-close"
               type="button"
@@ -242,8 +217,10 @@ function LandingSidebarContent({
   );
 }
 
+/** The desktop sidebar never collapses, so its open state ignores toggles (and Cmd+B). */
+function keepOpen(): void {}
+
 export function LandingSidebar(props: LandingSidebarProps) {
-  const expanded = useWorkbenchSidebarExpanded();
   const sidebarStyle: SidebarVariables = {
     '--sidebar-width': '15rem',
     '--sidebar-width-icon': '6.875rem',
@@ -251,8 +228,8 @@ export function LandingSidebar(props: LandingSidebarProps) {
 
   return (
     <SidebarProvider
-      open={expanded}
-      onOpenChange={setWorkbenchSidebarExpanded}
+      open
+      onOpenChange={keepOpen}
       className="landing-navigation-shell"
       style={sidebarStyle}
     >

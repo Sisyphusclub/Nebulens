@@ -371,7 +371,11 @@ export function LandingView() {
           <LandingHeroBackdrop reducedMotion={reducedMotion} />
           <div className="home-backdrop__overlay" />
         </div>
-        <h1 id="landing-title">今天，想把什么变成画面？</h1>
+        {/* Each clause stays whole, so a narrow screen breaks the line only between them. */}
+        <h1 id="landing-title" aria-label="今天，想把什么变成画面？">
+          <span>今天，</span>
+          <span>想把什么变成画面？</span>
+        </h1>
         <LandingModeSwitch />
         <div className="landing-composer-anchor">
           <div className="landing-composer-presentation landing-composer-hero">

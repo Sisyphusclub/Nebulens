@@ -16,12 +16,17 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
-import { useGenerationSessions } from '@/hooks/useGenerationSessions';
+import { SESSION_TITLE_MAX_LENGTH, useGenerationSessions } from '@/hooks/useGenerationSessions';
 import { useImageHistory } from '@/hooks/useImageHistory';
 import { sidebarSessions } from '@/utils/sidebarSessions';
 
 /** Opens the generate page on a blank session; the session is saved on first generation. */
 export const NEW_CREATION_PATH = '/generate?prompt=';
+
+/** A title cut short from a long prompt ends in "…", which is not part of the name. */
+function editableTitle(title: string): string {
+  return title.endsWith('…') ? title.slice(0, -1).trimEnd() : title;
+}
 
 interface SidebarCreationHistoryProps {
   onNavigate: () => void;
@@ -40,6 +45,7 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
   const navigate = useNavigate();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState('');
+  const [initialTitle, setInitialTitle] = useState('');
 
   const activeSessionId = location.pathname === '/generate' ? searchParams.get('session') : null;
   const items = useMemo(
@@ -70,10 +76,13 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
 
   const startRename = (id: string, title: string): void => {
     setEditingId(id);
-    setDraftTitle(title);
+    setDraftTitle(editableTitle(title));
+    setInitialTitle(editableTitle(title));
   };
+  /** Saves a changed, non-empty name; leaving it as it was keeps the title untouched. */
   const commitRename = (): void => {
-    if (editingId !== null && draftTitle.trim() !== '') rename(editingId, draftTitle.trim());
+    const next = draftTitle.trim();
+    if (editingId !== null && next !== '' && next !== initialTitle.trim()) rename(editingId, next);
     setEditingId(null);
   };
   const handleRenameKey = (event: KeyboardEvent<HTMLInputElement>): void => {
@@ -112,8 +121,10 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
                       className="sidebar-history__rename"
                       aria-label="重命名创作"
                       value={draftTitle}
-                      maxLength={60}
+                      maxLength={SESSION_TITLE_MAX_LENGTH}
                       autoFocus
+                      // Typing replaces the whole name, as when renaming a file.
+                      onFocus={(event) => event.currentTarget.select()}
                       onChange={(event) => setDraftTitle(event.target.value)}
                       onKeyDown={handleRenameKey}
                       onBlur={commitRename}

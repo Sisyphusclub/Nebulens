@@ -19,6 +19,7 @@ export function App() {
         'app-shell',
         isLanding && 'app-shell--landing',
         isGenerate && 'app-shell--generate',
+        isImageDetailModalOpen && 'app-shell--detail-open',
       )}
     >
       <AppSidebar />

@@ -13,6 +13,8 @@ import {
 const STORAGE_KEY = 'nebulens-generation-sessions-v1';
 const ACTIVE_SESSION_STORAGE_KEY = 'nebulens-active-generation-session-by-user-v1';
 const DEFAULT_SESSION_TITLE = '未命名会话';
+/** Longest title kept; longer prompts are cut and end in "…". */
+export const SESSION_TITLE_MAX_LENGTH = 30;
 
 export interface GenerationSession {
   id: string;
@@ -219,7 +221,9 @@ function sessionId(): string {
 function titleFromPrompt(prompt: string): string {
   const value = prompt.replace(/\s+/g, ' ').trim();
   if (!value) return DEFAULT_SESSION_TITLE;
-  return value.length > 30 ? `${value.slice(0, 30).trimEnd()}…` : value;
+  return value.length > SESSION_TITLE_MAX_LENGTH
+    ? `${value.slice(0, SESSION_TITLE_MAX_LENGTH).trimEnd()}…`
+    : value;
 }
 
 export function createGenerationSession(title = DEFAULT_SESSION_TITLE): GenerationSession {
@@ -236,13 +240,12 @@ export function createGenerationSession(title = DEFAULT_SESSION_TITLE): Generati
   return session;
 }
 
+/** Renaming is not new work, so the session keeps its place in the list. */
 export function renameGenerationSession(id: string, title: string): void {
   const nextTitle = titleFromPrompt(title);
   setSessions((current) => ({
     sessions: current.sessions.map((session) =>
-      session.id === id
-        ? { ...session, title: nextTitle, updatedAt: new Date().toISOString() }
-        : session,
+      session.id === id ? { ...session, title: nextTitle } : session,
     ),
   }));
 }

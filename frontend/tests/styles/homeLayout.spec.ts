@@ -73,3 +73,58 @@ describe('flat workbench sidebar', () => {
     );
   });
 });
+
+describe('creation history rows', () => {
+  it('keep their own compact size: the expanded navigation sizes stop at its <nav>', () => {
+    const navButton =
+      baseStyles.match(
+        /\.group\[data-state='expanded'\] \.landing-sidebar nav \[data-sidebar='menu-button'\] \{([^}]+)\}/,
+      )?.[1] ?? '';
+    expect(navButton).toContain('height: 42px;');
+    // No expanded-state rule reaches every menu button or group in the sidebar.
+    expect(baseStyles).not.toMatch(
+      /\.group\[data-state='expanded'\] \.landing-sidebar \[data-sidebar='(menu-button|group|menu)'\]/,
+    );
+    const historyGroup =
+      baseStyles.match(
+        /\.landing-sidebar \[data-sidebar='group'\]\.sidebar-history \{([^}]+)\}/,
+      )?.[1] ?? '';
+    expect(historyGroup).toContain('padding: 14px 10px 8px;');
+  });
+
+  it('leave room for the rename and remove actions in the phone menu, where they always show', () => {
+    expect(baseStyles).toMatch(
+      /\[data-mobile='true'\] \.sidebar-history \[data-sidebar='menu-button'\] \{[^}]*padding: 0 60px 0 12px;/,
+    );
+  });
+});
+
+describe('phone menu', () => {
+  it('has a width of its own, so long creation titles cannot push it off the screen', () => {
+    // Matched by its own attributes: the sheet is portaled out of `.landing-sidebar`.
+    const sheet =
+      baseStyles.match(/\n {2}\[data-sidebar='sidebar'\]\[data-mobile='true'\] \{([^}]+)\}/)?.[1] ??
+      '';
+    expect(sheet).toContain('width: min(20rem, 85vw);');
+    expect(baseStyles).not.toContain(
+      ".landing-sidebar [data-sidebar='sidebar'][data-mobile='true']",
+    );
+  });
+});
+
+describe('home headline', () => {
+  it('uses the light Song face of the earlier hero', () => {
+    const headline = rule('.home-hero h1');
+    expect(headline).toContain('font-family: var(--font-hero-serif);');
+    expect(headline).toContain('font-weight: 300;');
+    expect(rule('.home-hero h1 > span')).toContain('display: inline-block;');
+  });
+});
+
+describe('image detail over the sidebar', () => {
+  it('sends the sidebar and phone header beneath the page while a detail is open', () => {
+    expect(baseStyles).toMatch(
+      /\.app-shell--detail-open \.landing-navigation-shell,\s*\.app-shell--detail-open \.landing-mobile-header \{\s*z-index: 0;/,
+    );
+  });
+});

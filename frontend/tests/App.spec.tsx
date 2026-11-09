@@ -826,6 +826,58 @@ describe('React application routes', () => {
     );
   });
 
+  it('renames a creation in place: the old name is selected, typing replaces it, the order stays', async () => {
+    const user = userEvent.setup();
+    const older = createGenerationSession(
+      '门店活动海报，喜庆明快的配色与彩带元素，主标题周年庆典，副标题写明活动时间',
+    );
+    attachGenerationBatch(older.id, 'older-batch', older.title);
+    const newer = createGenerationSession('雾中的未来车站');
+    attachGenerationBatch(newer.id, 'newer-batch', '雾中的未来车站');
+    historyMocks.batches = [
+      mockHistoryBatch('older-batch', older.title),
+      mockHistoryBatch('newer-batch', '雾中的未来车站'),
+    ];
+    renderRoute('/templates');
+    const history = within(screen.getByRole('list', { name: '创作记录' }));
+    const titlesBefore = history.getAllByRole('link').map((link) => link.textContent);
+
+    await user.click(history.getByRole('button', { name: `重命名：${older.title}` }));
+    const input = screen.getByRole('textbox', { name: '重命名创作' });
+    // The "…" that marks a cut-short prompt is not part of the name, and nothing is lost
+    // to the 30-character limit after saving.
+    expect(input).toHaveValue(older.title.slice(0, -1));
+    expect(input).toHaveAttribute('maxLength', '30');
+    expect((input as HTMLInputElement).selectionStart).toBe(0);
+    expect((input as HTMLInputElement).selectionEnd).toBe(older.title.length - 1);
+    // A browser replaces the selected name as you type; user-event will not type into a full
+    // field, so the name is cleared first here.
+    await user.clear(input);
+    await user.type(input, '周年庆海报{Enter}');
+
+    const titlesAfter = history.getAllByRole('link').map((link) => link.textContent);
+    expect(titlesAfter).toEqual(
+      titlesBefore.map((title) => (title === older.title ? '周年庆海报' : title)),
+    );
+  });
+
+  it('leaves the title alone when a rename ends without a change', async () => {
+    const user = userEvent.setup();
+    const session = createGenerationSession('雾中的未来车站');
+    attachGenerationBatch(session.id, 'sidebar-batch', '雾中的未来车站');
+    historyMocks.batches = [mockHistoryBatch('sidebar-batch', '雾中的未来车站')];
+    renderRoute('/templates');
+    const history = within(screen.getByRole('list', { name: '创作记录' }));
+
+    await user.click(history.getByRole('button', { name: '重命名：雾中的未来车站' }));
+    await user.click(document.body);
+    expect(history.getByRole('link', { name: '雾中的未来车站' })).toBeInTheDocument();
+
+    await user.click(history.getByRole('button', { name: '重命名：雾中的未来车站' }));
+    await user.keyboard('不该保存{Escape}');
+    expect(history.getByRole('link', { name: '雾中的未来车站' })).toBeInTheDocument();
+  });
+
   it('keeps the sidebar expanded with no way to fold it into a rail', async () => {
     const user = userEvent.setup();
     const { container } = renderRoute('/templates');
@@ -909,6 +961,25 @@ describe('React application routes', () => {
     await user.click(screen.getByRole('button', { name: '生成图片' }));
     expect(await screen.findByRole('button', { name: '查看图片：蓝色玻璃森林' })).toBeVisible();
     expect(screen.getByRole('button', { name: '查看图片：橙色机械城市' })).toBeVisible();
+  });
+
+  it('puts the sidebar beneath the image detail while it is open', async () => {
+    const session = createGenerationSession('雾中的未来车站');
+    attachGenerationBatch(session.id, 'detail-batch', '雾中的未来车站');
+    historyMocks.batches = [mockHistoryBatch('detail-batch', '雾中的未来车站')];
+    const user = userEvent.setup();
+    const { container } = renderRoute(`/generate?session=${session.id}`);
+    const shell = container.querySelector('.app-shell');
+    expect(shell).not.toHaveClass('app-shell--detail-open');
+
+    await user.click(await screen.findByRole('button', { name: '查看图片：雾中的未来车站' }));
+    // The dialog lives in the page's stacking context; the shell class lets the sidebar step
+    // down beneath its backdrop.
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(shell).toHaveClass('app-shell--detail-open');
+
+    await user.click(screen.getByRole('button', { name: '关闭图片详情' }));
+    await waitFor(() => expect(shell).not.toHaveClass('app-shell--detail-open'));
   });
 
   it('restores the last viewed generation session after navigating away and back', async () => {

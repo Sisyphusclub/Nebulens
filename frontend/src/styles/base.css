@@ -483,6 +483,13 @@ video {
 .landing-navigation-shell > * {
   pointer-events: auto;
 }
+/* The image detail opens inside the page's own stacking context, which sits beneath the
+   sidebar's. While it is open the sidebar steps down too, so the backdrop covers it like the
+   rest of the page and its links cannot be clicked behind the dialog. */
+.app-shell--detail-open .landing-navigation-shell,
+.app-shell--detail-open .landing-mobile-header {
+  z-index: 0;
+}
 .landing-sidebar [data-sidebar='sidebar'] {
   border: 0;
   background: transparent;
@@ -3101,7 +3108,13 @@ video {
     inset: 0;
     z-index: 60;
   }
-  .landing-sidebar [data-sidebar='sidebar'][data-mobile='true'] {
+  /* The menu sheet is portaled out of the sidebar, so it is matched by its own attributes.
+     The registry sizes it with Tailwind 3's `w-[--sidebar-width]`, which Tailwind 4 does not
+     generate and which also displaces the sheet's own `w-3/4`: without a width here the
+     menu grows to fit the longest creation title and runs off the screen, close button
+     included. */
+  [data-sidebar='sidebar'][data-mobile='true'] {
+    width: min(20rem, 85vw);
     border: 0;
     border-right: 1px solid var(--border-floating);
     border-radius: 0;
@@ -11614,10 +11627,12 @@ video {
   .group[data-state='expanded'] .landing-sidebar [data-sidebar='header'] {
     padding: 18px 12px 14px 14px;
   }
-  .group[data-state='expanded'] .landing-sidebar [data-sidebar='group'] {
+  /* These sizes are for the main navigation only: scoped to its <nav>, so the creation
+     history below keeps its own smaller rows, spacing and hover actions. */
+  .group[data-state='expanded'] .landing-sidebar nav [data-sidebar='group'] {
     padding: 2px 10px;
   }
-  .group[data-state='expanded'] .landing-sidebar [data-sidebar='menu'] {
+  .group[data-state='expanded'] .landing-sidebar nav [data-sidebar='menu'] {
     gap: 2px;
   }
   .group[data-state='expanded']
@@ -11641,30 +11656,37 @@ video {
     background: rgb(255 255 255 / 0.06);
     content: '';
   }
-  .group[data-state='expanded'] .landing-sidebar [data-sidebar='menu-button'] {
+  .group[data-state='expanded'] .landing-sidebar nav [data-sidebar='menu-button'] {
     height: 42px;
     gap: 12px;
     border-radius: 10px;
     padding: 0 12px;
     font-size: 15px;
   }
-  .group[data-state='expanded'] .landing-sidebar [data-sidebar='menu-button'] svg {
+  .group[data-state='expanded'] .landing-sidebar nav [data-sidebar='menu-button'] svg {
     width: 18px;
     height: 18px;
   }
-  .group[data-state='expanded'] .landing-sidebar [data-sidebar='menu-button'][data-active='true'] {
+  .group[data-state='expanded']
+    .landing-sidebar
+    nav
+    [data-sidebar='menu-button'][data-active='true'] {
     background: rgb(255 255 255 / 0.09);
     box-shadow: none;
     font-weight: 600;
   }
 }
-.sidebar-history {
+.sidebar-history,
+.landing-sidebar [data-sidebar='group'].sidebar-history {
   display: flex;
   min-height: 0;
   flex: 1 1 auto;
   margin-top: 10px;
   border-top: 1px solid rgb(255 255 255 / 0.07);
-  padding-top: 14px;
+  padding: 14px 10px 8px;
+}
+.landing-sidebar .sidebar-history [data-sidebar='menu'] {
+  gap: 2px;
 }
 .sidebar-history [data-sidebar='group-label'] {
   height: 28px;
@@ -11686,14 +11708,19 @@ video {
   background: rgb(255 255 255 / 0.08);
   color: var(--foreground);
 }
-.landing-sidebar .sidebar-history [data-sidebar='menu-button'] {
+/* Desktop rows, and the phone menu's: it is portaled out of `.landing-sidebar`, and its
+   rename and remove actions are always shown (there is no hover), so the title always
+   leaves room for them. */
+.landing-sidebar .sidebar-history [data-sidebar='menu-button'],
+[data-mobile='true'] .sidebar-history [data-sidebar='menu-button'] {
   height: 34px;
   gap: 10px;
   padding: 0 60px 0 12px;
   color: rgb(242 244 247 / 0.7);
   font-size: 13px;
 }
-.landing-sidebar .sidebar-history [data-sidebar='menu-button'] svg {
+.landing-sidebar .sidebar-history [data-sidebar='menu-button'] svg,
+[data-mobile='true'] .sidebar-history [data-sidebar='menu-button'] svg {
   width: 15px;
   height: 15px;
   opacity: 0.7;
@@ -11703,7 +11730,9 @@ video {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.sidebar-history__item:not(:hover):not(:focus-within) [data-sidebar='menu-button'] {
+.landing-sidebar
+  .sidebar-history__item:not(:hover):not(:focus-within)
+  [data-sidebar='menu-button'] {
   padding-right: 12px;
 }
 .sidebar-history__action {
@@ -11812,13 +11841,20 @@ video.home-backdrop__media[data-playing='false'] {
     radial-gradient(120% 70% at 50% 0%, transparent 35%, rgb(5 6 10 / 0.55) 100%),
     linear-gradient(180deg, rgb(5 6 10 / 0.2) 0%, transparent 30%, var(--background) 100%);
 }
+/* The light, widely tracked Song face of the earlier hero headline. 'halt' sets the comma
+   and question mark half width, so the line reads as one phrase. */
 .home-hero h1 {
   margin: 0;
   color: var(--foreground);
-  font-size: clamp(26px, 2.1vw, 32px);
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: 0.02em;
+  font-family: var(--font-hero-serif);
+  font-size: clamp(26px, 2.7vw, 42px);
+  font-feature-settings: 'halt';
+  font-weight: 300;
+  line-height: 1.25;
+  letter-spacing: 0.05em;
+}
+.home-hero h1 > span {
+  display: inline-block;
 }
 .home-mode-switch {
   display: inline-flex;

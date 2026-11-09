@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
-import { LandingHeroBackdrop } from '@/components/landing/LandingHeroBackdrop';
 import { LandingGenerationControls } from '@/components/landing/LandingGenerationControls';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
@@ -13,7 +12,7 @@ import { LandingFeatureBanner } from '@/components/landing/LandingFeatureBanner'
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingShowcase } from '@/components/landing/LandingShowcase';
 import { LandingSkillBar } from '@/components/landing/LandingSkillBar';
-import { LandingTemplateShortcuts } from '@/components/landing/LandingTemplateShortcuts';
+import { LandingModeSwitch, LandingSkillChips } from '@/components/landing/LandingSkillChips';
 import { LandingSkillDeck } from '@/components/landing/LandingSkills';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
@@ -35,7 +34,6 @@ import { useImageQuota } from '@/hooks/useImageQuota';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { attachGenerationBatch, useGenerationSessions } from '@/hooks/useGenerationSessions';
 import { useImageHistory } from '@/hooks/useImageHistory';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { usePromptDraft } from '@/hooks/usePromptDraft';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
@@ -68,7 +66,7 @@ import { resolveAspectChoice } from '@/utils/imageAspect';
 import { recentCreations, type RecentCreation } from '@/utils/recentCreations';
 import type { SkillRunRequest } from '@/utils/skillRun';
 
-/** Templates that top up the inspiration feed when the team has shared little. */
+/** Covers for the banner's template slides, one from each category. */
 const INSPIRATION_TEMPLATES = templatesAcrossCategories(24);
 
 /** Skills offered in the composer's + menu and after typing "/". */
@@ -96,7 +94,6 @@ function withoutSkills(prompt: string): string {
 
 export function LandingView() {
   const navigate = useNavigate();
-  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { quota, isLoading: quotaLoading, checkIn } = useImageQuota();
   const imageApiKey = useImageApiKey();
@@ -345,166 +342,151 @@ export function LandingView() {
   };
 
   return (
-    <div className="landing-page">
-      <section className="landing-hero" data-layout="media-stage" aria-labelledby="landing-title">
-        <LandingHeroBackdrop reducedMotion={reducedMotion} />
-        <div className="landing-hero__overlay" aria-hidden="true" />
-        <LandingAccountActions
-          isAuthPending={authLoading}
-          accountImage={user?.image}
-          accountName={accountName}
-          checkedInToday={quota?.checkedInToday ?? false}
-          creditsRemaining={quota?.remaining ?? '—'}
-          dailyCheckInReward={quota?.dailyCheckInReward ?? 5}
-          isAuthenticated={isAuthenticated}
-          imageApiKeyConfigured={imageApiKey.status?.configured === true}
-          imageApiKeySuffix={imageApiKey.status?.keySuffix}
-          onCheckIn={checkIn}
-          onLogin={openAuthModal}
-          onLogout={logout}
-          onOpenImageApiKeySettings={() => setImageApiKeySettingsOpen(true)}
-          onNotify={notify}
-        />
-        <ImageApiKeySettingsDialog
-          open={imageApiKeySettingsOpen}
-          onClose={() => setImageApiKeySettingsOpen(false)}
-        />
-        <div className="landing-hero__content">
-          <h1 id="landing-title" aria-label="把想法，变成画面">
-            <span>把想法，</span>
-            <span>变成画面</span>
-          </h1>
-          <p>
-            <span>写下脑海中的画面，AI 替你落笔成图；</span>
-            <span>挑一个技能，一次做好整套设计。</span>
-          </p>
-          <div className="landing-composer-anchor">
-            <div className="landing-composer-presentation landing-composer-hero">
-              <LiquidGlassFrame className="landing-composer-content">
-                <AgentChatInput
-                  value={prompt}
-                  onValueChange={setPrompt}
-                  onSubmit={({ text, attachments: selectedAttachments }) =>
-                    submitPrompt(text, selectedAttachments)
-                  }
-                  header={
-                    activeSkill === undefined ? undefined : (
-                      <LandingSkillBar
-                        skill={activeSkill}
-                        form={activeForm}
-                        loadError={skillFormsError}
-                        choices={skillChoices}
-                        showExample={withoutSkills(prompt).length === 0}
-                        onChoiceChange={(fieldId, value) =>
-                          setSkillChoices((current) => ({ ...current, [fieldId]: value }))
-                        }
-                        onUseExample={() =>
-                          setPrompt(`/${activeSkill.label} ${activeSkill.briefExample}`)
-                        }
-                        onExit={exitSkill}
-                      />
-                    )
-                  }
-                  skills={COMPOSER_SKILLS}
-                  models={[]}
-                  defaultModel="gpt-image-2"
-                  agents={[]}
-                  reasoningLevels={[]}
-                  speedModes={[]}
-                  streamingPlaceholders={IMAGE_PROMPT_EXAMPLES}
-                  placeholder="描述你想生成的画面..."
-                  ariaLabel="首页创作提示词"
-                  submitLabel={
-                    activeSkill === undefined
-                      ? '带着提示词开始创作'
-                      : `用「${activeSkill.label}」开始生成`
-                  }
-                  submitContent={
-                    planningSkill ? (
-                      <LoaderCircle aria-hidden="true" className="spin" />
-                    ) : (
-                      <GenerationSubmitCost
-                        count={activeForm?.outputs.length ?? count}
-                        model={model}
-                        resolution={resolution}
-                      />
-                    )
-                  }
-                  disabled={planningSkill}
-                  minRows={1}
-                  maxRows={4}
-                  allowFileUpload
-                  attachments={attachments}
-                  onAttachmentsChange={updateAttachments}
-                  acceptedFileTypes="image/png,image/jpeg,image/webp"
-                  toolbarContent={
-                    <LandingGenerationControls
-                      model={model}
-                      aspect={aspect}
-                      count={count}
-                      resolution={resolution}
-                      quality={quality}
-                      disabled={authLoading}
-                      quotaLabel={quotaLabel}
-                      quotaAriaLabel={quotaAriaLabel}
-                      quotaIsAction={!authLoading && !isAuthenticated}
-                      onModelChange={setModel}
-                      onAspectChange={setAspect}
-                      onCountChange={setCount}
-                      onResolutionChange={updateResolution}
-                      onQualityChange={setQuality}
-                      onQuotaClick={openAuthModal}
+    <div className="home-page">
+      <LandingAccountActions
+        isAuthPending={authLoading}
+        accountImage={user?.image}
+        accountName={accountName}
+        checkedInToday={quota?.checkedInToday ?? false}
+        creditsRemaining={quota?.remaining ?? '—'}
+        dailyCheckInReward={quota?.dailyCheckInReward ?? 5}
+        isAuthenticated={isAuthenticated}
+        imageApiKeyConfigured={imageApiKey.status?.configured === true}
+        imageApiKeySuffix={imageApiKey.status?.keySuffix}
+        onCheckIn={checkIn}
+        onLogin={openAuthModal}
+        onLogout={logout}
+        onOpenImageApiKeySettings={() => setImageApiKeySettingsOpen(true)}
+        onNotify={notify}
+      />
+      <ImageApiKeySettingsDialog
+        open={imageApiKeySettingsOpen}
+        onClose={() => setImageApiKeySettingsOpen(false)}
+      />
+      <section className="home-hero" aria-labelledby="landing-title">
+        <h1 id="landing-title">今天，想把什么变成画面？</h1>
+        <LandingModeSwitch />
+        <div className="landing-composer-anchor">
+          <div className="landing-composer-presentation landing-composer-hero">
+            <LiquidGlassFrame className="landing-composer-content">
+              <AgentChatInput
+                value={prompt}
+                onValueChange={setPrompt}
+                onSubmit={({ text, attachments: selectedAttachments }) =>
+                  submitPrompt(text, selectedAttachments)
+                }
+                header={
+                  activeSkill === undefined ? undefined : (
+                    <LandingSkillBar
+                      skill={activeSkill}
+                      form={activeForm}
+                      loadError={skillFormsError}
+                      choices={skillChoices}
+                      showExample={withoutSkills(prompt).length === 0}
+                      onChoiceChange={(fieldId, value) =>
+                        setSkillChoices((current) => ({ ...current, [fieldId]: value }))
+                      }
+                      onUseExample={() =>
+                        setPrompt(`/${activeSkill.label} ${activeSkill.briefExample}`)
+                      }
+                      onExit={exitSkill}
                     />
-                  }
-                  className="generation-composer landing-composer"
-                />
-              </LiquidGlassFrame>
-            </div>
-          </div>
-          {activeSkill === undefined && prompt.trim() === '' ? <LandingTemplateShortcuts /> : null}
-          {activeSkill === undefined ? (
-            <AiInsightBar
-              prompt={prompt}
-              resolution={resolution}
-              canUse2k={canUse2k}
-              similarCount={recommendations.length}
-              onUse2k={() => updateResolution('2k')}
-              enhance={{
-                enhancing: promptEnhancer.enhancing,
-                canUndo: promptEnhancer.canUndo,
-                onEnhance: () => void promptEnhancer.enhance(),
-                onUndo: promptEnhancer.undo,
-              }}
-            />
-          ) : null}
-          {recommendations.length > 0 ? (
-            <div className="landing-hero__secondary">
-              <LandingRecommendations
-                recommendations={recommendations}
-                onOpen={setSelectedRecommendation}
-                onUsePrompt={applyRecommendedPrompt}
+                  )
+                }
+                skills={COMPOSER_SKILLS}
+                models={[]}
+                defaultModel="gpt-image-2"
+                agents={[]}
+                reasoningLevels={[]}
+                speedModes={[]}
+                streamingPlaceholders={IMAGE_PROMPT_EXAMPLES}
+                placeholder="描述你想生成的画面..."
+                ariaLabel="首页创作提示词"
+                submitLabel={
+                  activeSkill === undefined
+                    ? '带着提示词开始创作'
+                    : `用「${activeSkill.label}」开始生成`
+                }
+                submitContent={
+                  planningSkill ? (
+                    <LoaderCircle aria-hidden="true" className="spin" />
+                  ) : (
+                    <GenerationSubmitCost
+                      count={activeForm?.outputs.length ?? count}
+                      model={model}
+                      resolution={resolution}
+                    />
+                  )
+                }
+                disabled={planningSkill}
+                minRows={1}
+                maxRows={4}
+                allowFileUpload
+                attachments={attachments}
+                onAttachmentsChange={updateAttachments}
+                acceptedFileTypes="image/png,image/jpeg,image/webp"
+                toolbarContent={
+                  <LandingGenerationControls
+                    model={model}
+                    aspect={aspect}
+                    count={count}
+                    resolution={resolution}
+                    quality={quality}
+                    disabled={authLoading}
+                    quotaLabel={quotaLabel}
+                    quotaAriaLabel={quotaAriaLabel}
+                    quotaIsAction={!authLoading && !isAuthenticated}
+                    onModelChange={setModel}
+                    onAspectChange={setAspect}
+                    onCountChange={setCount}
+                    onResolutionChange={updateResolution}
+                    onQualityChange={setQuality}
+                    onQuotaClick={openAuthModal}
+                  />
+                }
+                className="generation-composer landing-composer"
               />
-            </div>
-          ) : null}
+            </LiquidGlassFrame>
+          </div>
         </div>
+        {activeSkill === undefined ? <LandingSkillChips onSelect={selectSkill} /> : null}
+        {activeSkill === undefined ? (
+          <AiInsightBar
+            prompt={prompt}
+            resolution={resolution}
+            canUse2k={canUse2k}
+            similarCount={recommendations.length}
+            onUse2k={() => updateResolution('2k')}
+            enhance={{
+              enhancing: promptEnhancer.enhancing,
+              canUndo: promptEnhancer.canUndo,
+              onEnhance: () => void promptEnhancer.enhance(),
+              onUndo: promptEnhancer.undo,
+            }}
+          />
+        ) : null}
+        {recommendations.length > 0 ? (
+          <div className="landing-hero__secondary">
+            <LandingRecommendations
+              recommendations={recommendations}
+              onOpen={setSelectedRecommendation}
+              onUsePrompt={applyRecommendedPrompt}
+            />
+          </div>
+        ) : null}
       </section>
       <LandingSkillDeck
         feature={
           <LandingFeatureBanner
             recent={recent[0]}
-            template={INSPIRATION_TEMPLATES[0]}
+            templates={INSPIRATION_TEMPLATES}
             templateCount={CREATION_TEMPLATES.length}
             onOpenRecent={openRecent}
           />
         }
         onSelect={selectSkill}
       />
-      <LandingShowcase
-        records={showcase}
-        templates={INSPIRATION_TEMPLATES}
-        onUse={makeSimilar}
-        onUseTemplate={fillTemplatePrompt}
-      />
+      <LandingShowcase records={showcase} onUse={makeSimilar} onUseTemplate={fillTemplatePrompt} />
       <ImageDetailModal
         entry={selectedRecommendationEntry}
         {...(selectedRecommendation === null

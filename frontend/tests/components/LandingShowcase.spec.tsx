@@ -4,7 +4,11 @@ import { MemoryRouter } from 'react-router-dom';
 import { expect, it, vi } from 'vitest';
 
 import { LandingShowcase } from '@/components/landing/LandingShowcase';
-import { CREATION_TEMPLATES } from '@/data/creationTemplates';
+import {
+  CREATION_TEMPLATES,
+  orderTemplatesWithAnimeLast,
+  TEMPLATE_SHORTCUT_CATEGORIES,
+} from '@/data/creationTemplates';
 import type { TeamImageRecord } from '@/types/image';
 
 const tea: TeamImageRecord = {
@@ -19,23 +23,17 @@ const tea: TeamImageRecord = {
   category: 'poster',
   ownerName: 'alice',
 };
-const templates = CREATION_TEMPLATES.slice(0, 30);
 
-it('puts teammates’ shared work first and makes a similar one on click', async () => {
+it('puts teammates’ shared work in its own row and makes a similar one on click', async () => {
   const user = userEvent.setup();
   const onUse = vi.fn();
   render(
     <MemoryRouter>
-      <LandingShowcase
-        records={[tea]}
-        templates={templates}
-        onUse={onUse}
-        onUseTemplate={vi.fn()}
-      />
+      <LandingShowcase records={[tea]} onUse={onUse} onUseTemplate={vi.fn()} />
     </MemoryRouter>,
   );
 
-  const section = screen.getByRole('region', { name: '灵感' });
+  const section = screen.getByRole('region', { name: '团队作品' });
   expect(within(section).getByRole('link', { name: '成果库' })).toHaveAttribute('href', '/team');
   const cards = within(section).getAllByRole('button', { name: /^做同款：/ });
   expect(cards[0]).toHaveAccessibleName('做同款：奶茶新品上市海报，清新绿色');
@@ -50,30 +48,30 @@ it('puts teammates’ shared work first and makes a similar one on click', async
   expect(onUse).toHaveBeenCalledWith(tea);
 });
 
-it('tops the wall up to 24 pieces with templates, so it is never empty', async () => {
+it('fills the featured tab with a row of templates per category, so it is never empty', async () => {
   const user = userEvent.setup();
   const onUseTemplate = vi.fn();
   render(
     <MemoryRouter>
-      <LandingShowcase
-        records={[]}
-        templates={templates}
-        onUse={vi.fn()}
-        onUseTemplate={onUseTemplate}
-      />
+      <LandingShowcase records={[]} onUse={vi.fn()} onUseTemplate={onUseTemplate} />
     </MemoryRouter>,
   );
 
-  const section = screen.getByRole('region', { name: '灵感' });
-  expect(within(section).queryByRole('link', { name: '成果库' })).not.toBeInTheDocument();
-  expect(within(section).getByRole('link', { name: '更多模板' })).toHaveAttribute(
-    'href',
-    '/templates',
-  );
-  expect(within(section).getAllByRole('button', { name: /^做同款：/ })).toHaveLength(24);
+  const feed = screen.getByRole('region', { name: '灵感' });
+  expect(within(feed).queryByRole('region', { name: '团队作品' })).not.toBeInTheDocument();
+  for (const category of TEMPLATE_SHORTCUT_CATEGORIES) {
+    const row = within(feed).getByRole('region', { name: category });
+    expect(within(row).getAllByRole('button', { name: /^做同款：/ })).toHaveLength(4);
+    expect(within(row).getByRole('link', { name: `更多${category}` })).toHaveAttribute(
+      'href',
+      `/templates?${new URLSearchParams({ category }).toString()}`,
+    );
+  }
 
-  const first = templates[0]!;
-  const card = within(section).getByRole('button', { name: `做同款：${first.title}` });
+  const first = orderTemplatesWithAnimeLast(CREATION_TEMPLATES).find(
+    (template) => template.category === TEMPLATE_SHORTCUT_CATEGORIES[0],
+  )!;
+  const card = within(feed).getByRole('button', { name: `做同款：${first.title}` });
   expect(card).toHaveTextContent(`创作模板 · ${first.category}`);
   await user.click(card);
   expect(onUseTemplate).toHaveBeenCalledWith(first);
@@ -82,12 +80,7 @@ it('tops the wall up to 24 pieces with templates, so it is never empty', async (
 function renderShowcase(records: TeamImageRecord[] = [tea]) {
   return render(
     <MemoryRouter>
-      <LandingShowcase
-        records={records}
-        templates={templates}
-        onUse={vi.fn()}
-        onUseTemplate={vi.fn()}
-      />
+      <LandingShowcase records={records} onUse={vi.fn()} onUseTemplate={vi.fn()} />
     </MemoryRouter>,
   );
 }

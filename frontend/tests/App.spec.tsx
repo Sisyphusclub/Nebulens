@@ -152,7 +152,11 @@ vi.mock('@/hooks/useAdminUsers', () => ({
 
 import { App } from '@/App';
 import { ToastProvider } from '@/components/common/ToastProvider';
-import { templatesAcrossCategories } from '@/data/creationTemplates';
+import {
+  CREATION_TEMPLATES,
+  orderTemplatesWithAnimeLast,
+  TEMPLATE_SHORTCUT_CATEGORIES,
+} from '@/data/creationTemplates';
 import {
   attachGenerationBatch,
   createGenerationSession,
@@ -499,7 +503,7 @@ describe('React application routes', () => {
     renderRoute('/');
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: '把想法，变成画面' }),
+      await screen.findByRole('heading', { level: 1, name: '今天，想把什么变成画面？' }),
     ).toBeInTheDocument();
   });
 
@@ -570,7 +574,9 @@ describe('React application routes', () => {
 
   it('tops the inspiration feed up with templates and fills the composer from one', async () => {
     const user = userEvent.setup();
-    const [template] = templatesAcrossCategories(1);
+    const template = orderTemplatesWithAnimeLast(CREATION_TEMPLATES).find(
+      (candidate) => candidate.category === TEMPLATE_SHORTCUT_CATEGORIES[0],
+    );
     renderRoute('/');
 
     const feed = await screen.findByRole('region', { name: '灵感' });
@@ -835,12 +841,14 @@ describe('React application routes', () => {
     expect(screen.getByRole('button', { name: '展开侧栏' })).toBeInTheDocument();
   });
 
-  it('hides the creation history from signed-out visitors', () => {
+  it('offers signed-out visitors a sign-in in place of the creation history', () => {
     authMocks.user = null;
     authMocks.isAuthenticated = false;
     renderRoute('/');
 
     expect(screen.queryByRole('link', { name: '新建创作' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: '创作记录' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '登录，开启创作' })).toBeInTheDocument();
   });
 
   it('keeps generated results when submitting multiple prompts in the active session', async () => {

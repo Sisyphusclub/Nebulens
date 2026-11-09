@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router-dom';
 
-import { HERO_BACKDROP_POSTER } from '@/components/landing/LandingHeroBackdrop';
 import { Button } from '@/components/ui/button';
 
 const SITE_TITLE = 'Nebulens｜AI 图像创作工作台';
@@ -80,11 +79,9 @@ function NotFound() {
   );
 }
 
-/** The home page's own backdrop, so it loads into itself instead of through grey blocks. */
+/** The home page's own plain background, so it loads into itself instead of through grey blocks. */
 function LandingFallback() {
-  return (
-    <img className="landing-hero__video" src={HERO_BACKDROP_POSTER} alt="" aria-hidden="true" />
-  );
+  return <div className="home-page home-page--loading" aria-hidden="true" />;
 }
 
 function PageSkeleton() {

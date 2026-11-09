@@ -2,6 +2,7 @@ import { MessageSquare, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState, type KeyboardEvent } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { Button } from '@/components/ui/button';
 import {
   SidebarGroup,
   SidebarGroupAction,
@@ -14,6 +15,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
+import { openAuthModal } from '@/hooks/useAuthModal';
 import { useGenerationSessions } from '@/hooks/useGenerationSessions';
 import { useImageHistory } from '@/hooks/useImageHistory';
 import { sidebarSessions } from '@/utils/sidebarSessions';
@@ -25,7 +27,10 @@ interface SidebarCreationHistoryProps {
   onNavigate: () => void;
 }
 
-/** The creation sessions of the signed-in user, to switch, rename or remove. */
+/**
+ * The creation sessions of the signed-in user, to switch, rename or remove; visitors get
+ * a sign-in prompt in their place.
+ */
 export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryProps) {
   const { isAuthenticated } = useAuth();
   const { sessions, rename, remove } = useGenerationSessions();
@@ -42,7 +47,26 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
     [activeSessionId, history.batches, sessions],
   );
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) {
+    return (
+      <SidebarGroup className="sidebar-history" aria-labelledby="sidebar-history-title">
+        <SidebarGroupLabel id="sidebar-history-title">创作记录</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <Button
+            type="button"
+            variant="ghost"
+            className="sidebar-history__login"
+            onClick={() => {
+              onNavigate();
+              openAuthModal();
+            }}
+          >
+            登录，开启创作
+          </Button>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  }
 
   const startRename = (id: string, title: string): void => {
     setEditingId(id);

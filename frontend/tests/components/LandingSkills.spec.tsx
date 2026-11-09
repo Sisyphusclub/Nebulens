@@ -53,14 +53,14 @@ it('only ships skills with a brief example and an example image on disk', () => 
   }
 });
 
-it('leads the deck with a templates card when there is nothing to continue', () => {
+it('leads the row with a templates slide when there is nothing to continue', () => {
   render(
     <MemoryRouter>
       <LandingSkillDeck
         feature={
           <LandingFeatureBanner
             recent={undefined}
-            template={CREATION_TEMPLATES[0]}
+            templates={CREATION_TEMPLATES}
             templateCount={CREATION_TEMPLATES.length}
             onOpenRecent={vi.fn()}
           />
@@ -70,11 +70,40 @@ it('leads the deck with a templates card when there is nothing to continue', () 
     </MemoryRouter>,
   );
 
-  const deck = screen.getByRole('region', { name: '技能' });
-  expect(within(deck).getByRole('link', { name: '浏览创作模板' })).toHaveAttribute(
+  const banner = screen.getByRole('region', { name: '推荐' });
+  expect(within(banner).getByRole('link', { name: '浏览创作模板' })).toHaveAttribute(
     'href',
     '/templates',
   );
-  expect(deck).toHaveTextContent(`${CREATION_TEMPLATES.length} 套精选模板`);
-  expect(within(deck).queryByRole('navigation', { name: '继续上次创作' })).toBeNull();
+  expect(banner).toHaveTextContent(`${CREATION_TEMPLATES.length} 套精选模板`);
+  expect(within(banner).queryByRole('navigation', { name: '继续上次创作' })).toBeNull();
+  // Only the showing slide can be reached; the others wait behind it.
+  expect(within(banner).queryByRole('link', { name: '浏览模板分类：海报字体' })).toBeNull();
+});
+
+it('switches slides from the dots', async () => {
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter>
+      <LandingFeatureBanner
+        recent={undefined}
+        templates={CREATION_TEMPLATES}
+        templateCount={CREATION_TEMPLATES.length}
+        onOpenRecent={vi.fn()}
+      />
+    </MemoryRouter>,
+  );
+
+  const dots = screen.getByRole('group', { name: '切换推荐' });
+  await user.click(within(dots).getByRole('button', { name: '第 2 张：海报字体' }));
+
+  expect(within(dots).getByRole('button', { name: '第 2 张：海报字体' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(screen.getByRole('link', { name: '浏览模板分类：海报字体' })).toHaveAttribute(
+    'href',
+    `/templates?${new URLSearchParams({ category: '海报字体' }).toString()}`,
+  );
+  expect(screen.queryByRole('link', { name: '浏览创作模板' })).toBeNull();
 });

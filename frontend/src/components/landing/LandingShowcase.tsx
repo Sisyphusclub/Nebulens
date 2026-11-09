@@ -1,5 +1,5 @@
-import { ArrowRight, ArrowUpRight, Search } from 'lucide-react';
-import { useMemo, useState, type ReactNode } from 'react';
+import { ArrowUpRight, ChevronRight, Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -15,39 +15,73 @@ import { buildApiUrl } from '@/services/api/imagesApi';
 import { IMAGE_CATEGORY_LABELS, type TeamImageRecord } from '@/types/image';
 import { templateThumbnailUrl, thumbnailUrl } from '@/utils/thumbnail';
 
-/** About four rows of the full-width masonry. */
+/** Six rows of four for one category or a search. */
 const FEED_SIZE = 24;
+/** One row of four per section on the featured tab. */
+const SECTION_SIZE = 4;
+/** Shared work gets two rows on the featured tab. */
+const TEAM_SECTION_SIZE = 8;
 const FEATURED = '精选';
 const TABS = [FEATURED, ...TEMPLATE_SHORTCUT_CATEGORIES];
+const ORDERED_TEMPLATES = orderTemplatesWithAnimeLast(CREATION_TEMPLATES);
+
+interface FeedSection {
+  title: string;
+  more?: { label: string; to: string };
+  records: readonly TeamImageRecord[];
+  templates: readonly CreationTemplate[];
+}
+
+function categoryHref(category: string): string {
+  return `/templates?${new URLSearchParams({ category }).toString()}`;
+}
+
+function featuredSections(records: readonly TeamImageRecord[]): FeedSection[] {
+  const sections: FeedSection[] = [];
+  if (records.length > 0) {
+    sections.push({
+      title: '团队作品',
+      more: { label: '成果库', to: '/team' },
+      records: records.slice(0, TEAM_SECTION_SIZE),
+      templates: [],
+    });
+  }
+  for (const category of TEMPLATE_SHORTCUT_CATEGORIES) {
+    sections.push({
+      title: category,
+      more: { label: `更多${category}`, to: categoryHref(category) },
+      records: [],
+      templates: ORDERED_TEMPLATES.filter((template) => template.category === category).slice(
+        0,
+        SECTION_SIZE,
+      ),
+    });
+  }
+  return sections;
+}
 
 /**
- * Inspiration under the skills, like Kling's feed: the team's newest shared work first,
- * topped up with creation templates so the wall is never empty, even for visitors who
- * are not signed in. Every image keeps its own shape; picking one fills the composer.
+ * Inspiration under the tool cards: category tabs and a search, then rows of large cards.
+ * The featured tab shows the team's newest shared work and a row per template category,
+ * so it is never empty, even for visitors who are not signed in. Picking a card fills the
+ * composer.
  */
 export function LandingShowcase({
   records,
-  templates,
   onUse,
   onUseTemplate,
 }: {
   records: readonly TeamImageRecord[];
-  templates: readonly CreationTemplate[];
   onUse: (record: TeamImageRecord) => void;
   onUseTemplate: (template: CreationTemplate) => void;
 }) {
   const [tab, setTab] = useState(FEATURED);
   const [query, setQuery] = useState('');
   const searching = query.trim() !== '';
-  const { shownRecords, shownTemplates } = useMemo(() => {
-    // Featured without a search keeps the curated mix: shared work first, topped up with
-    // varied templates. A category or a search looks through every template instead.
-    if (tab === FEATURED && !searching) {
-      return {
-        shownRecords: records,
-        shownTemplates: templates.slice(0, Math.max(0, FEED_SIZE - records.length)),
-      };
-    }
+  const sections = useMemo<FeedSection[]>(() => {
+    if (tab === FEATURED && !searching) return featuredSections(records);
+    // A category or a search looks through every template; shared work has categories
+    // of its own, so it only joins a search on the featured tab.
     const normalizedQuery = query.trim().toLocaleLowerCase('zh-CN');
     const matchingRecords =
       tab === FEATURED
@@ -55,51 +89,36 @@ export function LandingShowcase({
             record.prompt.toLocaleLowerCase('zh-CN').includes(normalizedQuery),
           )
         : [];
-    const matchingTemplates = orderTemplatesWithAnimeLast(
-      CREATION_TEMPLATES.filter(
-        (template) =>
-          (tab === FEATURED || template.category === tab) && templateMatchesQuery(template, query),
-      ),
+    const matchingTemplates = ORDERED_TEMPLATES.filter(
+      (template) =>
+        (tab === FEATURED || template.category === tab) && templateMatchesQuery(template, query),
     );
-    return {
-      shownRecords: matchingRecords.slice(0, FEED_SIZE),
-      shownTemplates: matchingTemplates.slice(0, Math.max(0, FEED_SIZE - matchingRecords.length)),
-    };
-  }, [query, records, searching, tab, templates]);
-  if (records.length === 0 && templates.length === 0) return null;
-  const empty = shownRecords.length === 0 && shownTemplates.length === 0;
+    const shownRecords = matchingRecords.slice(0, FEED_SIZE);
+    return [
+      {
+        title: searching ? '搜索结果' : tab,
+        ...(searching || tab === FEATURED
+          ? {}
+          : { more: { label: `更多${tab}`, to: categoryHref(tab) } }),
+        records: shownRecords,
+        templates: matchingTemplates.slice(0, Math.max(0, FEED_SIZE - shownRecords.length)),
+      },
+    ];
+  }, [query, records, searching, tab]);
+  const empty = sections.every(
+    (section) => section.records.length === 0 && section.templates.length === 0,
+  );
+
   return (
-    <section className="landing-showcase" aria-label="灵感">
-      <header className="landing-section-header">
-        <div>
-          <h2>灵感</h2>
-          <p>
-            {records.length > 0
-              ? '团队最近共享的作品和精选模板，看中哪张就一键做同款。'
-              : '精选创作模板，看中哪张就一键做同款。'}
-          </p>
-        </div>
-        <div className="landing-showcase__links">
-          {records.length > 0 ? (
-            <Link className="landing-showcase__more" to="/team">
-              成果库
-              <ArrowRight aria-hidden="true" />
-            </Link>
-          ) : null}
-          <Link className="landing-showcase__more" to="/templates">
-            更多模板
-            <ArrowRight aria-hidden="true" />
-          </Link>
-        </div>
-      </header>
-      <div className="landing-showcase__filters">
-        <div className="landing-showcase__tabs" role="group" aria-label="灵感分类">
+    <section className="home-feed" aria-label="灵感">
+      <div className="home-feed__bar">
+        <div className="home-feed__tabs" role="group" aria-label="灵感分类">
           {TABS.map((label) => (
             <Button
               key={label}
               type="button"
               variant="ghost"
-              className="landing-showcase__tab"
+              className="home-feed__tab"
               aria-pressed={tab === label}
               onClick={() => setTab(label)}
             >
@@ -107,7 +126,7 @@ export function LandingShowcase({
             </Button>
           ))}
         </div>
-        <label className="search-field landing-showcase__search">
+        <label className="search-field home-feed__search">
           <Search aria-hidden="true" />
           <span className="sr-only">搜索灵感</span>
           <Input
@@ -118,70 +137,87 @@ export function LandingShowcase({
           />
         </label>
       </div>
-      {empty ? <p className="landing-showcase__empty">没有找到相关作品，换个关键词试试</p> : null}
-      <div className="landing-showcase__masonry">
-        {shownRecords.map((record) => (
-          <InspirationCard
-            key={record.id}
-            label={record.prompt}
-            meta={[
-              record.ownerName,
-              ...(record.category ? [IMAGE_CATEGORY_LABELS[record.category]] : []),
-            ].join(' · ')}
-            imageUrl={thumbnailUrl(buildApiUrl(`/api/outputs/${record.id}`), 640)}
-            width={record.width}
-            height={record.height}
-            onUse={() => onUse(record)}
-          />
-        ))}
-        {shownTemplates.map((template) => (
-          <InspirationCard
-            key={template.id}
-            label={template.title}
-            meta={`创作模板 · ${template.category}`}
-            imageUrl={templateThumbnailUrl(template.imageUrl)}
-            width={template.width}
-            height={template.height}
-            onUse={() => onUseTemplate(template)}
-          />
-        ))}
-      </div>
+      {empty ? (
+        <p className="home-feed__empty">没有找到相关作品，换个关键词试试</p>
+      ) : (
+        sections.map((section) =>
+          section.records.length === 0 && section.templates.length === 0 ? null : (
+            <section key={section.title} className="home-feed__section" aria-label={section.title}>
+              <header className="home-feed__section-header">
+                <h2>{section.title}</h2>
+                {section.more === undefined ? null : (
+                  <Link className="home-feed__more" to={section.more.to}>
+                    {section.more.label}
+                    <ChevronRight aria-hidden="true" />
+                  </Link>
+                )}
+              </header>
+              <div className="home-feed__grid">
+                {section.records.map((record) => (
+                  <FeedCard
+                    key={record.id}
+                    label={record.prompt}
+                    author={record.ownerName}
+                    meta={record.category ? IMAGE_CATEGORY_LABELS[record.category] : undefined}
+                    imageUrl={thumbnailUrl(buildApiUrl(`/api/outputs/${record.id}`), 640)}
+                    onUse={() => onUse(record)}
+                  />
+                ))}
+                {section.templates.map((template) => (
+                  <FeedCard
+                    key={template.id}
+                    label={template.title}
+                    author="创作模板"
+                    meta={template.category}
+                    imageUrl={templateThumbnailUrl(template.imageUrl)}
+                    onUse={() => onUseTemplate(template)}
+                  />
+                ))}
+              </div>
+            </section>
+          ),
+        )
+      )}
     </section>
   );
 }
 
-function InspirationCard({
+function FeedCard({
   label,
+  author,
   meta,
   imageUrl,
-  width,
-  height,
   onUse,
 }: {
   label: string;
-  meta: ReactNode;
+  author: string;
+  meta: string | undefined;
   imageUrl: string;
-  width: number;
-  height: number;
   onUse: () => void;
 }) {
   return (
     <Button
       type="button"
       variant="ghost"
-      className="landing-showcase__card"
-      style={{ aspectRatio: `${width} / ${height}` }}
+      className="home-feed__card"
       aria-label={`做同款：${label}`}
       onClick={onUse}
     >
-      <img src={imageUrl} alt="" loading="lazy" decoding="async" />
-      <span className="landing-showcase__caption">
-        <span className="landing-showcase__prompt">{label}</span>
-        <span className="landing-showcase__meta">{meta}</span>
+      <span className="home-feed__media">
+        <img src={imageUrl} alt="" loading="lazy" decoding="async" />
+        <span className="home-feed__cta" aria-hidden="true">
+          做同款
+          <ArrowUpRight />
+        </span>
       </span>
-      <span className="landing-showcase__cta" aria-hidden="true">
-        做同款
-        <ArrowUpRight />
+      <span className="home-feed__body">
+        <span className="home-feed__title">{label}</span>
+        <span className="home-feed__meta">
+          <span className="home-feed__avatar" aria-hidden="true">
+            {author.slice(0, 1)}
+          </span>
+          {meta === undefined ? author : `${author} · ${meta}`}
+        </span>
       </span>
     </Button>
   );

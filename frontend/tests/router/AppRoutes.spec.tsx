@@ -11,14 +11,14 @@ vi.mock('@/views/HistoryView', () => ({
   HistoryView: () => <Link to="/somewhere-else">离开</Link>,
 }));
 
-it('holds the home page on its backdrop while it loads, with no skeleton blocks', () => {
+it('holds the home page on its plain background while it loads, with no skeleton blocks', () => {
   const { container } = render(
     <MemoryRouter initialEntries={['/']}>
       <AppRoutes />
     </MemoryRouter>,
   );
 
-  expect(container.querySelector('img.landing-hero__video')).toBeInTheDocument();
+  expect(container.querySelector('.home-page--loading')).toBeInTheDocument();
   expect(screen.queryByRole('status', { name: '页面加载中' })).not.toBeInTheDocument();
 });
 

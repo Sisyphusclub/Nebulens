@@ -11596,7 +11596,11 @@ video {
     left: var(--workbench-sidebar-width);
   }
 
+  /* The registry sidebar sizes its panel with Tailwind 3's `w-[--sidebar-width]`, which
+     Tailwind 4 does not generate: the panel then grows to fit the longest creation title
+     and covers the page. It takes the same width the page starts after instead. */
   .group[data-state='expanded'] .landing-sidebar {
+    width: var(--workbench-sidebar-width);
     padding: 0;
   }
   .group[data-state='expanded'] .landing-sidebar [data-sidebar='sidebar'] {

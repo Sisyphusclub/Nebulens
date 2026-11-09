@@ -54,12 +54,22 @@ describe('home tool cards on hover', () => {
 });
 
 describe('flat workbench sidebar', () => {
+  const panel =
+    baseStyles.match(/\.group\[data-state='expanded'\] \.landing-sidebar \{([^}]+)\}/)?.[1] ?? '';
+
   it('lies flush against the window edge while expanded', () => {
-    expect(baseStyles).toMatch(
-      /\.group\[data-state='expanded'\] \.landing-sidebar \{\s*padding: 0;\s*\}/,
-    );
+    expect(panel).toContain('padding: 0;');
     expect(baseStyles).toMatch(
       /\.group\[data-state='expanded'\] \.landing-sidebar \[data-sidebar='sidebar'\] \{[^}]*border-radius: 0;/,
+    );
+  });
+
+  it('stays exactly as wide as the page offset, however long the creation titles are', () => {
+    // Tailwind 4 does not generate the registry's `w-[--sidebar-width]`; without this the
+    // panel grows to fit the longest title and covers the page.
+    expect(panel).toContain('width: var(--workbench-sidebar-width);');
+    expect(baseStyles).toMatch(
+      /\.app-shell \.app-main \{\s*--workspace-sidebar-rail: 0px;\s*padding-left: var\(--workbench-sidebar-width\);/,
     );
   });
 });

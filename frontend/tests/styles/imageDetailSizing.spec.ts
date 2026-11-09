@@ -117,7 +117,7 @@ describe('image detail sizing contract', () => {
     expect(imageRule).toContain('height: 100%;');
     expect(imageRule).toContain('max-width: calc(92vw - 380px);');
     expect(imageRule).toContain('max-height: 100%;');
-    expect(imageRule).toContain('border-radius: 14px;');
+    expect(imageRule).toContain('border-radius: var(--radius-lg);');
     expect(imageRule).toContain('box-shadow: none;');
     expect(imageRule).toContain('object-fit: contain;');
     expect(desktopContract).toContain('aspect-ratio: auto;');

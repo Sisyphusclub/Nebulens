@@ -47,7 +47,7 @@ export function CreditsTopLayer({
             animate={{ height: expandedHeight, opacity: 1 }}
             exit={reduce ? {} : { height: 36, opacity: 0 }}
             transition={reduce ? { duration: 0 } : SPRING_PANEL}
-            className="absolute -right-[3px] bottom-0 -left-[3px] overflow-hidden rounded-t-[1.25rem] bg-muted"
+            className="absolute -right-[3px] bottom-0 -left-[3px] overflow-hidden rounded-t-2xl bg-muted"
           >
             <motion.div
               initial={reduce ? false : { opacity: 0, y: 6 }}

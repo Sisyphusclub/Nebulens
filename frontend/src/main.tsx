@@ -31,7 +31,7 @@ createRoot(root).render(
       <AuthProvider>
         <MorphicTooltipProvider
           delay={140}
-          className="!rounded-[4px] !border-white/15 !bg-black !text-white !shadow-none"
+          className="!rounded-sm !border-white/15 !bg-black !text-white !shadow-none"
         >
           <ToastProvider>
             <App />

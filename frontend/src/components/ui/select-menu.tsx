@@ -63,7 +63,7 @@ export function SelectMenu<T extends string>({
       <AnimatedDropdownContent
         align="start"
         className={cn(
-          'floating-surface !min-w-[var(--radix-dropdown-menu-trigger-width)] !rounded-[4px] !p-1',
+          'floating-surface !min-w-[var(--radix-dropdown-menu-trigger-width)] !rounded-xl !p-1',
           contentClassName,
         )}
       >
@@ -78,7 +78,7 @@ export function SelectMenu<T extends string>({
             <AnimatedDropdownRadioItem
               key={option.value}
               value={option.value}
-              className="!min-h-9 !rounded-[3px] !py-1.5"
+              className="!min-h-9 !rounded-md !py-1.5"
             >
               <span className="beui-select-option">
                 <strong>{option.label}</strong>

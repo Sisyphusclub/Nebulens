@@ -105,7 +105,7 @@ const TOOLTIP_REVEAL_SPRING = {
 const TOOLTIP_WARM_WINDOW = 240;
 
 const SURFACE_CLASS =
-  'relative overflow-hidden rounded-[4px] border border-background/15 bg-foreground text-background shadow-none';
+  'relative overflow-hidden rounded-sm border border-background/15 bg-foreground text-background shadow-none';
 
 const CONTENT_CLASS =
   'absolute top-1/2 left-1/2 w-max max-w-[min(18rem,calc(100vw-24px))] -translate-x-1/2 -translate-y-1/2 px-2 py-2 text-center text-xs';

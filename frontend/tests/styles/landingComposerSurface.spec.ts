@@ -120,7 +120,7 @@ describe('landing composer surface contract', () => {
     );
     expect(glass).not.toContain('conic-gradient');
     expect(glass).not.toContain('animation:');
-    expect(glass).toContain('border-radius: 28px;');
+    expect(glass).toContain('border-radius: var(--radius-2xl);');
     // Controls inside the glass are glass pills, including the send button.
     expect(glass).toMatch(
       /\.liquid-glass-frame > \.generation-composer \.agent-chat-input__submit\s*\{[^}]*background: var\(--fill-4\)/s,

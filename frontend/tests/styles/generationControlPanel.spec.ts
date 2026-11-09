@@ -19,7 +19,7 @@ describe('generation control panels', () => {
     // the same cascade layer with a doubled class.
     expect(panel).toContain('@layer utilities');
     expect(panel).toContain('.generation-control-panel.generation-control-panel {');
-    expect(panel).toContain('border-radius: 20px !important;');
+    expect(panel).toContain('border-radius: var(--radius-2xl) !important;');
     expect(controls).not.toContain('!bg-popover');
   });
 
@@ -43,7 +43,7 @@ describe('generation control panels', () => {
       baseStyles.match(/^\.generation-custom-option\[data-state='checked'\]\s*\{([^}]+)\}/m)?.[1] ??
       '';
 
-    expect(track).toContain('border-radius: 16px;');
+    expect(track).toContain('border-radius: var(--radius-xl);');
     expect(track).toContain('background: var(--fill-1);');
     expect(checked).toContain('background: var(--fill-4);');
     expect(checked).toContain('color: var(--text-1);');

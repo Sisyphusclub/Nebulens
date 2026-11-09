@@ -186,9 +186,7 @@ export function AgentChatCredits({
       className={cn(
         'relative w-full max-w-3xl transition-[border-radius] duration-200',
         variant === 'prompt' ? 'border border-border-strong bg-card p-0' : 'bg-muted p-[3px]',
-        variant === 'full' && skillCommand.visible
-          ? 'rounded-b-[1.25rem] rounded-t-none'
-          : 'rounded-[1.25rem]',
+        variant === 'full' && skillCommand.visible ? 'rounded-b-2xl rounded-t-none' : 'rounded-2xl',
         className,
       )}
     >
@@ -209,7 +207,7 @@ export function AgentChatCredits({
 
       <div
         className={cn(
-          'rounded-[1.1rem]',
+          'rounded-[calc(var(--radius-2xl)_-_3px)]',
           variant === 'prompt' ? 'bg-card px-2 py-2' : 'bg-background px-2 pt-1.5 pb-2',
         )}
       >

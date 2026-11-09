@@ -6,7 +6,7 @@
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--line-2);
-  border-radius: 15px;
+  border-radius: calc(var(--radius-xl) - 1px);
   background: color-mix(in oklch, var(--surface-raised) 78%, var(--card));
   isolation: isolate;
 }

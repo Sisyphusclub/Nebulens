@@ -510,6 +510,20 @@ describe('React application routes', () => {
     expect(screen.getByLabelText('当前路由')).toHaveTextContent(/^\/$/);
   });
 
+  it('swaps the skill chips for the AI strip once something is typed on the home page', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+    expect(await screen.findByRole('navigation', { name: '快捷技能' })).toBeInTheDocument();
+
+    await user.type(
+      screen.getByRole('textbox', { name: '首页创作提示词' }),
+      '周年庆海报，标题“店庆”',
+    );
+
+    expect(screen.queryByRole('navigation', { name: '快捷技能' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'AI 理解' })).toBeInTheDocument();
+  });
+
   it('greets visitors with a Chinese headline', async () => {
     renderRoute('/');
 

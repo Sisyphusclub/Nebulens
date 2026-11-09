@@ -7844,8 +7844,27 @@ video {
   background: var(--surface-media);
   box-shadow: 0 22px 56px -48px rgb(0 0 0 / 0.92);
 }
-.session-result > .text-check {
-  padding-inline: 4px;
+/* The row right under the image: its text check on the left and, for a single image, the
+   batch toolbar on the right, so the actions stay next to the result they act on. */
+.session-result__footer {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+}
+.session-result__footer > .text-check {
+  min-width: 0;
+  flex: 1 1 auto;
+  margin-top: 0;
+  padding: 8px 4px 0;
+}
+/* Beats the batch-size widths below, which stretch the toolbar across the whole result. */
+.session-batch[data-count] .session-result__footer > .session-batch__actions {
+  width: auto;
+  max-width: none;
+  flex: 0 0 auto;
+  margin: 0 0 0 auto;
 }
 .session-batch[data-count='1'] .session-result {
   max-width: var(--result-media-max-height);
@@ -11187,13 +11206,19 @@ video {
   max-width: 940px;
 }
 
-/* Landing hero: teammates' work matching the need being typed */
+/* Teammates' work matching the need being typed: one contained panel, its title and close
+   button on a header line inside it, so it reads as part of the composer area rather than
+   loose cards on the page. */
 .landing-recommendations {
   display: grid;
   gap: 8px;
   width: 100%;
-  max-width: 940px;
-  margin-top: 16px;
+  margin-top: 12px;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 16px;
+  background: rgb(20 22 28 / 0.92);
+  padding: 10px 10px 10px 14px;
+  box-shadow: 0 18px 40px -30px rgb(0 0 0 / 0.9);
 }
 .landing-recommendations__header {
   display: flex;
@@ -11228,10 +11253,15 @@ video {
   min-width: 0;
   align-items: center;
   gap: 10px;
-  border: 1px solid rgb(242 244 247 / 0.12);
+  border: 0;
   border-radius: 12px;
-  background: rgb(10 12 18 / 0.56);
+  background: rgb(255 255 255 / 0.04);
   padding: 6px;
+  transition: background-color 160ms var(--ease-out-expo);
+}
+.landing-recommendations__item:hover,
+.landing-recommendations__item:focus-within {
+  background: rgb(255 255 255 / 0.07);
 }
 .landing-recommendations .landing-recommendations__preview {
   width: 64px;
@@ -11289,9 +11319,9 @@ video {
 
 /* Generate page: the same teammate matches, compact and on the app surface. */
 .landing-recommendations.generation-inspiration {
-  max-width: none;
   margin: 0 0 10px;
   gap: 6px;
+  backdrop-filter: blur(14px);
 }
 .generation-inspiration .landing-recommendations__label,
 .generation-inspiration .landing-recommendations__owner {
@@ -11302,8 +11332,6 @@ video {
   gap: 6px;
 }
 .generation-inspiration .landing-recommendations__item {
-  border-color: var(--border);
-  background: color-mix(in oklch, var(--card) 80%, transparent);
   padding: 5px;
 }
 .generation-inspiration .landing-recommendations__preview {
@@ -11327,78 +11355,103 @@ video {
   }
 }
 
-/* What the AI understood from the prompt, shown beside the composer while typing. */
+/* What the AI understood from the prompt, a slim strip on the composer's edge while typing:
+   what it read on the left as quiet chips, what can be done about it on the right. */
 .ai-insight {
   display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin: 0 0 8px;
+  padding: 0 4px;
+  color: rgb(242 244 247 / 0.56);
+  font-size: 12px;
+}
+.ai-insight__facts {
+  display: flex;
+  min-width: 0;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin: 0 0 8px;
-  color: var(--muted-foreground);
-  font-size: 12.5px;
 }
 .ai-insight__badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(110deg, #3d81e3, #ae9ae6 60%, #f8d8d5);
-  color: #0b0d12;
-  padding: 2px 8px;
-  font-size: 11.5px;
-  font-weight: 700;
+  margin-right: 2px;
+  color: #b8b2ff;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0.04em;
 }
 .ai-insight__badge svg {
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
 }
 .ai-insight__fact {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  color: var(--foreground);
-  padding: 2px 9px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.06);
+  color: rgb(242 244 247 / 0.86);
+  padding: 3px 8px;
+  line-height: 1.4;
 }
-.ai-insight .ai-insight__action {
-  height: 24px;
-  padding: 0 8px;
-  color: var(--primary);
-  font-size: 12px;
+.ai-insight__tip {
+  color: rgb(242 244 247 / 0.5);
+}
+.ai-insight__tip--warn {
+  color: #f2c879;
 }
 .ai-insight__actions {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.ai-insight .ai-insight__action {
+  height: 26px;
+  min-height: 0;
   gap: 4px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.04);
+  padding: 0 10px;
+  color: rgb(242 244 247 / 0.86);
+  font-size: 12px;
+  font-weight: 500;
+}
+.ai-insight .ai-insight__action:hover:not(:disabled),
+.ai-insight .ai-insight__action:focus-visible {
+  border-color: rgb(255 255 255 / 0.18);
+  background: rgb(255 255 255 / 0.1);
+  color: #fff;
 }
 .ai-insight .ai-insight__action svg {
   width: 13px;
   height: 13px;
 }
-/* Polishing is the bar's main action, so it gets a glass pill like the composer controls. */
+/* Polishing is the strip's main action. */
 .ai-insight .ai-insight__action--enhance {
-  gap: 4px;
-  border: 1px solid rgb(255 255 255 / 0.14);
-  border-radius: var(--radius-full);
-  background: rgb(255 255 255 / 0.06);
-  color: var(--foreground);
+  border-color: rgb(184 178 255 / 0.28);
+  background: linear-gradient(100deg, rgb(124 140 255 / 0.2), rgb(73 198 192 / 0.16));
+  color: #fff;
 }
 .ai-insight .ai-insight__action--enhance:hover:not(:disabled) {
-  background: rgb(255 255 255 / 0.12);
+  background: linear-gradient(100deg, rgb(124 140 255 / 0.32), rgb(73 198 192 / 0.26));
 }
 .home-hero .ai-insight {
   width: 100%;
-  max-width: 940px;
-  justify-content: center;
-  margin: 14px 0 0;
-  color: rgb(242 244 247 / 0.7);
+  margin: 12px 0 0;
 }
-.home-hero .ai-insight__fact {
-  border-color: rgb(255 255 255 / 0.16);
-  background: rgb(255 255 255 / 0.05);
-  color: rgb(242 244 247 / 0.92);
-}
-.home-hero .ai-insight .ai-insight__action {
-  color: rgb(170 200 255 / 0.95);
+/* On the generate page results scroll underneath the dock, so the strip gets the same dark
+   glass as the panel above it instead of floating bare over an image. */
+.studio-create-bar .ai-insight {
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 12px;
+  background: rgb(20 22 28 / 0.86);
+  padding: 6px 6px 6px 10px;
+  backdrop-filter: blur(14px);
 }
 
 /* Skill mode: the skill's pill sits in the composer text and the bar under it says what

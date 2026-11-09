@@ -71,6 +71,62 @@ export function GenerationBatch({
   onFixText,
   onDeleteEntry,
 }: GenerationBatchProps) {
+  const batchActions = item.entries.length ? (
+    <div className="session-batch__actions" role="toolbar" aria-label="整组操作">
+      <IconTooltip label="复用完整设置">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="复用完整设置"
+          onClick={onReuseSettings}
+        >
+          <Copy aria-hidden="true" />
+        </Button>
+      </IconTooltip>
+      <IconTooltip label="再次生成">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="再次生成"
+          disabled={isGenerating}
+          onClick={onGenerateAgain}
+        >
+          <RefreshCw aria-hidden="true" />
+        </Button>
+      </IconTooltip>
+      {item.entries.length > 1 ? (
+        <>
+          <IconTooltip label="下载整组图片">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="下载整组图片"
+              onClick={onDownloadBatch}
+            >
+              <ArrowDownToLine aria-hidden="true" />
+            </Button>
+          </IconTooltip>
+          <IconTooltip label="删除整组">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="session-delete"
+              aria-label="删除整组"
+              disabled={mutatingId === item.id}
+              onClick={onDeleteBatch}
+            >
+              <Trash2 aria-hidden="true" />
+            </Button>
+          </IconTooltip>
+        </>
+      ) : null}
+    </div>
+  ) : null;
+
   return (
     <article
       ref={articleRef}
@@ -187,15 +243,20 @@ export function GenerationBatch({
                   </IconTooltip>
                 </div>
               </div>
-              {entry.record.textCheck ? (
-                <TextCheckNotice
-                  check={entry.record.textCheck}
-                  disabled={isGenerating}
-                  onFix={() => onFixText(entry)}
-                />
-              ) : (
-                <TextCheckProgress record={entry.record} />
-              )}
+              {/* One image: its text check and the batch toolbar share the row right under it,
+                  instead of the toolbar trailing a row further down. */}
+              <div className="session-result__footer">
+                {entry.record.textCheck ? (
+                  <TextCheckNotice
+                    check={entry.record.textCheck}
+                    disabled={isGenerating}
+                    onFix={() => onFixText(entry)}
+                  />
+                ) : (
+                  <TextCheckProgress record={entry.record} />
+                )}
+                {item.entries.length === 1 ? batchActions : null}
+              </div>
             </article>
           ))}
         </div>
@@ -213,61 +274,8 @@ export function GenerationBatch({
           <GenerationElapsed startedAt={item.createdAt} />
         </div>
       )}
-      {item.entries.length ? (
-        <div className="session-batch__actions" role="toolbar" aria-label="整组操作">
-          <IconTooltip label="复用完整设置">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="复用完整设置"
-              onClick={onReuseSettings}
-            >
-              <Copy aria-hidden="true" />
-            </Button>
-          </IconTooltip>
-          <IconTooltip label="再次生成">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="再次生成"
-              disabled={isGenerating}
-              onClick={onGenerateAgain}
-            >
-              <RefreshCw aria-hidden="true" />
-            </Button>
-          </IconTooltip>
-          {item.entries.length > 1 ? (
-            <>
-              <IconTooltip label="下载整组图片">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="下载整组图片"
-                  onClick={onDownloadBatch}
-                >
-                  <ArrowDownToLine aria-hidden="true" />
-                </Button>
-              </IconTooltip>
-              <IconTooltip label="删除整组">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="session-delete"
-                  aria-label="删除整组"
-                  disabled={mutatingId === item.id}
-                  onClick={onDeleteBatch}
-                >
-                  <Trash2 aria-hidden="true" />
-                </Button>
-              </IconTooltip>
-            </>
-          ) : null}
-        </div>
-      ) : null}
+      {/* With several images the batch toolbar follows the whole grid. */}
+      {item.entries.length > 1 ? batchActions : null}
     </article>
   );
 }

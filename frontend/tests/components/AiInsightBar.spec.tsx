@@ -32,6 +32,11 @@ it('says what the AI understood and offers 2K for dense text', async () => {
   expect(bar).toHaveTextContent('成果库有 4 个相似作品');
   await user.click(screen.getByRole('button', { name: '切换到 2K' }));
   expect(onUse2k).toHaveBeenCalledTimes(1);
+  // What it read sits apart from what can be done about it.
+  expect(
+    screen.getByRole('button', { name: '切换到 2K' }).closest('.ai-insight__actions'),
+  ).not.toBeNull();
+  expect(screen.getByText('识别为海报').closest('.ai-insight__facts')).not.toBeNull();
 });
 
 it('suggests redrawing instead of 2K when 2K is unavailable, and nothing at 2K', () => {

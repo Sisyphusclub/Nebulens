@@ -1173,6 +1173,9 @@ it('reveals a completed image only after its load event', async () => {
   expect(within(batch!).queryByRole('button', { name: /发现页/ })).not.toBeInTheDocument();
   expect(within(batch!).getByRole('button', { name: '删除图片' })).toBeInTheDocument();
   expect(batch?.querySelector('.session-batch__header .session-batch__actions')).toBeNull();
+  // One image: the toolbar shares the row right under it rather than trailing further down.
+  expect(batchActions.parentElement).toHaveClass('session-result__footer');
+  expect(batchActions.closest('.session-result')).toContainElement(image);
   expect(preview).toHaveStyle({ aspectRatio: '1792 / 1024' });
   expect(preview).not.toHaveClass('is-loaded');
   expect(preview.querySelector('.session-result__loading')).toBeInTheDocument();
@@ -1745,6 +1748,8 @@ it('keeps a failed batch confirmation open and supports retry', async () => {
 
   await user.click(screen.getByRole('button', { name: '生成图片' }));
   const batchActions = await screen.findByRole('toolbar', { name: '整组操作' });
+  // Several images: the batch toolbar follows the whole grid, not one image.
+  expect(batchActions.closest('.session-result')).toBeNull();
   expect(within(batchActions).getByRole('button', { name: '复用完整设置' })).toBeInTheDocument();
   expect(within(batchActions).getByRole('button', { name: '再次生成' })).toBeInTheDocument();
   expect(within(batchActions).getByRole('button', { name: '下载整组图片' })).toBeInTheDocument();

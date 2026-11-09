@@ -43,25 +43,34 @@ export function AiInsightBar({
   ];
   const adviseResolution = insight.dense && resolution === 'standard';
 
+  const offer2k = adviseResolution && canUse2k;
+
+  // What the AI read on the left, what can be done about it on the right.
   return (
     <div className="ai-insight" role="status" aria-label="AI 理解">
-      <span className="ai-insight__badge">
-        <Sparkles aria-hidden="true" />
-        AI
-      </span>
-      {facts.length > 0 ? (
-        facts.map((fact) => (
-          <span className="ai-insight__fact" key={fact}>
-            {fact}
+      <span className="ai-insight__facts">
+        <span className="ai-insight__badge">
+          <Sparkles aria-hidden="true" />
+          AI
+        </span>
+        {facts.length > 0 ? (
+          facts.map((fact) => (
+            <span className="ai-insight__fact" key={fact}>
+              {fact}
+            </span>
+          ))
+        ) : (
+          <span className="ai-insight__tip">用引号写出要出现在图中的文字，AI 会逐字核对。</span>
+        )}
+        {adviseResolution ? (
+          <span className="ai-insight__tip ai-insight__tip--warn">
+            {canUse2k ? '小字较多' : '小字较多，生成后可重画文字'}
           </span>
-        ))
-      ) : (
-        <span className="ai-insight__tip">用引号写出要出现在图中的文字，AI 会逐字核对。</span>
-      )}
-      {adviseResolution ? (
-        canUse2k ? (
-          <>
-            <span className="ai-insight__tip">小字较多</span>
+        ) : null}
+      </span>
+      {offer2k || enhance ? (
+        <span className="ai-insight__actions">
+          {offer2k ? (
             <Button
               type="button"
               variant="ghost"
@@ -71,14 +80,8 @@ export function AiInsightBar({
             >
               切换到 2K
             </Button>
-          </>
-        ) : (
-          <span className="ai-insight__tip">小字较多，生成后可重画文字</span>
-        )
-      ) : null}
-      {enhance ? (
-        <span className="ai-insight__actions">
-          {enhance.canUndo ? (
+          ) : null}
+          {enhance?.canUndo ? (
             <Button
               type="button"
               variant="ghost"
@@ -91,18 +94,20 @@ export function AiInsightBar({
               撤销
             </Button>
           ) : null}
-          <Button
-            type="button"
-            variant="ghost"
-            size="compact"
-            className="ai-insight__action ai-insight__action--enhance"
-            aria-label="AI 润色提示词"
-            disabled={enhance.enhancing}
-            onClick={enhance.onEnhance}
-          >
-            <WandSparkles aria-hidden="true" />
-            {enhance.enhancing ? '润色中…' : '润色'}
-          </Button>
+          {enhance ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="compact"
+              className="ai-insight__action ai-insight__action--enhance"
+              aria-label="AI 润色提示词"
+              disabled={enhance.enhancing}
+              onClick={enhance.onEnhance}
+            >
+              <WandSparkles aria-hidden="true" />
+              {enhance.enhancing ? '润色中…' : '润色'}
+            </Button>
+          ) : null}
         </span>
       ) : null}
     </div>

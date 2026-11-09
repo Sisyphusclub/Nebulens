@@ -72,3 +72,49 @@ it('ignores an unknown template id instead of showing an empty preview', () => {
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   expect(screen.getByLabelText('创作模板列表')).toBeInTheDocument();
 });
+
+it('shows every category as a visible chip and filters by the one in the address', () => {
+  const category = '科研配图';
+  const expected = CREATION_TEMPLATES.filter((template) => template.category === category);
+  renderView(`/templates?category=${encodeURIComponent(category)}`);
+
+  const chips = screen.getByRole('group', { name: '模板分类' });
+  expect(within(chips).getByRole('button', { name: category })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(within(chips).getByRole('button', { name: '全部' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
+  expect(screen.getByText(`${expected.length} 个模板`)).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: '模板分类' })).not.toBeInTheDocument();
+});
+
+it('writes the picked category into the address and drops it again for 全部', async () => {
+  const user = userEvent.setup();
+  renderView();
+  const chips = screen.getByRole('group', { name: '模板分类' });
+
+  await user.click(within(chips).getByRole('button', { name: '海报字体' }));
+
+  expect(currentSearch().get('category')).toBe('海报字体');
+  expect(within(chips).getByRole('button', { name: '海报字体' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+
+  await user.click(within(chips).getByRole('button', { name: '全部' }));
+
+  expect(currentSearch().has('category')).toBe(false);
+  expect(screen.getByText(`${CREATION_TEMPLATES.length} 个模板`)).toBeInTheDocument();
+});
+
+it('falls back to every template for a category that does not exist', () => {
+  renderView('/templates?category=不存在的分类');
+
+  expect(
+    within(screen.getByRole('group', { name: '模板分类' })).getByRole('button', { name: '全部' }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByText(`${CREATION_TEMPLATES.length} 个模板`)).toBeInTheDocument();
+});

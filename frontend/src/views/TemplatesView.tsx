@@ -22,8 +22,20 @@ import { ASPECT_RATIO_LABELS, IMAGE_RESOLUTION_LABELS } from '@/types/image';
 import { TEMPLATE_THUMBNAIL_WIDTH, templateThumbnailUrl } from '@/utils/thumbnail';
 
 type TemplateSort = 'featured' | 'recent' | 'title';
+type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
 
-const CATEGORY_OPTIONS = TEMPLATE_CATEGORIES.map((value) => ({ value, label: value }));
+const ALL_CATEGORIES: TemplateCategory = '全部';
+/** Every category stays in view, the fullest ones first after 全部. */
+const CATEGORY_CHIPS: readonly TemplateCategory[] = [
+  ALL_CATEGORIES,
+  ...TEMPLATE_CATEGORIES.filter((value) => value !== ALL_CATEGORIES)
+    .map((value) => ({
+      value,
+      size: CREATION_TEMPLATES.filter((template) => template.category === value).length,
+    }))
+    .sort((a, b) => b.size - a.size)
+    .map(({ value }) => value),
+];
 const SORT_OPTIONS: readonly { value: TemplateSort; label: string }[] = [
   { value: 'featured', label: '精选排序' },
   { value: 'recent', label: '最近使用' },
@@ -32,6 +44,12 @@ const SORT_OPTIONS: readonly { value: TemplateSort; label: string }[] = [
 const INITIAL_TEMPLATE_COUNT = 24;
 /** The previewed template lives in the address, so a link or a refresh reopens it. */
 const TEMPLATE_PARAM = 'template';
+/** The picked category is in the address too, so other pages can link straight to it. */
+const CATEGORY_PARAM = 'category';
+
+function isTemplateCategory(value: string | null): value is TemplateCategory {
+  return value !== null && (TEMPLATE_CATEGORIES as readonly string[]).includes(value);
+}
 const TEMPLATE_BATCH_SIZE = 24;
 
 function templateSearchParams(template: CreationTemplate): string {
@@ -48,11 +66,12 @@ export function TemplatesView() {
   const { notify } = useToast();
   const { favoriteIds, recent, toggleFavorite, markUsed } = useTemplatePreferences();
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<(typeof TEMPLATE_CATEGORIES)[number]>('全部');
   const [sort, setSort] = useState<TemplateSort>('featured');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedId = searchParams.get(TEMPLATE_PARAM);
+  const categoryParam = searchParams.get(CATEGORY_PARAM);
+  const category = isTemplateCategory(categoryParam) ? categoryParam : ALL_CATEGORIES;
   const selected = useMemo(
     () => CREATION_TEMPLATES.find((template) => template.id === selectedId) ?? null,
     [selectedId],
@@ -62,7 +81,7 @@ export function TemplatesView() {
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('zh-CN');
     const items = CREATION_TEMPLATES.filter((template) => {
-      if (category !== '全部' && template.category !== category) return false;
+      if (category !== ALL_CATEGORIES && template.category !== category) return false;
       if (favoritesOnly && !favoriteIds.includes(template.id)) return false;
       return (
         !normalizedQuery ||
@@ -111,16 +130,22 @@ export function TemplatesView() {
     markUsed(template.id);
     void navigate(`/generate?${templateSearchParams(template)}`);
   };
-  const setSelectedId = (id: string | null): void => {
+  const setAddressParam = (name: string, value: string | null): void => {
     setSearchParams(
       (current) => {
         const next = new URLSearchParams(current);
-        if (id === null) next.delete(TEMPLATE_PARAM);
-        else next.set(TEMPLATE_PARAM, id);
+        if (value === null) next.delete(name);
+        else next.set(name, value);
         return next;
       },
       { replace: true },
     );
+  };
+  const setSelectedId = (id: string | null): void => {
+    setAddressParam(TEMPLATE_PARAM, id);
+  };
+  const setCategory = (value: TemplateCategory): void => {
+    setAddressParam(CATEGORY_PARAM, value === ALL_CATEGORIES ? null : value);
   };
   const closePreview = (): void => {
     setSelectedId(null);
@@ -144,12 +169,6 @@ export function TemplatesView() {
             placeholder="搜索模板"
           />
         </label>
-        <SelectMenu
-          label="模板分类"
-          value={category}
-          options={CATEGORY_OPTIONS}
-          onValueChange={setCategory}
-        />
         <SelectMenu label="模板排序" value={sort} options={SORT_OPTIONS} onValueChange={setSort} />
         <IconTooltip label="仅显示收藏模板">
           <Button
@@ -164,6 +183,20 @@ export function TemplatesView() {
             <Heart aria-hidden="true" />
           </Button>
         </IconTooltip>
+      </div>
+      <div className="template-category-chips" role="group" aria-label="模板分类">
+        {CATEGORY_CHIPS.map((value) => (
+          <Button
+            key={value}
+            type="button"
+            variant="ghost"
+            size="compact"
+            aria-pressed={category === value}
+            onClick={() => setCategory(value)}
+          >
+            {value}
+          </Button>
+        ))}
       </div>
 
       {filtered.length ? (
@@ -250,7 +283,7 @@ export function TemplatesView() {
             variant="secondary"
             onClick={() => {
               setQuery('');
-              setCategory('全部');
+              setCategory(ALL_CATEGORIES);
               setFavoritesOnly(false);
             }}
           >

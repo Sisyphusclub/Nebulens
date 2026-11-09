@@ -4000,6 +4000,47 @@ video.landing-hero__video[data-playing='false'] {
 .templates-page .template-toolbar {
   margin-bottom: 18px;
 }
+/* Every template category stays in view as a chip, in the assets page's glass chip style;
+   a narrow screen scrolls the one row sideways instead of stacking it. */
+.template-category-chips {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: -6px 0 20px;
+}
+.template-category-chips button {
+  min-height: 32px;
+  flex: 0 0 auto;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: var(--radius-full);
+  background: rgb(26 30 40 / 0.42);
+  color: rgb(242 244 247 / 0.72);
+  padding: 0 14px;
+  backdrop-filter: blur(10px) saturate(1.2);
+}
+.template-category-chips button:hover:not([aria-pressed='true']) {
+  background: rgb(40 46 58 / 0.55);
+  color: #fff;
+}
+.template-category-chips button[aria-pressed='true'] {
+  border-color: rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
+}
+@media (max-width: 560px) {
+  .template-category-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: calc(var(--workspace-page-gutter, 16px) * -1);
+    padding-inline: var(--workspace-page-gutter, 16px);
+  }
+  .template-category-chips::-webkit-scrollbar {
+    display: none;
+  }
+}
 .workspace-toolbar .search-field {
   min-height: 40px;
   border-color: var(--border);

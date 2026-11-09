@@ -67,9 +67,9 @@ describe('flat workbench sidebar', () => {
   it('stays exactly as wide as the page offset, however long the creation titles are', () => {
     // Tailwind 4 does not generate the registry's `w-[--sidebar-width]`; without this the
     // panel grows to fit the longest title and covers the page.
-    expect(panel).toContain('width: var(--workbench-sidebar-width);');
+    expect(panel).toContain('width: var(--sidebar-width);');
     expect(baseStyles).toMatch(
-      /\.app-shell \.app-main \{\s*--workspace-sidebar-rail: 0px;\s*padding-left: var\(--workbench-sidebar-width\);/,
+      /\.app-shell \.app-main \{\s*--workspace-sidebar-rail: 0px;\s*padding-left: var\(--sidebar-width\);/,
     );
   });
 });
@@ -115,7 +115,7 @@ describe('phone menu', () => {
 describe('home headline', () => {
   it('uses the light Song face of the earlier hero', () => {
     const headline = rule('.home-hero h1');
-    expect(headline).toContain('font-family: var(--font-hero-serif);');
+    expect(headline).toContain('font-family: var(--font-serif);');
     expect(headline).toContain('font-weight: 300;');
     expect(rule('.home-hero h1 > span')).toContain('display: inline-block;');
   });

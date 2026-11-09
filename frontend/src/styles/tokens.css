@@ -1,79 +1,124 @@
 :root {
   color-scheme: dark;
 
-  /* shadcn/beUI semantic foundation */
-  --background: oklch(0.135 0.006 265);
-  --foreground: oklch(0.96 0.004 255);
-  --card: oklch(0.178 0.007 265);
-  --card-foreground: var(--foreground);
-  --popover: oklch(0.19 0.007 265);
-  --popover-foreground: var(--foreground);
-  --primary: oklch(0.94 0.005 255);
-  --primary-foreground: oklch(0.16 0.006 265);
-  --secondary: oklch(0.235 0.008 265);
-  --secondary-foreground: var(--foreground);
-  --muted: oklch(0.225 0.008 265);
-  --muted-foreground: oklch(0.69 0.012 255);
-  --accent: oklch(0.72 0.15 250);
-  --accent-foreground: oklch(0.985 0.005 255);
-  --accent-soft: oklch(0.28 0.06 250);
-  --destructive: oklch(0.68 0.18 25);
-  --destructive-foreground: oklch(0.985 0.005 25);
-  --border: oklch(1 0 0 / 0.1);
-  --border-strong: oklch(1 0 0 / 0.18);
-  --input: oklch(1 0 0 / 0.12);
-  --ring: oklch(0.72 0.02 250);
-  --overlay: oklch(0.04 0 0 / 0.82);
-  --surface-raised: oklch(0.215 0.008 265);
-  --surface-hover: oklch(0.255 0.009 265);
-  --surface-media: oklch(0.09 0.005 265);
-  /* Dark charcoal glass shared by every dialog, menu, popover and toast: one step above the
-     sidebar, so floating layers read as part of the dark workbench instead of a bright slab. */
-  --surface-floating: linear-gradient(180deg, rgb(30 32 39 / 0.98), rgb(23 25 31 / 0.98));
-  --border-floating: rgb(255 255 255 / 0.08);
+  /* Nebulens design tokens, mirrored from the design system's tokens.json: keep the two in step.
+     Surfaces run from darkest to lightest: media, page, sidebar, surface, floating. */
+  --bg-media: #020203;
+  --bg-page: #07080b;
+  --bg-sidebar: #0a0b0e;
+  --bg-surface: #111215;
+  --bg-surface-hover: #1d1e21;
+  --bg-floating: #1e2027;
+  --bg-floating-end: #171a1f;
+
+  /* States are white overlays on any surface: fills for backgrounds, lines for borders. */
+  --fill-1: rgb(255 255 255 / 0.04);
+  --fill-2: rgb(255 255 255 / 0.06);
+  --fill-3: rgb(255 255 255 / 0.09);
+  --fill-4: rgb(255 255 255 / 0.12);
+  --line-1: rgb(255 255 255 / 0.06);
+  --line-2: rgb(255 255 255 / 0.1);
+  --line-3: rgb(255 255 255 / 0.18);
+
+  --text-1: #f2f4f7;
+  --text-2: rgb(242 244 247 / 0.72);
+  --text-3: rgb(242 244 247 / 0.52);
+  --text-4: rgb(242 244 247 / 0.36);
+
+  /* Brand colours come from the logo ribbon and stay in brand places. */
+  --brand-blue: #005bf9;
+  --brand-cyan: #00a3fe;
+  --brand-orange: #f9931b;
+  /* The one interactive accent: links, the AI mark, expandable tags, focus rings. */
+  --accent: #52a9fe;
+  --accent-soft: rgb(82 169 254 / 0.16);
+  --glow-warm: #ffe1c2;
+  --glow-cool: #d3e6ff;
+  --primary: #eef0f5;
+  --on-primary: #12141a;
+  --success: #5fd39a;
+  --warning: #f2c879;
+  --danger: #f3625d;
+
   --shadow-floating: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 28px 64px -26px rgb(0 0 0 / 0.9);
+  --shadow-panel: 0 18px 40px -30px rgb(0 0 0 / 0.9);
+  --shadow-media: 0 22px 56px -48px rgb(0 0 0 / 0.92);
 
-  /* Compatibility aliases while legacy selectors move to semantic names. */
-  --color-canvas-dark: var(--background);
-  --color-canvas-light: var(--primary);
-  --color-workspace: var(--background);
-  --color-panel: var(--card);
-  --color-surface-dark-1: var(--card);
-  --color-surface-dark-2: var(--surface-raised);
-  --color-surface-subtle: oklch(1 0 0 / 0.055);
-  --color-selection-subtle: oklch(1 0 0 / 0.09);
-  --color-hairline-light: var(--border);
-  --color-hairline-dark: var(--border-strong);
-  --color-ink: var(--foreground);
-  --color-ink-inverse: var(--primary-foreground);
-  --color-ink-muted: var(--muted-foreground);
-  --color-danger: var(--destructive);
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
 
-  --font-sans: 'Geist Sans', Inter, 'Helvetica Neue', ui-sans-serif, sans-serif;
-  --font-display: 'Oxanium Variable', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
-  --font-hero-sans: 'Geist Variable', 'Helvetica Neue', ui-sans-serif, sans-serif;
-  --font-hero-serif: 'Noto Serif SC Variable', 'Songti SC', 'STSong', serif;
-  --font-serif: 'Geist Sans', Inter, 'Helvetica Neue', ui-sans-serif, sans-serif;
-  --sidebar-width: 232px;
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 999px;
+
+  --sidebar-width: 272px;
+  --content-max: 1180px;
+  --control-height: 36px;
+  --nav-item-height: 42px;
+  --list-row-height: 38px;
+  --icon-sm: 14px;
+  --icon-md: 16px;
+  --icon-lg: 18px;
+
+  --z-sidebar: 40;
+  --z-account: 41;
+  --z-mobile-header: 42;
+  --z-dialog: 100;
+
+  --font-sans: 'Geist', 'Geist Variable', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-serif: 'Noto Serif SC', 'Noto Serif SC Variable', 'Songti SC', 'STSong', serif;
+  --font-display: 'Oxanium', 'Oxanium Variable', 'Geist', system-ui, sans-serif;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* shadcn/beUI names the registry components read, pointed at the tokens above. */
+  --background: var(--bg-page);
+  --foreground: var(--text-1);
+  --card: var(--bg-surface);
+  --card-foreground: var(--text-1);
+  --popover: var(--bg-floating);
+  --popover-foreground: var(--text-1);
+  --primary-foreground: var(--on-primary);
+  --secondary: var(--bg-surface-hover);
+  --secondary-foreground: var(--text-1);
+  --muted: var(--bg-surface-hover);
+  --muted-foreground: var(--text-3);
+  --accent-foreground: var(--on-primary);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--text-1);
+  --border: var(--line-2);
+  --border-strong: var(--line-3);
+  --border-floating: var(--line-2);
+  --input: var(--line-2);
+  --ring: var(--accent);
+  --overlay: rgb(2 3 5 / 0.78);
+  --surface-raised: var(--bg-surface-hover);
+  --surface-hover: var(--bg-surface-hover);
+  --surface-media: var(--bg-media);
+  /* Every dialog, menu, popover, toast and the mobile sidebar sheet share this surface. */
+  --surface-floating: linear-gradient(180deg, var(--bg-floating), var(--bg-floating-end));
+
   --workspace-content-max: 1580px;
   --workspace-page-gutter: 32px;
   --workspace-sidebar-rail: 126px;
-
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-full: 999px;
-  --radius-control: var(--radius-sm);
-  --radius-card: var(--radius-lg);
-  --radius-pill: var(--radius-full);
 
   --shadow-float: 0 16px 48px -28px rgb(0 0 0 / 0.62);
   --shadow-modal: 0 24px 80px -36px rgb(0 0 0 / 0.78);
   --shadow-focus: 0 0 0 3px color-mix(in oklch, var(--ring) 24%, transparent);
   --focus-ring: var(--shadow-focus);
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme {
@@ -96,17 +141,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-canvas-dark: var(--background);
-  --color-canvas-light: var(--primary);
-  --color-workspace: var(--background);
-  --color-ink: var(--foreground);
-  --color-ink-muted: var(--muted-foreground);
-  --font-sans: 'Geist Sans', Inter, 'Helvetica Neue', ui-sans-serif, sans-serif;
-  --font-display: 'Oxanium Variable', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
-  --font-hero-sans: 'Geist Variable', 'Helvetica Neue', ui-sans-serif, sans-serif;
-  --font-hero-serif: 'Noto Serif SC Variable', 'Songti SC', 'STSong', serif;
-  --font-serif: 'Geist Sans', Inter, 'Helvetica Neue', ui-sans-serif, sans-serif;
-  --radius-control: 8px;
-  --radius-card: 16px;
-  --radius-pill: 999px;
+  --font-sans: 'Geist', 'Geist Variable', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-serif: 'Noto Serif SC', 'Noto Serif SC Variable', 'Songti SC', 'STSong', serif;
+  --font-display: 'Oxanium', 'Oxanium Variable', 'Geist', system-ui, sans-serif;
 }

@@ -1607,15 +1607,16 @@ video {
 .image-tile:focus-within .image-tile__remove {
   opacity: 1;
 }
-/* One slate glass for everything that floats over the page: dialogs, menus,
+/* One charcoal surface for everything that floats over the page: dialogs, menus,
    popovers, toasts and the mobile drawer. Nested controls read the semantic
    tokens (and Tailwind's resolved --color-* copies), so tint them for this
-   surface instead of letting near-black fills punch holes in it. */
+   surface instead of letting near-black fills punch holes in it: insets are
+   fill-2, hover fill-3. */
 .floating-surface {
-  --card: rgb(255 255 255 / 0.06);
-  --muted: rgb(255 255 255 / 0.07);
-  --surface-raised: rgb(255 255 255 / 0.06);
-  --surface-hover: rgb(255 255 255 / 0.11);
+  --card: var(--fill-2);
+  --muted: var(--fill-2);
+  --surface-raised: var(--fill-2);
+  --surface-hover: var(--fill-3);
   --color-card: var(--card);
   --color-muted: var(--muted);
   border: 1px solid var(--border-floating);

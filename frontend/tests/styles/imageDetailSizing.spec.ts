@@ -55,12 +55,12 @@ describe('image detail surface', () => {
     );
   });
 
-  it('shares its slate glass with the login, API key and confirm dialogs', () => {
+  it('shares its charcoal surface with the login, API key and confirm dialogs', () => {
     const floating = ruleBody(baseStyles, '.floating-surface');
 
     expect(floating).toContain('background: var(--surface-floating);');
     expect(floating).toContain('box-shadow: var(--shadow-floating);');
-    expect(floating).toContain('--card: rgb(255 255 255 / 0.06);');
+    expect(floating).toContain('--card: var(--fill-2);');
     for (const file of [
       'src/components/auth/LoginModal.tsx',
       'src/components/settings/ImageApiKeySettingsDialog.tsx',

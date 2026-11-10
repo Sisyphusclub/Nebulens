@@ -17,6 +17,7 @@ export type ErrorCode =
   | 'RATE_LIMITED'
   | 'QUOTA_EXHAUSTED'
   | 'STORAGE_ERROR'
+  | 'TEXT_MODEL_UNAVAILABLE'
   | 'INTERNAL';
 
 export class AppError extends Error {

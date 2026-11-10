@@ -38,8 +38,33 @@ export function buildSkillsRouter(deps: SkillsRouterDeps): Router {
     res.status(200).json({ skills: SKILLS.map(publicSkill) });
   });
 
+  // POST /api/skills/free-plan { brief, hasReference } -> { title, outputs } planned by the text
+  // model when no skill fits an Agent mode request; 503 when no text model is configured.
+  router.post(
+    '/free-plan',
+    deps.authMiddleware ?? requireAuth,
+    deps.rateLimiter ?? passThrough,
+    (req, res, next) => {
+      void (async () => {
+        try {
+          const parsed = selectBodySchema.safeParse(req.body ?? {});
+          if (!parsed.success) {
+            throw new AppError('BAD_REQUEST', 'Invalid free plan request body', 400, parsed.error, {
+              issues: parsed.error.issues,
+            });
+          }
+          res
+            .status(200)
+            .json(await deps.planner.planFreely(parsed.data.brief, parsed.data.hasReference));
+        } catch (err) {
+          next(err);
+        }
+      })();
+    },
+  );
+
   // POST /api/skills/select { brief, hasReference } -> { skillId } naming the skill that fits
-  // a request typed in Agent mode, or null when it is generated as a plain image.
+  // a request typed in Agent mode, or null when none does and the text model plans it freely.
   router.post(
     '/select',
     deps.authMiddleware ?? requireAuth,

@@ -9,7 +9,7 @@ import {
   type SkillOutput,
   type SkillValues,
 } from '../skills/skillDefinitions.js';
-import type { AspectRatio } from '../types/image.js';
+import { ASPECT_RATIOS, type AspectRatio } from '../types/image.js';
 import { chatApiHeaders } from '../utils/chatApiHeaders.js';
 import { extractVisibleTexts } from '../utils/visibleText.js';
 
@@ -36,9 +36,14 @@ export interface SkillPlanner {
   readBrief(skill: SkillDefinition, brief: string): Promise<SkillAnswers>;
   /**
    * Picks the skill that fits a one-line request typed in Agent mode, or null when none
-   * does and the request is generated as a plain image.
+   * does and the request goes to `planFreely`.
    */
   selectSkill(brief: string, hasReference: boolean): Promise<string | null>;
+  /**
+   * Agent mode when no skill fits: the text model breaks the request into one to four images
+   * and writes each one's prompt. Throws when there is no text model or it fails.
+   */
+  planFreely(brief: string, hasReference: boolean): Promise<SkillPlan>;
 }
 
 export interface SkillPlannerConfig {
@@ -268,6 +273,54 @@ const SELECT_RULES = [
   '4. 只输出一个 JSON 对象：{"skillId": "技能 id"}，不选时输出 {"skillId": null}，不要解释。',
 ].join('\n');
 
+const FREE_PLAN_RULES = [
+  '你是图像创作工作台的创作规划师：把用户的一句话需求拆成 1 到 4 张图，并为每张写好能直接生成的提示词。',
+  '1. 用户说了几张就出几张，最多 4 张；只要一个画面时出 1 张；要一组或一套但没说数量时出 3 张。',
+  '2. 每张的 prompt 用中文写完整画面：主体、场景、构图、光线、色彩和风格，80 到 200 字。',
+  '3. 画面里要出现的文字只用用户的原话，放在中文双引号里；用户没给文字时，画面里不要出现文字。',
+  '4. 已上传参考图时，每张都写明参考上传的图片，保持图里的主体不变。',
+  `5. aspect 从这些比例里选：${ASPECT_RATIOS.join('、')}，按用途选，如竖版海报 3:4、横幅 16:9、方图 1:1。`,
+  '6. label 是这张图的简短名称，不超过 8 个字；title 是这组图的标题，不超过 16 个字。',
+  '7. 只输出一个 JSON 对象：{"title": "…", "images": [{"label": "…", "aspect": "3:4", "prompt": "…"}]}，不要解释。',
+].join('\n');
+
+const FREE_PLAN_MAX_IMAGES = 4;
+const TEXT_MODEL_UNAVAILABLE =
+  'Agent 需要文本模型来规划画面，当前没有配置。可以先用图片生成，或从技能库选一个技能。';
+const FREE_PLAN_FAILED = 'Agent 这次没能规划好画面，请稍后重试。';
+
+function freePlanRequest(brief: string, hasReference: boolean): string {
+  return [`已上传参考图：${hasReference ? '是' : '否'}`, `用户需求：${brief}`].join('\n');
+}
+
+function isAspectRatio(value: unknown): value is AspectRatio {
+  return typeof value === 'string' && (ASPECT_RATIOS as readonly string[]).includes(value);
+}
+
+/** The usable images in the model's answer, in order; null when none is usable. */
+function readFreePlan(answer: Record<string, unknown>, brief: string): SkillPlan | null {
+  const images = Array.isArray(answer.images) ? answer.images : [];
+  const outputs: PlannedOutput[] = [];
+  for (const image of images) {
+    if (outputs.length === FREE_PLAN_MAX_IMAGES) break;
+    if (typeof image !== 'object' || image === null) continue;
+    const { label, aspect, prompt } = image as Record<string, unknown>;
+    const text = typeof prompt === 'string' ? prompt.trim() : '';
+    if (text.length < 10 || text.length > 2000) continue;
+    const number = outputs.length + 1;
+    const name = typeof label === 'string' ? label.trim().slice(0, 12) : '';
+    outputs.push({
+      id: `image-${number}`,
+      label: name || `第 ${number} 张`,
+      aspect: isAspectRatio(aspect) ? aspect : 'auto',
+      prompt: text,
+    });
+  }
+  if (outputs.length === 0) return null;
+  const title = typeof answer.title === 'string' ? answer.title.trim().slice(0, 20) : '';
+  return { title: title || brief.trim().slice(0, 20), outputs };
+}
+
 /** A skill that needs an uploaded image is only usable once there is one. */
 function usableSkill(skill: SkillDefinition, hasReference: boolean): boolean {
   return skill.reference !== 'required' || hasReference;
@@ -427,9 +480,24 @@ export function createSkillPlanner(config?: SkillPlannerConfig): SkillPlanner {
         const skill = typeof answer.skillId === 'string' ? findSkill(answer.skillId) : undefined;
         return skill !== undefined && usableSkill(skill, hasReference) ? skill.id : null;
       } catch (err) {
-        logger.warn({ err }, 'skill selection fell back to plain generation');
+        logger.warn({ err }, 'skill selection failed; the request is planned freely');
         return null;
       }
+    },
+    async planFreely(brief, hasReference) {
+      if (config === undefined) {
+        throw new AppError('TEXT_MODEL_UNAVAILABLE', TEXT_MODEL_UNAVAILABLE, 503);
+      }
+      let answer: Record<string, unknown>;
+      try {
+        answer = await askChat(config, 0.7, FREE_PLAN_RULES, freePlanRequest(brief, hasReference));
+      } catch (err) {
+        logger.warn({ err }, 'free plan request failed');
+        throw new AppError('PROVIDER_ERROR', FREE_PLAN_FAILED, 502, err);
+      }
+      const plan = readFreePlan(answer, brief);
+      if (plan === null) throw new AppError('PROVIDER_ERROR', FREE_PLAN_FAILED, 502);
+      return plan;
     },
   };
 }

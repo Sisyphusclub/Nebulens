@@ -393,3 +393,90 @@ describe('createSkillPlanner selectSkill', () => {
     expect(await createSkillPlanner().selectSkill('一张海边日落', false)).toBeNull();
   });
 });
+
+describe('createSkillPlanner planFreely', () => {
+  const chatConfig = {
+    baseUrl: 'https://llm.test',
+    apiKey: 'test-key',
+    model: 'test-model',
+    timeoutMs: 1000,
+  };
+
+  it('turns the chat model answer into at most four planned images', async () => {
+    const images = Array.from({ length: 5 }, (_, index) => ({
+      label: `第${index + 1}张`,
+      aspect: index === 0 ? '3:4' : 'banana',
+      prompt: `雨夜的未来城市，第 ${index + 1} 个构图，霓虹倒影`,
+    }));
+    const fetchImpl = vi.fn(async () =>
+      chatResponse(JSON.stringify({ title: '雨夜城市', images })),
+    );
+    const planner = createSkillPlanner({ ...chatConfig, fetchImpl });
+
+    const plan = await planner.planFreely('雨夜的未来城市，做一组', true);
+
+    expect(plan.title).toBe('雨夜城市');
+    expect(plan.outputs).toHaveLength(4);
+    expect(plan.outputs[0]).toEqual({
+      id: 'image-1',
+      label: '第1张',
+      aspect: '3:4',
+      prompt: '雨夜的未来城市，第 1 个构图，霓虹倒影',
+    });
+    expect(plan.outputs[1]?.aspect).toBe('auto');
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    const body = JSON.parse(String(init.body)) as { messages: Array<{ content: string }> };
+    expect(body.messages[1]?.content).toContain('已上传参考图：是');
+    expect(body.messages[1]?.content).toContain('用户需求：雨夜的未来城市，做一组');
+  });
+
+  it('drops unusable images and names the set after the request without a title', async () => {
+    const fetchImpl = vi.fn(async () =>
+      chatResponse(
+        JSON.stringify({
+          images: [{ prompt: '短' }, { label: ' ', prompt: '晨雾中的灯塔，胶片质感，冷色调' }],
+        }),
+      ),
+    );
+
+    const plan = await createSkillPlanner({ ...chatConfig, fetchImpl }).planFreely(
+      '晨雾中的灯塔',
+      false,
+    );
+
+    expect(plan).toEqual({
+      title: '晨雾中的灯塔',
+      outputs: [
+        {
+          id: 'image-1',
+          label: '第 1 张',
+          aspect: 'auto',
+          prompt: '晨雾中的灯塔，胶片质感，冷色调',
+        },
+      ],
+    });
+  });
+
+  it('says Agent needs a text model without one, and that planning failed when the model did', async () => {
+    await expect(createSkillPlanner().planFreely('雨夜', false)).rejects.toMatchObject({
+      code: 'TEXT_MODEL_UNAVAILABLE',
+      status: 503,
+    });
+    const failing = createSkillPlanner({
+      ...chatConfig,
+      fetchImpl: vi.fn(async () => chatResponse('', 500)),
+    });
+    await expect(failing.planFreely('雨夜', false)).rejects.toMatchObject({
+      code: 'PROVIDER_ERROR',
+      status: 502,
+    });
+    const empty = createSkillPlanner({
+      ...chatConfig,
+      fetchImpl: vi.fn(async () => chatResponse('{"images": []}')),
+    });
+    await expect(empty.planFreely('雨夜', false)).rejects.toMatchObject({
+      code: 'PROVIDER_ERROR',
+      status: 502,
+    });
+  });
+});

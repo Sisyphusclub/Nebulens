@@ -57,6 +57,7 @@ describe('POST /api/skills/:id/plan', () => {
       })),
       readBrief: vi.fn(async () => ({})),
       selectSkill: vi.fn(async () => null),
+      planFreely: vi.fn(),
     };
     const app = createApp({ provider, skillPlanner, authMiddleware: signedIn });
 
@@ -125,6 +126,7 @@ describe('POST /api/skills/select', () => {
       plan: vi.fn(),
       readBrief: vi.fn(),
       selectSkill: vi.fn(async () => 'ecommerce'),
+      planFreely: vi.fn(),
     };
     const app = createApp({ provider, skillPlanner, authMiddleware: signedIn });
 
@@ -158,6 +160,56 @@ describe('POST /api/skills/select', () => {
     const signedOutResponse = await request(signedOutApp)
       .post('/api/skills/select')
       .send({ brief: '活动海报' });
+    expect(signedOutResponse.status).toBe(401);
+  });
+});
+
+describe('POST /api/skills/free-plan', () => {
+  it('has the text model plan the images when no skill fits the request', async () => {
+    const skillPlanner: SkillPlanner = {
+      plan: vi.fn(),
+      readBrief: vi.fn(),
+      selectSkill: vi.fn(),
+      planFreely: vi.fn(async () => ({
+        title: '雨夜城市',
+        outputs: [
+          { id: 'image-1', label: '主视觉', aspect: '3:4' as const, prompt: '雨夜的未来城市' },
+        ],
+      })),
+    };
+    const app = createApp({ provider, skillPlanner, authMiddleware: signedIn });
+
+    const response = await request(app)
+      .post('/api/skills/free-plan')
+      .send({ brief: ' 雨夜的未来城市，做两张 ', hasReference: false });
+
+    expect(response.status).toBe(200);
+    expect(response.body.title).toBe('雨夜城市');
+    expect(skillPlanner.planFreely).toHaveBeenCalledWith('雨夜的未来城市，做两张', false);
+  });
+
+  it('says plainly that Agent needs a text model when none is configured', async () => {
+    const app = createApp({ provider, authMiddleware: signedIn });
+
+    const response = await request(app)
+      .post('/api/skills/free-plan')
+      .send({ brief: '雨夜的未来城市' });
+
+    expect(response.status).toBe(503);
+    expect(response.body.error.code).toBe('TEXT_MODEL_UNAVAILABLE');
+    expect(response.body.error.message).toContain('文本模型');
+  });
+
+  it('rejects an empty request and signed-out requests', async () => {
+    const app = createApp({ provider, authMiddleware: signedIn });
+    expect((await request(app).post('/api/skills/free-plan').send({ brief: ' ' })).status).toBe(
+      400,
+    );
+
+    const signedOutApp = createApp({ provider, authMiddleware: signedOut });
+    const signedOutResponse = await request(signedOutApp)
+      .post('/api/skills/free-plan')
+      .send({ brief: '雨夜' });
     expect(signedOutResponse.status).toBe(401);
   });
 });

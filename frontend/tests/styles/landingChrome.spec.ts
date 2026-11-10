@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const baseStyles = readFileSync(resolve(process.cwd(), 'src/styles/base.css'), 'utf8');
+const tokens = readFileSync(resolve(process.cwd(), 'src/styles/tokens.css'), 'utf8');
 
 function rule(selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -22,13 +23,19 @@ describe('landing navigation chrome', () => {
     );
   });
 
-  it('gives creation history rows room to breathe', () => {
+  it('gives creation history rows room to breathe, each led by its cover image', () => {
     const rows =
       baseStyles.match(
         /\.landing-sidebar \.sidebar-history \[data-sidebar='menu-button'\],\s*\[data-mobile='true'\] \.sidebar-history \[data-sidebar='menu-button'\] \{([^}]+)\}/,
       )?.[1] ?? '';
-    expect(rows).toContain('height: 38px;');
-    expect(rule(".landing-sidebar .sidebar-history [data-sidebar='menu']")).toContain('gap: 4px;');
+    expect(rows).toContain('height: var(--list-row-height);');
+    expect(tokens).toContain('--list-row-height: 44px;');
+    expect(rule(".landing-sidebar .sidebar-history [data-sidebar='menu']")).toContain(
+      'gap: var(--space-1);',
+    );
+    const thumb = rule('.sidebar-history__thumb');
+    expect(thumb).toContain('width: 28px;');
+    expect(thumb).toContain('object-fit: cover;');
   });
 
   it('marks the active rail item with a light glass pill and keeps labels legible', () => {

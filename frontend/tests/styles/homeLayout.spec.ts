@@ -80,7 +80,10 @@ describe('creation history rows', () => {
       baseStyles.match(
         /\.group\[data-state='expanded'\] \.landing-sidebar nav \[data-sidebar='menu-button'\] \{([^}]+)\}/,
       )?.[1] ?? '';
-    expect(navButton).toContain('height: 42px;');
+    expect(navButton).toContain('height: var(--nav-item-height);');
+    expect(readFileSync(resolve(process.cwd(), 'src/styles/tokens.css'), 'utf8')).toContain(
+      '--nav-item-height: 44px;',
+    );
     // No expanded-state rule reaches every menu button or group in the sidebar.
     expect(baseStyles).not.toMatch(
       /\.group\[data-state='expanded'\] \.landing-sidebar \[data-sidebar='(menu-button|group|menu)'\]/,
@@ -96,7 +99,7 @@ describe('creation history rows', () => {
 
   it('leave room for the rename and remove actions in the phone menu, where they always show', () => {
     expect(baseStyles).toMatch(
-      /\[data-mobile='true'\] \.sidebar-history \[data-sidebar='menu-button'\] \{[^}]*padding: 0 60px 0 12px;/,
+      /\[data-mobile='true'\] \.sidebar-history \[data-sidebar='menu-button'\] \{[^}]*padding: 0 60px 0 6px;/,
     );
   });
 });

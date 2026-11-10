@@ -5,6 +5,19 @@ import { isTextFixPrompt } from '@/utils/textCheck';
 export interface SidebarSession {
   id: string;
   title: string;
+  /** The session's newest image, as its cover; absent until it has made one. */
+  thumbnail?: string;
+}
+
+/** The first image of the session's newest batch that made any. */
+function coverImage(
+  session: GenerationSession,
+  batchById: ReadonlyMap<string, GroupedBatch>,
+): string | undefined {
+  return session.batchIds
+    .map((batchId) => batchById.get(batchId))
+    .filter((batch): batch is GroupedBatch => batch !== undefined && batch.entries.length > 0)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]?.entries[0]?.imageUrl;
 }
 
 /**
@@ -28,11 +41,14 @@ export function sidebarSessions(
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .slice(0, limit)
     .map((session) => {
-      if (!isTextFixPrompt(session.title)) return { id: session.id, title: session.title };
+      const thumbnail = coverImage(session, batchById);
+      const cover = thumbnail === undefined ? {} : { thumbnail };
+      if (!isTextFixPrompt(session.title))
+        return { id: session.id, title: session.title, ...cover };
       // A session named after a text fix shows the creation's own prompt instead.
       const ownPrompt = session.batchIds
         .map((batchId) => batchById.get(batchId)?.prompt)
         .find((prompt) => prompt !== undefined && !isTextFixPrompt(prompt));
-      return { id: session.id, title: ownPrompt ?? session.title };
+      return { id: session.id, title: ownPrompt ?? session.title, ...cover };
     });
 }

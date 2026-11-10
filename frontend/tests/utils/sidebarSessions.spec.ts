@@ -67,8 +67,8 @@ describe('sidebarSessions', () => {
     ];
 
     expect(sidebarSessions(sessions, batches, 'open')).toEqual([
-      { id: 'newer', title: '产品图' },
-      { id: 'older', title: '奶茶海报' },
+      { id: 'newer', title: '产品图', thumbnail: '/api/outputs/b2.png' },
+      { id: 'older', title: '奶茶海报', thumbnail: '/api/outputs/b1.png' },
       { id: 'open', title: '刚打开的会话' },
     ]);
   });
@@ -81,8 +81,26 @@ describe('sidebarSessions', () => {
     const sessions = [session('s1', '请只修改图中的文字：把“咖啡”改成“珈琲”', ['own', 'fix'])];
 
     expect(sidebarSessions(sessions, batches, null)).toEqual([
-      { id: 's1', title: '清晨窗边的咖啡' },
+      { id: 's1', title: '清晨窗边的咖啡', thumbnail: '/api/outputs/fix.png' },
     ]);
+  });
+
+  it('covers each session with its newest image, skipping batches that made none', () => {
+    const failed = { ...batch('failed', '2026-10-28T03:00:00.000Z'), entries: [] };
+    const batches = [
+      batch('first', '2026-10-28T01:00:00.000Z'),
+      batch('latest', '2026-10-28T02:00:00.000Z'),
+      failed,
+    ];
+    const sessions = [
+      session('s1', '海边日落', ['first', 'latest', 'failed']),
+      session('open', '刚打开的会话', []),
+    ];
+
+    const items = sidebarSessions(sessions, batches, 'open');
+
+    expect(items.find((item) => item.id === 's1')?.thumbnail).toBe('/api/outputs/latest.png');
+    expect(items.find((item) => item.id === 'open')?.thumbnail).toBeUndefined();
   });
 
   it('caps the list', () => {

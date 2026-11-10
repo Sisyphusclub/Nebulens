@@ -19,6 +19,7 @@ import { openAuthModal } from '@/hooks/useAuthModal';
 import { SESSION_TITLE_MAX_LENGTH, useGenerationSessions } from '@/hooks/useGenerationSessions';
 import { useImageHistory } from '@/hooks/useImageHistory';
 import { sidebarSessions } from '@/utils/sidebarSessions';
+import { thumbnailUrl } from '@/utils/thumbnail';
 
 /** Opens the generate page on a blank session; the session is saved on first generation. */
 export const NEW_CREATION_PATH = '/generate?prompt=';
@@ -141,7 +142,22 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
                       title={item.title}
                       onClick={onNavigate}
                     >
-                      <MessageSquare aria-hidden="true" />
+                      {item.thumbnail === undefined ? (
+                        <span
+                          className="sidebar-history__thumb sidebar-history__thumb--empty"
+                          aria-hidden="true"
+                        >
+                          <MessageSquare />
+                        </span>
+                      ) : (
+                        <img
+                          className="sidebar-history__thumb"
+                          src={thumbnailUrl(item.thumbnail, 320)}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      )}
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>

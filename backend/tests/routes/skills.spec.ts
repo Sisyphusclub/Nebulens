@@ -56,6 +56,7 @@ describe('POST /api/skills/:id/plan', () => {
         outputs: [{ id: 'portrait', label: '竖版海报', aspect: '3:4' as const, prompt: '海报' }],
       })),
       readBrief: vi.fn(async () => ({})),
+      selectSkill: vi.fn(async () => null),
     };
     const app = createApp({ provider, skillPlanner, authMiddleware: signedIn });
 
@@ -115,5 +116,48 @@ describe('POST /api/skills/:id/plan', () => {
 
     const signedOutApp = createApp({ provider, authMiddleware: signedOut });
     expect((await request(signedOutApp).post('/api/skills/logo/plan').send({})).status).toBe(401);
+  });
+});
+
+describe('POST /api/skills/select', () => {
+  it('names the skill the planner picks for a request typed in Agent mode', async () => {
+    const skillPlanner: SkillPlanner = {
+      plan: vi.fn(),
+      readBrief: vi.fn(),
+      selectSkill: vi.fn(async () => 'ecommerce'),
+    };
+    const app = createApp({ provider, skillPlanner, authMiddleware: signedIn });
+
+    const response = await request(app)
+      .post('/api/skills/select')
+      .send({ brief: ' 给山川明前绿茶做一套主图 ', hasReference: true });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ skillId: 'ecommerce' });
+    expect(skillPlanner.selectSkill).toHaveBeenCalledWith('给山川明前绿茶做一套主图', true);
+  });
+
+  it('answers null without a chat model unless the request names a skill', async () => {
+    const app = createApp({ provider, authMiddleware: signedIn });
+
+    const plain = await request(app)
+      .post('/api/skills/select')
+      .send({ brief: '雨后的未来都市街道' });
+    expect(plain.body).toEqual({ skillId: null });
+    const named = await request(app)
+      .post('/api/skills/select')
+      .send({ brief: '周年庆做一套活动海报' });
+    expect(named.body).toEqual({ skillId: 'poster' });
+  });
+
+  it('rejects an empty request and signed-out requests', async () => {
+    const app = createApp({ provider, authMiddleware: signedIn });
+    expect((await request(app).post('/api/skills/select').send({ brief: '  ' })).status).toBe(400);
+
+    const signedOutApp = createApp({ provider, authMiddleware: signedOut });
+    const signedOutResponse = await request(signedOutApp)
+      .post('/api/skills/select')
+      .send({ brief: '活动海报' });
+    expect(signedOutResponse.status).toBe(401);
   });
 });

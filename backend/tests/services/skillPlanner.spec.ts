@@ -7,6 +7,7 @@ import {
   missingBriefField,
   publicSkill,
   readSkillValues,
+  skillNamedIn,
 } from '../../src/services/skillPlanner.service.js';
 import { findSkill, SKILLS } from '../../src/skills/skillDefinitions.js';
 
@@ -332,5 +333,63 @@ describe('creator skills', () => {
       'portrait',
       'expressions',
     ]);
+  });
+});
+
+describe('createSkillPlanner selectSkill', () => {
+  const chatConfig = {
+    baseUrl: 'https://llm.test',
+    apiKey: 'test-key',
+    model: 'test-model',
+    timeoutMs: 1000,
+  };
+
+  it('takes a skill the request names without asking the model', async () => {
+    const fetchImpl = vi.fn();
+    const planner = createSkillPlanner({ ...chatConfig, fetchImpl });
+
+    expect(await planner.selectSkill('给周年庆做一套活动海报', false)).toBe('poster');
+    expect(fetchImpl).not.toHaveBeenCalled();
+    // A skill that redraws an uploaded image is only named once there is one.
+    expect(skillNamedIn('把这张图做风格重绘', false)).toBeNull();
+    expect(skillNamedIn('把这张图做风格重绘', true)).toBe('restyle');
+  });
+
+  it('keeps the skill the chat model picks, from a list of every skill and its needs', async () => {
+    const fetchImpl = vi.fn(async () => chatResponse('{"skillId": "ecommerce"}'));
+    const planner = createSkillPlanner({ ...chatConfig, fetchImpl });
+
+    expect(await planner.selectSkill('山川明前绿茶的淘宝首图，突出高山云雾', false)).toBe(
+      'ecommerce',
+    );
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    const body = JSON.parse(String(init.body)) as {
+      temperature: number;
+      messages: Array<{ content: string }>;
+    };
+    expect(body.temperature).toBe(0);
+    expect(body.messages[1]?.content).toContain('- ecommerce（电商主图）');
+    expect(body.messages[1]?.content).toContain('必填：商品名称');
+    expect(body.messages[1]?.content).toContain('需要参考图');
+    expect(body.messages[1]?.content).toContain('已上传参考图：否');
+  });
+
+  it('answers null for unknown picks, image skills without an image, no model and failures', async () => {
+    const answering = (content: string, status = 200) =>
+      createSkillPlanner({
+        ...chatConfig,
+        fetchImpl: vi.fn(async () => chatResponse(content, status)),
+      });
+
+    expect(await answering('{"skillId": "nope"}').selectSkill('一张海边日落', false)).toBeNull();
+    expect(await answering('{"skillId": null}').selectSkill('一张海边日落', false)).toBeNull();
+    expect(
+      await answering('{"skillId": "background"}').selectSkill('给这款香水换个海边背景', false),
+    ).toBeNull();
+    expect(
+      await answering('{"skillId": "background"}').selectSkill('给这款香水换个海边背景', true),
+    ).toBe('background');
+    expect(await answering('', 500).selectSkill('一张海边日落', false)).toBeNull();
+    expect(await createSkillPlanner().selectSkill('一张海边日落', false)).toBeNull();
   });
 });

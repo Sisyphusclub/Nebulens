@@ -25,6 +25,11 @@ const planBodySchema = z.object({
   hasReference: z.boolean().default(false),
 });
 
+const selectBodySchema = z.object({
+  brief: z.string().trim().min(1).max(500),
+  hasReference: z.boolean().default(false),
+});
+
 export function buildSkillsRouter(deps: SkillsRouterDeps): Router {
   const router = Router();
 
@@ -32,6 +37,37 @@ export function buildSkillsRouter(deps: SkillsRouterDeps): Router {
   router.get('/', (_req, res) => {
     res.status(200).json({ skills: SKILLS.map(publicSkill) });
   });
+
+  // POST /api/skills/select { brief, hasReference } -> { skillId } naming the skill that fits
+  // a request typed in Agent mode, or null when it is generated as a plain image.
+  router.post(
+    '/select',
+    deps.authMiddleware ?? requireAuth,
+    deps.rateLimiter ?? passThrough,
+    (req, res, next) => {
+      void (async () => {
+        try {
+          const parsed = selectBodySchema.safeParse(req.body ?? {});
+          if (!parsed.success) {
+            throw new AppError(
+              'BAD_REQUEST',
+              'Invalid skill selection request body',
+              400,
+              parsed.error,
+              { issues: parsed.error.issues },
+            );
+          }
+          const skillId = await deps.planner.selectSkill(
+            parsed.data.brief,
+            parsed.data.hasReference,
+          );
+          res.status(200).json({ skillId });
+        } catch (err) {
+          next(err);
+        }
+      })();
+    },
+  );
 
   // POST /api/skills/:id/plan { values, brief?, hasReference } -> { title, outputs } with
   // one ready-to-generate prompt per output image. With a brief, `values` carries only the

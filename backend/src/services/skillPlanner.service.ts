@@ -1,11 +1,13 @@
 import { env } from '../config/env.js';
 import { AppError } from '../errors/AppError.js';
 import { logger } from '../logger.js';
-import type {
-  SkillDefinition,
-  SkillField,
-  SkillOutput,
-  SkillValues,
+import {
+  findSkill,
+  SKILLS,
+  type SkillDefinition,
+  type SkillField,
+  type SkillOutput,
+  type SkillValues,
 } from '../skills/skillDefinitions.js';
 import type { AspectRatio } from '../types/image.js';
 import { chatApiHeaders } from '../utils/chatApiHeaders.js';
@@ -32,6 +34,11 @@ export interface SkillPlanner {
   plan(skill: SkillDefinition, values: SkillValues, hasReference: boolean): Promise<SkillPlan>;
   /** Reads the one line typed in the composer into answers; choice fields stay the client's. */
   readBrief(skill: SkillDefinition, brief: string): Promise<SkillAnswers>;
+  /**
+   * Picks the skill that fits a one-line request typed in Agent mode, or null when none
+   * does and the request is generated as a plain image.
+   */
+  selectSkill(brief: string, hasReference: boolean): Promise<string | null>;
 }
 
 export interface SkillPlannerConfig {
@@ -253,6 +260,45 @@ const BRIEF_RULES = [
   '3. 只输出一个 JSON 对象，键是字段 id，不要解释，不要 Markdown。',
 ].join('\n');
 
+const SELECT_RULES = [
+  '你是图像创作工作台的调度员：用户只说了一句需求，你从给出的技能里挑最合适的一个。',
+  '1. 技能会一次生成一组配套图片；需求明确是某个技能的用途、并写出了它的必填信息时才选它。',
+  '2. 只描述一个画面、或哪个技能都对不上时，不选技能。',
+  '3. 标着「需要参考图」的技能，只有用户已上传参考图时才能选。',
+  '4. 只输出一个 JSON 对象：{"skillId": "技能 id"}，不选时输出 {"skillId": null}，不要解释。',
+].join('\n');
+
+/** A skill that needs an uploaded image is only usable once there is one. */
+function usableSkill(skill: SkillDefinition, hasReference: boolean): boolean {
+  return skill.reference !== 'required' || hasReference;
+}
+
+/** The skill a request names outright, such as "做一套电商主图"; no chat model needed. */
+export function skillNamedIn(brief: string, hasReference: boolean): string | null {
+  const skill = SKILLS.find((candidate) => brief.includes(candidate.label));
+  return skill !== undefined && usableSkill(skill, hasReference) ? skill.id : null;
+}
+
+function selectRequest(brief: string, hasReference: boolean): string {
+  const skills = SKILLS.map((skill) => {
+    const required = skill.fields
+      .filter((field) => field.required && field.kind !== 'choice')
+      .map((field) => field.label);
+    const notes = [
+      skill.description,
+      ...(required.length > 0 ? [`必填：${required.join('、')}`] : []),
+      ...(skill.reference === 'required' ? ['需要参考图'] : []),
+    ];
+    return `- ${skill.id}（${skill.label}）：${notes.join('；')}`;
+  });
+  return [
+    '技能：',
+    ...skills,
+    `已上传参考图：${hasReference ? '是' : '否'}`,
+    `用户需求：${brief}`,
+  ].join('\n');
+}
+
 function briefRequest(skill: SkillDefinition, brief: string): string {
   const fields = skill.fields.flatMap((field) => {
     if (field.kind === 'choice') return [];
@@ -370,6 +416,19 @@ export function createSkillPlanner(config?: SkillPlannerConfig): SkillPlanner {
       } catch (err) {
         logger.warn({ err, skillId: skill.id }, 'skill brief fell back to plain reading');
         return guessed;
+      }
+    },
+    async selectSkill(brief, hasReference) {
+      // A request that names a skill needs no model, and without one nothing else is guessed.
+      const named = skillNamedIn(brief, hasReference);
+      if (named !== null || config === undefined) return named;
+      try {
+        const answer = await askChat(config, 0, SELECT_RULES, selectRequest(brief, hasReference));
+        const skill = typeof answer.skillId === 'string' ? findSkill(answer.skillId) : undefined;
+        return skill !== undefined && usableSkill(skill, hasReference) ? skill.id : null;
+      } catch (err) {
+        logger.warn({ err }, 'skill selection fell back to plain generation');
+        return null;
       }
     },
   };

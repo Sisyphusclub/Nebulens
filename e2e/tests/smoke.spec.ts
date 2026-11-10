@@ -104,7 +104,8 @@ test('adds a pasted image as a reference instead of inline content', async ({ pa
   });
 
   expect(defaultPrevented).toBe(true);
-  await expect(page.getByText('pasted-reference.png')).toBeVisible();
+  // The composer shows a reference as a thumbnail, its remove button named after the file.
+  await expect(page.getByRole('button', { name: '移除参考图 pasted-reference.png' })).toBeVisible();
   await expect(editor.locator('img')).toHaveCount(0);
 });
 

@@ -555,11 +555,7 @@ export function GenerateView() {
       return;
     }
     if (mode === 'agent' && text.trim() !== '') {
-      void composerSkills.runAgent(text.trim(), attachments).then((handled) => {
-        if (handled) return;
-        notify('没有对得上的技能，这次按图片生成处理。');
-        submitCurrent(text);
-      });
+      void composerSkills.runAgent(text.trim(), attachments);
       return;
     }
     submitCurrent(text);

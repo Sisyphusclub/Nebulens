@@ -236,11 +236,7 @@ export function LandingView() {
     const trimmed = value.trim();
     if (!trimmed) return;
     if (mode === 'agent') {
-      void composerSkills.runAgent(trimmed, selectedAttachments).then((handled) => {
-        if (handled) return;
-        notify('没有对得上的技能，这次按图片生成处理。');
-        generatePlain(trimmed, selectedAttachments);
-      });
+      void composerSkills.runAgent(trimmed, selectedAttachments);
       return;
     }
     generatePlain(trimmed, selectedAttachments);

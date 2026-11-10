@@ -7,6 +7,7 @@ const skillsApiMocks = vi.hoisted(() => ({
   fetchSkillForms: vi.fn(),
   planSkill: vi.fn(),
   selectSkillForBrief: vi.fn(),
+  planFreely: vi.fn(),
 }));
 
 vi.mock('@/services/api/skillsApi', () => skillsApiMocks);
@@ -2406,8 +2407,14 @@ it('keeps an unsent prompt through a remount and forgets it once it is generated
   expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent('');
 });
 
-it('makes a plain image when Agent mode finds no skill for the request', async () => {
+it('has the text model plan the images when no skill fits an Agent mode request', async () => {
   skillsApiMocks.selectSkillForBrief.mockResolvedValue(null);
+  skillsApiMocks.planFreely.mockResolvedValue({
+    title: '晨雾灯塔',
+    outputs: [
+      { id: 'image-1', label: '主视觉', aspect: '3:4', prompt: '晨雾里的灯塔，胶片质感，竖版构图' },
+    ],
+  });
   const user = userEvent.setup();
   render(
     <MemoryRouter initialEntries={['/generate']}>
@@ -2423,9 +2430,9 @@ it('makes a plain image when Agent mode finds no skill for the request', async (
 
   await waitFor(() =>
     expect(generation.generate).toHaveBeenCalledWith(
-      expect.objectContaining({ prompt: '晨雾里的灯塔' }),
+      expect.objectContaining({ prompt: '晨雾里的灯塔，胶片质感，竖版构图' }),
     ),
   );
-  expect(skillsApiMocks.selectSkillForBrief).toHaveBeenCalledWith('晨雾里的灯塔', false);
+  expect(skillsApiMocks.planFreely).toHaveBeenCalledWith('晨雾里的灯塔', false);
   expect(skillsApiMocks.planSkill).not.toHaveBeenCalled();
 });

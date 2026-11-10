@@ -65,17 +65,8 @@ export interface SkillPlanRequest {
   hasReference: boolean;
 }
 
-/** Has the server write one ready-to-generate prompt per output image of the skill. */
-export async function planSkill(skillId: string, request: SkillPlanRequest): Promise<SkillPlan> {
-  const response = await authedFetch(
-    buildApiUrl(`/api/skills/${encodeURIComponent(skillId)}/plan`),
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(request),
-    },
-  );
-  const payload = await parseJsonResponse(response);
+/** A planned run as the server returns it: a title and one prompt per image. */
+function readSkillPlan(response: Response, payload: unknown): SkillPlan {
   if (!response.ok) throw buildApiError(response.status, payload);
   if (
     !isRecord(payload) ||
@@ -96,9 +87,35 @@ export async function planSkill(skillId: string, request: SkillPlanRequest): Pro
   return payload as unknown as SkillPlan;
 }
 
+/** Has the server write one ready-to-generate prompt per output image of the skill. */
+export async function planSkill(skillId: string, request: SkillPlanRequest): Promise<SkillPlan> {
+  const response = await authedFetch(
+    buildApiUrl(`/api/skills/${encodeURIComponent(skillId)}/plan`),
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(request),
+    },
+  );
+  return readSkillPlan(response, await parseJsonResponse(response));
+}
+
+/**
+ * Agent mode when no skill fits: the text model splits the request into one to four images
+ * and writes their prompts. Fails with the server's own reason, such as no text model.
+ */
+export async function planFreely(brief: string, hasReference: boolean): Promise<SkillPlan> {
+  const response = await authedFetch(buildApiUrl('/api/skills/free-plan'), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ brief, hasReference }),
+  });
+  return readSkillPlan(response, await parseJsonResponse(response));
+}
+
 /**
  * Agent mode: asks the server which skill fits a request typed in the composer. Null
- * means none does, and the request is generated as a plain image.
+ * means none does, and the text model plans the request itself (`planFreely`).
  */
 export async function selectSkillForBrief(
   brief: string,

@@ -10,7 +10,12 @@ import {
 import type { LandingSkill } from '@/data/landingSkills';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { uploadReferenceImages } from '@/services/api/imagesApi';
-import { fetchSkillForms, planSkill, selectSkillForBrief } from '@/services/api/skillsApi';
+import {
+  fetchSkillForms,
+  planFreely,
+  planSkill,
+  selectSkillForBrief,
+} from '@/services/api/skillsApi';
 import type {
   GenerationSettingsSnapshot,
   ImageModel,
@@ -18,7 +23,7 @@ import type {
   ImageResolution,
 } from '@/types/image';
 import { normalizeAspectChoiceForResolution, supportsImageQuality } from '@/types/image';
-import type { SkillForm } from '@/types/skill';
+import type { SkillForm, SkillPlan } from '@/types/skill';
 import { resolveAspectChoice } from '@/utils/imageAspect';
 import type { SkillRunRequest } from '@/utils/skillRun';
 
@@ -86,6 +91,34 @@ export function useComposerSkills({
   const setSkillChoice = (fieldId: string, value: string): void =>
     setSkillChoices((current) => ({ ...current, [fieldId]: value }));
 
+  /** Makes each planned image with the page's current choices, one by one. */
+  const startPlan = async (
+    plan: SkillPlan,
+    runLabel: string,
+    referenceFiles: readonly File[],
+    referenceIds: readonly string[],
+  ): Promise<void> => {
+    const steps = await Promise.all(
+      plan.outputs.map(async (output) => {
+        const settings: GenerationSettingsSnapshot = {
+          prompt: output.prompt,
+          model,
+          count: 1,
+          aspectRatio: await resolveAspectChoice(
+            normalizeAspectChoiceForResolution(output.aspect, resolution),
+            referenceFiles,
+          ),
+          resolution,
+          ...(supportsImageQuality(model) ? { quality } : {}),
+          isPublic: false,
+          referenceIds: [...referenceIds],
+        };
+        return { label: output.label, settings };
+      }),
+    );
+    onPlanned(plan.title, { skillLabel: runLabel, steps });
+  };
+
   /** Uploads the skill's image once, has the server plan a prompt per output, and starts it. */
   const planAndStart = async (
     skill: LandingSkill,
@@ -101,25 +134,16 @@ export function useComposerSkills({
       values: choices,
       hasReference: referenceFile !== null,
     });
-    const steps = await Promise.all(
-      plan.outputs.map(async (output) => {
-        const settings: GenerationSettingsSnapshot = {
-          prompt: output.prompt,
-          model,
-          count: 1,
-          aspectRatio: await resolveAspectChoice(
-            normalizeAspectChoiceForResolution(output.aspect, resolution),
-            referenceFiles,
-          ),
-          resolution,
-          ...(supportsImageQuality(model) ? { quality } : {}),
-          isPublic: false,
-          referenceIds,
-        };
-        return { label: output.label, settings };
-      }),
-    );
-    onPlanned(plan.title, { skillLabel: skill.label, steps });
+    await startPlan(plan, skill.label, referenceFiles, referenceIds);
+  };
+
+  /** No skill fits: the text model plans the images, then they are made like a skill's. */
+  const planFreelyAndStart = async (brief: string, referenceFile: File | null): Promise<void> => {
+    // Planning comes first, so a missing text model is reported before anything is uploaded.
+    const plan = await planFreely(brief, referenceFile !== null);
+    const referenceFiles = referenceFile === null ? [] : [referenceFile];
+    const referenceIds = (await uploadReferenceImages(referenceFiles)).map((upload) => upload.id);
+    await startPlan(plan, plan.title, referenceFiles, referenceIds);
   };
 
   /** Skill mode: runs the skill in the pill with the brief typed after it. */
@@ -159,33 +183,34 @@ export function useComposerSkills({
   };
 
   /**
-   * Agent mode: the server picks the skill that fits the request, which then runs with its
-   * default choices. Resolves false when no skill fits, so the page makes a plain image.
+   * Agent mode: the server picks the skill that fits the request, which runs with its default
+   * choices; when none fits, the text model plans the images itself. A failure, such as no
+   * text model, is told plainly instead of quietly making something else.
    */
   const runAgent = async (
     brief: string,
     attachments: readonly AgentChatAttachment[],
-  ): Promise<boolean> => {
+  ): Promise<void> => {
     if (!isAuthenticated) {
       openAuthModal();
-      return true;
+      return;
     }
     const referenceFile = firstReferenceFile(attachments);
     setPlanning(true);
     try {
       const skillId = await selectSkillForBrief(brief, referenceFile !== null);
       const skill = skillId === null ? undefined : findLandingSkill(skillId);
-      if (skill === undefined) return false;
-      const forms = skillForms ?? (await fetchSkillForms());
-      if (skillForms === null) setSkillForms(forms);
-      const form = forms.find((candidate) => candidate.id === skill.id);
-      if (form === undefined) return false;
-      notify(`Agent 选用了「${skill.label}」，正在规划每张图。`);
-      await planAndStart(skill, form, briefForSkill(brief, skill), referenceFile, {});
-      return true;
+      const forms = skill === undefined ? null : (skillForms ?? (await fetchSkillForms()));
+      if (forms !== null && skillForms === null) setSkillForms(forms);
+      const form = skill === undefined ? undefined : forms?.find((item) => item.id === skill.id);
+      if (skill !== undefined && form !== undefined) {
+        notify(`Agent 选用了「${skill.label}」，正在规划每张图。`);
+        await planAndStart(skill, form, briefForSkill(brief, skill), referenceFile, {});
+        return;
+      }
+      await planFreelyAndStart(brief, referenceFile);
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Agent 暂时无法开始，请稍后重试。', 'error');
-      return true;
     } finally {
       setPlanning(false);
     }

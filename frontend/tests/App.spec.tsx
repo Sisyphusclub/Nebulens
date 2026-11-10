@@ -117,11 +117,13 @@ const skillMocks = vi.hoisted(() => ({
   fetchSkillForms: vi.fn(),
   planSkill: vi.fn(),
   selectSkillForBrief: vi.fn(),
+  planFreely: vi.fn(),
 }));
 vi.mock('@/services/api/skillsApi', () => ({
   fetchSkillForms: skillMocks.fetchSkillForms,
   planSkill: skillMocks.planSkill,
   selectSkillForBrief: skillMocks.selectSkillForBrief,
+  planFreely: skillMocks.planFreely,
 }));
 
 vi.mock('@/hooks/useImageHistory', () => ({
@@ -528,22 +530,87 @@ describe('React application routes', () => {
     expect(screen.getByLabelText('当前路由')).toHaveTextContent('/generate?session=');
   });
 
-  it('makes a plain image when Agent mode finds no skill for the request', async () => {
+  it('has the text model plan the images when no skill fits an Agent mode request', async () => {
     const user = userEvent.setup();
     skillMocks.selectSkillForBrief.mockResolvedValue(null);
+    skillMocks.planFreely.mockResolvedValue({
+      title: '雨夜城市',
+      outputs: [
+        {
+          id: 'image-1',
+          label: '主视觉',
+          aspect: '3:4',
+          prompt: '雨夜的未来城市，霓虹倒影，竖版构图',
+        },
+        {
+          id: 'image-2',
+          label: '方图',
+          aspect: '1:1',
+          prompt: '雨夜的未来城市，霓虹倒影，方图构图',
+        },
+      ],
+    });
+    generation.generate.mockImplementation((options: { prompt: string; aspectRatio: string }) => {
+      const batchId = `agent-${options.aspectRatio}`;
+      return Promise.resolve({
+        batchId,
+        aspectRatio: options.aspectRatio,
+        generationMode: 'text-to-image',
+        entries: [
+          {
+            record: {
+              id: `${batchId}.png`,
+              batchId,
+              createdAt: '2026-11-10T08:00:00.000Z',
+              prompt: options.prompt,
+              model: 'gpt-image-2',
+              aspectRatio: options.aspectRatio,
+              width: 1024,
+              height: 1024,
+              count: 1,
+              resolution: 'standard',
+              isPublic: false,
+            },
+            imageUrl: `/${batchId}.png`,
+          },
+        ],
+      });
+    });
+    renderRoute('/');
+
+    await user.click(await screen.findByRole('button', { name: 'Agent 模式' }));
+    await user.type(
+      screen.getByRole('textbox', { name: '首页创作提示词' }),
+      '雨夜的未来城市，做两张',
+    );
+    await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
+
+    await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(2));
+    expect(skillMocks.planFreely).toHaveBeenCalledWith('雨夜的未来城市，做两张', false);
+    expect(skillMocks.planSkill).not.toHaveBeenCalled();
+    expect(
+      generation.generate.mock.calls.map(([options]) => (options as { prompt: string }).prompt),
+    ).toEqual(['雨夜的未来城市，霓虹倒影，竖版构图', '雨夜的未来城市，霓虹倒影，方图构图']);
+    expect(screen.getByLabelText('当前路由')).toHaveTextContent('/generate?session=');
+  });
+
+  it('says plainly when Agent mode has no text model, and makes nothing', async () => {
+    const user = userEvent.setup();
+    skillMocks.selectSkillForBrief.mockResolvedValue(null);
+    skillMocks.planFreely.mockRejectedValue(
+      new Error(
+        'Agent 需要文本模型来规划画面，当前没有配置。可以先用图片生成，或从技能库选一个技能。',
+      ),
+    );
     renderRoute('/');
 
     await user.click(await screen.findByRole('button', { name: 'Agent 模式' }));
     await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '雨夜的未来城市');
     await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
 
-    await waitFor(() =>
-      expect(generation.generate).toHaveBeenCalledWith(
-        expect.objectContaining({ prompt: '雨夜的未来城市' }),
-      ),
-    );
-    expect(skillMocks.planSkill).not.toHaveBeenCalled();
-    expect(await screen.findByText('没有对得上的技能，这次按图片生成处理。')).toBeInTheDocument();
+    expect(await screen.findByText(/Agent 需要文本模型/)).toBeInTheDocument();
+    expect(generation.generate).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('当前路由')).not.toHaveTextContent('/generate');
   });
 
   it('says video is on its way and keeps the current mode', async () => {

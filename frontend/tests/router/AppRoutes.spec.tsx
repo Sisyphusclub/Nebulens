@@ -46,8 +46,8 @@ it('tells the user a page does not exist instead of quietly going home', () => {
 });
 
 it.each([
-  ['/templates', '创作模板 · Nebulens'],
-  ['/no-such-page', '页面不存在 · Nebulens'],
+  ['/templates', '创作模板 · 贝尔灵画'],
+  ['/no-such-page', '页面不存在 · 贝尔灵画'],
 ])('names the browser tab after the page at %s', async (path, title) => {
   render(
     <MemoryRouter initialEntries={[path]}>

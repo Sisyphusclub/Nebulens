@@ -4,7 +4,7 @@ import { Link, Route, Routes, useLocation } from 'react-router-dom';
 import { HERO_BACKDROP_POSTER } from '@/components/landing/LandingHeroBackdrop';
 import { Button } from '@/components/ui/button';
 
-const SITE_TITLE = 'Nebulens｜AI 图像创作工作台';
+const SITE_TITLE = '贝尔灵画｜AI 图像创作工作台';
 const PAGE_TITLES: Readonly<Record<string, string>> = {
   '/generate': '生图',
   '/templates': '创作模板',
@@ -38,7 +38,7 @@ export function AppRoutes() {
   // Each page names its tab, so several open tabs can be told apart.
   useEffect(() => {
     const page = pathname === '/' ? null : (PAGE_TITLES[pathname] ?? '页面不存在');
-    document.title = page === null ? SITE_TITLE : `${page} · Nebulens`;
+    document.title = page === null ? SITE_TITLE : `${page} · 贝尔灵画`;
   }, [pathname]);
 
   // The window keeps the last page's scroll, so a switched-to page starts at its top. A layout

@@ -30,7 +30,7 @@ export function App() {
           isLanding && 'app-main--landing',
           isGenerate && 'app-main--generate',
         )}
-        aria-label={isLanding ? 'Nebulens 首页' : 'Nebulens 工作区'}
+        aria-label={isLanding ? '贝尔灵画首页' : '贝尔灵画工作区'}
       >
         <div className={cn('app-workspace', !isLanding && 'app-workspace--studio')}>
           {/* Keyed by route, so moving to another page clears a crash on this one. */}

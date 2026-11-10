@@ -177,7 +177,7 @@ export function LoginModal() {
         </Button>
         <div className="auth-brand" aria-hidden="true">
           <img src="/brand/logo.png" alt="" />
-          <span>Nebulens</span>
+          <span>贝尔灵画</span>
         </div>
         <div className="auth-heading">
           <h2 id="login-title">{copy.title}</h2>

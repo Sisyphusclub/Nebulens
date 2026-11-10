@@ -505,6 +505,7 @@ video {
   align-items: center;
   justify-content: space-between;
 }
+/* The wordmark is Chinese, so it uses the serif: the Latin display face has no Chinese glyphs. */
 .landing-sidebar__brand {
   display: flex;
   min-height: 50px;
@@ -514,10 +515,10 @@ video {
   border-radius: var(--radius-sm);
   padding: 0 10px;
   color: var(--foreground);
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 15px;
-  font-variation-settings: 'wght' 650;
-  font-weight: 650;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 .landing-sidebar__brand img {
@@ -3183,10 +3184,10 @@ video {
     align-items: center;
     gap: 8px;
     padding: 0 9px;
-    font-family: var(--font-display);
+    font-family: var(--font-serif);
     font-size: 15px;
-    font-variation-settings: 'wght' 650;
-    font-weight: 650;
+    font-weight: 600;
+    letter-spacing: 0.04em;
   }
   .landing-mobile-header__brand img {
     width: 24px;
@@ -4146,8 +4147,10 @@ video {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 14px;
+  font-family: var(--font-serif);
+  font-size: 15px;
   font-weight: 600;
+  letter-spacing: 0.04em;
 }
 .auth-brand img {
   width: 28px;

@@ -114,6 +114,21 @@ describe('phone menu', () => {
   });
 });
 
+describe('brand wordmark', () => {
+  it('sets the Chinese name in the serif: the Latin display face has no Chinese glyphs', () => {
+    for (const selector of [
+      '.landing-sidebar__brand',
+      '.landing-mobile-header__brand',
+      '.auth-brand',
+    ]) {
+      const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const body = baseStyles.match(new RegExp(`${escaped} \\{([^}]+)\\}`))?.[1] ?? '';
+      expect(body, selector).toContain('font-family: var(--font-serif);');
+      expect(body, selector).toContain('font-weight: 600;');
+    }
+  });
+});
+
 describe('home headline', () => {
   it('uses the light Song face of the earlier hero', () => {
     const headline = rule('.home-hero h1');

@@ -133,7 +133,7 @@ function LandingSidebarContent({
             <Link
               className="landing-sidebar__brand"
               to={brandHref}
-              aria-label={`${brandLabel} 首页`}
+              aria-label={`${brandLabel}首页`}
               onClick={closeMobile}
             >
               <img src={logoSrc} alt="" />
@@ -206,7 +206,7 @@ function LandingSidebarContent({
         <Link
           className="landing-mobile-header__brand"
           to={brandHref}
-          aria-label={`${brandLabel} 首页`}
+          aria-label={`${brandLabel}首页`}
         >
           <img src={logoSrc} alt="" />
           <span>{brandLabel}</span>

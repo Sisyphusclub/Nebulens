@@ -366,6 +366,15 @@ describe('React application routes', () => {
     expect(container.querySelector(".landing-sidebar [data-sidebar='separator']")).toBeNull();
   });
 
+  it('carries the 贝尔灵画 wordmark in the sidebar and the phone header', async () => {
+    renderRoute('/');
+    const brandLinks = await screen.findAllByRole('link', { name: '贝尔灵画首页' });
+
+    expect(brandLinks.length).toBeGreaterThan(0);
+    for (const link of brandLinks) expect(link).toHaveTextContent('贝尔灵画');
+    expect(screen.queryByText('Nebulens')).toBeNull();
+  });
+
   it('turns the composer into skill mode from a capsule and leaves it again', async () => {
     const user = userEvent.setup();
     renderRoute('/');

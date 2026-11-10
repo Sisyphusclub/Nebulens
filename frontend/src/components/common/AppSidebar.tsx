@@ -25,7 +25,7 @@ export function AppSidebar() {
       <LandingSidebar
         accountImage={user?.image}
         accountName={user?.username ?? user?.name ?? '账户'}
-        brandLabel="Nebulens"
+        brandLabel="贝尔灵画"
         creditsRemaining={quota?.remaining ?? '—'}
         ctaLabel={isLanding ? (isAuthenticated ? '进入工作台' : '开始创作') : '返回发现'}
         ctaTo={isLanding ? '/generate' : '/'}

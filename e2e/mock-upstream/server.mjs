@@ -3,7 +3,8 @@
 //
 //   POST /v1/images/generations, /v1/images/edits  -> solid-colour PNGs (b64_json)
 //   POST /v1/chat/completions                       -> image analysis JSON (see analysisAnswer),
-//                                                      or a polished prompt for prompt polishing
+//                                                      Agent mode's skill pick and free plan
+//                                                      (see agentAnswer), or a polished prompt
 //   GET  /v1/models                                 -> a minimal model list
 //   GET  /__fail?on=1 | /__fail?on=0                -> toggle upstream failures
 //   GET  /__state                                   -> { fail, calls }
@@ -114,6 +115,29 @@ function analysisAnswer(body) {
   });
 }
 
+/**
+ * Answers Agent mode: the dispatcher picks no skill, so the free planner splits the request into
+ * two images. Other chat requests get null and are answered as before.
+ */
+function agentAnswer(payload) {
+  const system = String(payload.messages?.[0]?.content ?? '');
+  const user = String(payload.messages?.[1]?.content ?? '');
+  if (system.includes('调度员')) return JSON.stringify({ skillId: null });
+  if (!system.includes('创作规划师')) return null;
+  const brief = /用户需求：(.*)$/m.exec(user)?.[1] ?? '模拟需求';
+  return JSON.stringify({
+    title: `模拟规划 · ${brief.slice(0, 8)}`,
+    images: [
+      {
+        label: '主视觉',
+        aspect: '3:4',
+        prompt: `${brief}，模拟规划：主视觉，竖版构图，柔和自然光`,
+      },
+      { label: '方图', aspect: '1:1', prompt: `${brief}，模拟规划：方图，居中构图，电影感光影` },
+    ],
+  });
+}
+
 /** Answers prompt polishing, which sends a system message followed by the user's prompt. */
 function polishAnswer(payload) {
   const prompt = String(payload.messages?.[1]?.content ?? '');
@@ -135,7 +159,8 @@ const server = createServer(async (req, res) => {
     const body = await readBody(req);
     const payload = JSON.parse(body.toString('utf8') || '{}');
     const answer =
-      payload.messages?.[0]?.role === 'system' ? polishAnswer(payload) : analysisAnswer(body);
+      agentAnswer(payload) ??
+      (payload.messages?.[0]?.role === 'system' ? polishAnswer(payload) : analysisAnswer(body));
     return sendJson(res, 200, { choices: [{ message: { role: 'assistant', content: answer } }] });
   }
   if (req.method === 'POST' && url.pathname.startsWith('/v1/images/')) {

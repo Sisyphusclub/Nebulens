@@ -1,10 +1,10 @@
 import {
   Compass,
   FolderOpen,
+  GalleryVerticalEnd,
   Image,
   LayoutTemplate,
   Users,
-  UsersRound,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -19,7 +19,7 @@ const primaryNavigation = [
   { label: '生图', to: '/generate', icon: Image },
   { label: '创作模板', to: '/templates', icon: LayoutTemplate },
   { label: '资产', to: '/history', icon: FolderOpen },
-  { label: '成果库', to: '/team', icon: UsersRound },
+  { label: '成果库', to: '/team', icon: GalleryVerticalEnd },
 ] as const satisfies readonly AppNavigationItem[];
 
 const adminNavigation = {

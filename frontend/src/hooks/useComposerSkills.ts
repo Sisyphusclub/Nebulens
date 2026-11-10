@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 
 import type { AgentChatAttachment } from '@/components/premium/agent-chat-input/types';
-import { findLandingSkill, skillInPrompt, withoutSkills } from '@/data/composerSkills';
+import {
+  briefForSkill,
+  findLandingSkill,
+  skillInPrompt,
+  withoutSkills,
+} from '@/data/composerSkills';
 import type { LandingSkill } from '@/data/landingSkills';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { uploadReferenceImages } from '@/services/api/imagesApi';
@@ -176,7 +181,7 @@ export function useComposerSkills({
       const form = forms.find((candidate) => candidate.id === skill.id);
       if (form === undefined) return false;
       notify(`Agent 选用了「${skill.label}」，正在规划每张图。`);
-      await planAndStart(skill, form, brief, referenceFile, {});
+      await planAndStart(skill, form, briefForSkill(brief, skill), referenceFile, {});
       return true;
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Agent 暂时无法开始，请稍后重试。', 'error');

@@ -50,6 +50,23 @@ export const AGENT_PROMPT_EXAMPLES: readonly string[] = LANDING_SKILLS.filter(
   .slice(0, 6)
   .map((skill) => `做一套${skill.label}：${skill.briefExample}`);
 
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * The part of an Agent mode request the picked skill reads. An opening that only names the
+ * kind of set, as in "做一套活动海报：周年庆典", is dropped, the way a skill pill is never part
+ * of the brief; without a chat model the first phrase would otherwise become the headline.
+ */
+export function briefForSkill(brief: string, skill: LandingSkill): string {
+  const opening = new RegExp(
+    `^(?:请|帮我|给我)?(?:做|设计|生成|出|来|画)?一?[套组张份个版]?${escapeRegExp(skill.label)}[：:，,。、；;]?`,
+    'u',
+  );
+  return brief.trim().replace(opening, '').trim();
+}
+
 export function findLandingSkill(id: string): LandingSkill | undefined {
   return LANDING_SKILLS.find((skill) => skill.id === id);
 }

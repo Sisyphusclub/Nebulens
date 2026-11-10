@@ -20,6 +20,8 @@ export type ComposerValue = {
 
 export type AgentChatComposerHandle = {
   focus: () => void;
+  /** Focus with the caret after the last character, as a click below the text would. */
+  focusEnd: () => void;
   clear: () => void;
   insertSkill: (skill: AgentChatSkill) => void;
   /** Replace the content, then focus with the caret at the end so typing continues it. */
@@ -393,6 +395,19 @@ export const AgentChatComposer = forwardRef<AgentChatComposerHandle, AgentChatCo
       ref,
       () => ({
         focus: () => editorRef.current?.focus(),
+        focusEnd: () => {
+          const editor = editorRef.current;
+          if (!editor) {
+            return;
+          }
+          editor.focus();
+          const caret = document.createRange();
+          caret.selectNodeContents(editor);
+          caret.collapse(false);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(caret);
+        },
         clear: () => {
           const editor = editorRef.current;
           if (editor) {

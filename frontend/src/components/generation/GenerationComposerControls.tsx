@@ -56,6 +56,8 @@ interface GenerationComposerControlsProps {
   quality: ImageQuality;
   disabled?: boolean;
   customPanelSide?: 'top' | 'bottom';
+  /** A skill decides each image's ratio and count, so only the other settings are offered. */
+  planned?: boolean;
   trailingContent?: ReactNode;
   onModelChange: (model: ImageModel) => void;
   onAspectChange: (aspect: AspectChoice) => void;
@@ -72,6 +74,7 @@ export function GenerationComposerControls({
   quality,
   disabled = false,
   customPanelSide = 'bottom',
+  planned = false,
   trailingContent,
   onModelChange,
   onAspectChange,
@@ -82,10 +85,10 @@ export function GenerationComposerControls({
   const visibleAspect = aspect === 'auto' ? '智能' : aspect;
   const qualitySupported = supportsImageQuality(model);
   const parameterSummary = [
-    visibleAspect,
+    ...(planned ? [] : [visibleAspect]),
     IMAGE_RESOLUTION_LABELS[resolution],
     ...(qualitySupported ? [IMAGE_QUALITY_LABELS[quality]] : []),
-    `${count}张`,
+    ...(planned ? [] : [`${count}张`]),
   ].join(' · ');
 
   return (
@@ -132,45 +135,47 @@ export function GenerationComposerControls({
           </AnimatedDropdownLabel>
 
           <div className="generation-custom-panel__body">
-            <ParameterGroup
-              label="选择比例"
-              value={visibleAspect}
-              className="generation-custom-group--aspect"
-            >
-              <AnimatedDropdownRadioGroup
-                value={aspect}
-                className="generation-custom-options generation-custom-options--aspect"
-                aria-label="画面比例"
-                onValueChange={(value) => onAspectChange(value as AspectChoice)}
+            {planned ? null : (
+              <ParameterGroup
+                label="选择比例"
+                value={visibleAspect}
+                className="generation-custom-group--aspect"
               >
-                {ASPECT_CHOICES.map((value) => (
-                  <AnimatedDropdownRadioItem
-                    key={value}
-                    value={value}
-                    aria-label={value === 'auto' ? '智能' : value}
-                    className="generation-custom-option generation-custom-option--aspect"
-                    onSelect={keepCustomPanelOpen}
-                  >
-                    <AnimatedDropdownItemIcon
-                      className="generation-custom-option__visual group-data-[highlighted]:translate-x-0"
-                      data-aspect={value}
+                <AnimatedDropdownRadioGroup
+                  value={aspect}
+                  className="generation-custom-options generation-custom-options--aspect"
+                  aria-label="画面比例"
+                  onValueChange={(value) => onAspectChange(value as AspectChoice)}
+                >
+                  {ASPECT_CHOICES.map((value) => (
+                    <AnimatedDropdownRadioItem
+                      key={value}
+                      value={value}
+                      aria-label={value === 'auto' ? '智能' : value}
+                      className="generation-custom-option generation-custom-option--aspect"
+                      onSelect={keepCustomPanelOpen}
                     >
-                      {value === 'auto' ? (
-                        <Sparkles />
-                      ) : (
-                        <span
-                          className="generation-custom-option__frame"
-                          style={aspectFrameSize(value)}
-                        />
-                      )}
-                    </AnimatedDropdownItemIcon>
-                    <AnimatedDropdownItemText className="generation-custom-option__text group-data-[highlighted]:translate-x-0">
-                      {value === 'auto' ? '智能' : value}
-                    </AnimatedDropdownItemText>
-                  </AnimatedDropdownRadioItem>
-                ))}
-              </AnimatedDropdownRadioGroup>
-            </ParameterGroup>
+                      <AnimatedDropdownItemIcon
+                        className="generation-custom-option__visual group-data-[highlighted]:translate-x-0"
+                        data-aspect={value}
+                      >
+                        {value === 'auto' ? (
+                          <Sparkles />
+                        ) : (
+                          <span
+                            className="generation-custom-option__frame"
+                            style={aspectFrameSize(value)}
+                          />
+                        )}
+                      </AnimatedDropdownItemIcon>
+                      <AnimatedDropdownItemText className="generation-custom-option__text group-data-[highlighted]:translate-x-0">
+                        {value === 'auto' ? '智能' : value}
+                      </AnimatedDropdownItemText>
+                    </AnimatedDropdownRadioItem>
+                  ))}
+                </AnimatedDropdownRadioGroup>
+              </ParameterGroup>
+            )}
 
             <div className="generation-custom-panel__compact-groups">
               {qualitySupported ? (
@@ -224,39 +229,43 @@ export function GenerationComposerControls({
                 </AnimatedDropdownRadioGroup>
               </ParameterGroup>
 
-              <ParameterGroup label="生成张数" value={`${count} 张`}>
-                <AnimatedDropdownRadioGroup
-                  value={String(count)}
-                  className="generation-custom-options generation-custom-options--compact generation-custom-options--count"
-                  aria-label="生成张数"
-                  onValueChange={(value) => onCountChange(Number(value))}
-                >
-                  {Array.from(
-                    { length: MAX_COUNT - MIN_COUNT + 1 },
-                    (_, index) => index + MIN_COUNT,
-                  ).map((value) => (
-                    <AnimatedDropdownRadioItem
-                      key={value}
-                      value={String(value)}
-                      aria-label={`${value} 张`}
-                      className="generation-custom-option generation-custom-option--compact"
-                      onSelect={keepCustomPanelOpen}
-                    >
-                      <AnimatedDropdownItemText className="generation-custom-option__text group-data-[highlighted]:translate-x-0">
-                        {value}
-                      </AnimatedDropdownItemText>
-                    </AnimatedDropdownRadioItem>
-                  ))}
-                </AnimatedDropdownRadioGroup>
-              </ParameterGroup>
+              {planned ? null : (
+                <ParameterGroup label="生成张数" value={`${count} 张`}>
+                  <AnimatedDropdownRadioGroup
+                    value={String(count)}
+                    className="generation-custom-options generation-custom-options--compact generation-custom-options--count"
+                    aria-label="生成张数"
+                    onValueChange={(value) => onCountChange(Number(value))}
+                  >
+                    {Array.from(
+                      { length: MAX_COUNT - MIN_COUNT + 1 },
+                      (_, index) => index + MIN_COUNT,
+                    ).map((value) => (
+                      <AnimatedDropdownRadioItem
+                        key={value}
+                        value={String(value)}
+                        aria-label={`${value} 张`}
+                        className="generation-custom-option generation-custom-option--compact"
+                        onSelect={keepCustomPanelOpen}
+                      >
+                        <AnimatedDropdownItemText className="generation-custom-option__text group-data-[highlighted]:translate-x-0">
+                          {value}
+                        </AnimatedDropdownItemText>
+                      </AnimatedDropdownRadioItem>
+                    ))}
+                  </AnimatedDropdownRadioGroup>
+                </ParameterGroup>
+              )}
             </div>
           </div>
         </AnimatedDropdownContent>
       </AnimatedDropdown>
 
-      <output className="sr-only" aria-label={`${count} 张`}>
-        {count}
-      </output>
+      {planned ? null : (
+        <output className="sr-only" aria-label={`${count} 张`}>
+          {count}
+        </output>
+      )}
 
       {trailingContent ? <div className="generation-controls-tail">{trailingContent}</div> : null}
     </div>

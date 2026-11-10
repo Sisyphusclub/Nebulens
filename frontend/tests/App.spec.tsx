@@ -113,10 +113,15 @@ const promptMocks = vi.hoisted(() => ({
 
 vi.mock('@/services/api/promptApi', () => ({ enhancePrompt: promptMocks.enhancePrompt }));
 
-const skillMocks = vi.hoisted(() => ({ fetchSkillForms: vi.fn(), planSkill: vi.fn() }));
+const skillMocks = vi.hoisted(() => ({
+  fetchSkillForms: vi.fn(),
+  planSkill: vi.fn(),
+  selectSkillForBrief: vi.fn(),
+}));
 vi.mock('@/services/api/skillsApi', () => ({
   fetchSkillForms: skillMocks.fetchSkillForms,
   planSkill: skillMocks.planSkill,
+  selectSkillForBrief: skillMocks.selectSkillForBrief,
 }));
 
 vi.mock('@/hooks/useImageHistory', () => ({
@@ -490,6 +495,80 @@ describe('React application routes', () => {
     expect(screen.getByLabelText('当前路由')).toHaveTextContent('/generate?session=');
   });
 
+  it('runs Agent mode: the server picks the skill, then its images are planned and made', async () => {
+    const user = userEvent.setup();
+    skillMocks.selectSkillForBrief.mockResolvedValue('ecommerce');
+    skillMocks.planSkill.mockResolvedValue({
+      title: '电商主图 · 山川绿茶',
+      outputs: [{ id: 'main', label: '主图', aspect: '1:1', prompt: '山川绿茶主图' }],
+    });
+    renderRoute('/');
+
+    await user.click(await screen.findByRole('button', { name: 'Agent 模式' }));
+    expect(screen.getByRole('button', { name: 'Agent 模式' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByText('按实际用量计费')).toBeInTheDocument();
+    await user.type(
+      screen.getByRole('textbox', { name: '首页创作提示词' }),
+      '给山川绿茶做一套淘宝主图',
+    );
+    await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
+
+    await waitFor(() =>
+      expect(skillMocks.planSkill).toHaveBeenCalledWith('ecommerce', {
+        brief: '给山川绿茶做一套淘宝主图',
+        values: {},
+        hasReference: false,
+      }),
+    );
+    expect(skillMocks.selectSkillForBrief).toHaveBeenCalledWith('给山川绿茶做一套淘宝主图', false);
+    await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
+    expect(screen.getByLabelText('当前路由')).toHaveTextContent('/generate?session=');
+  });
+
+  it('makes a plain image when Agent mode finds no skill for the request', async () => {
+    const user = userEvent.setup();
+    skillMocks.selectSkillForBrief.mockResolvedValue(null);
+    renderRoute('/');
+
+    await user.click(await screen.findByRole('button', { name: 'Agent 模式' }));
+    await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '雨夜的未来城市');
+    await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
+
+    await waitFor(() =>
+      expect(generation.generate).toHaveBeenCalledWith(
+        expect.objectContaining({ prompt: '雨夜的未来城市' }),
+      ),
+    );
+    expect(skillMocks.planSkill).not.toHaveBeenCalled();
+    expect(await screen.findByText('没有对得上的技能，这次按图片生成处理。')).toBeInTheDocument();
+  });
+
+  it('says video is on its way and keeps the current mode', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+
+    await user.click(await screen.findByRole('button', { name: /视频生成/ }));
+
+    expect(await screen.findByText(/视频生成即将上线/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '图片生成' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('starts skill mode from the skill library', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+
+    await user.click(await screen.findByRole('button', { name: '技能库' }));
+    await user.click(await screen.findByRole('menuitem', { name: /活动海报/ }));
+
+    expect(await screen.findByRole('group', { name: '技能：活动海报' })).toBeInTheDocument();
+  });
+
   it('resumes a recent creation from the homepage in its own session', async () => {
     const user = userEvent.setup();
     const session = createGenerationSession('雾中的未来车站');
@@ -753,8 +832,13 @@ describe('React application routes', () => {
     expect(fileInput).toHaveAttribute('accept', 'image/png,image/jpeg,image/webp');
     await user.upload(fileInput!, referenceFiles);
     expect(screen.getByText('参考图最多支持 14 张，已保留前 14 张。')).toBeInTheDocument();
-    expect(screen.getByText('reference-14.png')).toBeInTheDocument();
-    expect(screen.queryByText('reference-15.png')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '移除参考图 reference-14.png' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: '移除参考图 reference-15.png' }),
+    ).not.toBeInTheDocument();
+    // The add tile counts toward the limit and stops taking more once it is reached.
+    expect(screen.getByText('参考图 14/14')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '添加参考图' })).toBeDisabled();
 
     await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '雨夜的未来城市');
     await user.click(screen.getByRole('button', { name: '选择模型' }));

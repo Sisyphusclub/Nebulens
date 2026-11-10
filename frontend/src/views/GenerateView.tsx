@@ -1,4 +1,4 @@
-import { ArrowDown, ImagePlus, Sparkles } from 'lucide-react';
+import { ArrowDown, ImagePlus, LoaderCircle, Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -12,14 +12,27 @@ import { AiInsightBar } from '@/components/generation/AiInsightBar';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
+import { LandingSkillBar } from '@/components/landing/LandingSkillBar';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { AgentChatInput } from '@/components/premium/agent-chat-input/agent-chat-input';
 import type { AgentChatAttachment } from '@/components/premium/agent-chat-input/types';
 import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
+import {
+  AGENT_PLACEHOLDER,
+  COMPOSER_MODES,
+  COMPOSER_SKILLS,
+  type ComposerModeId,
+  findLandingSkill,
+  LIBRARY_SKILLS,
+  skillInPrompt,
+  VIDEO_COMING_SOON,
+  withoutSkills,
+} from '@/data/composerSkills';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
+import { useComposerSkills } from '@/hooks/useComposerSkills';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import {
   attachGenerationBatch,
@@ -511,6 +524,47 @@ export function GenerateView() {
   // Leaving now would lose the images still being made.
   useLeaveWarning(generation.isLoading || skillRun.isRunning);
 
+  const [mode, setMode] = useState<ComposerModeId>('image');
+  const composerSkills = useComposerSkills({
+    prompt,
+    setPrompt,
+    isAuthenticated,
+    notify,
+    model,
+    resolution,
+    quality,
+    // A run planned here stays in this session; its images join the feed below.
+    onPlanned: (_title, request) => {
+      setPrompt('');
+      startSkillRun(request);
+    },
+  });
+  const { activeSkill } = composerSkills;
+  const agentMode = mode === 'agent' && activeSkill === undefined;
+  const changeMode = (next: string): void => {
+    if (next === 'video') {
+      notify(VIDEO_COMING_SOON);
+      return;
+    }
+    if (next === 'agent' || next === 'image') setMode(next);
+  };
+  const submitFromComposer = (text: string): void => {
+    const skill = skillInPrompt(text);
+    if (skill !== undefined) {
+      void composerSkills.runSkill(skill, withoutSkills(text), attachments);
+      return;
+    }
+    if (mode === 'agent' && text.trim() !== '') {
+      void composerSkills.runAgent(text.trim(), attachments).then((handled) => {
+        if (handled) return;
+        notify('没有对得上的技能，这次按图片生成处理。');
+        submitCurrent(text);
+      });
+      return;
+    }
+    submitCurrent(text);
+  };
+
   // A skill planned on the homepage arrives as navigation state, in its own session.
   useEffect(() => {
     if (authLoading || skillRunHandled.current) return;
@@ -761,29 +815,70 @@ export function GenerateView() {
           <AgentChatInput
             value={prompt}
             onValueChange={setPrompt}
-            onSubmit={(payload) => submitCurrent(payload.text)}
+            onSubmit={(payload) => submitFromComposer(payload.text)}
             onStop={() => {
               skillRun.cancel();
               generation.cancel();
             }}
             status={generation.isLoading ? 'streaming' : 'ready'}
-            placeholder="描述你想生成的画面…"
-            ariaLabel="图像提示词"
-            submitLabel="生成图片"
-            submitContent={
-              <GenerationSubmitCost count={count} model={model} resolution={resolution} />
+            header={
+              activeSkill === undefined ? undefined : (
+                <LandingSkillBar
+                  skill={activeSkill}
+                  form={composerSkills.activeForm}
+                  loadError={composerSkills.skillFormsError}
+                  choices={composerSkills.skillChoices}
+                  showExample={withoutSkills(prompt).length === 0}
+                  onChoiceChange={composerSkills.setSkillChoice}
+                  onUseExample={() =>
+                    setPrompt(`/${activeSkill.label} ${activeSkill.briefExample}`)
+                  }
+                  onExit={composerSkills.exitSkill}
+                />
+              )
             }
-            disabled={authLoading}
+            placeholder={agentMode ? AGENT_PLACEHOLDER : '描述你想生成的画面…'}
+            ariaLabel="图像提示词"
+            submitLabel={
+              activeSkill !== undefined
+                ? `用「${activeSkill.label}」开始生成`
+                : agentMode
+                  ? '交给 Agent 开始创作'
+                  : '生成图片'
+            }
+            submitContent={
+              composerSkills.planning ? (
+                <LoaderCircle aria-hidden="true" className="spin" />
+              ) : agentMode ? undefined : (
+                <GenerationSubmitCost
+                  count={composerSkills.activeForm?.outputs.length ?? count}
+                  model={model}
+                  resolution={resolution}
+                />
+              )
+            }
+            submitNote={agentMode ? '按实际用量计费' : undefined}
+            disabled={authLoading || composerSkills.planning}
             minRows={2}
             maxRows={7}
             models={[]}
             reasoningLevels={[]}
             speedModes={[]}
             agents={[]}
-            skills={[]}
+            skills={COMPOSER_SKILLS}
             attachments={attachments}
+            attachmentLimit={MAX_REFERENCE_IMAGES}
             onAttachmentsChange={handleAttachments}
             acceptedFileTypes="image/png,image/jpeg,image/webp"
+            modes={COMPOSER_MODES}
+            mode={mode}
+            onModeChange={changeMode}
+            librarySkills={LIBRARY_SKILLS}
+            onLibrarySkillSelect={(skillId) => {
+              const skill = findLandingSkill(skillId);
+              if (skill !== undefined) composerSkills.selectSkill(skill);
+            }}
+            menuSide="top"
             toolbarContent={
               <GenerationComposerControls
                 model={model}
@@ -792,6 +887,7 @@ export function GenerateView() {
                 resolution={resolution}
                 quality={quality}
                 disabled={generation.isLoading}
+                planned={mode === 'agent' || activeSkill !== undefined}
                 customPanelSide="top"
                 onModelChange={setModel}
                 onAspectChange={setAspect}

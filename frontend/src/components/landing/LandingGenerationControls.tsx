@@ -11,6 +11,8 @@ interface LandingGenerationControlsProps {
   resolution: ImageResolution;
   quality: ImageQuality;
   disabled?: boolean;
+  /** A skill decides each image's ratio and count. */
+  planned?: boolean;
   quotaLabel: string;
   quotaAriaLabel: string;
   quotaIsAction: boolean;
@@ -29,6 +31,7 @@ export function LandingGenerationControls({
   resolution,
   quality,
   disabled,
+  planned = false,
   quotaLabel,
   quotaAriaLabel,
   quotaIsAction,
@@ -54,6 +57,7 @@ export function LandingGenerationControls({
       resolution={resolution}
       quality={quality}
       disabled={disabled ?? false}
+      planned={planned}
       onModelChange={onModelChange}
       onAspectChange={onAspectChange}
       onCountChange={onCountChange}

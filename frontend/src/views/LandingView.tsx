@@ -1,5 +1,5 @@
 import { LoaderCircle } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
@@ -18,19 +18,29 @@ import { LandingSkillDeck } from '@/components/landing/LandingSkills';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
 import { AgentChatInput } from '@/components/premium/agent-chat-input/agent-chat-input';
-import type {
-  AgentChatAttachment,
-  AgentChatSkill,
-} from '@/components/premium/agent-chat-input/types';
+import type { AgentChatAttachment } from '@/components/premium/agent-chat-input/types';
 import {
   CREATION_TEMPLATES,
   templatesAcrossCategories,
   type CreationTemplate,
 } from '@/data/creationTemplates';
+import {
+  AGENT_PLACEHOLDER,
+  AGENT_PROMPT_EXAMPLES,
+  COMPOSER_MODES,
+  COMPOSER_SKILLS,
+  type ComposerModeId,
+  findLandingSkill,
+  LIBRARY_SKILLS,
+  skillInPrompt,
+  VIDEO_COMING_SOON,
+  withoutSkills,
+} from '@/data/composerSkills';
 import { IMAGE_PROMPT_EXAMPLES } from '@/data/imagePromptExamples';
-import { LANDING_SKILLS, type LandingSkill } from '@/data/landingSkills';
+import type { LandingSkill } from '@/data/landingSkills';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
+import { useComposerSkills } from '@/hooks/useComposerSkills';
 import { useImageQuota } from '@/hooks/useImageQuota';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { attachGenerationBatch, useGenerationSessions } from '@/hooks/useGenerationSessions';
@@ -40,11 +50,9 @@ import { usePromptDraft } from '@/hooks/usePromptDraft';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
 import { useTeamShowcase } from '@/hooks/useTeamShowcase';
-import { buildApiUrl, uploadReferenceImages } from '@/services/api/imagesApi';
-import { fetchSkillForms, planSkill } from '@/services/api/skillsApi';
+import { buildApiUrl } from '@/services/api/imagesApi';
 import type {
   AspectChoice,
-  GenerationSettingsSnapshot,
   HistoryEntry,
   ImageModel,
   ImageQuality,
@@ -63,36 +71,10 @@ import {
   normalizeAspectChoiceForResolution,
   supportsImageQuality,
 } from '@/types/image';
-import type { SkillForm } from '@/types/skill';
-import { resolveAspectChoice } from '@/utils/imageAspect';
 import { recentCreations, type RecentCreation } from '@/utils/recentCreations';
-import type { SkillRunRequest } from '@/utils/skillRun';
 
 /** Covers for the banner's template slides, one from each category. */
 const INSPIRATION_TEMPLATES = templatesAcrossCategories(24);
-
-/** Skills offered in the composer's + menu and after typing "/". */
-const COMPOSER_SKILLS: AgentChatSkill[] = LANDING_SKILLS.map((skill) => {
-  const Icon = skill.icon;
-  return {
-    id: skill.id,
-    label: skill.label,
-    description: skill.tagline,
-    icon: <Icon aria-hidden="true" />,
-  };
-});
-
-/** The skill whose "/name" pill is in the composer; while there is one, it is in skill mode. */
-function skillInPrompt(prompt: string): LandingSkill | undefined {
-  return LANDING_SKILLS.find((skill) => prompt.includes(`/${skill.label}`));
-}
-
-/** The composer text without skill pills: in skill mode, the brief the server reads. */
-function withoutSkills(prompt: string): string {
-  return LANDING_SKILLS.reduce((text, skill) => text.replaceAll(`/${skill.label}`, ''), prompt)
-    .replace(/\s+/gu, ' ')
-    .trim();
-}
 
 export function LandingView() {
   const navigate = useNavigate();
@@ -144,28 +126,26 @@ export function LandingView() {
     (quota?.remaining ?? 0) >= imageGenerationCreditCost('2k', model);
   const [quality, setQuality] = useState<ImageQuality>(DEFAULT_IMAGE_QUALITY);
   const [imageApiKeySettingsOpen, setImageApiKeySettingsOpen] = useState(false);
-  const [skillForms, setSkillForms] = useState<SkillForm[] | null>(null);
-  const [skillFormsError, setSkillFormsError] = useState<string | null>(null);
-  const [skillChoices, setSkillChoices] = useState<Record<string, string>>({});
-  const [planningSkill, setPlanningSkill] = useState(false);
-  const activeSkillId = activeSkill?.id;
-  const activeForm = skillForms?.find((form) => form.id === activeSkillId);
-  // Forms load the first time a skill is picked; each skill starts from its default choices.
-  useEffect(() => {
-    if (activeSkillId === undefined || skillForms !== null) return;
-    let cancelled = false;
-    fetchSkillForms()
-      .then((forms) => {
-        if (!cancelled) setSkillForms(forms);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setSkillFormsError(err instanceof Error ? err.message : '技能加载失败。');
+  const [mode, setMode] = useState<ComposerModeId>('image');
+  const composerSkills = useComposerSkills({
+    prompt,
+    setPrompt,
+    isAuthenticated,
+    notify,
+    model,
+    resolution,
+    quality,
+    // The run opens in a new session on the generate page, which makes the images one by one.
+    onPlanned: (title, skillRun) => {
+      const session = createSession(title);
+      clearPromptDraft();
+      void navigate(`/generate?${new URLSearchParams({ session: session.id }).toString()}`, {
+        state: { skillRun },
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [activeSkillId, skillForms]);
-  useEffect(() => setSkillChoices({}), [activeSkillId]);
+    },
+  });
+  const { activeForm, skillFormsError, skillChoices, planning: planningSkill } = composerSkills;
+  const agentMode = mode === 'agent' && activeSkill === undefined;
   const accountName = user?.username ?? user?.name ?? '账户';
   const providerPending = authLoading || (isAuthenticated && imageApiKey.isLoading);
   const quotaPending = isAuthenticated && quotaLoading;
@@ -218,87 +198,16 @@ export function LandingView() {
   };
   /** Puts the skill's pill in front of whatever is typed, like picking it from the + menu. */
   const selectSkill = (skill: LandingSkill): void => {
-    setPrompt(`/${skill.label} ${withoutSkills(prompt)}`);
+    composerSkills.selectSkill(skill);
     // Skills picked below the fold bring the composer back into view.
     if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  const exitSkill = (): void => setPrompt(withoutSkills(prompt));
-  /**
-   * Uploads the skill's image once, has the server read the brief and plan a prompt per
-   * output, and opens the generate page in a new session that makes them one by one.
-   */
-  const runSkill = async (
-    skill: LandingSkill,
-    brief: string,
-    selectedAttachments: readonly AgentChatAttachment[],
-  ): Promise<void> => {
-    const form = skillForms?.find((candidate) => candidate.id === skill.id);
-    if (form === undefined) {
-      notify(skillFormsError ?? '技能还在加载，请稍后再试。', 'error');
+  const changeMode = (next: string): void => {
+    if (next === 'video') {
+      notify(VIDEO_COMING_SOON);
       return;
     }
-    if (!isAuthenticated) {
-      // The composer keeps the pill and the brief, so sending again after signing in works.
-      openAuthModal();
-      return;
-    }
-    const referenceFile =
-      selectedAttachments.find((attachment) => attachment.file !== undefined)?.file ?? null;
-    if (form.reference === 'required' && referenceFile === null) {
-      notify(`请先上传${form.referenceLabel ?? '参考图'}。`, 'error');
-      return;
-    }
-    const required = form.fields.find((field) => field.required && field.kind !== 'choice');
-    if (required !== undefined && brief.length === 0) {
-      notify(`请在描述里写上${required.label}。`, 'error');
-      return;
-    }
-    setPlanningSkill(true);
-    try {
-      await planAndStartSkill(skill, form, brief, referenceFile);
-    } catch (err) {
-      notify(err instanceof Error ? err.message : '技能启动失败，请稍后重试。', 'error');
-    } finally {
-      setPlanningSkill(false);
-    }
-  };
-  const planAndStartSkill = async (
-    skill: LandingSkill,
-    form: SkillForm,
-    brief: string,
-    referenceFile: File | null,
-  ): Promise<void> => {
-    const referenceFiles = referenceFile === null ? [] : [referenceFile];
-    const referenceIds = (await uploadReferenceImages(referenceFiles)).map((upload) => upload.id);
-    const plan = await planSkill(form.id, {
-      brief,
-      values: skillChoices,
-      hasReference: referenceFile !== null,
-    });
-    const steps = await Promise.all(
-      plan.outputs.map(async (output) => {
-        const settings: GenerationSettingsSnapshot = {
-          prompt: output.prompt,
-          model,
-          count: 1,
-          aspectRatio: await resolveAspectChoice(
-            normalizeAspectChoiceForResolution(output.aspect, resolution),
-            referenceFiles,
-          ),
-          resolution,
-          ...(supportsImageQuality(model) ? { quality } : {}),
-          isPublic: false,
-          referenceIds,
-        };
-        return { label: output.label, settings };
-      }),
-    );
-    const session = createSession(plan.title);
-    const skillRun: SkillRunRequest = { skillLabel: skill.label, steps };
-    clearPromptDraft();
-    void navigate(`/generate?${new URLSearchParams({ session: session.id }).toString()}`, {
-      state: { skillRun },
-    });
+    if (next === 'agent' || next === 'image') setMode(next);
   };
   /** A teammate's reference images stay theirs, so only the prompt and framing carry over. */
   const makeSimilar = (record: TeamImageRecord): void => {
@@ -321,11 +230,25 @@ export function LandingView() {
   ): void => {
     const skill = skillInPrompt(value);
     if (skill !== undefined) {
-      void runSkill(skill, withoutSkills(value), selectedAttachments);
+      void composerSkills.runSkill(skill, withoutSkills(value), selectedAttachments);
       return;
     }
     const trimmed = value.trim();
     if (!trimmed) return;
+    if (mode === 'agent') {
+      void composerSkills.runAgent(trimmed, selectedAttachments).then((handled) => {
+        if (handled) return;
+        notify('没有对得上的技能，这次按图片生成处理。');
+        generatePlain(trimmed, selectedAttachments);
+      });
+      return;
+    }
+    generatePlain(trimmed, selectedAttachments);
+  };
+  const generatePlain = (
+    trimmed: string,
+    selectedAttachments: readonly AgentChatAttachment[],
+  ): void => {
     const nextSearch = new URLSearchParams({
       prompt: trimmed,
       model,
@@ -394,13 +317,11 @@ export function LandingView() {
                       loadError={skillFormsError}
                       choices={skillChoices}
                       showExample={withoutSkills(prompt).length === 0}
-                      onChoiceChange={(fieldId, value) =>
-                        setSkillChoices((current) => ({ ...current, [fieldId]: value }))
-                      }
+                      onChoiceChange={composerSkills.setSkillChoice}
                       onUseExample={() =>
                         setPrompt(`/${activeSkill.label} ${activeSkill.briefExample}`)
                       }
-                      onExit={exitSkill}
+                      onExit={composerSkills.exitSkill}
                     />
                   )
                 }
@@ -410,18 +331,22 @@ export function LandingView() {
                 agents={[]}
                 reasoningLevels={[]}
                 speedModes={[]}
-                streamingPlaceholders={IMAGE_PROMPT_EXAMPLES}
-                placeholder="描述你想生成的画面..."
+                streamingPlaceholders={
+                  mode === 'agent' ? AGENT_PROMPT_EXAMPLES : IMAGE_PROMPT_EXAMPLES
+                }
+                placeholder={mode === 'agent' ? AGENT_PLACEHOLDER : '描述你想生成的画面...'}
                 ariaLabel="首页创作提示词"
                 submitLabel={
-                  activeSkill === undefined
-                    ? '带着提示词开始创作'
-                    : `用「${activeSkill.label}」开始生成`
+                  activeSkill !== undefined
+                    ? `用「${activeSkill.label}」开始生成`
+                    : agentMode
+                      ? '交给 Agent 开始创作'
+                      : '带着提示词开始创作'
                 }
                 submitContent={
                   planningSkill ? (
                     <LoaderCircle aria-hidden="true" className="spin" />
-                  ) : (
+                  ) : agentMode ? undefined : (
                     <GenerationSubmitCost
                       count={activeForm?.outputs.length ?? count}
                       model={model}
@@ -429,13 +354,23 @@ export function LandingView() {
                     />
                   )
                 }
+                submitNote={agentMode ? '按实际用量计费' : undefined}
                 disabled={planningSkill}
                 minRows={1}
                 maxRows={4}
                 allowFileUpload
                 attachments={attachments}
+                attachmentLimit={MAX_REFERENCE_IMAGES}
                 onAttachmentsChange={updateAttachments}
                 acceptedFileTypes="image/png,image/jpeg,image/webp"
+                modes={COMPOSER_MODES}
+                mode={mode}
+                onModeChange={changeMode}
+                librarySkills={LIBRARY_SKILLS}
+                onLibrarySkillSelect={(skillId) => {
+                  const skill = findLandingSkill(skillId);
+                  if (skill !== undefined) selectSkill(skill);
+                }}
                 toolbarContent={
                   <LandingGenerationControls
                     model={model}
@@ -444,6 +379,7 @@ export function LandingView() {
                     resolution={resolution}
                     quality={quality}
                     disabled={authLoading}
+                    planned={mode === 'agent' || activeSkill !== undefined}
                     quotaLabel={quotaLabel}
                     quotaAriaLabel={quotaAriaLabel}
                     quotaIsAction={!authLoading && !isAuthenticated}

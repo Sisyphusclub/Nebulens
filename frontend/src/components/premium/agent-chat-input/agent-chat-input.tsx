@@ -8,7 +8,6 @@ import {
   CornerUpLeft,
   Mic,
   Pencil,
-  Plus,
   Square,
   Trash2,
 } from 'lucide-react';
@@ -17,6 +16,8 @@ import {
   type ChangeEvent,
   type ClipboardEvent,
   type DragEvent,
+  type FocusEvent,
+  type MouseEvent,
   type ReactNode,
   useEffect,
   useRef,
@@ -33,6 +34,7 @@ import { SPRING_PRESS, SPRING_SWAP } from '@/lib/ease';
 import { cn } from '@/lib/utils';
 
 import { AgentChatComposer, type AgentChatComposerHandle, type ComposerValue } from './composer';
+import { ComposerModeSwitch } from './composer-modes';
 import {
   DEFAULT_AGENTS,
   DEFAULT_MODELS,
@@ -40,10 +42,11 @@ import {
   DEFAULT_SKILLS,
   DEFAULT_SPEED,
 } from './constants';
-import { CreditsAttachmentTray } from './credits-attachment-tray';
 import { CreditsImagePreview } from './credits-image-preview';
 import { useControllableArray, useControllableString } from './hooks';
 import { ModelLogo } from './model-logo';
+import { ReferenceStrip } from './reference-strip';
+import { SkillLibrary } from './skill-library';
 import { SkillSelector } from './skills';
 import type {
   AgentChatAgent,
@@ -281,28 +284,12 @@ function ModelSettings({
   );
 }
 
-interface AttachButtonProps {
-  disabled: boolean;
-  reduce: boolean;
-  onAttach: () => void;
-}
+/** Clicks on these keep their own meaning; a click anywhere else in the composer focuses the text. */
+const INTERACTIVE_TARGETS =
+  'button, a, input, select, textarea, label, [role="textbox"], [role="button"], [role="menu"], [role="dialog"]';
 
-/** + opens the file picker directly; skills are picked from the tiles or by typing "/". */
-function AttachButton({ disabled, reduce, onAttach }: AttachButtonProps) {
-  return (
-    <motion.button
-      type="button"
-      disabled={disabled}
-      aria-label="添加参考图"
-      title="添加参考图"
-      whileTap={reduce ? {} : { scale: 0.92 }}
-      transition={SPRING_PRESS}
-      className="agent-chat-input__icon-button"
-      onClick={onAttach}
-    >
-      <Plus aria-hidden="true" />
-    </motion.button>
-  );
+function isEditor(target: EventTarget): boolean {
+  return target instanceof HTMLElement && target.getAttribute('role') === 'textbox';
 }
 
 interface QueueProps {
@@ -511,6 +498,14 @@ export function AgentChatInput({
   onVoiceClick,
   allowFileUpload = true,
   acceptedFileTypes = 'image/*',
+  attachmentLimit,
+  modes = [],
+  mode,
+  onModeChange,
+  librarySkills = [],
+  onLibrarySkillSelect,
+  menuSide = 'bottom',
+  submitNote,
   toolbarContent,
   className,
   classNames,
@@ -520,6 +515,8 @@ export function AgentChatInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragDepthRef = useRef(0);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  // While the text has focus the examples stop streaming, so the caret is plain to see.
+  const [editorFocused, setEditorFocused] = useState(false);
   const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
   const [text, setText] = useControllableString({
     value,
@@ -663,6 +660,22 @@ export function AgentChatInput({
     addFiles(files);
   }
 
+  function handleSurfaceMouseDown(event: MouseEvent<HTMLDivElement>) {
+    if (disabled || event.button !== 0) return;
+    if (event.target instanceof Element && event.target.closest(INTERACTIVE_TARGETS)) return;
+    // The padding and the gaps between controls belong to the text box.
+    event.preventDefault();
+    composerRef.current?.focusEnd();
+  }
+
+  function handleSurfaceFocus(event: FocusEvent<HTMLDivElement>) {
+    if (isEditor(event.target)) setEditorFocused(true);
+  }
+
+  function handleSurfaceBlur(event: FocusEvent<HTMLDivElement>) {
+    if (isEditor(event.target)) setEditorFocused(false);
+  }
+
   function removeAttachment(id: string) {
     setCurrentAttachments(currentAttachments.filter((attachment) => attachment.id !== id));
     if (previewAttachmentId === id) setPreviewAttachmentId(null);
@@ -692,6 +705,7 @@ export function AgentChatInput({
         'agent-chat-input',
         status === 'error' && 'agent-chat-input--error',
         isDraggingFiles && 'agent-chat-input--dragging',
+        modes.length > 0 && 'agent-chat-input--modes',
         className,
         classNames?.root,
       )}
@@ -711,48 +725,59 @@ export function AgentChatInput({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onPaste={handlePaste}
+        onMouseDown={handleSurfaceMouseDown}
+        onFocus={handleSurfaceFocus}
+        onBlur={handleSurfaceBlur}
       >
-        {header}
-        {streamingPlaceholders.length ? (
-          <StreamingPlaceholder
-            active={text.length === 0}
-            examples={streamingPlaceholders}
+        {allowFileUpload ? (
+          <ReferenceStrip
+            attachments={currentAttachments}
+            previewUrls={previewUrls}
+            limit={attachmentLimit}
+            disabled={disabled}
             reduce={reduce}
-            onPick={(prompt) => composerRef.current?.fill(prompt)}
+            onAdd={() => fileInputRef.current?.click()}
+            onPreview={setPreviewAttachmentId}
+            onRemove={removeAttachment}
           />
         ) : null}
-        <AgentChatComposer
-          ref={composerRef}
-          value={text}
-          skills={skills}
-          placeholder={streamingPlaceholders.length ? '' : placeholder}
-          ariaLabel={ariaLabel}
-          disabled={disabled}
-          minRows={minRows}
-          maxRows={maxRows}
-          submitOnEnter={submitOnEnter}
-          onChange={handleComposerChange}
-          onSlashQueryChange={skillCommand.onQueryChange}
-          onNavKeyDown={skillCommand.onNavKeyDown}
-          onSubmit={submit}
-          className={cn('agent-chat-input__textarea', classNames?.textarea)}
-        />
-
-        <CreditsAttachmentTray
-          attachments={currentAttachments}
-          previewUrls={previewUrls}
-          reduce={reduce}
-          onPreview={setPreviewAttachmentId}
-          onRemove={removeAttachment}
-        />
+        {header}
+        <div className="agent-chat-input__editor">
+          {streamingPlaceholders.length ? (
+            <StreamingPlaceholder
+              active={text.length === 0 && !editorFocused}
+              examples={streamingPlaceholders}
+              reduce={reduce}
+              onPick={(prompt) => composerRef.current?.fill(prompt)}
+            />
+          ) : null}
+          <AgentChatComposer
+            ref={composerRef}
+            value={text}
+            skills={skills}
+            placeholder={streamingPlaceholders.length && !editorFocused ? '' : placeholder}
+            ariaLabel={ariaLabel}
+            disabled={disabled}
+            minRows={minRows}
+            maxRows={maxRows}
+            submitOnEnter={submitOnEnter}
+            onChange={handleComposerChange}
+            onSlashQueryChange={skillCommand.onQueryChange}
+            onNavKeyDown={skillCommand.onNavKeyDown}
+            onSubmit={submit}
+            className={cn('agent-chat-input__textarea', classNames?.textarea)}
+          />
+        </div>
 
         <div className={cn('agent-chat-input__toolbar', classNames?.toolbar)}>
           <div className="agent-chat-input__toolbar-group">
-            {allowFileUpload ? (
-              <AttachButton
+            {modes.length > 0 ? (
+              <ComposerModeSwitch
+                modes={modes}
+                value={mode ?? modes[0]?.id ?? ''}
                 disabled={disabled}
                 reduce={reduce}
-                onAttach={() => fileInputRef.current?.click()}
+                onChange={(next) => onModeChange?.(next)}
               />
             ) : null}
             <AgentSelector
@@ -767,6 +792,15 @@ export function AgentChatInput({
 
           {toolbarContent ? (
             <div className="agent-chat-input__toolbar-content">{toolbarContent}</div>
+          ) : null}
+
+          {librarySkills.length > 0 ? (
+            <SkillLibrary
+              skills={librarySkills}
+              side={menuSide}
+              disabled={disabled}
+              onSelect={(skillId) => onLibrarySkillSelect?.(skillId)}
+            />
           ) : null}
 
           <div className="agent-chat-input__toolbar-group agent-chat-input__toolbar-group--end">
@@ -793,6 +827,9 @@ export function AgentChatInput({
               >
                 <Mic aria-hidden="true" />
               </IconButton>
+            ) : null}
+            {submitNote ? (
+              <span className="agent-chat-input__submit-note">{submitNote}</span>
             ) : null}
             <motion.button
               type="button"

@@ -12451,3 +12451,318 @@ video.home-backdrop__media[data-playing='false'] {
   background: transparent;
   color: var(--foreground);
 }
+
+/* The composer as one box: reference images in its top-left corner, the text, the settings
+   for the current mode, then the mode bar with the skill library and the send button. The
+   empty parts of the box focus the text, and the box lights its edge while it has focus. */
+.agent-chat-input__editor {
+  position: relative;
+  min-width: 0;
+}
+.agent-chat-input__editor > .agent-chat-input__streaming-placeholder {
+  top: 16px;
+}
+.landing-composer .agent-chat-input__editor > .agent-chat-input__streaming-placeholder,
+.studio-agent-input .agent-chat-input__editor > .agent-chat-input__streaming-placeholder {
+  top: 18px;
+  right: 16px;
+  left: 18px;
+}
+.agent-chat-input.generation-composer {
+  transition: box-shadow 0.2s var(--ease-out-expo);
+}
+.agent-chat-input.generation-composer:focus-within {
+  box-shadow:
+    0 0 0 1px var(--line-3),
+    0 18px 54px -38px rgb(0 0 0 / 0.82);
+}
+
+.agent-chat-input__references {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1-5);
+  padding: var(--space-3) var(--space-3) 0;
+}
+.agent-chat-input__reference-row {
+  display: flex;
+  max-width: 100%;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.agent-chat-input__reference-add,
+.agent-chat-input__reference {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-md);
+}
+.agent-chat-input__reference-add {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  background: var(--fill-2);
+  color: var(--text-3);
+  padding: 0;
+  transition:
+    background 0.16s var(--ease-out-expo),
+    border-color 0.16s var(--ease-out-expo),
+    color 0.16s var(--ease-out-expo);
+}
+.agent-chat-input__reference-add:hover:not(:disabled) {
+  border-color: var(--line-3);
+  background: var(--fill-3);
+  color: var(--text-1);
+}
+.agent-chat-input__reference-add:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.agent-chat-input__reference-add svg {
+  width: 18px;
+  height: 18px;
+}
+.agent-chat-input__reference-preview,
+.agent-chat-input__reference-file {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line-1);
+  border-radius: inherit;
+  background: var(--bg-media);
+  padding: 0;
+  color: var(--text-3);
+}
+.agent-chat-input__reference-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.agent-chat-input__reference-file svg {
+  width: 18px;
+  height: 18px;
+}
+/* Dark glass over the image, like the other controls laid on media. */
+.agent-chat-input__reference-remove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: rgb(0 0 0 / 0.62);
+  color: var(--text-1);
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.16s var(--ease-out-expo);
+}
+.agent-chat-input__reference:hover .agent-chat-input__reference-remove,
+.agent-chat-input__reference:focus-within .agent-chat-input__reference-remove {
+  opacity: 1;
+}
+.agent-chat-input__reference-remove svg {
+  width: 12px;
+  height: 12px;
+}
+.agent-chat-input__reference-count {
+  color: var(--text-4);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+}
+@media (hover: none) {
+  .agent-chat-input__reference-remove {
+    opacity: 1;
+  }
+}
+
+/* With modes the settings take the first row and the mode bar the second, at every width;
+   the doubled class outranks the page composers' earlier orderings. */
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar {
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+}
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar-content {
+  order: -1;
+  width: 100%;
+  flex: 1 0 100%;
+  justify-content: flex-start;
+  margin: 0;
+  border-top: 0;
+  border-bottom: 0;
+  padding: 0;
+}
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar-group,
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar-group:first-child {
+  order: 0;
+}
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar-group--end {
+  margin-left: auto;
+}
+.agent-chat-input__modes {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: var(--radius-full);
+  background: var(--fill-1);
+  padding: 3px;
+}
+.agent-chat-input__mode {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  gap: var(--space-1-5);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-3);
+  padding: 0 var(--space-3);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background 0.16s var(--ease-out-expo),
+    color 0.16s var(--ease-out-expo);
+}
+.agent-chat-input__mode:hover:not(:disabled) {
+  color: var(--text-1);
+}
+.agent-chat-input__mode--selected {
+  background: var(--fill-4);
+  color: var(--text-1);
+  font-weight: 600;
+}
+.agent-chat-input__mode svg {
+  width: 16px;
+  height: 16px;
+}
+.agent-chat-input__mode-badge {
+  border-radius: var(--radius-xs);
+  background: var(--fill-2);
+  color: var(--text-4);
+  padding: 0 var(--space-1-5);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+}
+.agent-chat-input__library-trigger {
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  gap: var(--space-1-5);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-2);
+  padding: 0 var(--space-2-5);
+  font-size: 13px;
+  white-space: nowrap;
+  transition:
+    background 0.16s var(--ease-out-expo),
+    color 0.16s var(--ease-out-expo);
+}
+.agent-chat-input__library-trigger:hover:not(:disabled),
+.agent-chat-input__library-trigger[data-state='open'] {
+  background: var(--fill-3);
+  color: var(--text-1);
+}
+.agent-chat-input__library-trigger svg {
+  width: 16px;
+  height: 16px;
+}
+.agent-chat-input__submit-note {
+  color: var(--text-3);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* The library opens in a portal, so its rules are not scoped under the composer. */
+.agent-chat-input__library-panel {
+  width: min(640px, calc(100vw - 32px));
+  padding: var(--space-2);
+}
+.agent-chat-input__library-header {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-2) var(--space-2) var(--space-3);
+}
+.agent-chat-input__library-header strong {
+  color: var(--text-1);
+  font-size: 15px;
+  font-weight: 600;
+}
+.agent-chat-input__library-header span {
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 400;
+}
+.agent-chat-input__library-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+.agent-chat-input__library-item {
+  gap: var(--space-3);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+}
+.agent-chat-input__library-item img,
+.agent-chat-input__library-icon {
+  width: 56px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-sm);
+  background: var(--bg-media);
+  object-fit: cover;
+}
+.agent-chat-input__library-icon {
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+}
+.agent-chat-input__library-text {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.agent-chat-input__library-text strong {
+  color: var(--text-1);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+}
+.agent-chat-input__library-text small {
+  overflow: hidden;
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 860px) {
+  .landing-composer .agent-chat-input__editor > .agent-chat-input__streaming-placeholder,
+  .studio-agent-input .agent-chat-input__editor > .agent-chat-input__streaming-placeholder {
+    top: 14px;
+    right: 14px;
+    left: 14px;
+  }
+}
+@media (max-width: 560px) {
+  .agent-chat-input__mode {
+    padding: 0 var(--space-2);
+    font-size: 12px;
+  }
+  .agent-chat-input__mode svg {
+    display: none;
+  }
+  .agent-chat-input__library-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

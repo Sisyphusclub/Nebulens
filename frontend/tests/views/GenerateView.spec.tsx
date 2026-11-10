@@ -3,6 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+const skillsApiMocks = vi.hoisted(() => ({
+  fetchSkillForms: vi.fn(),
+  planSkill: vi.fn(),
+  selectSkillForBrief: vi.fn(),
+}));
+
+vi.mock('@/services/api/skillsApi', () => skillsApiMocks);
+
 const generation = vi.hoisted(() => ({
   generate: vi.fn(),
   cancel: vi.fn(),
@@ -692,7 +700,9 @@ it('adds a dropped reference image to the next generation', async () => {
     dataTransfer: { files: [file], types: ['Files'], dropEffect: 'none' },
   });
 
-  expect(await screen.findByText('dropped-reference.png')).toBeInTheDocument();
+  expect(
+    await screen.findByRole('button', { name: '移除参考图 dropped-reference.png' }),
+  ).toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: '生成图片' }));
 
   await waitFor(() =>
@@ -722,7 +732,9 @@ it('adds a pasted image to the next generation exactly once', async () => {
     },
   });
 
-  expect(await screen.findAllByText('pasted-reference.png')).toHaveLength(1);
+  expect(
+    await screen.findAllByRole('button', { name: '移除参考图 pasted-reference.png' }),
+  ).toHaveLength(1);
   await user.click(screen.getByRole('button', { name: '生成图片' }));
 
   await waitFor(() =>
@@ -1473,7 +1485,7 @@ it('shows the sent reference images with the prompt while generating', async () 
   fireEvent.drop(surface!, {
     dataTransfer: { files: [file], types: ['Files'], dropEffect: 'none' },
   });
-  expect(await screen.findByText('device.png')).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: '移除参考图 device.png' })).toBeInTheDocument();
 
   await user.click(screen.getByRole('button', { name: '生成图片' }));
 
@@ -1531,7 +1543,9 @@ it('keeps the uploaded reference images when a failed generation is retried', as
   fireEvent.drop(surface!, {
     dataTransfer: { files: [file], types: ['Files'], dropEffect: 'none' },
   });
-  expect(await screen.findByText('retry-reference.png')).toBeInTheDocument();
+  expect(
+    await screen.findByRole('button', { name: '移除参考图 retry-reference.png' }),
+  ).toBeInTheDocument();
 
   await user.click(screen.getByRole('button', { name: '生成图片' }));
   const errorCard = await waitFor(() => {
@@ -2390,4 +2404,28 @@ it('keeps an unsent prompt through a remount and forgets it once it is generated
 
   renderWorkspace();
   expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent('');
+});
+
+it('makes a plain image when Agent mode finds no skill for the request', async () => {
+  skillsApiMocks.selectSkillForBrief.mockResolvedValue(null);
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter initialEntries={['/generate']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await user.click(screen.getByRole('button', { name: 'Agent 模式' }));
+  await user.type(screen.getByRole('textbox', { name: '图像提示词' }), '晨雾里的灯塔');
+  await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
+
+  await waitFor(() =>
+    expect(generation.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ prompt: '晨雾里的灯塔' }),
+    ),
+  );
+  expect(skillsApiMocks.selectSkillForBrief).toHaveBeenCalledWith('晨雾里的灯塔', false);
+  expect(skillsApiMocks.planSkill).not.toHaveBeenCalled();
 });

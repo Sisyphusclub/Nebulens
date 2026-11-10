@@ -1,4 +1,5 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ClipboardEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -265,5 +266,106 @@ describe('AgentChatInput skills', () => {
     const pill = container.querySelector<HTMLElement>('[data-skill-id="architecture"]');
     expect(pill).toHaveTextContent(/^架构图$/);
     expect(pill?.querySelector('svg')).toBeInTheDocument();
+  });
+});
+
+describe('AgentChatInput composer box', () => {
+  const baseProps = {
+    ariaLabel: '图像提示词',
+    models: [],
+    reasoningLevels: [],
+    speedModes: [],
+    agents: [],
+    skills: [],
+  };
+
+  it('stops streaming examples while the text has focus, so the caret is plain to see', () => {
+    const { container, getByRole } = render(
+      <AgentChatInput
+        {...baseProps}
+        placeholder="描述你想生成的画面"
+        streamingPlaceholders={['雨夜的未来城市']}
+      />,
+    );
+    const editor = getByRole('textbox', { name: '图像提示词' });
+    const examples = container.querySelector('.agent-chat-input__streaming-placeholder');
+    expect(examples).toHaveAttribute('data-active', 'true');
+    expect(editor).toHaveAttribute('data-placeholder', '');
+
+    fireEvent.focus(editor);
+    expect(examples).not.toHaveAttribute('data-active');
+    expect(editor).toHaveAttribute('data-placeholder', '描述你想生成的画面');
+
+    fireEvent.blur(editor);
+    expect(examples).toHaveAttribute('data-active', 'true');
+  });
+
+  it('focuses the text when an empty part of the box is pressed', () => {
+    const { container, getByRole } = render(<AgentChatInput {...baseProps} />);
+
+    fireEvent.mouseDown(container.querySelector('.agent-chat-input__surface')!);
+
+    expect(getByRole('textbox', { name: '图像提示词' })).toHaveFocus();
+  });
+
+  it('marks the current mode and hands a picked one to the page', () => {
+    const onModeChange = vi.fn();
+    const { getByRole } = render(
+      <AgentChatInput
+        {...baseProps}
+        modes={[
+          { id: 'agent', label: 'Agent 模式' },
+          { id: 'image', label: '图片生成' },
+          { id: 'video', label: '视频生成', badge: '即将上线' },
+        ]}
+        mode="image"
+        onModeChange={onModeChange}
+      />,
+    );
+
+    expect(getByRole('button', { name: '图片生成' })).toHaveAttribute('aria-pressed', 'true');
+    expect(getByRole('button', { name: 'Agent 模式' })).toHaveAttribute('aria-pressed', 'false');
+    const video = getByRole('button', { name: /视频生成/ });
+    expect(video).toHaveTextContent('即将上线');
+    fireEvent.click(video);
+    expect(onModeChange).toHaveBeenCalledWith('video');
+  });
+
+  it('counts reference images against the limit and stops adding at it', () => {
+    const file = new File(['a'], 'a.png', { type: 'image/png' });
+    const first: AgentChatAttachment = { id: 'a', name: 'a.png', type: 'image/png', file };
+    const second: AgentChatAttachment = { ...first, id: 'b', name: 'b.png' };
+    const { getByRole, getByText, rerender } = render(
+      <AgentChatInput {...baseProps} attachments={[first]} attachmentLimit={2} />,
+    );
+    expect(getByText('参考图 1/2')).toBeInTheDocument();
+    expect(getByRole('button', { name: '添加参考图' })).toBeEnabled();
+    expect(getByRole('button', { name: '移除参考图 a.png' })).toBeInTheDocument();
+
+    rerender(<AgentChatInput {...baseProps} attachments={[first, second]} attachmentLimit={2} />);
+    expect(getByText('参考图 2/2')).toBeInTheDocument();
+    expect(getByRole('button', { name: '添加参考图' })).toBeDisabled();
+  });
+
+  it('lists every skill in the library and hands the picked one to the page', async () => {
+    const user = userEvent.setup();
+    const onLibrarySkillSelect = vi.fn();
+    const { getByRole, findByRole } = render(
+      <AgentChatInput
+        {...baseProps}
+        librarySkills={[
+          { id: 'poster', label: '活动海报', description: '一次出竖版海报、方图和横幅' },
+          { id: 'logo', label: '品牌 Logo', description: '一次出四个方向的 Logo' },
+        ]}
+        onLibrarySkillSelect={onLibrarySkillSelect}
+      />,
+    );
+
+    await user.click(getByRole('button', { name: '技能库' }));
+    const library = await findByRole('menu', { name: '技能库' });
+    expect(within(library).getAllByRole('menuitem')).toHaveLength(2);
+    await user.click(within(library).getByRole('menuitem', { name: /品牌 Logo/ }));
+
+    expect(onLibrarySkillSelect).toHaveBeenCalledWith('logo');
   });
 });

@@ -79,6 +79,26 @@ function buildPill(skill: AgentChatSkill) {
   return pill;
 }
 
+/**
+ * What a browser leaves in the editor once its last character is deleted: a lone line break,
+ * bare or in a block of its own. A break the user typed never stands alone, because the line
+ * the caret moves to brings a second one.
+ */
+function isLeftoverBreak(editor: HTMLElement): boolean {
+  if (editor.childNodes.length !== 1) {
+    return false;
+  }
+  const only = editor.firstChild;
+  if (only instanceof HTMLBRElement) {
+    return true;
+  }
+  return (
+    only instanceof HTMLDivElement &&
+    only.childNodes.length === 1 &&
+    only.firstChild instanceof HTMLBRElement
+  );
+}
+
 function serializeEditor(editor: HTMLElement): ComposerValue {
   const skillIds: string[] = [];
 
@@ -364,6 +384,11 @@ export const AgentChatComposer = forwardRef<AgentChatComposerHandle, AgentChatCo
         return;
       }
 
+      // Read as a new line, the leftover break would keep the box from ever counting as
+      // empty again, and the placeholder and the examples would not come back.
+      if (isLeftoverBreak(editor)) {
+        editor.replaceChildren();
+      }
       const value = serializeEditor(editor);
       editor.dataset.empty = value.text.length === 0 ? 'true' : 'false';
       onChange?.(value);

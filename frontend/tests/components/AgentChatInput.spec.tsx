@@ -308,6 +308,44 @@ describe('AgentChatInput composer box', () => {
     expect(getByRole('textbox', { name: '图像提示词' })).toHaveFocus();
   });
 
+  it('counts the box as empty again once the last character is deleted', () => {
+    const onValueChange = vi.fn();
+    const { getByRole } = render(
+      <AgentChatInput
+        {...baseProps}
+        placeholder="描述你想生成的画面"
+        onValueChange={onValueChange}
+      />,
+    );
+    const editor = getByRole('textbox', { name: '图像提示词' });
+
+    editor.textContent = '海';
+    fireEvent.input(editor);
+    expect(editor).toHaveAttribute('data-empty', 'false');
+
+    // Browsers leave a lone line break behind when the last character goes; read as a
+    // new line it kept the placeholder and the examples from ever coming back.
+    editor.innerHTML = '<br>';
+    fireEvent.input(editor);
+
+    expect(editor).toHaveAttribute('data-empty', 'true');
+    expect(editor).toBeEmptyDOMElement();
+    expect(onValueChange).toHaveBeenLastCalledWith('');
+  });
+
+  it('keeps a line break the user typed into an empty box', () => {
+    const onValueChange = vi.fn();
+    const { getByRole } = render(<AgentChatInput {...baseProps} onValueChange={onValueChange} />);
+    const editor = getByRole('textbox', { name: '图像提示词' });
+
+    // Shift+Enter in an empty box: the break itself and the line the caret moves to.
+    editor.innerHTML = '<br><br>';
+    fireEvent.input(editor);
+
+    expect(editor).toHaveAttribute('data-empty', 'false');
+    expect(editor.childNodes).toHaveLength(2);
+  });
+
   it('sets the text beside the reference images at the top of the box, over the header', () => {
     const { container, getByRole, getByTestId } = render(
       <AgentChatInput {...baseProps} header={<div data-testid="skill-card" />} />,

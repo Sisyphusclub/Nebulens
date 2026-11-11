@@ -853,7 +853,44 @@ export function GenerateView() {
                 />
               )
             }
-            submitNote={agentMode ? '按实际用量计费' : undefined}
+            submitNote={
+              <span className="studio-toolbar-meta">
+                <span
+                  className="studio-toolbar-status"
+                  data-active={generation.isLoading ? 'true' : undefined}
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span
+                    className="studio-toolbar-status__dot"
+                    data-active={generation.isLoading ? 'true' : undefined}
+                    aria-hidden="true"
+                  />
+                  {generation.isLoading ? generation.statusMessage : '准备生成'}
+                </span>
+                {/* One thing at a time, so the toolbar keeps its width while a run is on. */}
+                {generation.isLoading ? null : agentMode ? (
+                  <span>按实际用量计费</span>
+                ) : (
+                  <span
+                    className="studio-toolbar-quota"
+                    aria-label={
+                      activeImageApiKeyConfigured ? '当前使用个人 API Key' : '今日生成额度'
+                    }
+                  >
+                    {imageApiKey.isLoading
+                      ? '调用：同步中'
+                      : activeImageApiKeyConfigured
+                        ? `调用：个人 Key · ${activeImageApiKeySuffix ?? '已配置'}`
+                        : quotaLoading
+                          ? '额度：同步中'
+                          : isAuthenticated
+                            ? `额度：${activeQuotaRemaining ?? '—'} / ${activeQuotaTotal ?? '—'}`
+                            : '额度：登录后查看'}
+                  </span>
+                )}
+              </span>
+            }
             disabled={authLoading || composerSkills.planning}
             minRows={2}
             maxRows={7}
@@ -890,39 +927,6 @@ export function GenerateView() {
                 onCountChange={setCount}
                 onResolutionChange={updateResolution}
                 onQualityChange={setQuality}
-                trailingContent={
-                  <span className="studio-toolbar-meta">
-                    <span
-                      className="studio-toolbar-status"
-                      data-active={generation.isLoading ? 'true' : undefined}
-                      role="status"
-                      aria-live="polite"
-                    >
-                      <span
-                        className="studio-toolbar-status__dot"
-                        data-active={generation.isLoading ? 'true' : undefined}
-                        aria-hidden="true"
-                      />
-                      {generation.isLoading ? generation.statusMessage : '准备生成'}
-                    </span>
-                    <span
-                      className="studio-toolbar-quota"
-                      aria-label={
-                        activeImageApiKeyConfigured ? '当前使用个人 API Key' : '今日生成额度'
-                      }
-                    >
-                      {imageApiKey.isLoading
-                        ? '调用：同步中'
-                        : activeImageApiKeyConfigured
-                          ? `调用：个人 Key · ${activeImageApiKeySuffix ?? '已配置'}`
-                          : quotaLoading
-                            ? '额度：同步中'
-                            : isAuthenticated
-                              ? `额度：${activeQuotaRemaining ?? '—'} / ${activeQuotaTotal ?? '—'}`
-                              : '额度：登录后查看'}
-                    </span>
-                  </span>
-                }
               />
             }
             className="generation-composer studio-agent-input"

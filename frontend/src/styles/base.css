@@ -10776,8 +10776,7 @@ video {
   gap: 8px;
 }
 .generation-composer-controls .beui-select-trigger,
-.generation-custom-trigger,
-.generation-controls-tail > * {
+.generation-custom-trigger {
   box-sizing: border-box;
   height: 40px;
   min-height: 40px;
@@ -10788,8 +10787,7 @@ video {
   font-size: 12px;
 }
 .generation-composer-controls .beui-select-trigger:hover:not(:disabled),
-.generation-custom-trigger:hover:not(:disabled),
-.generation-controls-tail > button:hover:not(:disabled) {
+.generation-custom-trigger:hover:not(:disabled) {
   background: var(--muted);
   color: var(--foreground);
 }
@@ -11052,20 +11050,6 @@ video {
   gap: 0;
   padding: 0 6px;
 }
-.generation-controls-tail {
-  display: flex;
-  min-width: 0;
-  flex: 1 1 auto;
-  align-items: center;
-  justify-content: flex-end;
-  margin-left: auto;
-}
-.generation-controls-tail .landing-quota {
-  margin-left: 0;
-}
-.generation-controls-tail .studio-toolbar-meta {
-  min-width: 0;
-}
 
 @media (max-width: 860px) {
   .generation-composer .agent-chat-input__textarea {
@@ -11116,9 +11100,6 @@ video {
   }
   .generation-custom-trigger > small {
     display: none;
-  }
-  .generation-controls-tail {
-    flex: 1 1 150px;
   }
   .generation-custom-panel {
     width: min(360px, calc(100vw - 20px));
@@ -12467,9 +12448,10 @@ video.home-backdrop__media[data-playing='false'] {
   color: var(--foreground);
 }
 
-/* The composer as one box: reference images in its top-left corner, the text, the settings
-   for the current mode, then the mode bar with the skill library and the send button. The
-   empty parts of the box focus the text, and the box lights its edge while it has focus. */
+/* The composer as one box on one left edge: reference images in its top-left corner, the
+   text, then a single toolbar with the modes, the current mode's settings and the skill
+   library, and a quiet note beside the send button on the right. The empty parts of the box
+   focus the text, and the box lights its edge while it has focus. */
 .agent-chat-input__editor {
   position: relative;
   min-width: 0;
@@ -12481,7 +12463,7 @@ video.home-backdrop__media[data-playing='false'] {
 .studio-agent-input .agent-chat-input__editor > .agent-chat-input__streaming-placeholder {
   top: 18px;
   right: 16px;
-  left: 18px;
+  left: 16px;
 }
 .agent-chat-input.generation-composer {
   transition: box-shadow 0.2s var(--ease-out-expo);
@@ -12597,28 +12579,82 @@ video.home-backdrop__media[data-playing='false'] {
   }
 }
 
-/* With modes the settings take the first row and the mode bar the second, at every width;
-   the doubled class outranks the page composers' earlier orderings. */
-.agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar {
-  flex-wrap: wrap;
-  row-gap: var(--space-2);
+/* With modes everything in the box starts on one inset and the toolbar is a single row. The
+   doubled class outranks the page composers' earlier paddings and orderings. */
+.agent-chat-input.agent-chat-input--modes {
+  container: composer / inline-size;
 }
-.agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar-content {
-  order: -1;
-  width: 100%;
-  flex: 1 0 100%;
-  justify-content: flex-start;
-  margin: 0;
-  border-top: 0;
-  border-bottom: 0;
-  padding: 0;
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__surface {
+  /* Measured inside the surface's own padding. Set here, not on the box: a container query
+     cannot restyle its own container. */
+  --composer-inset: var(--space-3);
+  padding-bottom: var(--space-4);
+}
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__references {
+  padding: var(--space-3) var(--composer-inset) 0;
+}
+.agent-chat-input.agent-chat-input--modes .landing-skill-card {
+  margin: var(--space-2) var(--composer-inset) 0;
+}
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__textarea {
+  min-height: 78px !important;
+  padding-inline: var(--composer-inset) !important;
+}
+.agent-chat-input.agent-chat-input--modes
+  .agent-chat-input__editor
+  > .agent-chat-input__streaming-placeholder {
+  right: var(--composer-inset);
+  left: var(--composer-inset);
+  line-height: 1.5;
+}
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar {
+  flex-wrap: nowrap;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: 0 var(--composer-inset);
 }
 .agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar-group,
 .agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar-group:first-child {
   order: 0;
+  flex: 0 0 auto;
+}
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar-content {
+  order: 0;
+  width: auto;
+  min-width: 0;
+  flex: 0 1 auto;
+  justify-content: flex-start;
+  margin: 0;
+  border: 0;
+  padding: 0;
 }
 .agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar-group--end {
+  gap: var(--space-3);
   margin-left: auto;
+}
+/* The settings read as two capsules after the modes. The summary says what is set, so the
+   word 自定义 is kept for boxes too narrow to show the summary. */
+.agent-chat-input.agent-chat-input--modes .generation-composer-controls {
+  width: auto;
+  flex-wrap: nowrap;
+  gap: var(--space-2);
+}
+.agent-chat-input.agent-chat-input--modes .generation-composer-controls .generation-model-select {
+  width: 190px;
+  flex: 0 1 190px;
+}
+.agent-chat-input.agent-chat-input--modes .generation-custom-trigger {
+  width: auto;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.agent-chat-input.agent-chat-input--modes .generation-custom-trigger > span {
+  display: none;
+}
+.agent-chat-input.agent-chat-input--modes .generation-custom-trigger > small {
+  display: block;
+  color: inherit;
+  font-size: 12px;
 }
 .agent-chat-input__modes {
   display: flex;
@@ -12668,7 +12704,8 @@ video.home-backdrop__media[data-playing='false'] {
 }
 .agent-chat-input__library-trigger {
   display: inline-flex;
-  height: 32px;
+  height: var(--control-height);
+  flex: 0 0 auto;
   align-items: center;
   gap: var(--space-1-5);
   border: 0;
@@ -12692,9 +12729,90 @@ video.home-backdrop__media[data-playing='false'] {
   height: 16px;
 }
 .agent-chat-input__submit-note {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
   color: var(--text-3);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+/* What the note holds used to be a row of its own; here it sits on the toolbar's line. */
+.agent-chat-input__submit-note .landing-quota,
+.agent-chat-input__submit-note .studio-toolbar-meta {
+  width: auto;
+  height: var(--control-height);
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+.agent-chat-input__submit-note button.landing-quota {
+  padding: 0 var(--space-2);
+}
+
+/* As the box narrows the toolbar gives up the mode icons, then the note, then the single
+   row: the settings move to a row of their own above the modes. A phone keeps it to two rows
+   by showing the library as an icon beside the settings and dropping the 即将上线 tag. */
+@container composer (max-width: 1139px) {
+  .agent-chat-input__mode svg {
+    display: none;
+  }
+}
+@container composer (max-width: 1019px) {
+  .agent-chat-input__submit-note {
+    display: none;
+  }
+}
+@container composer (max-width: 904px) {
+  .agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar {
+    flex-wrap: wrap;
+  }
+  .agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar-content {
+    order: -1;
+    flex: 1 0 100%;
+  }
+}
+@container composer (max-width: 559px) {
+  .agent-chat-input.agent-chat-input--modes .agent-chat-input__surface {
+    --composer-inset: var(--space-2);
+  }
+  .agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar-content {
+    flex: 1 1 calc(100% - var(--control-height) - var(--space-2));
+  }
+  .agent-chat-input.agent-chat-input--modes .generation-composer-controls {
+    width: 100%;
+  }
+  .agent-chat-input.agent-chat-input--modes .generation-composer-controls .generation-model-select,
+  .agent-chat-input.agent-chat-input--modes .generation-custom-trigger {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 0;
+  }
+  .agent-chat-input.agent-chat-input--modes .generation-custom-trigger > span {
+    display: inline;
+  }
+  .agent-chat-input.agent-chat-input--modes .generation-custom-trigger > small {
+    display: none;
+  }
+  /* An icon on its own takes the capsule of the two settings beside it. */
+  .agent-chat-input.agent-chat-input--modes .agent-chat-input__library-trigger {
+    order: -1;
+    width: var(--control-height);
+    justify-content: center;
+    border: 1px solid var(--line-1);
+    background: var(--fill-2);
+    padding: 0;
+  }
+  .agent-chat-input__library-trigger span {
+    display: none;
+  }
+  .agent-chat-input__mode {
+    padding: 0 var(--space-2);
+    font-size: 12px;
+  }
+  .agent-chat-input__mode-badge {
+    display: none;
+  }
 }
 
 /* The library opens in a portal, so its rules are not scoped under the composer. */
@@ -12770,13 +12888,6 @@ video.home-backdrop__media[data-playing='false'] {
   }
 }
 @media (max-width: 560px) {
-  .agent-chat-input__mode {
-    padding: 0 var(--space-2);
-    font-size: 12px;
-  }
-  .agent-chat-input__mode svg {
-    display: none;
-  }
   .agent-chat-input__library-grid {
     grid-template-columns: minmax(0, 1fr);
   }

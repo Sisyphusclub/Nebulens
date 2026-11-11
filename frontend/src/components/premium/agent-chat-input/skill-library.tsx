@@ -24,7 +24,13 @@ export function SkillLibrary({ skills, side, disabled, onSelect }: SkillLibraryP
   return (
     <AnimatedDropdown modal={false}>
       <AnimatedDropdownTrigger asChild>
-        <button type="button" className="agent-chat-input__library-trigger" disabled={disabled}>
+        <button
+          type="button"
+          // Named here: on a phone the label is hidden and only the icon shows.
+          aria-label="技能库"
+          className="agent-chat-input__library-trigger"
+          disabled={disabled}
+        >
           <LibraryBig aria-hidden="true" />
           <span>技能库</span>
         </button>

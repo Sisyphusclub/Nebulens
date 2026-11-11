@@ -613,6 +613,23 @@ describe('React application routes', () => {
     expect(screen.getByLabelText('当前路由')).not.toHaveTextContent('/generate');
   });
 
+  it('keeps the credits beside the send button, with the billing note in their place in Agent mode', async () => {
+    const user = userEvent.setup();
+    const { container } = renderRoute('/');
+
+    const quota = await screen.findByRole('status', { name: '剩余额度 16，总额度 20' });
+    expect(quota.closest('.agent-chat-input__submit-note')).not.toBeNull();
+    // The settings no longer carry a tail of their own: the toolbar is one row.
+    expect(container.querySelector('.generation-controls-tail')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Agent 模式' }));
+
+    expect(screen.queryByRole('status', { name: /剩余额度/ })).toBeNull();
+    expect(container.querySelector('.agent-chat-input__submit-note')).toHaveTextContent(
+      '按实际用量计费',
+    );
+  });
+
   it('says video is on its way and keeps the current mode', async () => {
     const user = userEvent.setup();
     renderRoute('/');

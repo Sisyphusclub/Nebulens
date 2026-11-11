@@ -10,7 +10,13 @@ test('plans the images with the text model when no skill fits an Agent mode requ
 }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Agent 模式' }).click();
-  await expect(page.getByText('按实际用量计费')).toBeVisible();
+  // The billing note beside the send button only shows in a wide composer, so the mode is
+  // read from the controls that are always there.
+  await expect(page.getByRole('button', { name: 'Agent 模式' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('button', { name: '交给 Agent 开始创作' })).toBeVisible();
   const editor = page.getByRole('textbox', { name: '首页创作提示词' });
   await editor.click();
   await page.keyboard.type('端到端 Agent 规划，雨夜的未来城市');

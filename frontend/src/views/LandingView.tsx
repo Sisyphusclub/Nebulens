@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom';
 
 import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
-import { LandingGenerationControls } from '@/components/landing/LandingGenerationControls';
+import { GenerationComposerControls } from '@/components/generation/GenerationComposerControls';
 import { LandingHeroBackdrop } from '@/components/landing/LandingHeroBackdrop';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { AiInsightBar } from '@/components/generation/AiInsightBar';
 import { LandingFeatureBanner } from '@/components/landing/LandingFeatureBanner';
+import { LandingQuota } from '@/components/landing/LandingQuota';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingShowcase } from '@/components/landing/LandingShowcase';
 import { LandingSkillBar } from '@/components/landing/LandingSkillBar';
@@ -350,7 +351,18 @@ export function LandingView() {
                     />
                   )
                 }
-                submitNote={agentMode ? '按实际用量计费' : undefined}
+                submitNote={
+                  agentMode ? (
+                    '按实际用量计费'
+                  ) : (
+                    <LandingQuota
+                      label={quotaLabel}
+                      ariaLabel={quotaAriaLabel}
+                      isAction={!authLoading && !isAuthenticated}
+                      onClick={openAuthModal}
+                    />
+                  )
+                }
                 disabled={planningSkill}
                 minRows={1}
                 maxRows={4}
@@ -368,7 +380,7 @@ export function LandingView() {
                   if (skill !== undefined) selectSkill(skill);
                 }}
                 toolbarContent={
-                  <LandingGenerationControls
+                  <GenerationComposerControls
                     model={model}
                     aspect={aspect}
                     count={count}
@@ -376,15 +388,11 @@ export function LandingView() {
                     quality={quality}
                     disabled={authLoading}
                     planned={mode === 'agent' || activeSkill !== undefined}
-                    quotaLabel={quotaLabel}
-                    quotaAriaLabel={quotaAriaLabel}
-                    quotaIsAction={!authLoading && !isAuthenticated}
                     onModelChange={setModel}
                     onAspectChange={setAspect}
                     onCountChange={setCount}
                     onResolutionChange={updateResolution}
                     onQualityChange={setQuality}
-                    onQuotaClick={openAuthModal}
                   />
                 }
                 className="generation-composer landing-composer"

@@ -58,7 +58,6 @@ interface GenerationComposerControlsProps {
   customPanelSide?: 'top' | 'bottom';
   /** A skill decides each image's ratio and count, so only the other settings are offered. */
   planned?: boolean;
-  trailingContent?: ReactNode;
   onModelChange: (model: ImageModel) => void;
   onAspectChange: (aspect: AspectChoice) => void;
   onCountChange: (count: number) => void;
@@ -75,7 +74,6 @@ export function GenerationComposerControls({
   disabled = false,
   customPanelSide = 'bottom',
   planned = false,
-  trailingContent,
   onModelChange,
   onAspectChange,
   onCountChange,
@@ -266,8 +264,6 @@ export function GenerationComposerControls({
           {count}
         </output>
       )}
-
-      {trailingContent ? <div className="generation-controls-tail">{trailingContent}</div> : null}
     </div>
   );
 }

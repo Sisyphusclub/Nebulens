@@ -2436,3 +2436,42 @@ it('has the text model plan the images when no skill fits an Agent mode request'
   expect(skillsApiMocks.planFreely).toHaveBeenCalledWith('晨雾里的灯塔', false);
   expect(skillsApiMocks.planSkill).not.toHaveBeenCalled();
 });
+
+it('keeps the quota beside the send button, with the billing note in its place in Agent mode', async () => {
+  const user = userEvent.setup();
+  const { container } = render(
+    <MemoryRouter initialEntries={['/generate']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  expect(
+    screen.getByLabelText('今日生成额度').closest('.agent-chat-input__submit-note'),
+  ).not.toBeNull();
+  expect(container.querySelector('.generation-controls-tail')).toBeNull();
+
+  await user.click(screen.getByRole('button', { name: 'Agent 模式' }));
+
+  expect(screen.queryByLabelText('今日生成额度')).not.toBeInTheDocument();
+  expect(container.querySelector('.agent-chat-input__submit-note')).toHaveTextContent(
+    '按实际用量计费',
+  );
+});
+
+it('shows only the progress beside the send button while a generation runs', () => {
+  generation.isLoading = true;
+  const { container } = render(
+    <MemoryRouter initialEntries={['/generate']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  const note = container.querySelector('.agent-chat-input__submit-note');
+  expect(note?.querySelector('.studio-toolbar-status')).toHaveAttribute('data-active', 'true');
+  // The quota comes back when the run ends, so the toolbar keeps its width meanwhile.
+  expect(screen.queryByLabelText('今日生成额度')).not.toBeInTheDocument();
+});

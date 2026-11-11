@@ -874,9 +874,7 @@ export function GenerateView() {
                 ) : (
                   <span
                     className="studio-toolbar-quota"
-                    aria-label={
-                      activeImageApiKeyConfigured ? '当前使用个人 API Key' : '今日生成额度'
-                    }
+                    aria-label={activeImageApiKeyConfigured ? '当前使用个人 API Key' : '生成额度'}
                   >
                     {imageApiKey.isLoading
                       ? '调用：同步中'

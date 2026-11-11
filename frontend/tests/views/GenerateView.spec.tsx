@@ -221,7 +221,7 @@ it('shows personal Key routing instead of site quota when configured', () => {
   );
 
   expect(screen.getByLabelText('当前使用个人 API Key')).toHaveTextContent('调用：个人 Key · 4321');
-  expect(screen.queryByLabelText('今日生成额度')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('生成额度')).not.toBeInTheDocument();
 });
 
 it('uses the Key status for the currently selected resolution group', () => {
@@ -250,7 +250,7 @@ it('uses the Key status for the currently selected resolution group', () => {
     </MemoryRouter>,
   );
 
-  expect(screen.getByLabelText('今日生成额度')).toHaveTextContent('额度：18 / 20');
+  expect(screen.getByLabelText('生成额度')).toHaveTextContent('额度：18 / 20');
 });
 
 it('keeps the generation workspace prompt plain and focused', () => {
@@ -2448,13 +2448,13 @@ it('keeps the quota beside the send button, with the billing note in its place i
   );
 
   expect(
-    screen.getByLabelText('今日生成额度').closest('.agent-chat-input__submit-note'),
+    screen.getByLabelText('生成额度').closest('.agent-chat-input__submit-note'),
   ).not.toBeNull();
   expect(container.querySelector('.generation-controls-tail')).toBeNull();
 
   await user.click(screen.getByRole('button', { name: 'Agent 模式' }));
 
-  expect(screen.queryByLabelText('今日生成额度')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('生成额度')).not.toBeInTheDocument();
   expect(container.querySelector('.agent-chat-input__submit-note')).toHaveTextContent(
     '按实际用量计费',
   );
@@ -2473,5 +2473,5 @@ it('shows only the progress beside the send button while a generation runs', () 
   const note = container.querySelector('.agent-chat-input__submit-note');
   expect(note?.querySelector('.studio-toolbar-status')).toHaveAttribute('data-active', 'true');
   // The quota comes back when the run ends, so the toolbar keeps its width meanwhile.
-  expect(screen.queryByLabelText('今日生成额度')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('生成额度')).not.toBeInTheDocument();
 });

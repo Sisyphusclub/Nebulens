@@ -1002,7 +1002,7 @@ describe('React application routes', () => {
     );
     const generate = within(workspace);
     expect(generate.getByRole('button', { name: '选择模型' })).toHaveTextContent('gpt-image-2');
-    expect(generate.getByLabelText('今日生成额度')).toBeInTheDocument();
+    expect(generate.getByLabelText('生成额度')).toBeInTheDocument();
     expect(generate.getByRole('button', { name: '自定义生成参数' })).toBeInTheDocument();
     expect(generate.getByRole('button', { name: /生成图片/ })).toBeInTheDocument();
     expect(workspace).toHaveClass('is-empty');

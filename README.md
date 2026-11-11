@@ -153,6 +153,7 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 | `/generate`    | 生图工作区和当前会话结果     |
 | `/templates`   | 创作模板                     |
 | `/history`     | 个人资产历史                 |
+| `/team`        | 团队共享的成果库             |
 | `/admin/users` | 管理员用户与额度管理         |
 
 ### API 入口

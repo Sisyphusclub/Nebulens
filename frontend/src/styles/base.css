@@ -11435,9 +11435,10 @@ video {
   margin: 12px 0 0;
 }
 /* While writing on the generate page the composer shows four lines at most and scrolls
-   inside, so a long prompt, put back by "reuse settings" say, does not cover the results. */
+   inside, so a long prompt, put back by "reuse settings" say, does not cover the results:
+   four 24px lines and the 14px of padding the text has above and below. */
 .studio-create-bar .generation-composer .agent-chat-input__textarea {
-  max-height: 126px !important;
+  max-height: 110px !important;
 }
 /* On the generate page results scroll underneath the dock, so the strip gets the same dark
    glass as the panel above it instead of floating bare over an image. */

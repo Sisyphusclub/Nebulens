@@ -151,8 +151,12 @@ describe('image detail over the sidebar', () => {
 
 describe('generate composer', () => {
   it('shows four lines of a long prompt at most, so it cannot cover the results', () => {
+    // Four 24px lines and the 14px of padding the text has above and below.
     expect(rule('.studio-create-bar .generation-composer .agent-chat-input__textarea')).toContain(
-      'max-height: 126px !important;',
+      'max-height: 110px !important;',
+    );
+    expect(rule('.agent-chat-input.agent-chat-input--modes .agent-chat-input__textarea')).toContain(
+      'padding: 2px 0 var(--space-3) !important;',
     );
   });
 });

@@ -24,14 +24,12 @@ export interface Env {
   UPLOAD_MAX_BYTES: number;
   OUTPUT_DIR: string;
   LOG_LEVEL: string;
-  CORS_ORIGIN: string;
   BETTER_AUTH_URL: string;
   BETTER_AUTH_SECRET: string;
   GOOGLE_CLIENT_ID: string | undefined;
   GOOGLE_CLIENT_SECRET: string | undefined;
   FRONTEND_ORIGIN: string;
   SQLITE_PATH: string;
-  DAILY_USER_QUOTA: number;
   DAILY_CHECK_IN_REWARD: number;
   SEED_DEFAULT_ADMIN: boolean;
   DEMO_PROMPTS: string[];
@@ -146,14 +144,12 @@ function loadEnv(): Env {
     UPLOAD_MAX_BYTES: readInt('UPLOAD_MAX_BYTES', 10_485_760),
     OUTPUT_DIR: readString('OUTPUT_DIR', './tmp/outputs'),
     LOG_LEVEL: readString('LOG_LEVEL', 'info'),
-    CORS_ORIGIN: readString('CORS_ORIGIN', 'http://localhost:5173'),
     BETTER_AUTH_URL: readString('BETTER_AUTH_URL', 'http://localhost:3000'),
     BETTER_AUTH_SECRET: readString('BETTER_AUTH_SECRET'),
     GOOGLE_CLIENT_ID: googleClientId,
     GOOGLE_CLIENT_SECRET: googleClientSecret,
     FRONTEND_ORIGIN: readString('FRONTEND_ORIGIN', 'http://localhost:5173'),
     SQLITE_PATH: readString('SQLITE_PATH', './data/app.sqlite'),
-    DAILY_USER_QUOTA: readInt('DAILY_USER_QUOTA', 20),
     DAILY_CHECK_IN_REWARD: readInt('DAILY_CHECK_IN_REWARD', 5),
     SEED_DEFAULT_ADMIN: readBool('SEED_DEFAULT_ADMIN', false),
     DEMO_PROMPTS: readDelimitedStrings('DEMO_PROMPTS', '|||'),

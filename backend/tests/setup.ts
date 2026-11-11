@@ -49,7 +49,6 @@ process.env.BETTER_AUTH_URL ??= 'http://localhost:3000';
 process.env.BETTER_AUTH_SECRET ??= 'test-secret-32-chars-min-padding-padding';
 process.env.FRONTEND_ORIGIN ??= 'http://localhost:5173';
 process.env.SQLITE_PATH ??= path.join(root, 'app.sqlite');
-process.env.DAILY_USER_QUOTA ??= '20';
 process.env.DAILY_CHECK_IN_REWARD ??= '5';
 process.env.SEED_DEFAULT_ADMIN ??= 'false';
 

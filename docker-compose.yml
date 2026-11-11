@@ -27,7 +27,6 @@ services:
       OUTPUT_DIR: /app/tmp/outputs
       LOG_LEVEL: ${LOG_LEVEL:-info}
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:5173}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in the root .env file}
       SEED_DEFAULT_ADMIN: ${SEED_DEFAULT_ADMIN:-false}
@@ -35,7 +34,6 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
       SQLITE_PATH: /app/data/app.sqlite
-      DAILY_USER_QUOTA: ${DAILY_USER_QUOTA:-20}
       DEMO_PROMPTS: ${DEMO_PROMPTS:-}
       DEMO_PROMPT_CACHE_DELAY_MS: ${DEMO_PROMPT_CACHE_DELAY_MS:-4000}
     expose:

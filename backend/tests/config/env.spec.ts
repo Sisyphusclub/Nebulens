@@ -33,11 +33,9 @@ describe('config/env', () => {
     delete process.env.UPLOAD_DIR;
     delete process.env.OUTPUT_DIR;
     delete process.env.LOG_LEVEL;
-    delete process.env.CORS_ORIGIN;
     delete process.env.BETTER_AUTH_URL;
     delete process.env.FRONTEND_ORIGIN;
     delete process.env.SQLITE_PATH;
-    delete process.env.DAILY_USER_QUOTA;
     delete process.env.DAILY_CHECK_IN_REWARD;
     delete process.env.SEED_DEFAULT_ADMIN;
     delete process.env.DEMO_PROMPTS;
@@ -65,11 +63,9 @@ describe('config/env', () => {
     expect(env.UPLOAD_DIR).toBe('./tmp/uploads');
     expect(env.OUTPUT_DIR).toBe('./tmp/outputs');
     expect(env.LOG_LEVEL).toBe('info');
-    expect(env.CORS_ORIGIN).toBe('http://localhost:5173');
     expect(env.BETTER_AUTH_URL).toBe('http://localhost:3000');
     expect(env.FRONTEND_ORIGIN).toBe('http://localhost:5173');
     expect(env.SQLITE_PATH).toBe('./data/app.sqlite');
-    expect(env.DAILY_USER_QUOTA).toBe(20);
     expect(env.DAILY_CHECK_IN_REWARD).toBe(5);
     expect(env.SEED_DEFAULT_ADMIN).toBe(false);
     expect(env.DEMO_PROMPTS).toEqual([]);

@@ -67,7 +67,6 @@ openssl rand -base64 32
 ```env
 FRONTEND_PORT=5173
 FRONTEND_ORIGIN=http://localhost:5173
-CORS_ORIGIN=http://localhost:5173
 BETTER_AUTH_URL=http://localhost:5173
 VITE_API_BASE_URL=
 ```
@@ -113,7 +112,7 @@ HIGH_RES_IMAGE_MODEL=
 http://localhost:5173/api/auth/callback/google
 ```
 
-生产环境请使用 HTTPS 域名，并将 `FRONTEND_ORIGIN`、`CORS_ORIGIN` 和 `BETTER_AUTH_URL` 统一设置为同一个 HTTPS origin。
+生产环境请使用 HTTPS 域名，并将 `FRONTEND_ORIGIN` 和 `BETTER_AUTH_URL` 统一设置为同一个 HTTPS origin。
 
 ## 本地开发
 
@@ -194,7 +193,6 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 | `VISION_MODEL`                | 否   | 视觉模型名，用于打标签、判断用途和核对文字             |
 | `VISION_API_BASE_URL`         | 否   | 视觉模型接口地址，默认同 `IMAGE_API_BASE_URL`          |
 | `UPLOAD_MAX_BYTES`            | 否   | 参考图上传上限，默认 10MiB                             |
-| `DAILY_USER_QUOTA`            | 否   | 新用户默认永久额度，默认 20                            |
 | `SEED_DEFAULT_ADMIN`          | 否   | 是否创建本地演示管理员，生产环境保持 `false`           |
 | `GOOGLE_CLIENT_ID`            | 否   | Google OAuth Client ID                                 |
 | `GOOGLE_CLIENT_SECRET`        | 否   | Google OAuth Client Secret                             |

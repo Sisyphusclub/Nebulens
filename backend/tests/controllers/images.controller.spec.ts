@@ -1121,7 +1121,7 @@ describe('POST /api/images/generate', () => {
     const userId = `cap-${randomUUID()}`;
     const app = buildApp(provider, stubAuth(userId));
 
-    // DAILY_USER_QUOTA defaults to 20, MAX_COUNT=4 per request -> 5 generate calls to drain.
+    // Test users start with a quota of 20 (see stubAuth); MAX_COUNT=4 per request -> 5 calls drain it.
     for (let i = 0; i < 5; i += 1) {
       const res = await request(app).post('/api/images/generate').send({ prompt: 'p', count: 4 });
       expect(res.status).toBe(200);

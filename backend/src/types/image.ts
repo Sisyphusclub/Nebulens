@@ -16,7 +16,6 @@ export type AspectRatio = (typeof ASPECT_RATIOS)[number];
 export const IMAGE_RESOLUTIONS = ['standard', '2k', '4k'] as const;
 export type ImageResolution = (typeof IMAGE_RESOLUTIONS)[number];
 export const HIGH_RES_IMAGE_RESOLUTIONS = ['2k', '4k'] as const;
-export type HighImageResolution = (typeof HIGH_RES_IMAGE_RESOLUTIONS)[number];
 
 export const IMAGE_QUALITIES = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
 export type ImageQuality = (typeof IMAGE_QUALITIES)[number];

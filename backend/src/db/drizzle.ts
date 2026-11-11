@@ -18,5 +18,3 @@ export function runMigrations(): void {
   drizzleMigrate(db, { migrationsFolder });
   logger.info({ migrationsFolder }, 'drizzle: migrations applied');
 }
-
-export type Database = typeof db;

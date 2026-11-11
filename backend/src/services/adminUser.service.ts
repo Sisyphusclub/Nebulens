@@ -36,11 +36,6 @@ export interface CreateAdminUserInput {
   dailyTotal?: number;
 }
 
-export interface UpdateUserQuotaInput {
-  permanentTotal?: number;
-  dailyTotal: number;
-}
-
 interface EffectiveQuotaState {
   total: number;
   usedToday: number;
@@ -303,9 +298,6 @@ export function setUserPermanentQuota(userId: string, permanentTotal: number): A
 
   return getAdminUser(userId);
 }
-
-/** @deprecated Kept for older callers while the API transitions to permanentTotal. */
-export const setUserDailyQuota = setUserPermanentQuota;
 
 export async function deleteAdminManagedUser(
   targetUserId: string,

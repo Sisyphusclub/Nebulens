@@ -122,11 +122,6 @@ export const ASPECT_RATIO_LABELS: Record<AspectRatio, string> = Object.fromEntri
   ASPECT_RATIOS.map((ratio) => [ratio, ASPECT_RATIO_CONFIGS[ratio].label]),
 ) as Record<AspectRatio, string>;
 
-export const ASPECT_CHOICE_LABELS: Record<AspectChoice, string> = {
-  auto: '智能',
-  ...ASPECT_RATIO_LABELS,
-};
-
 export const DEFAULT_ASPECT_CHOICE: AspectChoice = 'auto';
 export const DEFAULT_ASPECT_RATIO: AspectRatio = '1:1';
 export const IMAGE_RESOLUTIONS = ['standard', '2k', '4k'] as const;

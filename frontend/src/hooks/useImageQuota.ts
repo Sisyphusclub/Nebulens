@@ -65,9 +65,3 @@ export function useImageQuota() {
   }, []);
   return { ...state, refresh, checkIn };
 }
-
-export function resetImageQuotaForTests(): void {
-  requested = false;
-  requestId = 0;
-  store.set({ quota: null, isLoading: false, error: null });
-}

@@ -1817,76 +1817,6 @@ video {
   background: var(--card);
   padding: 24px;
 }
-.reference-uploader {
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
-}
-.reference-uploader.is-dragging {
-  border-style: solid;
-  border-color: var(--ring);
-}
-.reference-uploader__add {
-  display: grid;
-  width: 100%;
-  min-height: 92px;
-  place-items: center;
-  align-content: center;
-  gap: 4px;
-  border: 0;
-  background: transparent;
-}
-.reference-uploader__add svg {
-  width: 19px;
-}
-.reference-uploader__add span {
-  font-size: 12px;
-  font-weight: 600;
-}
-.reference-uploader__add small {
-  color: var(--text-3);
-  font-size: 11px;
-}
-.reference-list {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  border-top: 1px dashed var(--line-2);
-  padding: 10px;
-}
-.reference-list figure {
-  position: relative;
-  width: 72px;
-  min-width: 72px;
-  margin: 0;
-}
-.reference-list img {
-  width: 72px;
-  height: 72px;
-  border-radius: var(--radius-xs);
-  object-fit: cover;
-}
-.reference-list button {
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  display: grid;
-  width: 22px;
-  height: 22px;
-  place-items: center;
-  border: 0;
-  border-radius: var(--radius-full);
-  background: rgb(0 0 0 / 0.75);
-  color: var(--foreground);
-}
-.reference-list button svg {
-  width: 12px;
-}
-.reference-list figcaption {
-  margin-top: 3px;
-  color: var(--danger);
-  font-size: 11px;
-}
 .reused-references {
   display: flex;
   align-items: center;
@@ -6836,8 +6766,7 @@ video {
   color: var(--muted-foreground);
 }
 .input-control:disabled,
-.textarea-control:disabled,
-.switch-control:disabled {
+.textarea-control:disabled {
   cursor: not-allowed;
   opacity: 0.48;
 }

@@ -73,17 +73,13 @@ export function buildAdminUsersController(): {
     async create(req, res, next) {
       try {
         const parsed = parseBody(createUserBodySchema, req.body, '创建用户请求无效。');
-        const input =
-          parsed.dailyTotal === undefined
-            ? { username: parsed.username, password: parsed.password }
-            : {
-                username: parsed.username,
-                password: parsed.password,
-                ...(parsed.permanentTotal !== undefined
-                  ? { permanentTotal: parsed.permanentTotal }
-                  : { dailyTotal: parsed.dailyTotal }),
-              };
-        const created = await createAdminManagedUser(input);
+        // `dailyTotal` is the older name for the same quota; `permanentTotal` wins when both are sent.
+        const permanentTotal = parsed.permanentTotal ?? parsed.dailyTotal;
+        const created = await createAdminManagedUser({
+          username: parsed.username,
+          password: parsed.password,
+          ...(permanentTotal !== undefined ? { permanentTotal } : {}),
+        });
         const body: AdminUserResponse = { user: created };
         res.status(201).json(body);
       } catch (err) {

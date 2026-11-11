@@ -129,6 +129,23 @@ describe('/api/admin/users', () => {
     expect(duplicate.body.error.message).toBe('该用户名已被占用，请换一个。');
   });
 
+  it('gives a user created with permanentTotal that quota', async () => {
+    const adminId = createAdminUser();
+    const app = createApp({ provider: fakeProvider, authMiddleware: stubAuth(adminId) });
+    const username = `perm_${randomUUID().slice(0, 8)}`;
+
+    const created = await request(app)
+      .post('/api/admin/users')
+      .send({ username, password: 'password123', permanentTotal: 9 });
+
+    expect(created.status).toBe(201);
+    expect(created.body.user.quota).toMatchObject({
+      total: 9,
+      permanentTotal: 9,
+      remainingToday: 9,
+    });
+  });
+
   it('deletes a non-admin user and prevents deleting the current admin account', async () => {
     const adminId = createAdminUser();
     const memberId = createDbUser({ username: `delete_${randomUUID().slice(0, 8)}` });

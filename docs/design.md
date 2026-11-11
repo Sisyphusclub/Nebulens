@@ -632,9 +632,9 @@ Foreign or nonexistent IDs are never mutated by bulk operations. The frontend va
   component systems, browser dialogs, and undocumented consumers of external visual exceptions.
 - `BorderGlow` and `ImageGenerationPlaceholder` are the only non-beUI visual exceptions.
   `BorderGlow` may only wrap the beUI Agent Chat Input focus surface; the AICSS placeholder may only
-  render pending or image-loading states in `GenerateView`. The hidden file input in
-  `ReferenceUploader` is the only business-component native-control exception; its visible trigger
-  remains the shared `Button`.
+  render pending or image-loading states in `GenerateView`. No business component holds a native
+  control any more: the hidden file input for reference images lives inside the beUI Agent Chat
+  Input.
 - Every route uses the semantic token layer in this document.
 - Homepage presents a usable prompt-first beUI experience followed by the beUI Pro six-image vertical gallery.
 - Generate, templates, assets, authentication, and image detail preserve existing behavior and satisfy their page-pattern requirements above.

@@ -8,14 +8,14 @@
 
 The remediation pass replaced 79 visible native control declarations in route and business
 components with shared `Button`, `Input`, `Textarea`, `Switch`, `SelectMenu`, beUI
-`AnimatedDropdown`, and `ConfirmActionModal` contracts. The only remaining business-level native
-control is a hidden `type="file"` input required by the browser file picker. Its visible trigger is
-the shared `Button`.
+`AnimatedDropdown`, and `ConfirmActionModal` contracts. No business-level native control remains:
+the hidden `type="file"` input the browser file picker needs now lives inside the beUI Pro Agent
+Chat Input.
 
 The automated gate scans the TypeScript source tree and currently reports:
 
 - 0 visible native controls outside shared implementation roots.
-- 1 exact hidden browser-control exception.
+- 0 hidden browser-control exceptions.
 - 0 direct foundation imports outside approved roots.
 - 0 competing component-system imports.
 - 0 `window.confirm`, `window.alert`, or `window.prompt` calls.
@@ -37,7 +37,6 @@ The automated gate scans the TypeScript source tree and currently reports:
 | Authentication            | beUI Auth interaction pattern + shared adapters | `src/components/auth/LoginModal.tsx`                                         | Approved adaptation  |
 | Composer focus effect     | ReactBits Border Glow                           | `src/components/BorderGlow.tsx`                                              | Documented exception |
 | Generation placeholder    | AICSS Image Generation                          | `src/components/generation/ImageGenerationPlaceholder.tsx`                   | Documented exception |
-| File picker bridge        | Browser hidden file input                       | `src/components/upload/ReferenceUploader.tsx`                                | Required exception   |
 
 The source tree combines beUI premium source files, protected shadcn registry primitives, shared UI
 adapters, and product composition files. Radix remains an implementation foundation inside the

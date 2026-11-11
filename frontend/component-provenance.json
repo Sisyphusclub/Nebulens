@@ -52,18 +52,7 @@
       "rationale": "Shared primitives are the only local boundary allowed to implement native controls; protected registry files must retain their recorded hashes."
     }
   ],
-  "nativeControlExceptions": [
-    {
-      "file": "src/components/upload/ReferenceUploader.tsx",
-      "tag": "input",
-      "count": 1,
-      "requiredAttributes": {
-        "type": "file",
-        "hidden": true
-      },
-      "rationale": "A hidden native file input is required to open the browser file picker; the visible trigger uses the shared Button primitive."
-    }
-  ],
+  "nativeControlExceptions": [],
   "foundationImports": [
     {
       "prefix": "@radix-ui/",

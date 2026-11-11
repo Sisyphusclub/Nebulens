@@ -45,7 +45,7 @@ describe('production frontend hardening', () => {
     expect(coarsePointerContract).toContain('.agent-chat-input__submit {');
     expect(coarsePointerContract).toContain('min-width: 44px;');
     expect(coarsePointerContract).toContain('min-height: 44px;');
-    expect(coarsePointerContract).toContain('.landing-count-stepper button {');
+    expect(coarsePointerContract).toContain('.assets-page .image-tile__actions button {');
     expect(coarsePointerContract).toContain('width: 44px;');
     expect(coarsePointerContract).toContain('height: 44px;');
   });

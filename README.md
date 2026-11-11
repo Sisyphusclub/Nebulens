@@ -193,6 +193,7 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 | `VISION_MODEL`                | 否   | 视觉模型名，用于打标签、判断用途和核对文字             |
 | `VISION_API_BASE_URL`         | 否   | 视觉模型接口地址，默认同 `IMAGE_API_BASE_URL`          |
 | `UPLOAD_MAX_BYTES`            | 否   | 参考图上传上限，默认 10MiB                             |
+| `DAILY_CHECK_IN_REWARD`       | 否   | 每日签到发放的额度，默认 5，7 天内有效                 |
 | `SEED_DEFAULT_ADMIN`          | 否   | 是否创建本地演示管理员，生产环境保持 `false`           |
 | `GOOGLE_CLIENT_ID`            | 否   | Google OAuth Client ID                                 |
 | `GOOGLE_CLIENT_SECRET`        | 否   | Google OAuth Client Secret                             |

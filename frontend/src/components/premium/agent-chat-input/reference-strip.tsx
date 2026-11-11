@@ -4,6 +4,7 @@ import { FileText, Plus, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 import { SPRING_PRESS, SPRING_SWAP } from '@/lib/ease';
+import { cn } from '@/lib/utils';
 
 import { isImageAttachment } from './attachment-utils';
 import type { AgentChatAttachment } from './types';
@@ -20,8 +21,9 @@ interface ReferenceStripProps {
 }
 
 /**
- * The add tile and the reference images in the composer's top-left corner, with how many
- * more fit underneath.
+ * The add tile and the reference images in the composer's top-left corner, beside the text.
+ * Alone, the tile carries the limit in its tip; once there are images the count is written
+ * underneath them.
  */
 export function ReferenceStrip({
   attachments,
@@ -33,15 +35,27 @@ export function ReferenceStrip({
   onPreview,
   onRemove,
 }: ReferenceStripProps) {
+  const filled = attachments.length > 0;
   const full = limit !== undefined && attachments.length >= limit;
+  const addTip =
+    limit === undefined
+      ? '添加参考图'
+      : full
+        ? `最多 ${limit} 张参考图`
+        : `添加参考图，最多 ${limit} 张`;
 
   return (
-    <div className="agent-chat-input__references">
+    <div
+      className={cn(
+        'agent-chat-input__references',
+        filled && 'agent-chat-input__references--filled',
+      )}
+    >
       <div className="agent-chat-input__reference-row">
         <motion.button
           type="button"
           aria-label="添加参考图"
-          title={full ? `最多 ${limit} 张参考图` : '添加参考图'}
+          title={addTip}
           disabled={disabled || full}
           whileTap={reduce ? {} : { scale: 0.94 }}
           transition={SPRING_PRESS}
@@ -90,10 +104,12 @@ export function ReferenceStrip({
           })}
         </AnimatePresence>
       </div>
-      <span className="agent-chat-input__reference-count">
-        参考图 {attachments.length}
-        {limit === undefined ? '' : `/${limit}`}
-      </span>
+      {filled ? (
+        <span className="agent-chat-input__reference-count">
+          参考图 {attachments.length}
+          {limit === undefined ? '' : `/${limit}`}
+        </span>
+      ) : null}
     </div>
   );
 }

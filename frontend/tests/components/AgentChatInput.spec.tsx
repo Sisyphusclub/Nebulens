@@ -308,6 +308,38 @@ describe('AgentChatInput composer box', () => {
     expect(getByRole('textbox', { name: '图像提示词' })).toHaveFocus();
   });
 
+  it('sets the text beside the reference images at the top of the box, over the header', () => {
+    const { container, getByRole, getByTestId } = render(
+      <AgentChatInput {...baseProps} header={<div data-testid="skill-card" />} />,
+    );
+    const body = container.querySelector('.agent-chat-input__body');
+    const strip = body?.querySelector('.agent-chat-input__references');
+    const editor = body?.querySelector('.agent-chat-input__editor');
+
+    expect(strip).toContainElement(getByRole('button', { name: '添加参考图' }));
+    expect(editor).toContainElement(getByRole('textbox', { name: '图像提示词' }));
+    // The images lead the row and the text follows on the same line.
+    expect(strip?.nextElementSibling).toBe(editor);
+    // What the page adds, such as the skill card, goes under the text, never over it.
+    expect(body?.nextElementSibling).toBe(getByTestId('skill-card'));
+  });
+
+  it('marks the box while the text has focus, and only then', () => {
+    const { container, getByRole } = render(<AgentChatInput {...baseProps} value="海报" />);
+    const root = container.querySelector('[data-slot="agent-chat-input"]');
+    const editor = getByRole('textbox', { name: '图像提示词' });
+
+    expect(root).not.toHaveClass('agent-chat-input--focused');
+    fireEvent.focus(editor);
+    expect(root).toHaveClass('agent-chat-input--focused');
+    fireEvent.blur(editor);
+    expect(root).not.toHaveClass('agent-chat-input--focused');
+
+    // Focus on a button in the toolbar is not focus on the text.
+    fireEvent.focus(container.querySelector('.agent-chat-input__submit')!);
+    expect(root).not.toHaveClass('agent-chat-input--focused');
+  });
+
   it('marks the current mode and hands a picked one to the page', () => {
     const onModeChange = vi.fn();
     const { getByRole } = render(
@@ -335,16 +367,28 @@ describe('AgentChatInput composer box', () => {
     const file = new File(['a'], 'a.png', { type: 'image/png' });
     const first: AgentChatAttachment = { id: 'a', name: 'a.png', type: 'image/png', file };
     const second: AgentChatAttachment = { ...first, id: 'b', name: 'b.png' };
-    const { getByRole, getByText, rerender } = render(
-      <AgentChatInput {...baseProps} attachments={[first]} attachmentLimit={2} />,
+    const { container, getByRole, getByText, queryByText, rerender } = render(
+      <AgentChatInput {...baseProps} attachmentLimit={2} />,
     );
+    const strip = container.querySelector('.agent-chat-input__references');
+    // With nothing added the tile stands alone beside the text; its tip carries the limit.
+    expect(queryByText(/参考图 \d/)).not.toBeInTheDocument();
+    expect(strip).not.toHaveClass('agent-chat-input__references--filled');
+    expect(getByRole('button', { name: '添加参考图' })).toHaveAttribute(
+      'title',
+      '添加参考图，最多 2 张',
+    );
+
+    rerender(<AgentChatInput {...baseProps} attachments={[first]} attachmentLimit={2} />);
     expect(getByText('参考图 1/2')).toBeInTheDocument();
+    expect(strip).toHaveClass('agent-chat-input__references--filled');
     expect(getByRole('button', { name: '添加参考图' })).toBeEnabled();
     expect(getByRole('button', { name: '移除参考图 a.png' })).toBeInTheDocument();
 
     rerender(<AgentChatInput {...baseProps} attachments={[first, second]} attachmentLimit={2} />);
     expect(getByText('参考图 2/2')).toBeInTheDocument();
     expect(getByRole('button', { name: '添加参考图' })).toBeDisabled();
+    expect(getByRole('button', { name: '添加参考图' })).toHaveAttribute('title', '最多 2 张参考图');
   });
 
   it('lists every skill in the library and hands the picked one to the page', async () => {

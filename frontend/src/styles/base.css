@@ -9157,11 +9157,11 @@ video {
   background:
     linear-gradient(180deg, var(--fill-1), rgb(255 255 255 / 0) 40%), var(--card-bg) !important;
   backdrop-filter: blur(4px) saturate(1.15);
-  box-shadow:
-    rgb(255 255 255 / 0.08) 0 0 2px 1px inset,
-    rgb(255 255 255 / 0.04) 0 0 18px 2px inset,
-    rgb(255 255 255 / 0.02) 0 2px 12px 0 inset,
-    0 20px 50px -32px rgb(0 0 0 / 0.7);
+  /* Named so the hover and focus rings further down can be laid over the same glass. */
+  --composer-glass:
+    rgb(255 255 255 / 0.08) 0 0 2px 1px inset, rgb(255 255 255 / 0.04) 0 0 18px 2px inset,
+    rgb(255 255 255 / 0.02) 0 2px 12px 0 inset, 0 20px 50px -32px rgb(0 0 0 / 0.7);
+  box-shadow: var(--composer-glass);
 }
 /* With refraction, a lighter blur lets the bent backdrop read as real glass. */
 .liquid-glass-frame[data-refraction='true'] > .generation-composer.agent-chat-input {
@@ -9245,9 +9245,6 @@ video {
 .liquid-glass-frame > .generation-composer .agent-chat-input__submit:disabled {
   background: var(--fill-2);
   color: var(--text-3);
-}
-.landing-composer-hero .landing-composer .agent-chat-input__textarea[data-empty='true'] {
-  caret-color: transparent;
 }
 
 /* Composer parity: Generate keeps its workbench canvas, but the input follows
@@ -12448,10 +12445,10 @@ video.home-backdrop__media[data-playing='false'] {
   color: var(--foreground);
 }
 
-/* The composer as one box on one left edge: reference images in its top-left corner, the
-   text, then a single toolbar with the modes, the current mode's settings and the skill
-   library, and a quiet note beside the send button on the right. The empty parts of the box
-   focus the text, and the box lights its edge while it has focus. */
+/* The composer as one box on one left edge: reference images in its top-left corner with the
+   text beside them, then a single toolbar with the modes, the current mode's settings and
+   the skill library, and a quiet note beside the send button on the right. The empty parts
+   of the box focus the text, and the box lights its edge while the text has focus. */
 .agent-chat-input__editor {
   position: relative;
   min-width: 0;
@@ -12465,13 +12462,27 @@ video.home-backdrop__media[data-playing='false'] {
   right: 16px;
   left: 16px;
 }
-.agent-chat-input.generation-composer {
+/* The box answers the pointer. Under it the edge brightens; once the text has focus an
+   accent ring with a soft halo goes round the box. Every state keeps the glass highlights
+   and lists the same shadows, so one fades into the next. */
+.liquid-glass-frame > .agent-chat-input.generation-composer {
+  box-shadow:
+    0 0 0 1px transparent,
+    0 0 0 4px transparent,
+    var(--composer-glass);
   transition: box-shadow 0.2s var(--ease-out-expo);
 }
-.agent-chat-input.generation-composer:focus-within {
+.liquid-glass-frame > .agent-chat-input.generation-composer:hover {
   box-shadow:
     0 0 0 1px var(--line-3),
-    0 18px 54px -38px rgb(0 0 0 / 0.82);
+    0 0 0 4px transparent,
+    var(--composer-glass);
+}
+.liquid-glass-frame > .agent-chat-input.generation-composer.agent-chat-input--focused {
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 0 4px var(--accent-soft),
+    var(--composer-glass);
 }
 
 .agent-chat-input__references {
@@ -12590,22 +12601,45 @@ video.home-backdrop__media[data-playing='false'] {
   --composer-inset: var(--space-3);
   padding-bottom: var(--space-4);
 }
-.agent-chat-input.agent-chat-input--modes .agent-chat-input__references {
+/* The text is the first thing in the box: it starts at the top, beside the reference images,
+   which wrap inside a column of their own instead of pushing it down or off the row. */
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
   padding: var(--space-3) var(--composer-inset) 0;
+  cursor: text;
 }
-.agent-chat-input.agent-chat-input--modes .landing-skill-card {
-  margin: var(--space-2) var(--composer-inset) 0;
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__references {
+  /* Five across: five 52px tiles and four 8px gaps. */
+  max-width: min(292px, 40%);
+  flex: 0 0 auto;
+  padding: 0 0 var(--space-3);
+  cursor: default;
+}
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__reference-row {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+.agent-chat-input.agent-chat-input--modes .agent-chat-input__editor {
+  flex: 1 1 0;
 }
 .agent-chat-input.agent-chat-input--modes .agent-chat-input__textarea {
-  min-height: 78px !important;
-  padding-inline: var(--composer-inset) !important;
+  min-height: 86px !important;
+  padding: 2px 0 var(--space-3) !important;
+  caret-color: var(--accent);
 }
 .agent-chat-input.agent-chat-input--modes
   .agent-chat-input__editor
   > .agent-chat-input__streaming-placeholder {
-  right: var(--composer-inset);
-  left: var(--composer-inset);
+  top: 2px;
+  right: 0;
+  left: 0;
   line-height: 1.5;
+}
+/* The skill card goes under the text, so picking a skill never moves what is being written. */
+.agent-chat-input.agent-chat-input--modes .landing-skill-card {
+  margin: 0 var(--composer-inset) var(--space-3);
 }
 .agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar {
   flex-wrap: nowrap;
@@ -12775,6 +12809,22 @@ video.home-backdrop__media[data-playing='false'] {
 @container composer (max-width: 559px) {
   .agent-chat-input.agent-chat-input--modes .agent-chat-input__surface {
     --composer-inset: var(--space-2);
+  }
+  /* Beside a narrow column images would squeeze the words: once there are any they go
+     under the text, in a row that scrolls sideways. */
+  .agent-chat-input.agent-chat-input--modes .agent-chat-input__body {
+    flex-wrap: wrap;
+  }
+  .agent-chat-input.agent-chat-input--modes .agent-chat-input__references--filled {
+    order: 1;
+    max-width: none;
+    flex: 1 0 100%;
+  }
+  .agent-chat-input.agent-chat-input--modes
+    .agent-chat-input__references--filled
+    .agent-chat-input__reference-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
   }
   .agent-chat-input.agent-chat-input--modes .agent-chat-input__toolbar-content {
     flex: 1 1 calc(100% - var(--control-height) - var(--space-2));

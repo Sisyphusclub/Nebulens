@@ -515,7 +515,8 @@ export function AgentChatInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragDepthRef = useRef(0);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
-  // While the text has focus the examples stop streaming, so the caret is plain to see.
+  // While the text has focus the examples stop streaming, so the caret is plain to see, and
+  // the box is marked so its edge can light up.
   const [editorFocused, setEditorFocused] = useState(false);
   const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
   const [text, setText] = useControllableString({
@@ -705,6 +706,7 @@ export function AgentChatInput({
         'agent-chat-input',
         status === 'error' && 'agent-chat-input--error',
         isDraggingFiles && 'agent-chat-input--dragging',
+        editorFocused && 'agent-chat-input--focused',
         modes.length > 0 && 'agent-chat-input--modes',
         className,
         classNames?.root,
@@ -729,45 +731,48 @@ export function AgentChatInput({
         onFocus={handleSurfaceFocus}
         onBlur={handleSurfaceBlur}
       >
-        {allowFileUpload ? (
-          <ReferenceStrip
-            attachments={currentAttachments}
-            previewUrls={previewUrls}
-            limit={attachmentLimit}
-            disabled={disabled}
-            reduce={reduce}
-            onAdd={() => fileInputRef.current?.click()}
-            onPreview={setPreviewAttachmentId}
-            onRemove={removeAttachment}
-          />
-        ) : null}
-        {header}
-        <div className="agent-chat-input__editor">
-          {streamingPlaceholders.length ? (
-            <StreamingPlaceholder
-              active={text.length === 0 && !editorFocused}
-              examples={streamingPlaceholders}
+        {/* The text leads the box: it starts at the top, beside the reference images. */}
+        <div className="agent-chat-input__body">
+          {allowFileUpload ? (
+            <ReferenceStrip
+              attachments={currentAttachments}
+              previewUrls={previewUrls}
+              limit={attachmentLimit}
+              disabled={disabled}
               reduce={reduce}
-              onPick={(prompt) => composerRef.current?.fill(prompt)}
+              onAdd={() => fileInputRef.current?.click()}
+              onPreview={setPreviewAttachmentId}
+              onRemove={removeAttachment}
             />
           ) : null}
-          <AgentChatComposer
-            ref={composerRef}
-            value={text}
-            skills={skills}
-            placeholder={streamingPlaceholders.length && !editorFocused ? '' : placeholder}
-            ariaLabel={ariaLabel}
-            disabled={disabled}
-            minRows={minRows}
-            maxRows={maxRows}
-            submitOnEnter={submitOnEnter}
-            onChange={handleComposerChange}
-            onSlashQueryChange={skillCommand.onQueryChange}
-            onNavKeyDown={skillCommand.onNavKeyDown}
-            onSubmit={submit}
-            className={cn('agent-chat-input__textarea', classNames?.textarea)}
-          />
+          <div className="agent-chat-input__editor">
+            {streamingPlaceholders.length ? (
+              <StreamingPlaceholder
+                active={text.length === 0 && !editorFocused}
+                examples={streamingPlaceholders}
+                reduce={reduce}
+                onPick={(prompt) => composerRef.current?.fill(prompt)}
+              />
+            ) : null}
+            <AgentChatComposer
+              ref={composerRef}
+              value={text}
+              skills={skills}
+              placeholder={streamingPlaceholders.length && !editorFocused ? '' : placeholder}
+              ariaLabel={ariaLabel}
+              disabled={disabled}
+              minRows={minRows}
+              maxRows={maxRows}
+              submitOnEnter={submitOnEnter}
+              onChange={handleComposerChange}
+              onSlashQueryChange={skillCommand.onQueryChange}
+              onNavKeyDown={skillCommand.onNavKeyDown}
+              onSubmit={submit}
+              className={cn('agent-chat-input__textarea', classNames?.textarea)}
+            />
+          </div>
         </div>
+        {header}
 
         <div className={cn('agent-chat-input__toolbar', classNames?.toolbar)}>
           <div className="agent-chat-input__toolbar-group">

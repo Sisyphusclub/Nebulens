@@ -9202,7 +9202,7 @@ video {
 }
 .home-hero .ai-insight {
   width: 100%;
-  margin: 12px 0 0;
+  margin: var(--space-5) 0 0;
 }
 /* While writing on the generate page the composer shows four lines at most and scrolls
    inside, so a long prompt, put back by "reuse settings" say, does not cover the results:
@@ -9579,8 +9579,8 @@ video {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: clamp(76px, 10svh, 108px);
-  padding-bottom: 28px;
+  padding-top: clamp(88px, 13svh, 148px);
+  padding-bottom: var(--space-12);
   text-align: center;
 }
 /* The nebula covers the hero from the sidebar to the window edge. Sized like `cover`, then
@@ -9636,7 +9636,7 @@ video.home-backdrop__media[data-playing='false'] {
 }
 .home-mode-switch {
   display: inline-flex;
-  margin-top: 22px;
+  margin-top: var(--space-6);
   border-radius: var(--radius-full);
   background: var(--fill-2);
   padding: 4px;
@@ -9674,16 +9674,23 @@ video.home-backdrop__media[data-playing='false'] {
   width: 100%;
   max-width: 1180px;
   min-height: 0;
-  margin-top: 28px;
+  margin-top: var(--space-8);
 }
 .home-hero .landing-composer-anchor::before {
   display: none;
 }
+/* One gap above the composer at every width: the anchor's. */
 .home-hero .landing-composer {
   max-width: none;
+  margin-top: 0;
 }
-.home-hero .landing-composer .agent-chat-input__textarea {
-  min-height: 96px !important;
+/* The hero composer is the page's main act: it starts with five lines to write in and grows
+   to eight before it scrolls. A phone keeps the shared three lines. */
+@container composer (min-width: 560px) {
+  .home-hero .agent-chat-input.agent-chat-input--modes .agent-chat-input__textarea {
+    min-height: 134px !important;
+    max-height: 206px !important;
+  }
 }
 .home-hero .ai-insight,
 .home-hero .landing-hero__secondary {
@@ -9696,7 +9703,7 @@ video.home-backdrop__media[data-playing='false'] {
   width: 100%;
   max-width: 1180px;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: var(--space-5);
 }
 /* Only the chips that fit on one line show: the rest wrap onto a second line that is cut
    off, so the row never needs a sideways scroll and "more" stays at its end. */
@@ -9740,7 +9747,7 @@ video.home-backdrop__media[data-playing='false'] {
 }
 
 .home-feed {
-  margin-top: 48px;
+  margin-top: var(--space-12);
 }
 .home-feed__bar {
   display: flex;
@@ -9942,6 +9949,7 @@ video.home-backdrop__media[data-playing='false'] {
   }
   .home-hero {
     padding-top: 84px;
+    padding-bottom: var(--space-6);
   }
   .home-mode-switch .home-mode-switch__item {
     width: 120px;

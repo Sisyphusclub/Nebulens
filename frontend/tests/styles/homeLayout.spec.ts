@@ -27,6 +27,30 @@ describe('home layout', () => {
     }
   });
 
+  it('gives the hero composer five lines to write in, and eight before it scrolls', () => {
+    // 24px lines plus the 14px of padding the text has above and below. A phone keeps the
+    // shared three lines, so the rule waits for a composer at least 560px wide.
+    expect(baseStyles).toMatch(
+      /@container composer \(min-width: 560px\) \{\s*\.home-hero \.agent-chat-input\.agent-chat-input--modes \.agent-chat-input__textarea \{\s*min-height: 134px !important;\s*max-height: 206px !important;/,
+    );
+    // The earlier hero height lost to the shared composer rule and did nothing.
+    expect(baseStyles).not.toContain('min-height: 96px !important;');
+  });
+
+  it('spaces the hero on the spacing scale and sets the feed well apart from it', () => {
+    const hero = rule('.home-hero');
+    expect(hero).toContain('padding-top: clamp(88px, 13svh, 148px);');
+    expect(hero).toContain('padding-bottom: var(--space-12);');
+    expect(rule('.home-mode-switch')).toContain('margin-top: var(--space-6);');
+    expect(rule('.home-hero .landing-composer-anchor')).toContain('margin-top: var(--space-8);');
+    expect(rule('.home-skill-chips')).toContain('margin-top: var(--space-5);');
+    expect(rule('.home-feed')).toContain('margin-top: var(--space-12);');
+    // Whatever stands under the composer, the chips or the AI strip, starts at one offset.
+    expect(rule('.home-hero .ai-insight')).toContain('margin: var(--space-5) 0 0;');
+    // A phone used to add 30px of its own above the composer, on top of the anchor's gap.
+    expect(rule('.home-hero .landing-composer')).toContain('margin-top: 0;');
+  });
+
   it('lays the inspiration feed out in rows of four wide cards', () => {
     expect(rule('.home-feed__grid')).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
     expect(rule('.home-feed__media')).toContain('aspect-ratio: 4 / 3;');

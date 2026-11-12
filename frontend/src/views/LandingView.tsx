@@ -9,22 +9,16 @@ import { LandingHeroBackdrop } from '@/components/landing/LandingHeroBackdrop';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { AiInsightBar } from '@/components/generation/AiInsightBar';
-import { LandingFeatureBanner } from '@/components/landing/LandingFeatureBanner';
 import { LandingQuota } from '@/components/landing/LandingQuota';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingShowcase } from '@/components/landing/LandingShowcase';
 import { LandingSkillBar } from '@/components/landing/LandingSkillBar';
 import { LandingModeSwitch, LandingSkillChips } from '@/components/landing/LandingSkillChips';
-import { LandingSkillDeck } from '@/components/landing/LandingSkills';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
 import { AgentChatInput } from '@/components/premium/agent-chat-input/agent-chat-input';
 import type { AgentChatAttachment } from '@/components/premium/agent-chat-input/types';
-import {
-  CREATION_TEMPLATES,
-  templatesAcrossCategories,
-  type CreationTemplate,
-} from '@/data/creationTemplates';
+import type { CreationTemplate } from '@/data/creationTemplates';
 import {
   AGENT_PLACEHOLDER,
   AGENT_PROMPT_EXAMPLES,
@@ -44,8 +38,7 @@ import { openAuthModal } from '@/hooks/useAuthModal';
 import { useComposerSkills } from '@/hooks/useComposerSkills';
 import { useImageQuota } from '@/hooks/useImageQuota';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
-import { attachGenerationBatch, useGenerationSessions } from '@/hooks/useGenerationSessions';
-import { useImageHistory } from '@/hooks/useImageHistory';
+import { useGenerationSessions } from '@/hooks/useGenerationSessions';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { usePromptDraft } from '@/hooks/usePromptDraft';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
@@ -72,10 +65,6 @@ import {
   normalizeAspectChoiceForResolution,
   supportsImageQuality,
 } from '@/types/image';
-import { recentCreations, type RecentCreation } from '@/utils/recentCreations';
-
-/** Covers for the banner's template slides, one from each category. */
-const INSPIRATION_TEMPLATES = templatesAcrossCategories(24);
 
 export function LandingView() {
   const navigate = useNavigate();
@@ -84,8 +73,7 @@ export function LandingView() {
   const { quota, isLoading: quotaLoading, checkIn } = useImageQuota();
   const imageApiKey = useImageApiKey();
   const { notify } = useToast();
-  const { batches: historyBatches } = useImageHistory();
-  const { sessions, create: createSession } = useGenerationSessions();
+  const { create: createSession } = useGenerationSessions();
   const [selectedRecommendation, setSelectedRecommendation] = useState<TeamRecommendation | null>(
     null,
   );
@@ -98,10 +86,6 @@ export function LandingView() {
             imageUrl: buildApiUrl(`/api/outputs/${selectedRecommendation.record.id}`),
           },
     [selectedRecommendation],
-  );
-  const recent = useMemo(
-    () => recentCreations(historyBatches, sessions),
-    [historyBatches, sessions],
   );
   const [prompt, setPrompt] = useState('');
   const { clear: clearPromptDraft } = usePromptDraft(
@@ -181,14 +165,6 @@ export function LandingView() {
   const updateResolution = (next: ImageResolution): void => {
     setResolution(next);
     setAspect((current) => normalizeAspectChoiceForResolution(current, next));
-  };
-  const openRecent = (creation: RecentCreation): void => {
-    let sessionId = creation.sessionId;
-    if (sessionId === null) {
-      sessionId = createSession(creation.batch.prompt).id;
-      attachGenerationBatch(sessionId, creation.batch.batchId, creation.batch.prompt);
-    }
-    void navigate(`/generate?${new URLSearchParams({ session: sessionId }).toString()}`);
   };
   const applyRecommendedPrompt = (recommendation: TeamRecommendation): void => {
     setPrompt(recommendation.record.prompt);
@@ -429,17 +405,6 @@ export function LandingView() {
           </div>
         ) : null}
       </section>
-      <LandingSkillDeck
-        feature={
-          <LandingFeatureBanner
-            recent={recent[0]}
-            templates={INSPIRATION_TEMPLATES}
-            templateCount={CREATION_TEMPLATES.length}
-            onOpenRecent={openRecent}
-          />
-        }
-        onSelect={selectSkill}
-      />
       <LandingShowcase records={showcase} onUse={makeSimilar} onUseTemplate={fillTemplatePrompt} />
       <ImageDetailModal
         entry={selectedRecommendationEntry}

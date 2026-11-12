@@ -8,10 +8,9 @@ test('runs a skill from one line in the composer, then redraws wrong text by its
   page,
 }) => {
   await page.goto('/');
-  await page
-    .getByRole('region', { name: '技能' })
-    .getByRole('button', { name: '使用技能：信息图' })
-    .click();
+  // Every skill is in the composer's own library; the chips under it show only what fits.
+  await page.getByRole('button', { name: '技能库' }).click();
+  await page.getByRole('menuitem', { name: /^信息图/ }).click();
   await expect(
     page.getByRole('group', { name: '技能：信息图' }).getByLabel('将生成'),
   ).toContainText('竖版');

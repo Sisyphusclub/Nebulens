@@ -20,20 +20,20 @@ export interface LandingSkill {
   id: string;
   label: string;
   description: string;
-  /** One short line for the compact skill tiles, ten characters at most. */
+  /** One short line beside the skill in the composer's "/" menu, ten characters at most. */
   tagline: string;
   icon: LucideIcon;
   /** Small example shown on the skill card. */
   image: string;
   /** A one-line brief to type after the skill in the composer, shown as the example. */
   briefExample: string;
-  /** What people reach for most: creators' scenes and the company's own, on the Discover page. */
+  /** What people reach for most: creators' scenes and the company's own. */
   everyday?: boolean;
 }
 
 /**
- * Every skill, offered in the composer's + menu and after typing "/". The everyday ones
- * come first, in the order they appear on the Discover page.
+ * Every skill, offered in the composer's skill library, on the chips under it and after
+ * typing "/". The everyday ones come first.
  */
 export const LANDING_SKILLS: readonly LandingSkill[] = [
   {
@@ -175,5 +175,3 @@ export const LANDING_SKILLS: readonly LandingSkill[] = [
     briefExample: '清晨阳光下的大理石台面，旁边有绿植',
   },
 ];
-
-export const EVERYDAY_SKILLS = LANDING_SKILLS.filter((skill) => skill.everyday);

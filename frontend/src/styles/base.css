@@ -9549,10 +9549,11 @@ video {
   line-height: 1.6;
 }
 
-/* Home: a creation workbench. A short greeting, a switch between writing and templates,
-   the wide composer with one row of skill chips, then a banner beside two rows of tool
-   cards, and an inspiration feed of large cards under category tabs. The dimmed nebula
-   sits behind the greeting and composer only, and scrolls away with them. */
+/* Home: a creation workbench. A short greeting, a switch between writing and the canvas,
+   the wide composer with one row of skill chips, then an inspiration feed of large cards
+   under category tabs. Every skill with its example is in the composer's own library, so
+   nothing else stands between the composer and the feed. The dimmed nebula sits behind the
+   greeting and composer only, and scrolls away with them. */
 .home-page {
   --home-gutter: clamp(20px, 2.4vw, 44px);
   position: relative;
@@ -9585,7 +9586,7 @@ video {
 /* The nebula covers the hero from the sidebar to the window edge. Sized like `cover`, then
    placed so the vortex's inner ring (at 48.2% of the frame's width) sits on the hero's
    centre line, under the greeting and composer; the overlay darkens the edges and fades
-   the bottom into the page, so the tool cards below sit on a plain background. */
+   the bottom into the page, so the feed below sits on a plain background. */
 .home-backdrop {
   position: absolute;
   inset: 0 calc(-1 * var(--home-gutter));
@@ -9736,221 +9737,6 @@ video.home-backdrop__media[data-playing='false'] {
 .home-skill-chips__chip--more svg {
   width: 14px;
   height: 14px;
-}
-
-/* Banner and tool cards share one row: the banner holds its width, the cards fill the
-   rest in two rows and scroll sideways when they run out of room. */
-.home-tools {
-  z-index: 1;
-  display: grid;
-  grid-template-columns: clamp(280px, 24vw, 400px) minmax(0, 1fr);
-  gap: 10px;
-  margin-top: 16px;
-}
-.landing-feature {
-  position: relative;
-  min-height: 212px;
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-  background: var(--surface-raised);
-}
-.landing-feature__slide {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 500ms var(--ease-out-expo);
-  pointer-events: none;
-}
-.landing-feature__slide[data-active='true'] {
-  opacity: 1;
-  pointer-events: auto;
-}
-.landing-feature__slide-frame {
-  height: 100%;
-}
-.landing-feature .landing-feature__card {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 0;
-  color: var(--text-1);
-  text-align: left;
-  text-decoration: none;
-}
-.landing-feature__card img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 600ms var(--ease-out-expo);
-}
-.landing-feature__card:hover img,
-.landing-feature__card:focus-visible img {
-  transform: scale(1.03);
-}
-.landing-feature__card::after {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 30%, rgb(6 8 12 / 0.82));
-  content: '';
-}
-.landing-feature__text {
-  position: absolute;
-  right: 20px;
-  bottom: 22px;
-  left: 20px;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.landing-feature__eyebrow {
-  color: var(--text-2);
-  font-size: 12px;
-}
-.landing-feature__title {
-  overflow: hidden;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.landing-feature__description {
-  color: var(--text-2);
-  font-size: 13px;
-}
-.landing-feature__cta {
-  display: none;
-}
-.landing-feature__dots {
-  position: absolute;
-  right: 16px;
-  bottom: 14px;
-  z-index: 2;
-  display: flex;
-  gap: 5px;
-}
-.landing-feature__dots .landing-feature__dot {
-  width: 6px;
-  min-width: 0;
-  height: 6px;
-  min-height: 0;
-  border-radius: var(--radius-full);
-  background: rgb(255 255 255 / 0.4);
-  padding: 0;
-  transition:
-    width 200ms var(--ease-out-expo),
-    background-color 200ms var(--ease-out-expo);
-}
-.landing-feature__dots .landing-feature__dot[aria-pressed='true'] {
-  width: 16px;
-  background: var(--text-1);
-}
-.landing-deck {
-  position: relative;
-  min-width: 0;
-}
-.landing-deck__scroller {
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.landing-deck__scroller::-webkit-scrollbar {
-  display: none;
-}
-/* Columns are sized so a slice of the next one always shows, a hint that the row scrolls. */
-.landing-deck__grid {
-  display: grid;
-  grid-auto-columns: max(270px, calc((100% - 40px) / 4.4));
-  grid-auto-flow: column;
-  grid-template-rows: repeat(2, 101px);
-  gap: 10px;
-}
-.landing-deck .landing-deck__tile {
-  display: flex;
-  height: 100%;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 16px;
-  overflow: hidden;
-  border: 0;
-  border-radius: var(--radius-lg);
-  background: var(--fill-1);
-  padding: 5px;
-  color: var(--foreground);
-  text-align: left;
-  transition: background-color 160ms var(--ease-out-expo);
-}
-.landing-deck .landing-deck__tile:hover,
-.landing-deck .landing-deck__tile:focus-visible {
-  background: var(--fill-3);
-}
-.landing-deck .landing-deck__arrow {
-  position: absolute;
-  top: 50%;
-  z-index: 2;
-  display: grid;
-  width: 36px;
-  min-width: 0;
-  height: 36px;
-  min-height: 0;
-  place-items: center;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-full);
-  background: rgb(20 22 28 / 0.86);
-  padding: 0;
-  color: var(--foreground);
-  box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.8);
-  transform: translateY(-50%);
-  backdrop-filter: blur(8px);
-}
-.landing-deck .landing-deck__arrow:hover,
-.landing-deck .landing-deck__arrow:focus-visible {
-  background: rgb(44 47 56 / 0.95);
-}
-.landing-deck__arrow--back {
-  left: 8px;
-}
-.landing-deck__arrow--forward {
-  right: 8px;
-}
-.landing-deck__arrow svg {
-  width: 18px;
-  height: 18px;
-}
-.landing-deck__tile img {
-  width: 46%;
-  max-width: 168px;
-  height: 100%;
-  flex: 0 0 auto;
-  border-radius: var(--radius-md);
-  object-fit: cover;
-}
-.landing-deck__tile-text {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 6px;
-}
-.landing-deck__tile-title {
-  overflow: hidden;
-  font-size: 15px;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.landing-deck__tile-description {
-  overflow: hidden;
-  color: var(--text-3);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .home-feed {
@@ -10145,12 +9931,6 @@ video.home-backdrop__media[data-playing='false'] {
 }
 
 @media (max-width: 1240px) {
-  .home-tools {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .landing-feature {
-    min-height: 200px;
-  }
   .home-feed__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -10168,10 +9948,6 @@ video.home-backdrop__media[data-playing='false'] {
   }
   .home-skill-chips {
     --chip-height: 40px;
-  }
-  .landing-deck__grid {
-    grid-auto-columns: minmax(240px, 78%);
-    grid-template-rows: repeat(2, 84px);
   }
   .home-feed__bar {
     flex-direction: column;
@@ -10193,8 +9969,6 @@ video.home-backdrop__media[data-playing='false'] {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .landing-feature__slide,
-  .landing-feature__card img,
   .home-feed__media img {
     transition: none;
   }

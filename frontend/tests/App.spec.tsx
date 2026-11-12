@@ -406,11 +406,12 @@ describe('React application routes', () => {
     );
   });
 
-  it('starts a skill from its tile under the composer, with no second row inside the input', async () => {
+  it('starts a skill from its chip under the composer, with no second row inside the input', async () => {
     const user = userEvent.setup();
     renderRoute('/');
 
-    await user.click(await screen.findByRole('button', { name: '使用技能：分镜脚本' }));
+    const chips = await screen.findByRole('navigation', { name: '快捷技能' });
+    await user.click(within(chips).getByRole('button', { name: '分镜脚本' }));
 
     expect(await screen.findByRole('group', { name: '技能：分镜脚本' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent('分镜脚本');
@@ -653,23 +654,6 @@ describe('React application routes', () => {
     expect(await screen.findByRole('group', { name: '技能：活动海报' })).toBeInTheDocument();
   });
 
-  it('resumes a recent creation from the homepage in its own session', async () => {
-    const user = userEvent.setup();
-    const session = createGenerationSession('雾中的未来车站');
-    attachGenerationBatch(session.id, 'recent-batch', '雾中的未来车站');
-    historyMocks.batches = [mockHistoryBatch('recent-batch', '雾中的未来车站')];
-    renderRoute('/');
-
-    const recent = await screen.findByRole('navigation', { name: '继续上次创作' });
-    await user.click(within(recent).getByRole('button', { name: '继续创作：雾中的未来车站' }));
-
-    await waitFor(() =>
-      expect(screen.getByLabelText('当前路由')).toHaveTextContent(
-        `/generate?session=${session.id}`,
-      ),
-    );
-  });
-
   it('offers a canvas beside generating that says it is not open yet', async () => {
     const user = userEvent.setup();
     renderRoute('/');
@@ -705,10 +689,16 @@ describe('React application routes', () => {
     ).toBeInTheDocument();
   });
 
-  it('hides recent creations when there is no history', async () => {
+  it('keeps one row of skill chips as the only skill entry under the composer', async () => {
     renderRoute('/');
-    await screen.findByRole('region', { name: '技能' });
-    expect(screen.queryByRole('navigation', { name: '继续上次创作' })).not.toBeInTheDocument();
+    const chips = await screen.findByRole('navigation', { name: '快捷技能' });
+
+    expect(within(chips).getByRole('button', { name: '社媒封面' })).toBeInTheDocument();
+    // The same skills used to follow as two rows of tool cards beside a banner. The
+    // composer's own skill library shows them with their examples, so the page says it once.
+    expect(screen.queryByRole('region', { name: '技能' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '推荐' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^使用技能：/u })).not.toBeInTheDocument();
   });
 
   it('shows similar teammate work under the composer and reuses its prompt', async () => {
@@ -733,7 +723,6 @@ describe('React application routes', () => {
     renderRoute('/');
 
     const panel = await screen.findByRole('region', { name: '成果库里相似的作品' });
-    expect(screen.queryByRole('navigation', { name: '继续上次创作' })).not.toBeInTheDocument();
     await user.click(within(panel).getByRole('button', { name: '用这个提示词' }));
 
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(

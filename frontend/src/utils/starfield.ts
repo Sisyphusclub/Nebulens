@@ -134,10 +134,11 @@ void main() {
  * stars have depth when the camera moves.
  *
  * The box draws the sky in: each pixel near it shows the sky that lies further out, so the
- * sky nearest the box is squeezed into a band along its edge, many times over at the edge
- * and less and less further out. There the stars thin into streaks that follow the
- * outline. Behind the box the sky is enlarged a little instead: the box is thick glass, and
- * the stars show through it larger and fewer. All lengths are CSS pixels.
+ * sky nearest the box is squeezed into a band along its edge. The pull follows a stadium
+ * round the box: along the long sides the band is thin and the stars there thin into short
+ * streaks; round the ends it is deep, and the stars swirl round them in long arcs. Behind
+ * the box the sky is enlarged a little instead: the box is thick glass, and the stars show
+ * through it larger and fewer. All lengths are CSS pixels.
  */
 export const STARFIELD_FRAGMENT_SHADER = `
 precision highp float;
@@ -150,16 +151,20 @@ uniform vec3 u_eye;
 uniform vec3 u_right;
 uniform vec3 u_down;
 
-// A pixel d pixels from the box's edge shows the sky PULL * (1 - (1 - d / REACH)^STEEP)
-// pixels further out. So the REACH + PULL pixels of sky nearest the box are squeezed into a
-// band REACH pixels wide, about four times over at the edge; past the band the sky is only
-// shifted, which cannot be seen.
-const float PULL = 160.0;
-const float REACH = 120.0;
-const float STEEP = 2.5;
-// The band turns round the box's corners on at least this radius, so the streaks there
-// sweep round in arcs rather than turning on the spot.
-const float TURN = 32.0;
+// A pixel d pixels from the box's edge shows the sky PULL * REACH * (1 - (1 - d / REACH)^STEEP)
+// pixels further out, so the band is squeezed 1 + PULL * STEEP times over at the edge.
+// Along the long sides the band is thin and tight; round the ends it is deep and looser,
+// and that is where the sky swirls.
+const float SIDE_REACH = 84.0;
+const float END_REACH = 190.0;
+const float SIDE_PULL = 1.25;
+const float END_PULL = 0.8;
+const float STEEP = 2.2;
+// The long sides curve into the ends over about this many pixels, so the streaks turn
+// gradually instead of at a corner.
+const float EASE_IN = 110.0;
+// Round the ends the streaks are drawn out up to 1 + ARC times longer, into arcs.
+const float ARC = 2.4;
 // The distance from the camera to the screen, which sets how wide its view is.
 const float FOCAL = 1000.0;
 // A star thinner than this many device pixels would flicker as it moves, so it dims instead.
@@ -200,7 +205,7 @@ float grain(vec2 p) {
 // the middle of the sky (behind it when negative), as a share of its distance from the
 // camera. "normal" points away from the box: a star is drawn "squeeze" times thinner along
 // it and "smear" times longer across it. "fan" is how many times wider the sky is than the
-// screen across that direction, where it fans out round a corner of the box.
+// screen across that direction, where it fans out round an end of the box.
 vec3 starSheet(
   vec2 seen, float depth, float cell, float seed, float smallest, float largest,
   float dimmest, float brightest, vec2 normal, float squeeze, float smear, float fan
@@ -224,7 +229,7 @@ vec3 starSheet(
       // The brighter the star, the longer its streak. Its length is counted in the sky, where
       // it is "fan" times longer than on the screen, and stops short of the next cell.
       float longer = 1.0 + (smear - 1.0) * (0.6 + 0.8 * look.y * look.y);
-      float wide = min(max(size * longer, THINNEST / u_scale) * fan, cell * 0.12);
+      float wide = min(max(size * longer, THINNEST / u_scale) * fan, cell * 0.16);
       float thin = max(size / squeeze, THINNEST / u_scale);
       float across = dot(away, normal) / squeeze / thin;
       float along = dot(away, vec2(-normal.y, normal.x)) / wide;
@@ -264,21 +269,43 @@ void main() {
     float beside = smoothstep(-0.5, 1.0, edge);
 
     if (edge > 0.0) {
-      // Outwards from the outline, as if its corners were at least TURN wide.
-      float turn = min(max(u_radius, TURN), min(halfSize.x, halfSize.y));
-      vec2 turning = max(abs(rel) - halfSize + turn, 0.0);
-      normal = sign(rel) * normalize(turning + 0.0001);
+      // Work with the long sides along x, in the first quadrant.
+      bool tall = halfSize.y > halfSize.x;
+      vec2 a = tall ? rel.yx : rel;
+      vec2 h = tall ? halfSize.yx : halfSize;
+      // Outwards from the box's spine, the segment its long sides run along: straight out
+      // from the long sides, round from the ends. The spine's ends are rounded off over
+      // EASE_IN, so the one turns smoothly into the other.
+      float spineEnd = h.x - h.y;
+      float along = abs(a.x);
+      float soft = max(EASE_IN - abs(along - spineEnd), 0.0) / EASE_IN;
+      float spine = min(along, spineEnd) - soft * soft * EASE_IN * 0.25;
+      vec2 fromSpine = vec2(along - spine, abs(a.y));
+      float dist = length(fromSpine) + 0.0001;
+      vec2 outward = fromSpine / dist;
+      // How sharply the field lines curve here: not at all beside the long sides, as round
+      // as their distance from the spine's end beyond it.
+      float turning = along < spineEnd ? soft * 0.5 : 1.0 - soft * 0.5;
+      float curve =
+        (turning * fromSpine.y * fromSpine.y + fromSpine.x * fromSpine.x) / (dist * dist * dist);
+      vec2 oriented = vec2(a.x < 0.0 ? -outward.x : outward.x, a.y < 0.0 ? -outward.y : outward.y);
+      normal = tall ? oriented.yx : oriented;
+      // 0 beside the long sides, 1 straight off an end.
+      float endward = outward.x * outward.x;
 
-      float fall = clamp(1.0 - outside / REACH, 0.0, 1.0);
-      float pulled = PULL * (1.0 - pow(fall, STEEP));
+      float reach = mix(SIDE_REACH, END_REACH, endward);
+      float share = mix(SIDE_PULL, END_PULL, endward);
+      float fall = clamp(1.0 - outside / reach, 0.0, 1.0);
+      float pulled = share * reach * (1.0 - pow(fall, STEEP));
       seen = p + normal * pulled;
       // How many times over the sky is squeezed here: the slope of the pull.
-      squeeze = 1.0 + PULL * STEEP / REACH * pow(fall, STEEP - 1.0);
-      // Squeezed stars draw out along the outline, most of all right at the edge.
-      smear = 1.0 + 0.6 * (squeeze - 1.0) + 0.8 * exp(-outside / 6.0);
-      // Round a corner the sky comes from a wider arc than the one it is shown on.
-      float fromTurn = length(turning);
-      if (turning.x > 0.0 && turning.y > 0.0) fan = (fromTurn + pulled) / fromTurn;
+      squeeze = 1.0 + share * STEEP * pow(fall, STEEP - 1.0);
+      // Round an end the sky also comes from a wider arc than the one it is shown on.
+      fan = 1.0 + pulled * curve;
+      // Squeezed stars draw out along the outline; round the ends, into long arcs.
+      smear =
+        (1.0 + 0.5 * (squeeze - 1.0) + 0.6 * exp(-outside / 6.0)) *
+        (1.0 + ARC * endward * fall);
     } else {
       seen = u_lens.xy + rel / MAGNIFY;
     }
@@ -286,9 +313,9 @@ void main() {
     // A fine rim of light runs along the box's edge, a little uneven and brighter along the
     // top, like light on a polished edge; a soft glow and a faint haze fade away from it on
     // the outside.
-    float haze = 0.09 * exp(-outside / 26.0) + 0.09 * exp(-outside / 5.0);
+    float haze = 0.1 * exp(-outside / 30.0) + 0.15 * exp(-outside / 7.0);
     float glint = (0.8 + 0.4 * grain(p * 0.045)) * (1.0 - 0.22 * normal.y);
-    float rim = 0.48 * glint * exp(-outside / 1.1) * smoothstep(-1.2, 0.0, edge);
+    float rim = 0.62 * glint * exp(-outside / 1.2) * smoothstep(-1.2, 0.0, edge);
     light += HAZE * haze * beside + vec3(0.9, 0.94, 1.0) * rim;
   }
 

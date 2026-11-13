@@ -79,9 +79,14 @@
   --z-mobile-header: 42;
   --z-dialog: 100;
 
-  --font-sans: 'Geist', 'Geist Variable', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
-  --font-serif: 'Noto Serif SC', 'Noto Serif SC Variable', 'Songti SC', 'STSong', serif;
-  --font-display: 'Oxanium', 'Oxanium Variable', 'Geist', system-ui, sans-serif;
+  /* Inter for the interface, Poppins for headings and names. Neither has Chinese glyphs, so
+     both stacks carry on to the system's Chinese sans. */
+  --font-sans:
+    'Inter Variable', 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui,
+    sans-serif;
+  --font-display:
+    'Poppins', 'Inter Variable', 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    system-ui, sans-serif;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* shadcn/beUI names the registry components read, pointed at the tokens above. */
@@ -141,7 +146,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: 'Geist', 'Geist Variable', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
-  --font-serif: 'Noto Serif SC', 'Noto Serif SC Variable', 'Songti SC', 'STSong', serif;
-  --font-display: 'Oxanium', 'Oxanium Variable', 'Geist', system-ui, sans-serif;
+  --font-sans:
+    'Inter Variable', 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui,
+    sans-serif;
+  --font-display:
+    'Poppins', 'Inter Variable', 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    system-ui, sans-serif;
 }

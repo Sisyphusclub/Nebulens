@@ -1,6 +1,7 @@
-import '@fontsource-variable/geist';
-import '@fontsource-variable/oxanium';
-import '@fontsource-variable/noto-serif-sc';
+import '@fontsource-variable/inter';
+import '@fontsource/poppins/400.css';
+import '@fontsource/poppins/500.css';
+import '@fontsource/poppins/600.css';
 import '@/styles/base.css';
 
 import { StrictMode } from 'react';

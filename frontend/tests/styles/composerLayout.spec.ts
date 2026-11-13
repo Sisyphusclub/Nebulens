@@ -61,12 +61,14 @@ describe('composer with modes', () => {
     expect(rule(`${MODES} .agent-chat-input__reference-row`)).toContain('flex-wrap: wrap;');
   });
 
-  it('answers the pointer: a text cursor, a brighter edge, then an accent ring and caret', () => {
+  it('answers the pointer: a text cursor, a brighter edge, then a clear light edge and a caret', () => {
     expect(rule(`${MODES} .agent-chat-input__body`)).toContain('cursor: text;');
     expect(rule(`${GLASS}:hover`)).toContain('0 0 0 1px var(--line-3)');
     const focused = rule(`${GLASS}.agent-chat-input--focused`);
-    expect(focused).toContain('0 0 0 1px var(--accent)');
-    expect(focused).toContain('0 0 0 4px var(--accent-soft)');
+    // The focused edge is light, not coloured: a blue frame round the whole box was too loud.
+    expect(focused).toContain('0 0 0 1px rgb(255 255 255 / 0.4)');
+    expect(focused).toContain('0 0 0 4px var(--fill-1)');
+    expect(focused).not.toContain('accent');
     // The glass highlights stay under the ring in every state, so the ring can fade in.
     for (const state of [GLASS, `${GLASS}:hover`, `${GLASS}.agent-chat-input--focused`]) {
       expect(rule(state)).toContain('var(--composer-glass)');

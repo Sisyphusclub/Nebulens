@@ -10021,8 +10021,9 @@ video {
   right: 16px;
   left: 16px;
 }
-/* The box answers the pointer. Under it the edge brightens; once the text has focus an
-   accent ring with a soft halo goes round the box. Every state keeps the glass highlights
+/* The box answers the pointer. Under it the edge brightens; once the text has focus the
+   edge becomes a clear light line with a faint glow outside it. The line takes no colour:
+   a blue frame round the whole box was too loud. Every state keeps the glass highlights
    and lists the same shadows, so one fades into the next. */
 .liquid-glass-frame > .agent-chat-input.generation-composer {
   box-shadow:
@@ -10039,8 +10040,8 @@ video {
 }
 .liquid-glass-frame > .agent-chat-input.generation-composer.agent-chat-input--focused {
   box-shadow:
-    0 0 0 1px var(--accent),
-    0 0 0 4px var(--accent-soft),
+    0 0 0 1px rgb(255 255 255 / 0.4),
+    0 0 0 4px var(--fill-1),
     var(--composer-glass);
 }
 

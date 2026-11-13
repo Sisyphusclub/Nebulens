@@ -6,6 +6,7 @@ import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
 import { GenerationComposerControls } from '@/components/generation/GenerationComposerControls';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
+import { LandingClosing, LandingFooter } from '@/components/landing/LandingClosing';
 import { LandingNews } from '@/components/landing/LandingNews';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { AiInsightBar } from '@/components/generation/AiInsightBar';
@@ -205,6 +206,14 @@ export function LandingView() {
     setAspect(normalizeAspectChoiceForResolution(template.settings.aspectRatio, resolution));
     notify('已填入这个模板的提示词，可以直接生成，或改几个字再生成。');
     if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  /** From the foot of the page back to the composer, ready to type in. */
+  const startCreating = (): void => {
+    // Focused without scrolling, so the glide to the top is not cut short by a jump.
+    composerBoxRef.current
+      ?.querySelector<HTMLElement>('[role="textbox"]')
+      ?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const submitPrompt = (
     value: string,
@@ -421,6 +430,8 @@ export function LandingView() {
         onNotify={notify}
       />
       <LandingShowcase records={showcase} onUse={makeSimilar} onUseTemplate={fillTemplatePrompt} />
+      <LandingClosing onStart={startCreating} />
+      {/* The quick composer comes to rest here, between the closing lines and the footer. */}
       <LandingQuickComposer
         anchor={composerBoxRef}
         value={prompt}
@@ -429,6 +440,7 @@ export function LandingView() {
         placeholder={placeholder}
         disabled={planningSkill}
       />
+      <LandingFooter />
       <ImageDetailModal
         entry={selectedRecommendationEntry}
         {...(selectedRecommendation === null

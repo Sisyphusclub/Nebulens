@@ -891,6 +891,23 @@ describe('React application routes', () => {
     expect(borderGlow?.style.getPropertyValue('--fill-opacity')).toBe('0');
   });
 
+  it('ends the home page with a way back to the composer, then the footer', async () => {
+    const user = userEvent.setup();
+    const { container } = renderRoute('/');
+    const hero = await screen.findByRole('textbox', { name: '首页创作提示词' });
+
+    const closing = screen.getByRole('region', { name: '开始用贝尔灵画创作' });
+    const footer = screen.getByRole('contentinfo');
+    // The quick composer rests between the two once the page has been scrolled to its end.
+    const quick = container.querySelector('.home-quick-composer')!;
+    expect(closing.compareDocumentPosition(quick) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(quick.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    await user.click(within(closing).getByRole('button', { name: '开始创作' }));
+    expect(hero).toHaveFocus();
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+  });
+
   it('sends a prompt from the quick composer down the page, with the hero composer’s settings', async () => {
     // The browser reports the hero composer scrolling away through this observer.
     const watches: Array<(entries: Array<{ isIntersecting: boolean }>) => void> = [];

@@ -10266,27 +10266,59 @@ video {
   }
 }
 
+/* The end of the page's content: the logo, one line about the product and the way to begin. */
+.home-closing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--space-12);
+  text-align: center;
+}
+.home-closing img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+.home-closing h2 {
+  margin: var(--space-5) 0 0;
+  color: var(--text-1);
+  font-family: var(--font-display);
+  font-size: clamp(24px, 2.5vw, 36px);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.home-closing p {
+  margin: var(--space-2) 0 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 22px;
+}
+.home-closing .button {
+  min-height: 40px;
+  margin-top: var(--space-6);
+  padding: 0 var(--space-6);
+  font-size: 14px;
+}
+
 /* The quick composer: one line of glass that rides the bottom of the window once the hero
    composer has scrolled away. Sticky rather than fixed, so it stays in the middle of the
-   page column whatever the sidebar's width, and at the end of the page it comes to rest in
-   the space its margin keeps above it. It takes no room of its own: the bar hangs upwards
-   from a line, over the feed and under the sidebar and every dialog. */
+   page column whatever the sidebar's width. Its own place is at the end of the page,
+   between the closing lines and the footer, and that is where it comes to rest; until
+   then it floats over the feed, under the sidebar and every dialog. */
 .home-page .home-quick-composer {
   position: sticky;
   bottom: var(--space-6);
   z-index: 30;
-  height: 0;
-  margin-top: 104px;
+  height: 56px;
+  margin-top: var(--space-12);
   pointer-events: none;
 }
 .home-quick-composer__bar {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
   display: flex;
   width: min(700px, 100%);
-  height: 56px;
+  height: 100%;
   align-items: center;
+  margin: 0 auto;
   gap: var(--space-2);
   border-radius: var(--radius-2xl);
   background: rgb(30 30 30 / 0.72);
@@ -10296,7 +10328,6 @@ video {
   padding: 0 var(--space-3) 0 var(--space-5);
   backdrop-filter: blur(24px) saturate(1.2);
   pointer-events: auto;
-  transform: translate(-50%, 0);
   transition: box-shadow 150ms ease;
   animation: home-quick-composer-in 300ms var(--ease-out-expo) both;
 }
@@ -10304,7 +10335,7 @@ video {
 @keyframes home-quick-composer-in {
   from {
     opacity: 0;
-    transform: translate(-50%, 12px);
+    transform: translateY(12px);
   }
 }
 /* The same neutral edge as the hero composer's: light, not the accent. */
@@ -10367,6 +10398,57 @@ video {
   .home-quick-composer__bar {
     animation: none;
   }
+}
+
+/* The footer: the product's name, its other pages, and the way back up. */
+.home-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-8);
+  margin-top: var(--space-12);
+  border-top: 1px solid var(--line-1);
+  padding-top: var(--space-6);
+  color: var(--text-3);
+  font-size: 13px;
+}
+.home-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.home-footer__brand img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.home-footer__brand strong {
+  color: var(--text-1);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.home-footer__brand span {
+  font-size: 12px;
+}
+.home-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+}
+.home-footer__nav a {
+  color: var(--text-2);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+.home-footer__nav a:hover,
+.home-footer__nav a:focus-visible {
+  color: var(--text-1);
+}
+.home-footer .home-footer__top {
+  margin-left: auto;
+  border-radius: var(--radius-full);
 }
 
 .sidebar-history .sidebar-history__login {

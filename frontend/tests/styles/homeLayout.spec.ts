@@ -175,21 +175,42 @@ describe('news row', () => {
   });
 });
 
+describe('closing lines and footer', () => {
+  it('centres the closing lines under the wall, the title in the display face', () => {
+    const closing = rule('.home-closing');
+    expect(closing).toContain('align-items: center;');
+    expect(closing).toContain('margin-top: var(--space-12);');
+    expect(closing).toContain('text-align: center;');
+    const title = rule('.home-closing h2');
+    expect(title).toContain('font-family: var(--font-display);');
+    expect(title).toContain('font-weight: 600;');
+  });
+
+  it('sets the footer apart with a hairline and keeps it quiet', () => {
+    const footer = rule('.home-footer');
+    expect(footer).toContain('margin-top: var(--space-12);');
+    expect(footer).toContain('border-top: 1px solid var(--line-1);');
+    expect(footer).toContain('color: var(--text-3);');
+    // The way back up sits at the far end of the row.
+    expect(rule('.home-footer .home-footer__top')).toContain('margin-left: auto;');
+  });
+});
+
 describe('quick composer', () => {
-  it('rides the bottom of the window in the middle of the page column, taking no room of its own', () => {
+  it('rides the bottom of the window in the middle of the page column, and has a place of its own at the page’s end', () => {
     const dock = rule('.home-page .home-quick-composer');
     // Sticky, not fixed: it stays in the page column whatever the sidebar's width, and at
-    // the end of the page it comes to rest in the space kept above it.
+    // the end of the page it comes to rest in its own place, above the footer.
     expect(dock).toContain('position: sticky;');
     expect(dock).toContain('bottom: var(--space-6);');
-    expect(dock).toContain('height: 0;');
+    expect(dock).toContain('height: 56px;');
+    expect(dock).toContain('margin-top: var(--space-12);');
     // Over the feed, under the sidebar and every dialog.
     expect(dock).toContain('z-index: 30;');
     const bar = rule('.home-quick-composer__bar');
-    expect(bar).toContain('position: absolute;');
-    expect(bar).toContain('bottom: 0;');
     expect(bar).toContain('width: min(700px, 100%);');
-    expect(bar).toContain('height: 56px;');
+    expect(bar).toContain('height: 100%;');
+    expect(bar).toContain('margin: 0 auto;');
   });
 
   it('is a pill of glass, like the hero composer it stands in for', () => {
@@ -204,7 +225,7 @@ describe('quick composer', () => {
       'animation: home-quick-composer-in 300ms var(--ease-out-expo) both;',
     );
     expect(baseStyles).toMatch(
-      /@keyframes home-quick-composer-in \{\s*from \{\s*opacity: 0;\s*transform: translate\(-50%, 12px\);/,
+      /@keyframes home-quick-composer-in \{\s*from \{\s*opacity: 0;\s*transform: translateY\(12px\);/,
     );
     expect(baseStyles).toMatch(
       /@media \(prefers-reduced-motion: reduce\) \{\s*\.home-quick-composer__bar \{\s*animation: none;/,

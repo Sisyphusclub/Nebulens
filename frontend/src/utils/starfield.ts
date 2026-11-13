@@ -24,17 +24,24 @@ export interface StarfieldFrame {
   /** The share of the usual sharpness to draw at, from 0 to 1. */
   quality: number;
   lens: StarfieldLens | null;
-  /** How far the sky has slid, in CSS pixels: a larger shift moves the stars left and up. */
-  shiftX: number;
-  shiftY: number;
-  /** Seconds of animation so far; drives the twinkle. */
-  time: number;
+  /** How far the camera has swung round the sky, in radians: to the right, and downwards. */
+  yaw: number;
+  pitch: number;
 }
 
 export interface StarfieldRenderer {
   draw(frame: StarfieldFrame): void;
   /** Frees the program and hands the GPU context back; the canvas cannot be drawn to again. */
   dispose(): void;
+}
+
+type Vector = [number, number, number];
+
+/** Where the camera stands and how its screen lies: x to the right, y down, z out of it. */
+export interface StarfieldCamera {
+  eye: Vector;
+  right: Vector;
+  down: Vector;
 }
 
 /** Device pixels the canvas may hold: more than this costs frames on integrated graphics. */
@@ -75,14 +82,39 @@ export function lensWithin(
   };
 }
 
+/**
+ * The camera after swinging `yaw` to the right and `pitch` downwards around the middle of
+ * the sky. It stays one unit away and keeps looking at the middle, so stars in front of the
+ * middle slide one way across the screen and stars behind it the other.
+ */
+export function orbitCamera(yaw: number, pitch: number): StarfieldCamera {
+  const eye: Vector = [
+    Math.sin(yaw) * Math.cos(pitch),
+    Math.sin(pitch),
+    Math.cos(yaw) * Math.cos(pitch),
+  ];
+  // It looks along -eye. Its right is level with the horizon, and its down completes the set.
+  const level = Math.hypot(eye[0], eye[2]);
+  const right: Vector = [eye[2] / level, 0, -eye[0] / level];
+  const down: Vector = [
+    right[2] * eye[1],
+    right[0] * eye[2] - right[2] * eye[0],
+    -right[0] * eye[1],
+  ];
+  // A plain zero rather than a negative one, where a component cancels out.
+  const tidy = (vector: Vector): Vector => [vector[0] + 0, vector[1] + 0, vector[2] + 0];
+  return { eye: tidy(eye), right: tidy(right), down: tidy(down) };
+}
+
 /** Every uniform `draw` sets; the shader has to declare each one. */
 export const STARFIELD_UNIFORMS = [
   'u_buffer',
   'u_scale',
   'u_lens',
   'u_radius',
-  'u_shift',
-  'u_time',
+  'u_eye',
+  'u_right',
+  'u_down',
 ] as const;
 
 type UniformName = (typeof STARFIELD_UNIFORMS)[number];
@@ -97,10 +129,15 @@ void main() {
 /**
  * A night sky that bends around a rounded box, the way light bends around a heavy body.
  *
- * Each pixel near the box looks at a point of sky pulled towards the box, so the sky behind
- * the box is squeezed into a band around it and the stars there turn into thin streaks that
- * follow its outline. As the sky slides, they flow around the box instead of passing behind.
- * All lengths are CSS pixels.
+ * The sky is four sheets of stars at different depths, seen by a camera that swings round
+ * their middle: the sheets in front slide one way and the ones behind the other, so the
+ * stars have depth when the camera moves.
+ *
+ * The box draws the sky in: each pixel outside it shows the sky that really lies further
+ * out, by an amount that grows with the distance from the box's edge and then levels off.
+ * So the sky around the box is squeezed into a band along its edge, many times over right
+ * at the edge, and the squeezed stars smear along the outline into streaks. All lengths
+ * are CSS pixels.
  */
 export const STARFIELD_FRAGMENT_SHADER = `
 precision highp float;
@@ -109,26 +146,27 @@ uniform vec2 u_buffer;
 uniform float u_scale;
 uniform vec4 u_lens;
 uniform float u_radius;
-uniform vec2 u_shift;
-uniform float u_time;
+uniform vec3 u_eye;
+uniform vec3 u_right;
+uniform vec3 u_down;
 
-// How far the sky is pulled at the box's edge, and the distance over which the pull falls
-// to about a third. Their ratio is how much the sky is squeezed right at the edge.
-const float PULL = 150.0;
-const float REACH = 52.0;
-// How much longer a star is drawn along the outline right at the edge, and how fast that
-// fades. With the squeeze, this is what turns dots into streaks.
-const float STRETCH = 3.6;
-const float STRETCH_REACH = 40.0;
-// The field bends around rounder corners than the box has, so the streaks sweep around
-// its ends in arcs instead of turning on the spot.
-const float FIELD_CORNER = 64.0;
+// The sky is drawn in towards the box: a star 260 pixels or more from its edge appears 260
+// pixels nearer, and the ones nearer than that pile up against the edge. The pull has two
+// parts, measured on the look this follows: a steep one that acts within 62 pixels of the
+// edge, and a gentle one that reaches almost three times as far.
+const float NEAR_PULL = 150.0;
+const float NEAR_REACH = 62.0;
+const float NEAR_STEEP = 2.4;
+const float FAR_PULL = 110.0;
+const float FAR_REACH = 170.0;
+// The distance from the camera to the screen, which sets how wide its view is.
+const float FOCAL = 1000.0;
 // A star thinner than this many device pixels would flicker as it moves, so it dims instead.
 const float THINNEST = 1.15;
 
-const vec3 COOL = vec3(0.66, 0.79, 1.0);
+const vec3 COOL = vec3(0.68, 0.8, 1.0);
 const vec3 WARM = vec3(1.0, 0.86, 0.72);
-const vec3 HALO = vec3(0.6, 0.72, 0.95);
+const vec3 HAZE = vec3(0.62, 0.72, 0.92);
 
 vec2 hash2(vec2 p) {
   vec3 q = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
@@ -141,13 +179,34 @@ float roundedBox(vec2 p, vec2 halfSize, float corner) {
   return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - corner;
 }
 
-// One depth of stars, one per cell of a grid. "at" is the point of sky this pixel looks at.
-// A star is drawn "squeeze" times thinner across the outline ("normal") and "stretch" times
-// longer along it.
-vec3 starLayer(
-  vec2 at, float cell, float seed, float smallest, float largest,
-  vec2 normal, float squeeze, float stretch
+// Smooth noise from 0 to 1, for the grain in the rim.
+float grain(vec2 p) {
+  vec2 cell = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float a = hash2(cell).x;
+  float b = hash2(cell + vec2(1.0, 0.0)).x;
+  float c = hash2(cell + vec2(0.0, 1.0)).x;
+  float d = hash2(cell + vec2(1.0, 1.0)).x;
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+// One sheet of stars, one star to a cell. "depth" is how far the sheet stands in front of
+// the middle of the sky (behind it when negative), as a share of its distance from the
+// camera. "normal" points away from the box: a star is drawn "squeeze" times thinner along
+// it and "smear" times longer across it. "fan" is how many times wider the sky is than the
+// screen across that direction, where it fans out round a corner of the box.
+vec3 starSheet(
+  vec2 seen, float depth, float cell, float seed, float smallest, float largest,
+  float dimmest, float brightest, vec2 normal, float squeeze, float smear, float fan
 ) {
+  // Where the line of sight through this pixel meets the sheet, in the sheet's own pixels.
+  vec3 ray = -u_eye * FOCAL + u_right * seen.x + u_down * seen.y;
+  // On a very wide canvas a line of sight at the far side could run along the sheet.
+  ray.z = min(ray.z, -0.2 * FOCAL);
+  float plane = depth / (1.0 + depth);
+  vec2 at = (u_eye.xy + ray.xy * ((plane - u_eye.z) / ray.z)) * (FOCAL * (1.0 + depth));
+
   vec2 first = floor(at / cell - 0.5);
   vec3 light = vec3(0.0);
   for (int j = 0; j < 2; j++) {
@@ -156,22 +215,25 @@ vec3 starLayer(
       vec2 place = hash2(id + seed);
       vec2 look = hash2(id * 1.37 + seed + 19.19);
       vec2 away = at - (id + 0.08 + 0.84 * place) * cell;
-      float size = mix(smallest, largest, look.x * look.x * look.x);
+      float size = mix(smallest, largest, look.x * look.x);
+      // The brighter the star, the longer its streak. Its length is counted in the sky, where
+      // it is "fan" times longer than on the screen, and stops short of the next cell.
+      float longer = 1.0 + (smear - 1.0) * (0.45 + 1.1 * look.y * look.y);
+      float wide = min(max(size * longer, THINNEST / u_scale) * fan, cell * 0.12);
       float thin = max(size / squeeze, THINNEST / u_scale);
-      float wide = max(size * stretch, THINNEST / u_scale);
       float across = dot(away, normal) / squeeze / thin;
       float along = dot(away, vec2(-normal.y, normal.x)) / wide;
       float r2 = across * across + along * along;
       if (r2 < 16.0) {
         vec2 mood = fract(look * vec2(57.13, 91.71) + place.yx * 13.7);
-        // A star held at the thinnest width covers more than its share, so it dims a little.
-        float dim = sqrt(size / squeeze / thin) * (size * stretch / wide);
-        float bright = mix(0.38, 1.0, look.y) * (0.62 + 0.38 * look.x);
-        float twinkle = 0.86 + 0.14 * sin(u_time * (0.5 + 1.6 * mood.x) + mood.y * 6.2832);
-        // A crisp disc, with a faint glow around the larger stars.
-        float glow = exp(-r2 * r2) + 0.22 * look.x * exp(-r2 * 0.4);
-        vec3 tint = mood.y > 0.88 ? WARM : mix(vec3(1.0), COOL, mood.x);
-        light += tint * (glow * bright * twinkle * dim);
+        // Squeezed light is brighter light.
+        float bright =
+          mix(dimmest, brightest, look.y * look.y) * (0.55 + 0.45 * look.x) *
+          (1.0 + 0.25 * (squeeze - 1.0));
+        // A sharp core with soft wings: the brightest stars burn out in the middle and glow.
+        float shine = 1.0 / pow(1.0 + r2, 2.5);
+        vec3 tint = mood.y > 0.9 ? WARM : mix(vec3(1.0), COOL, mood.x * mood.x);
+        light += tint * (shine * bright);
       }
     }
   }
@@ -181,10 +243,11 @@ vec3 starLayer(
 void main() {
   vec2 p = vec2(gl_FragCoord.x, u_buffer.y - gl_FragCoord.y) / u_scale;
 
-  vec2 sky = p;
+  vec2 seen = p;
   vec2 normal = vec2(0.0, 1.0);
   float squeeze = 1.0;
-  float stretch = 1.0;
+  float smear = 1.0;
+  float fan = 1.0;
   float open = 1.0;
   vec3 light = vec3(0.0);
 
@@ -192,30 +255,47 @@ void main() {
     vec2 rel = p - u_lens.xy;
     vec2 halfSize = u_lens.zw;
     float edge = roundedBox(rel, halfSize, u_radius);
-
-    float corner = min(max(u_radius, FIELD_CORNER), min(halfSize.x, halfSize.y));
-    float field = max(roundedBox(rel, halfSize, corner), 0.0);
-    // Outwards from the nearest point of that rounder outline.
-    normal = sign(rel) * normalize(max(abs(rel) - halfSize + corner, 0.0) + 0.0001);
-
-    float bend = exp(-field / REACH);
-    sky = p - normal * (PULL * bend);
-    squeeze = 1.0 + PULL / REACH * bend;
-    stretch = 1.0 + STRETCH * exp(-field / STRETCH_REACH);
-
-    // Nothing shows through the box itself; a haze and a thin bright rim hug its edge.
-    open = smoothstep(-0.5, 1.0, edge);
     float outside = max(edge, 0.0);
-    float haze = 0.085 * exp(-outside / 46.0) + 0.1 * exp(-outside / 11.0);
-    float offRim = (edge - 0.7) / 0.9;
-    float rim = 0.62 * exp(-offRim * offRim);
-    light += HALO * haze * open + vec3(0.9, 0.95, 1.0) * rim;
+    // Outwards from the nearest point of the outline.
+    vec2 turning = max(abs(rel) - halfSize + u_radius, 0.0);
+    normal = sign(rel) * normalize(turning + 0.0001);
+
+    // This pixel shows the sky that is really "pulled" pixels further out.
+    float near = clamp(1.0 - outside / NEAR_REACH, 0.0, 1.0);
+    float far = clamp(1.0 - outside / FAR_REACH, 0.0, 1.0);
+    float pulled = NEAR_PULL * (1.0 - pow(near, NEAR_STEEP)) + FAR_PULL * (1.0 - far * far);
+    seen = p + normal * pulled;
+    // How many times over the sky is squeezed here: the slope of the pull.
+    squeeze =
+      1.0 +
+      NEAR_PULL * NEAR_STEEP / NEAR_REACH * pow(near, NEAR_STEEP - 1.0) +
+      FAR_PULL * 2.0 / FAR_REACH * far;
+    // Squeezed stars smear along the outline, most of all right at the edge.
+    smear =
+      1.0 + 0.2 * (squeeze - 1.0) + 2.0 * exp(-outside / 5.0) +
+      0.45 * (1.0 - smoothstep(40.0, 110.0, outside));
+    // Round a corner the pulled-in sky comes from a wider arc than the one it is shown on.
+    float fromTurn = length(turning);
+    if (turning.x > 0.0 && turning.y > 0.0) fan = (fromTurn + pulled) / fromTurn;
+
+    // Nothing shows through the box. A grainy bright rim runs along its edge, and a haze
+    // fades away from it.
+    open = smoothstep(-0.5, 1.0, edge);
+    float haze = 0.14 * exp(-outside / 21.0);
+    // The rim is brightest on the edge itself and gone two pixels out; inside the box it
+    // is cut off at once.
+    float sparkle = 0.8 + 0.9 * grain(p * 0.42) * grain(p * 0.13 + 7.0);
+    float rim = 0.56 * sparkle * exp(-outside / 1.25) * smoothstep(-1.2, 0.0, edge);
+    light += HAZE * haze * open + vec3(0.88, 0.92, 1.0) * rim;
   }
 
+  // The camera looks at the middle of the canvas.
+  seen -= u_buffer / u_scale * 0.5;
   vec3 stars =
-    starLayer(sky + u_shift * 0.34, 40.0, 0.0, 0.55, 1.1, normal, squeeze, stretch) +
-    starLayer(sky + u_shift * 0.6, 70.0, 37.0, 0.7, 1.6, normal, squeeze, stretch) +
-    starLayer(sky + u_shift, 120.0, 91.0, 1.0, 2.4, normal, squeeze, stretch);
+    starSheet(seen, -0.3, 62.0, 0.0, 1.15, 2.5, 0.4, 1.4, normal, squeeze, smear, fan) +
+    starSheet(seen, -0.14, 84.0, 37.0, 1.2, 3.0, 0.45, 1.9, normal, squeeze, smear, fan) +
+    starSheet(seen, 0.16, 126.0, 91.0, 1.35, 3.8, 0.5, 2.4, normal, squeeze, smear, fan) +
+    starSheet(seen, 0.42, 210.0, 53.0, 2.0, 5.4, 0.8, 3.0, normal, squeeze, smear, fan);
   light += stars * open;
 
   // Half a step of noise, so the faint haze does not settle into bands of 8-bit colour.
@@ -266,8 +346,8 @@ export function createStarfieldRenderer(canvas: HTMLCanvasElement): StarfieldRen
     depth: false,
     stencil: false,
     powerPreference: 'low-power',
-    // No context at all on a software renderer: drawing the sky on the CPU every frame
-    // would cost more than the sky is worth.
+    // No context at all on a software renderer: drawing the sky on the CPU would cost more
+    // than the sky is worth.
     failIfMajorPerformanceCaveat: true,
   });
   if (gl === null) return null;
@@ -293,8 +373,9 @@ export function createStarfieldRenderer(canvas: HTMLCanvasElement): StarfieldRen
   const scale = uniform('u_scale');
   const lens = uniform('u_lens');
   const radius = uniform('u_radius');
-  const shift = uniform('u_shift');
-  const time = uniform('u_time');
+  const eye = uniform('u_eye');
+  const right = uniform('u_right');
+  const down = uniform('u_down');
 
   return {
     draw(frame) {
@@ -305,6 +386,7 @@ export function createStarfieldRenderer(canvas: HTMLCanvasElement): StarfieldRen
         canvas.width = width;
         canvas.height = height;
       }
+      const camera = orbitCamera(frame.yaw, frame.pitch);
       gl.viewport(0, 0, width, height);
       gl.uniform2f(buffer, width, height);
       gl.uniform1f(scale, density);
@@ -316,8 +398,9 @@ export function createStarfieldRenderer(canvas: HTMLCanvasElement): StarfieldRen
         frame.lens?.halfHeight ?? 0,
       );
       gl.uniform1f(radius, frame.lens?.radius ?? 0);
-      gl.uniform2f(shift, frame.shiftX, frame.shiftY);
-      gl.uniform1f(time, frame.time);
+      gl.uniform3f(eye, ...camera.eye);
+      gl.uniform3f(right, ...camera.right);
+      gl.uniform3f(down, ...camera.down);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     },
     dispose() {

@@ -9617,6 +9617,14 @@ video {
 .home-hero .landing-composer-presentation {
   border-radius: var(--radius-2xl);
 }
+/* Here the composer is the dark body the sky is pulled towards: black, with nothing showing
+   through and no glass highlights. The sky draws its bright rim and haze around it. */
+.home-hero .liquid-glass-frame.landing-composer-content > .generation-composer.agent-chat-input {
+  --card-bg: #000 !important;
+  --composer-glass: 0 0 0 0 transparent;
+  background: #000 !important;
+  backdrop-filter: none;
+}
 /* The light, widely tracked Song face of the earlier hero headline. 'halt' sets the comma
    and question mark half width, so the line reads as one phrase. */
 .home-hero h1 {

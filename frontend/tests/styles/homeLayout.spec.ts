@@ -39,6 +39,17 @@ describe('home layout', () => {
     }
   });
 
+  it('makes the hero composer the dark body the sky bends around', () => {
+    const composer = rule(
+      '.home-hero .liquid-glass-frame.landing-composer-content > .generation-composer.agent-chat-input',
+    );
+    // Black, with nothing showing through: the sky draws the bright rim and the haze around it.
+    expect(composer).toContain('background: #000 !important;');
+    expect(composer).toContain('backdrop-filter: none;');
+    // No glass highlights inside; the hover and focus rings still have a shadow to fade from.
+    expect(composer).toContain('--composer-glass: 0 0 0 0 transparent;');
+  });
+
   it('goes from the composer and its chips straight to the feed, with no tool cards between', () => {
     // The banner and the two rows of tool cards repeated what the composer's skill library
     // and the feed's own tabs already offer.

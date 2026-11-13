@@ -18,6 +18,7 @@ let uniforms = new Map<string, number[]>();
 let gl: ReturnType<typeof fakeGl>;
 let getContext: MockInstance;
 let measure: MockInstance;
+let resizeCallbacks: Array<() => void> = [];
 const loseContext = vi.fn();
 const originalObserver = globalThis.IntersectionObserver;
 
@@ -56,6 +57,7 @@ function fakeGl() {
     getUniformLocation: vi.fn((_program: unknown, name: string) => ({ name })),
     uniform1f: vi.fn(set),
     uniform2f: vi.fn(set),
+    uniform3f: vi.fn(set),
     uniform4f: vi.fn(set),
     viewport: vi.fn(),
     drawArrays: vi.fn(),
@@ -90,13 +92,24 @@ function step(now: number): void {
   act(() => frame?.run(now));
 }
 
-/** Runs a frame every 16ms, the first at `from` and the last at `to`. */
-function play(from: number, to: number): void {
-  for (let now = from; now <= to; now += 16) step(now);
+/** Runs frames every 16ms from `from` until none is left waiting, and returns the last time. */
+function playUntilStill(from: number): number {
+  let now = from;
+  while (frames.length > 0 && now < from + 20_000) {
+    step(now);
+    now += 16;
+  }
+  return now;
 }
 
-function shiftX(): number {
-  return uniforms.get('u_shift')?.[0] ?? 0;
+/** Where the camera stands: x to the right, y down, z towards the viewer. */
+function eye(): number[] {
+  return uniforms.get('u_eye') ?? [];
+}
+
+/** What the page's ResizeObserver would report when the sky or the composer changes size. */
+function resizeObserved(): void {
+  act(() => resizeCallbacks.forEach((notify) => notify()));
 }
 
 /** jsdom has no PointerEvent, so the fields the backdrop reads are set by hand. */
@@ -122,6 +135,7 @@ function Hero({ reducedMotion = false }: { reducedMotion?: boolean }) {
 
 beforeEach(() => {
   frames = [];
+  resizeCallbacks = [];
   uniforms = new Map();
   gl = fakeGl();
   loseContext.mockClear();
@@ -148,6 +162,21 @@ beforeEach(() => {
       unobserve(): void {}
     },
   });
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      private readonly notify: () => void;
+      constructor(callback: () => void) {
+        this.notify = callback;
+        resizeCallbacks.push(this.notify);
+      }
+      disconnect(): void {
+        resizeCallbacks = resizeCallbacks.filter((notify) => notify !== this.notify);
+      }
+      observe(): void {}
+      unobserve(): void {}
+    },
+  );
   getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext') as MockInstance;
   getContext.mockImplementation(() => gl);
   // The backdrop starts after a 280px sidebar; the composer sits in the middle of it.
@@ -186,6 +215,18 @@ it('draws the stars bending around the composer, and fades in once the first fra
   // 1160×640 at two device pixels per pixel.
   expect(uniforms.get('u_buffer')).toEqual([2320, 1280]);
   expect(uniforms.get('u_scale')).toEqual([2]);
+  // The camera faces the sky head on until the mouse says otherwise.
+  expect(eye()).toEqual([0, 0, 1]);
+  expect(uniforms.get('u_right')).toEqual([1, 0, 0]);
+  expect(uniforms.get('u_down')).toEqual([0, 1, 0]);
+});
+
+it('keeps the sky still while nothing happens: it is not drawn again', () => {
+  render(<Hero />);
+  step(0);
+
+  expect(frames).toHaveLength(0);
+  expect(gl.drawArrays).toHaveBeenCalledTimes(1);
 });
 
 it('follows the composer when it grows', () => {
@@ -197,123 +238,156 @@ it('follows the composer when it grows', () => {
     if (this.dataset.testid === 'composer') return rect(300, 280, 1120, 258);
     return rect(0, 0, 0, 0);
   });
+  resizeObserved();
   step(16);
 
   expect(uniforms.get('u_lens')).toEqual([580, 409, 560, 129]);
   expect(uniforms.get('u_buffer')).toEqual([2320, 1376]);
+  expect(frames).toHaveLength(0);
 });
 
-it('keeps drifting on its own, so the stars flow round the composer without any input', () => {
+it('swings the camera towards the mouse, easing rather than jumping, then stops drawing', () => {
   render(<Hero />);
   step(0);
-  const start = shiftX();
 
-  play(16, 1008);
-
-  expect(shiftX()).toBeGreaterThan(start);
-  expect(gl.drawArrays).toHaveBeenCalledTimes(64);
-  expect(uniforms.get('u_time')?.[0]).toBeCloseTo(1.008, 3);
-});
-
-it('slides the stars against the mouse, easing towards it rather than jumping', () => {
-  // The drift alone, as the baseline.
-  const baseline = render(<Hero />);
-  step(0);
-  step(16);
-  const driftAfterOneFrame = shiftX();
-  play(32, 4000);
-  const driftAfterFourSeconds = shiftX();
-  baseline.unmount();
-
-  render(<Hero />);
-  step(0);
-  // Far to the right of the backdrop's centre, which is at x = 860.
+  // Well to the right of the sky's centre, which is at x = 860, and level with it.
   movePointer(1340, 320);
-  step(16);
-  const justMoved = shiftX() - driftAfterOneFrame;
-  play(32, 4000);
-  const settled = shiftX() - driftAfterFourSeconds;
+  expect(frames).toHaveLength(1);
+  step(1000);
+  step(1016);
+  const [justMoved = 0] = eye();
+  const end = playUntilStill(1032);
+  const [settled = 0, level = 0, depth = 0] = eye();
 
-  // A star is drawn at its own place minus the shift: a larger shift moves it left.
   expect(justMoved).toBeGreaterThan(0);
-  expect(justMoved).toBeLessThan(settled / 2);
-  // The stars are far away: they move a fraction of what the mouse did.
-  expect(settled).toBeLessThan(480 / 2);
+  expect(justMoved).toBeLessThan(settled / 4);
+  // The camera keeps its distance: it swings round the sky, it does not slide across it.
+  expect(Math.hypot(settled, level, depth)).toBeCloseTo(1, 6);
+  expect(level).toBe(0);
+  expect(settled).toBeGreaterThan(0.2);
+  expect(settled).toBeLessThan(0.6);
+  // It has caught up in about two seconds, and nothing is drawn after that.
+  expect(end - 1032).toBeLessThan(2500);
+  expect(frames).toHaveLength(0);
+  const drawn = gl.drawArrays.mock.calls.length;
+
+  movePointer(380, 320);
+  playUntilStill(end + 500);
+  expect(eye()[0]).toBeCloseTo(-settled, 6);
+  expect(gl.drawArrays.mock.calls.length).toBeGreaterThan(drawn);
+});
+
+it('swings up and down with the mouse as well', () => {
+  render(<Hero />);
+  step(0);
+
+  movePointer(860, 600);
+  playUntilStill(16);
+
+  const [across = 0, down = 0] = eye();
+  expect(across).toBe(0);
+  expect(down).toBeGreaterThan(0.1);
+  // The camera's own axes stay square to each other while it leans.
+  const right = uniforms.get('u_right') ?? [];
+  const below = uniforms.get('u_down') ?? [];
+  const dot = (a: number[], b: number[]): number =>
+    (a[0] ?? 0) * (b[0] ?? 0) + (a[1] ?? 0) * (b[1] ?? 0) + (a[2] ?? 0) * (b[2] ?? 0);
+  expect(dot(right, below)).toBeCloseTo(0, 6);
+  expect(dot(right, eye())).toBeCloseTo(0, 6);
+  expect(dot(below, eye())).toBeCloseTo(0, 6);
 });
 
 it('ignores touches, which scroll the page rather than point at it', () => {
-  const baseline = render(<Hero />);
-  step(0);
-  step(16);
-  const drift = shiftX();
-  baseline.unmount();
-
   render(<Hero />);
   step(0);
-  movePointer(1340, 320, 'touch');
-  step(16);
 
-  expect(shiftX()).toBe(drift);
+  movePointer(1340, 320, 'touch');
+
+  expect(frames).toHaveLength(0);
 });
 
 it('draws at most sixty times a second, however fast the screen refreshes', () => {
   render(<Hero />);
   step(0);
-  // A 120Hz screen asks for a frame every 8ms.
-  for (let now = 8; now <= 1000; now += 8) step(now);
+  movePointer(1340, 320);
+  const before = gl.drawArrays.mock.calls.length;
 
-  expect(gl.drawArrays.mock.calls.length).toBeGreaterThanOrEqual(60);
-  expect(gl.drawArrays.mock.calls.length).toBeLessThanOrEqual(64);
-  // Time still runs at its own pace.
-  expect(uniforms.get('u_time')?.[0]).toBeCloseTo(1, 1);
+  // A 120Hz screen asks for a frame every 8ms.
+  for (let now = 8; now <= 500; now += 8) step(now);
+
+  const drawn = gl.drawArrays.mock.calls.length - before;
+  expect(drawn).toBeGreaterThanOrEqual(28);
+  expect(drawn).toBeLessThanOrEqual(33);
 });
+
+/** Keeps the mouse crossing the sky, so the camera never comes to rest. */
+function keepMoving(frame: number): void {
+  if (frame % 12 === 0) movePointer(frame % 24 === 0 ? 1340 : 380, 320);
+}
 
 it('gives up sharpness when the GPU cannot keep up, and never below half', () => {
   render(<Hero />);
   step(0);
-  play(16, 4000);
+  let now = 0;
+  let frame = 0;
+  for (; now < 4000; frame += 1) {
+    keepMoving(frame);
+    step((now += 16));
+  }
   // A steady sixty frames a second keeps the full two device pixels per pixel.
   expect(uniforms.get('u_scale')).toEqual([2]);
 
   // Then every frame takes 40ms.
-  let now = 4000;
-  for (let frame = 0; frame < 60; frame += 1) step((now += 40));
+  for (let slow = 0; slow < 60; slow += 1, frame += 1) {
+    keepMoving(frame);
+    step((now += 40));
+  }
   expect(uniforms.get('u_scale')).toEqual([1.5]);
   expect(uniforms.get('u_buffer')).toEqual([1740, 960]);
 
-  for (let frame = 0; frame < 400; frame += 1) step((now += 40));
+  for (let slow = 0; slow < 400; slow += 1, frame += 1) {
+    keepMoving(frame);
+    step((now += 40));
+  }
   expect(uniforms.get('u_scale')).toEqual([1]);
 });
 
-it('does not mistake a busy page load or a long pause for a slow GPU', () => {
+it('does not mistake a busy page load or time spent at rest for a slow GPU', () => {
   render(<Hero />);
   step(0);
   // The first second is uneven while the page is still loading.
   let now = 0;
-  for (let frame = 0; frame < 20; frame += 1) step((now += 45));
-  play(now + 16, now + 3200);
-  // Coming back from another tab is one long gap, not a slow frame.
-  step(now + 60_000);
-  play(now + 60_016, now + 61_600);
+  let frame = 0;
+  for (; frame < 20; frame += 1) {
+    keepMoving(frame);
+    step((now += 45));
+  }
+  for (; now < 4100; frame += 1) {
+    keepMoving(frame);
+    step((now += 16));
+  }
+  // The mouse rests for a minute: the gap before the next frame is not a slow frame.
+  now = playUntilStill(now + 16);
+  movePointer(1100, 200);
+  playUntilStill(now + 60_000);
 
   expect(uniforms.get('u_scale')).toEqual([2]);
 });
 
-it('draws one still frame when reduced motion is on', () => {
+it('draws one still frame when reduced motion is on, and leaves the mouse alone', () => {
   render(<Hero reducedMotion />);
   step(0);
 
   expect(gl.drawArrays).toHaveBeenCalledTimes(1);
   expect(uniforms.get('u_lens')).toEqual([580, 385, 560, 105]);
-  expect(uniforms.get('u_shift')).toEqual([0, 0]);
-  expect(uniforms.get('u_time')).toEqual([0]);
+  expect(eye()).toEqual([0, 0, 1]);
   expect(frames).toHaveLength(0);
 
   movePointer(1340, 320);
   expect(frames).toHaveLength(0);
 });
 
-it('draws the still frame again when the tab comes back, in case the browser dropped it', () => {
+it('draws the frame again when the tab comes back, in case the browser dropped it', () => {
   render(<Hero reducedMotion />);
   step(0);
   expect(frames).toHaveLength(0);
@@ -322,14 +396,15 @@ it('draws the still frame again when the tab comes back, in case the browser dro
   step(5000);
 
   expect(gl.drawArrays).toHaveBeenCalledTimes(2);
-  expect(uniforms.get('u_time')).toEqual([0]);
+  expect(eye()).toEqual([0, 0, 1]);
   expect(frames).toHaveLength(0);
 });
 
-it('draws one still frame on low-end devices and with data saver on', () => {
+it('leaves the mouse alone on low-end devices and with data saver on', () => {
   stubNavigator({ hardwareConcurrency: 2 });
   const first = render(<Hero />);
   step(0);
+  movePointer(1340, 320);
   expect(gl.drawArrays).toHaveBeenCalledTimes(1);
   expect(frames).toHaveLength(0);
   first.unmount();
@@ -337,30 +412,29 @@ it('draws one still frame on low-end devices and with data saver on', () => {
   stubNavigator({ hardwareConcurrency: 8, connection: { saveData: true } });
   render(<Hero />);
   step(0);
+  movePointer(1340, 320);
   expect(gl.drawArrays).toHaveBeenCalledTimes(2);
   expect(frames).toHaveLength(0);
 });
 
-it('stops drawing while scrolled out of view and picks up again when visible', () => {
+it('draws nothing while scrolled out of view, and catches up with the mouse when back', () => {
   render(<Hero />);
   step(0);
-  expect(frames).toHaveLength(1);
 
   act(() => observerCallback?.([{ isIntersecting: false }]));
+  movePointer(1340, 320);
   expect(frames).toHaveLength(0);
 
   act(() => observerCallback?.([{ isIntersecting: true }]));
   expect(frames).toHaveLength(1);
-  // The time away is not replayed as one long jump.
-  step(60_000);
-  step(60_016);
-  expect(uniforms.get('u_time')?.[0]).toBeLessThan(1);
+  playUntilStill(60_000);
+  expect(eye()[0]).toBeGreaterThan(0.2);
 });
 
 it('asks for a GPU-backed context only, so a software renderer leaves the hero plain', () => {
   render(<Hero />);
 
-  // Drawing the sky on the CPU every frame would cost more than the sky is worth.
+  // Drawing the sky on the CPU would cost more than the sky is worth.
   expect(getContext).toHaveBeenCalledWith(
     'webgl',
     expect.objectContaining({ failIfMajorPerformanceCaveat: true }),
@@ -396,6 +470,7 @@ it('starts over on a fresh canvas after the browser takes the GPU context away',
   });
   // Without this the browser never offers the context back.
   expect(lost.defaultPrevented).toBe(true);
+  movePointer(1340, 320);
   expect(frames).toHaveLength(0);
 
   act(() => {
@@ -412,6 +487,7 @@ it('starts over on a fresh canvas after the browser takes the GPU context away',
 it('hands the GPU context back and stops listening when the page goes away', () => {
   const { container, unmount } = render(<Hero />);
   step(0);
+  movePointer(1340, 320);
   const canvas = container.querySelector('.home-backdrop__stars canvas')!;
 
   unmount();
@@ -421,5 +497,6 @@ it('hands the GPU context back and stops listening when the page goes away', () 
   expect(canvas).not.toBeInTheDocument();
   expect(frames).toHaveLength(0);
   movePointer(10, 10);
+  resizeObserved();
   expect(frames).toHaveLength(0);
 });

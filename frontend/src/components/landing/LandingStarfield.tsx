@@ -2,22 +2,21 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 
 import { createStarfieldRenderer, lensWithin } from '@/utils/starfield';
 
-/** The sky slides this many pixels a second on its own, so the stars always flow. */
-const DRIFT_X = 7;
-const DRIFT_Y = 1.6;
-/** The share of the mouse's distance from the middle of the sky that the nearest stars move. */
-const PARALLAX = 0.26;
-/** Seconds the stars take to cover most of the way to where the mouse sends them. */
-const EASE_SECONDS = 0.4;
-/** A longer gap between frames (a hidden tab, a stall) counts as this much time at most. */
+/** How far the camera swings round the sky with the mouse at the sky's edge, in radians. */
+const SWING = 0.42;
+/** Seconds the camera takes to cover most of the way to where the mouse sends it. */
+const EASE_SECONDS = 0.3;
+/** This close to where it is going, the camera counts as there, and drawing stops. */
+const AT_REST = 0.001;
+/** A longer gap between frames (a stall) moves the camera as far as this much time would. */
 const LONGEST_STEP = 0.1;
-/** Sixty frames a second is plenty for a slow sky, also on a screen that refreshes faster. */
+/** Sixty frames a second is plenty, also on a screen that refreshes faster. */
 const SHORTEST_FRAME_MS = 1000 / 60 - 2;
 /** Frames that average slower than this mean the GPU cannot keep up at this sharpness. */
 const SLOW_FRAME_MS = 26;
 /** How many frames are averaged before judging, and how long the page gets to settle first. */
 const JUDGED_FRAMES = 45;
-const SETTLE_SECONDS = 1.5;
+const SETTLE_MS = 1500;
 /** Each time the GPU falls behind, the sky is drawn this much softer, down to half. */
 const SOFTEN = 0.75;
 const SOFTEST = 0.5;
@@ -27,7 +26,7 @@ interface NavigatorHints {
   deviceMemory?: number;
 }
 
-/** Devices that would stutter drawing the sky every frame get one still frame instead. */
+/** Devices that would stutter drawing the sky as it moves get one still frame instead. */
 function prefersStillBackdrop(): boolean {
   if (typeof navigator === 'undefined') return false;
   const hints = navigator as Navigator & NavigatorHints;
@@ -38,8 +37,9 @@ function prefersStillBackdrop(): boolean {
 
 /**
  * The hero's night sky. The stars bend around the element `lens` points at, following it as
- * it moves or grows; they drift slowly and slide against the mouse. Where WebGL is missing
- * the hero keeps its plain background.
+ * it moves or grows. The sky stands still, and is not drawn, until the mouse moves: then
+ * the camera swings round it towards the mouse, and the stars slide past each other by
+ * their depth. Where WebGL is missing the hero keeps its plain background.
  */
 export function LandingStarfield({
   lens,
@@ -69,12 +69,12 @@ export function LandingStarfield({
     let visible = true;
     let lost = false;
     let shown = false;
+    /** When the last frame of the current movement was drawn; null while the sky is still. */
     let last: number | null = null;
-    let time = 0;
-    let driftX = 0;
-    let driftY = 0;
-    let easedX = 0;
-    let easedY = 0;
+    let startedAt: number | null = null;
+    /** Where the camera is on its way to the mouse: -1 to 1 across, and the same scale down. */
+    let aimX = 0;
+    let aimY = 0;
     let pointer: { x: number; y: number } | null = null;
     let measured: HTMLElement | null = null;
     let radius = 0;
@@ -84,7 +84,7 @@ export function LandingStarfield({
 
     const paint = (now: number): void => {
       pending = 0;
-      if (animated && last !== null && now - last < SHORTEST_FRAME_MS) {
+      if (last !== null && now - last < SHORTEST_FRAME_MS) {
         pending = requestAnimationFrame(paint);
         return;
       }
@@ -97,13 +97,12 @@ export function LandingStarfield({
             ? 0
             : Number.parseFloat(getComputedStyle(target).borderTopLeftRadius) || 0;
       }
+      let moving = false;
       if (animated) {
+        startedAt ??= now;
         const gap = last === null ? 0 : (now - last) / 1000;
-        const elapsed = Math.min(gap, LONGEST_STEP);
-        last = now;
-        time += elapsed;
-        // A pause is not a slow frame, and neither is the page still loading around us.
-        if (gap > 0 && gap < LONGEST_STEP && time > SETTLE_SECONDS) {
+        // The page still loading around us is not a slow GPU, and neither is a stall.
+        if (gap > 0 && gap < LONGEST_STEP && now - startedAt > SETTLE_MS) {
           judgedTime += gap;
           judgedFrames += 1;
           if (judgedFrames === JUDGED_FRAMES) {
@@ -114,22 +113,22 @@ export function LandingStarfield({
             judgedFrames = 0;
           }
         }
-        driftX += DRIFT_X * elapsed;
-        driftY += DRIFT_Y * elapsed;
-        // The mouse counts from the middle of the sky, and no further than its edges.
-        const reachX = box.width / 2;
-        const reachY = box.height / 2;
-        const targetX =
-          pointer === null
-            ? 0
-            : Math.min(Math.max(pointer.x - box.left - reachX, -reachX), reachX) * PARALLAX;
-        const targetY =
-          pointer === null
-            ? 0
-            : Math.min(Math.max(pointer.y - box.top - reachY, -reachY), reachY) * PARALLAX;
-        const ease = 1 - Math.exp(-elapsed / EASE_SECONDS);
-        easedX += (targetX - easedX) * ease;
-        easedY += (targetY - easedY) * ease;
+        // The mouse counts from the middle of the sky. Half the sky's width is a full swing,
+        // across and down alike, and the camera goes no further than that.
+        const half = box.width / 2;
+        const swing = (offset: number): number =>
+          pointer === null || half === 0 ? 0 : Math.min(Math.max(offset / half, -1), 1);
+        const goalX = swing((pointer?.x ?? 0) - box.left - half);
+        const goalY = swing((pointer?.y ?? 0) - box.top - box.height / 2);
+        const ease = 1 - Math.exp(-Math.min(gap, LONGEST_STEP) / EASE_SECONDS);
+        aimX += (goalX - aimX) * ease;
+        aimY += (goalY - aimY) * ease;
+        moving = Math.abs(goalX - aimX) > AT_REST || Math.abs(goalY - aimY) > AT_REST;
+        if (!moving) {
+          aimX = goalX;
+          aimY = goalY;
+        }
+        last = moving ? now : null;
       }
       if (box.width > 0 && box.height > 0) {
         renderer.draw({
@@ -138,16 +137,16 @@ export function LandingStarfield({
           pixelRatio: window.devicePixelRatio || 1,
           quality,
           lens: lensWithin(box, target?.getBoundingClientRect() ?? null, radius),
-          shiftX: driftX + easedX,
-          shiftY: driftY + easedY,
-          time,
+          yaw: aimX * SWING,
+          pitch: aimY * SWING,
         });
         if (!shown) {
           shown = true;
           setReady(true);
         }
       }
-      if (animated && visible) pending = requestAnimationFrame(paint);
+      // Once the camera has caught up with the mouse there is nothing new to draw.
+      if (moving && visible) pending = requestAnimationFrame(paint);
     };
     const request = (): void => {
       if (pending === 0 && !lost) pending = requestAnimationFrame(paint);
@@ -155,7 +154,7 @@ export function LandingStarfield({
     const pause = (): void => {
       cancelAnimationFrame(pending);
       pending = 0;
-      // The time spent paused is not replayed as one long step.
+      // The time spent paused is not counted as one long frame.
       last = null;
     };
 
@@ -163,6 +162,7 @@ export function LandingStarfield({
       // A touch scrolls the page; it is not pointing at anything.
       if (event.pointerType === 'touch') return;
       pointer = { x: event.clientX, y: event.clientY };
+      if (visible) request();
     };
     const onLost = (event: Event): void => {
       // Without this the browser never offers the context back.
@@ -171,8 +171,8 @@ export function LandingStarfield({
       pause();
     };
     const onRestored = (): void => setRestored((count) => count + 1);
-    // A browser may drop what a hidden tab's canvas showed; nothing would draw the still
-    // frame again, so it is drawn once more when the tab comes back.
+    // A browser may drop what a hidden tab's canvas showed, and nothing else would draw
+    // the sky again while it stands still: it is drawn once more when the tab comes back.
     const onShown = (): void => {
       if (!document.hidden) request();
     };
@@ -193,8 +193,10 @@ export function LandingStarfield({
         });
         scrollWatch.observe(host);
       }
-    } else if (typeof ResizeObserver === 'function') {
-      // The still frame is drawn again only when the sky or the composer changes size.
+    }
+    if (typeof ResizeObserver === 'function') {
+      // The sky stands still, so the stars have to be told when the composer they bend
+      // around grows or moves: either box changing size redraws them.
       sizeWatch = new ResizeObserver(request);
       sizeWatch.observe(host);
       if (lens.current !== null) sizeWatch.observe(lens.current);

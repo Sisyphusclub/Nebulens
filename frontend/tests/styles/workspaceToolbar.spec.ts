@@ -32,10 +32,12 @@ describe('asset filters', () => {
     return baseStyles.match(new RegExp(`^${escaped}\\s*\\{([^}]+)\\}`, 'm'))?.[1] ?? '';
   }
 
-  it('show model chips as glass pills with a light pill for the active one', () => {
-    expect(rule('.assets-page .collection-rail button')).toContain('background: var(--fill-1);');
+  it('show model chips as solid pills, the active one filled with the accent', () => {
+    expect(rule('.assets-page .collection-rail button')).toContain(
+      'background: var(--bg-surface-hover);',
+    );
     expect(rule(".assets-page .collection-rail button[aria-pressed='true']")).toContain(
-      'background: var(--fill-4);',
+      'background: var(--accent-fill);',
     );
   });
 

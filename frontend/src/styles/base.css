@@ -109,33 +109,39 @@ video {
   justify-content: center;
   gap: 8px;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   padding: 0 18px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   transition:
-    background 0.18s ease,
-    color 0.18s ease,
-    border-color 0.18s ease;
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 .button svg {
   width: 16px;
   height: 16px;
 }
+/* Light on dark: shaded underneath, and lit along the top edge when pointed at. */
 .button--primary {
   background: var(--primary);
+  box-shadow: var(--shadow-primary);
   color: var(--primary-foreground);
 }
 .button--primary:hover {
-  background: color-mix(in oklch, var(--primary) 88%, var(--background));
+  background: color-mix(in oklch, var(--primary) 60%, white);
+  box-shadow: var(--shadow-primary-hover);
 }
 .button--secondary {
   border-color: var(--border);
   background: var(--card);
+  box-shadow: var(--shadow-control);
   color: var(--foreground);
 }
 .button--secondary:hover {
   background: var(--surface-hover);
+  box-shadow: var(--shadow-control-hover);
 }
 .button--ghost {
   background: transparent;
@@ -158,7 +164,7 @@ video {
   min-height: 40px;
   place-items: center;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--card);
   padding: 0;
 }
@@ -2760,8 +2766,8 @@ video {
 .templates-page .template-toolbar {
   margin-bottom: 18px;
 }
-/* Every template category stays in view as a chip, in the assets page's glass chip style;
-   a narrow screen scrolls the one row sideways instead of stacking it. */
+/* Every template category stays in view as a pill, in the same look as the asset filters
+   and the home feed's; a narrow screen scrolls the one row sideways instead of stacking it. */
 .template-category-chips {
   position: relative;
   display: flex;
@@ -2774,21 +2780,23 @@ video {
 .template-category-chips button {
   min-height: 32px;
   flex: 0 0 auto;
-  border: 1px solid var(--line-1);
+  border: 0;
   border-radius: var(--radius-full);
-  background: var(--fill-1);
+  background: var(--bg-surface-hover);
+  box-shadow: var(--shadow-control);
   color: var(--text-2);
   padding: 0 14px;
-  backdrop-filter: blur(10px) saturate(1.2);
+  font-weight: 400;
 }
 .template-category-chips button:hover:not([aria-pressed='true']) {
-  background: var(--fill-3);
+  background: var(--bg-surface-active);
   color: var(--text-1);
 }
 .template-category-chips button[aria-pressed='true'] {
-  border-color: var(--line-3);
-  background: var(--fill-4);
-  color: var(--text-1);
+  background: var(--accent-fill);
+  box-shadow: var(--shadow-accent-fill);
+  color: var(--on-primary);
+  font-weight: 500;
 }
 @media (max-width: 560px) {
   .template-category-chips {
@@ -7343,25 +7351,27 @@ video {
 .collection-rail__items::-webkit-scrollbar {
   display: none;
 }
-/* Model chips follow the glass segmented style: quiet glass chips, and a light
-   glass pill for the active one. */
+/* Model chips are filter pills like the template categories: solid and raised a shade,
+   the active one filled with the accent. */
 .assets-page .collection-rail button {
   min-height: 32px;
-  border: 1px solid var(--line-1);
+  border: 0;
   border-radius: var(--radius-full);
-  background: var(--fill-1);
+  background: var(--bg-surface-hover);
+  box-shadow: var(--shadow-control);
   color: var(--text-2);
   padding: 0 14px;
-  backdrop-filter: blur(10px) saturate(1.2);
+  font-weight: 400;
 }
 .assets-page .collection-rail button:hover:not([aria-pressed='true']) {
-  background: var(--fill-3);
+  background: var(--bg-surface-active);
   color: var(--text-1);
 }
 .assets-page .collection-rail button[aria-pressed='true'] {
-  border-color: var(--line-3);
-  background: var(--fill-4);
-  color: var(--text-1);
+  background: var(--accent-fill);
+  box-shadow: var(--shadow-accent-fill);
+  color: var(--on-primary);
+  font-weight: 500;
 }
 .asset-selection-slot {
   min-height: 49px;
@@ -9704,7 +9714,7 @@ video {
 }
 
 .home-skill-chips {
-  --chip-height: 36px;
+  --chip-height: 32px;
   display: flex;
   width: 100%;
   max-width: var(--home-hero-width);
@@ -9728,13 +9738,14 @@ video {
   min-height: var(--chip-height);
   flex: 0 0 auto;
   align-items: center;
-  gap: 6px;
-  border: 1px solid var(--line-1);
+  gap: 4px;
+  border: 0;
   border-radius: var(--radius-md);
-  background: var(--fill-1);
-  padding: 0 14px;
+  background: var(--bg-surface-hover);
+  box-shadow: var(--shadow-control);
+  padding: 0 12px;
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
   text-decoration: none;
   white-space: nowrap;
@@ -9744,7 +9755,7 @@ video {
 }
 .home-skill-chips .home-skill-chips__chip:hover,
 .home-skill-chips .home-skill-chips__chip:focus-visible {
-  background: var(--fill-3);
+  background: var(--bg-surface-active);
   color: var(--foreground);
 }
 .home-skill-chips__chip--more svg {
@@ -9764,31 +9775,38 @@ video {
 .home-feed__tabs {
   display: flex;
   min-width: 0;
-  gap: 4px;
+  gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
 }
 .home-feed__tabs::-webkit-scrollbar {
   display: none;
 }
+/* Filter pills: solid, raised a shade off the page, and the chosen one filled with the
+   accent. The template and asset filters further up share the look. */
 .home-feed .home-feed__tab {
-  height: 38px;
+  height: 32px;
+  min-height: 32px;
   flex: 0 0 auto;
-  border-radius: var(--radius-md);
-  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-hover);
+  box-shadow: var(--shadow-control);
+  padding: 0 14px;
   color: var(--text-2);
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 400;
 }
-.home-feed .home-feed__tab:hover,
-.home-feed .home-feed__tab:focus-visible {
-  background: var(--fill-2);
+.home-feed .home-feed__tab:hover:not([aria-pressed='true']),
+.home-feed .home-feed__tab:focus-visible:not([aria-pressed='true']) {
+  background: var(--bg-surface-active);
   color: var(--foreground);
 }
 .home-feed .home-feed__tab[aria-pressed='true'] {
-  background: var(--fill-3);
-  color: var(--text-1);
-  font-weight: 600;
+  background: var(--accent-fill);
+  box-shadow: var(--shadow-accent-fill);
+  color: var(--on-primary);
+  font-weight: 500;
 }
 .home-feed__search {
   width: min(340px, 34%);
@@ -9962,6 +9980,10 @@ video {
   }
   .home-skill-chips {
     --chip-height: 40px;
+  }
+  .home-feed .home-feed__tab {
+    height: 40px;
+    min-height: 40px;
   }
   .home-feed__bar {
     flex-direction: column;

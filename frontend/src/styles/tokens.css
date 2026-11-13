@@ -9,6 +9,7 @@
   --bg-sidebar: #161616;
   --bg-surface: #161616;
   --bg-surface-hover: #222222;
+  --bg-surface-active: #303030;
   --bg-floating: #222222;
   --bg-floating-end: #1a1a1a;
 
@@ -35,6 +36,11 @@
   --accent: #f76a00;
   --accent-soft: rgb(247 106 0 / 0.16);
   --glow-warm: #ffe1c2;
+  /* The filled accent, for the one chosen filter in a row: a warm highlight in the top left
+     over orange that deepens towards the bottom right. */
+  --accent-fill:
+    linear-gradient(118deg, var(--glow-warm) 0%, transparent 46%),
+    radial-gradient(85% 110% at 100% 100%, var(--accent) 0%, var(--brand-orange) 100%);
   --primary: #e6e6e6;
   --on-primary: #0c0c0c;
   --success: #5fd39a;
@@ -44,6 +50,14 @@
   --shadow-floating: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 28px 64px -26px rgb(0 0 0 / 0.9);
   --shadow-panel: 0 18px 40px -30px rgb(0 0 0 / 0.9);
   --shadow-media: 0 22px 56px -48px rgb(0 0 0 / 0.92);
+  /* Controls are shaded underneath and lit along the top edge on hover, rather than
+     outlined: a faint light inside dark ones, a shadow inside light ones. */
+  --shadow-control: inset 0 -2px 4px rgb(255 255 255 / 0.05);
+  --shadow-control-hover:
+    inset 0 1px 1px rgb(255 255 255 / 0.16), inset 0 -2px 4px rgb(255 255 255 / 0.05);
+  --shadow-primary: inset 0 -2px 4px rgb(0 0 0 / 0.24);
+  --shadow-primary-hover: inset 0 1px 0 rgb(255 255 255 / 0.8), inset 0 -2px 4px rgb(0 0 0 / 0.24);
+  --shadow-accent-fill: inset 0 -2px 6px rgb(255 225 194 / 0.7);
 
   --space-0-5: 2px;
   --space-1: 4px;

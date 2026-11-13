@@ -2,14 +2,15 @@
   color-scheme: dark;
 
   /* Nebulens design tokens, mirrored from the design system's tokens.json: keep the two in step.
-     Surfaces run from darkest to lightest: media, page, sidebar, surface, floating. */
-  --bg-media: #020203;
-  --bg-page: #07080b;
-  --bg-sidebar: #0a0b0e;
-  --bg-surface: #111215;
-  --bg-surface-hover: #1d1e21;
-  --bg-floating: #1e2027;
-  --bg-floating-end: #171a1f;
+     Surfaces are neutral greys with no cast. The page is the darkest people read on; the
+     sidebar, cards and panels sit one shade above it, and what is raised on them one more. */
+  --bg-media: #050505;
+  --bg-page: #0c0c0c;
+  --bg-sidebar: #161616;
+  --bg-surface: #161616;
+  --bg-surface-hover: #222222;
+  --bg-floating: #222222;
+  --bg-floating-end: #1a1a1a;
 
   /* States are white overlays on any surface: fills for backgrounds, lines for borders. */
   --fill-1: rgb(255 255 255 / 0.04);
@@ -20,22 +21,22 @@
   --line-2: rgb(255 255 255 / 0.1);
   --line-3: rgb(255 255 255 / 0.18);
 
-  --text-1: #f2f4f7;
-  --text-2: rgb(242 244 247 / 0.72);
-  --text-3: rgb(242 244 247 / 0.52);
-  --text-4: rgb(242 244 247 / 0.36);
+  --text-1: #eeeeee;
+  --text-2: rgb(255 255 255 / 0.72);
+  --text-3: rgb(255 255 255 / 0.52);
+  --text-4: rgb(255 255 255 / 0.36);
 
   /* Brand colours come from the logo ribbon and stay in brand places. */
   --brand-blue: #005bf9;
   --brand-cyan: #00a3fe;
   --brand-orange: #f9931b;
-  /* The one interactive accent: links, the AI mark, expandable tags, focus rings. */
-  --accent: #52a9fe;
-  --accent-soft: rgb(82 169 254 / 0.16);
+  /* The one interactive accent, the deep orange of the ribbon: links, the AI mark, expandable
+     tags, focus rings. Blue stays in the logo. */
+  --accent: #f76a00;
+  --accent-soft: rgb(247 106 0 / 0.16);
   --glow-warm: #ffe1c2;
-  --glow-cool: #d3e6ff;
-  --primary: #eef0f5;
-  --on-primary: #12141a;
+  --primary: #e6e6e6;
+  --on-primary: #0c0c0c;
   --success: #5fd39a;
   --warning: #f2c879;
   --danger: #f3625d;
@@ -109,7 +110,7 @@
   --border-floating: var(--line-2);
   --input: var(--line-2);
   --ring: var(--accent);
-  --overlay: rgb(2 3 5 / 0.78);
+  --overlay: rgb(0 0 0 / 0.72);
   --surface-raised: var(--bg-surface-hover);
   --surface-hover: var(--bg-surface-hover);
   --surface-media: var(--bg-media);

@@ -86,8 +86,8 @@ describe('landing composer surface contract', () => {
     );
 
     expect(glassStart).toBeGreaterThan(-1);
-    // Wanxiang's light tint and 4px blur keep what is behind clearly visible.
-    expect(glass).toContain('--card-bg: rgb(26 30 40 / 0.26) !important;');
+    // A light neutral tint and 4px blur keep what is behind clearly visible.
+    expect(glass).toContain('--card-bg: rgb(30 30 30 / 0.26) !important;');
     expect(glass).toContain('backdrop-filter: blur(4px) saturate(1.15);');
     // No blurred halo behind the glass: it tinted the glass and hid the backdrop.
     expect(glass).not.toContain('.liquid-glass-frame::after');

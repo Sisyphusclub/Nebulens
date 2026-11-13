@@ -52,8 +52,8 @@ describe('landing navigation chrome', () => {
     );
     const credits = rule('.landing-account-actions .landing-account-actions__credits');
 
-    expect(icon).toContain('background: rgb(26 30 40 / 0.42);');
+    expect(icon).toContain('background: rgb(30 30 30 / 0.42);');
     expect(icon).toContain('backdrop-filter: blur(10px) saturate(1.2);');
-    expect(credits).toContain('background: rgb(26 30 40 / 0.42);');
+    expect(credits).toContain('background: rgb(30 30 30 / 0.42);');
   });
 });

@@ -450,7 +450,7 @@ video {
   border-radius: var(--radius-full);
   border: 1px solid var(--line-2);
   border-top-color: var(--line-3);
-  background: rgb(26 30 40 / 0.42);
+  background: rgb(30 30 30 / 0.42);
   color: var(--text-1);
   padding: 0;
   box-shadow: rgb(255 255 255 / 0.08) 0 0 2px 1px inset;
@@ -464,7 +464,7 @@ video {
 .landing-account-actions .landing-account-actions__icon:hover,
 .landing-account-actions .landing-account-actions__avatar:hover {
   border-color: var(--line-3);
-  background: rgb(40 46 58 / 0.55);
+  background: rgb(46 46 46 / 0.55);
   color: var(--foreground);
 }
 .landing-account-actions .landing-account-actions__icon svg {
@@ -480,7 +480,7 @@ video {
   border: 1px solid var(--line-2);
   border-top-color: var(--line-3);
   border-radius: var(--radius-full);
-  background: rgb(26 30 40 / 0.42);
+  background: rgb(30 30 30 / 0.42);
   color: var(--text-1);
   padding: 0 14px 0 16px;
   box-shadow:
@@ -492,7 +492,7 @@ video {
 }
 .landing-account-actions .landing-account-actions__credits:hover {
   border-color: var(--line-3);
-  background: rgb(40 46 58 / 0.55);
+  background: rgb(46 46 46 / 0.55);
   color: var(--foreground);
 }
 .landing-account-actions__credits i {
@@ -521,7 +521,7 @@ video {
 }
 .landing-account-actions .landing-account-actions__avatar:hover {
   border-color: transparent;
-  background: rgb(19 19 20 / 0.62);
+  background: rgb(19 19 19 / 0.62);
   color: inherit;
 }
 .landing-account-actions .landing-account-actions__avatar .user-avatar {
@@ -536,7 +536,7 @@ video {
   border-color: var(--line-2);
   border-top-color: var(--line-3);
   border-radius: var(--radius-full);
-  background: rgb(26 30 40 / 0.42);
+  background: rgb(30 30 30 / 0.42);
   color: var(--text-1);
   padding: 0 14px;
   box-shadow:
@@ -546,7 +546,7 @@ video {
 }
 .landing-account-actions .landing-account-actions__login:hover {
   border-color: var(--line-3);
-  background: rgb(34 35 40 / 0.9);
+  background: rgb(36 36 36 / 0.9);
 }
 .landing-account-actions__login svg {
   width: 17px;
@@ -579,7 +579,7 @@ video {
   right: 9px;
   width: 8px;
   height: 8px;
-  border: 1.5px solid rgb(26 30 40);
+  border: 1.5px solid rgb(30 30 30);
   border-radius: var(--radius-full);
   background: var(--danger);
 }
@@ -1427,12 +1427,12 @@ video {
 .image-detail__close .icon-button {
   border: 0;
   border-radius: var(--radius-full);
-  background: rgb(38 42 52 / 0.72);
+  background: rgb(42 42 42 / 0.72);
   color: var(--text-1);
   backdrop-filter: blur(14px);
 }
 .image-detail__close .icon-button:hover {
-  background: rgb(66 72 86 / 0.82);
+  background: rgb(72 72 72 / 0.82);
 }
 .image-detail__media {
   display: flex;
@@ -1726,7 +1726,7 @@ video {
   }
   /* Back over the image here, so it needs the glass again. */
   .image-detail[data-stacked] .image-detail__close .icon-button {
-    background: rgb(38 42 52 / 0.72);
+    background: rgb(42 42 42 / 0.72);
     backdrop-filter: blur(14px);
   }
 }
@@ -1998,7 +1998,7 @@ video {
   z-index: 1;
   border: 1px solid var(--line-3);
   border-radius: var(--radius-full);
-  background: rgb(10 10 12 / 0.74);
+  background: rgb(10 10 10 / 0.74);
   color: var(--foreground);
   padding: 6px 9px;
   font-size: 11px;
@@ -4369,7 +4369,7 @@ video {
   }
   /* Over the image here, so it needs the glass. */
   .template-detail > .template-detail__close {
-    background: rgb(38 42 52 / 0.72);
+    background: rgb(42 42 42 / 0.72);
     backdrop-filter: blur(14px);
   }
   .selection-bar {
@@ -5540,7 +5540,7 @@ video {
   display: inline;
   border: 0;
   padding: 0;
-  background: linear-gradient(90deg, var(--text-1) 0%, var(--glow-cool) 52%, var(--glow-warm) 100%);
+  background: linear-gradient(90deg, var(--text-1) 52%, var(--glow-warm) 100%);
   background-clip: text;
   color: transparent;
   font: inherit;
@@ -6941,7 +6941,7 @@ video {
 }
 .liquid-glass-frame > .generation-composer.agent-chat-input {
   --border-radius: 28px !important;
-  --card-bg: rgb(26 30 40 / 0.26) !important;
+  --card-bg: rgb(30 30 30 / 0.26) !important;
   border-color: transparent;
   border-radius: var(--radius-2xl);
   background:
@@ -8477,7 +8477,7 @@ video {
   border-radius: var(--radius-2xl);
   background: var(--card-bg) !important;
   box-shadow:
-    inset 0 1px 0 rgb(236 248 255 / 0.08),
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
     0 22px 56px -34px rgb(0 0 0 / 0.92);
 }
 .generation-composer.border-glow-card > .border-glow-inner,
@@ -9238,7 +9238,7 @@ video {
   margin: 4px 4px 2px;
   border: 1px solid var(--line-2);
   border-radius: var(--radius-lg);
-  background: rgb(8 11 18 / 0.72);
+  background: rgb(12 12 12 / 0.72);
   padding: 10px 44px 10px 10px;
   text-align: left;
 }
@@ -9665,7 +9665,7 @@ video {
   color: var(--foreground);
 }
 .home-mode-switch .home-mode-switch__item[aria-current='page'] {
-  background: linear-gradient(100deg, var(--glow-warm), var(--glow-cool));
+  background: linear-gradient(100deg, var(--glow-warm), var(--text-1));
   color: var(--on-primary);
   font-weight: 600;
 }

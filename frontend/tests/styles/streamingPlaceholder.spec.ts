@@ -29,9 +29,7 @@ describe('streaming placeholder style contract', () => {
     const caret =
       baseStyles.match(/\n\.agent-chat-input__streaming-placeholder-caret \{([^}]+)\}/)?.[1] ?? '';
 
-    expect(text).toContain(
-      'linear-gradient(90deg, var(--text-1) 0%, var(--glow-cool) 52%, var(--glow-warm) 100%)',
-    );
+    expect(text).toContain('linear-gradient(90deg, var(--text-1) 52%, var(--glow-warm) 100%)');
     expect(text).toContain('background-clip: text;');
     // A blinking caret made it look as if the box had focus and content.
     expect(caret).toContain('display: none;');

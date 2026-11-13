@@ -4,11 +4,12 @@ import { createStarfieldRenderer, lensWithin } from '@/utils/starfield';
 
 /**
  * How far the camera leans round the sky with the mouse at the sky's edge, in radians: about
- * nine degrees, enough for the stars to shift by their depth without the sky swinging about.
+ * thirteen degrees, enough for the stars to slide past each other by their depth without
+ * the sky swinging about.
  */
-const SWING = 0.16;
+const SWING = 0.22;
 /** Seconds the camera takes to cover most of the way to where the mouse sends it. */
-const EASE_SECONDS = 0.45;
+const EASE_SECONDS = 0.4;
 /** This close to where it is going, the camera counts as there, and drawing stops. */
 const AT_REST = 0.001;
 /** A longer gap between frames (a stall) moves the camera as far as this much time would. */

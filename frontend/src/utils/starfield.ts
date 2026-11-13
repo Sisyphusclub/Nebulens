@@ -133,12 +133,11 @@ void main() {
  * their middle: the sheets in front slide one way and the ones behind the other, so the
  * stars have depth when the camera moves.
  *
- * Light bends a little round the box: each pixel near it shows the sky that lies nearer the
- * box, by an amount that is largest at the box's edge and gone a few dozen pixels out. So
- * the sky beside the box is squeezed into a narrow band along its edge, where the stars
- * turn into fine short streaks that follow the outline; the rest of the sky is untouched.
- * Behind the box the sky is enlarged a little instead: the box is thick glass, and the stars
- * show through it larger and fewer. All lengths are CSS pixels.
+ * The box draws the sky in: each pixel near it shows the sky that lies further out, so the
+ * sky nearest the box is squeezed into a band along its edge, many times over at the edge
+ * and less and less further out. There the stars thin into streaks that follow the
+ * outline. Behind the box the sky is enlarged a little instead: the box is thick glass, and
+ * the stars show through it larger and fewer. All lengths are CSS pixels.
  */
 export const STARFIELD_FRAGMENT_SHADER = `
 precision highp float;
@@ -151,15 +150,16 @@ uniform vec3 u_eye;
 uniform vec3 u_right;
 uniform vec3 u_down;
 
-// A pixel right at the box's edge shows the sky PULL pixels nearer the box. The bend falls
-// away with the distance from the edge and is gone REACH pixels out, so it stays a narrow
-// band round the box and leaves the rest of the sky alone.
-const float PULL = 84.0;
-const float REACH = 96.0;
+// A pixel d pixels from the box's edge shows the sky PULL * (1 - (1 - d / REACH)^STEEP)
+// pixels further out. So the REACH + PULL pixels of sky nearest the box are squeezed into a
+// band REACH pixels wide, about four times over at the edge; past the band the sky is only
+// shifted, which cannot be seen.
+const float PULL = 160.0;
+const float REACH = 120.0;
 const float STEEP = 2.5;
-// The bend turns round corners this wide where the box is big enough, wider than the box's
-// own and wider than the bend is deep, so the sky does not fold over itself at a corner.
-const float TURN = 96.0;
+// The band turns round the box's corners on at least this radius, so the streaks there
+// sweep round in arcs rather than turning on the spot.
+const float TURN = 32.0;
 // The distance from the camera to the screen, which sets how wide its view is.
 const float FOCAL = 1000.0;
 // A star thinner than this many device pixels would flicker as it moves, so it dims instead.
@@ -199,10 +199,11 @@ float grain(vec2 p) {
 // One sheet of stars, one star to a cell. "depth" is how far the sheet stands in front of
 // the middle of the sky (behind it when negative), as a share of its distance from the
 // camera. "normal" points away from the box: a star is drawn "squeeze" times thinner along
-// it and "smear" times longer across it.
+// it and "smear" times longer across it. "fan" is how many times wider the sky is than the
+// screen across that direction, where it fans out round a corner of the box.
 vec3 starSheet(
   vec2 seen, float depth, float cell, float seed, float smallest, float largest,
-  float dimmest, float brightest, vec2 normal, float squeeze, float smear
+  float dimmest, float brightest, vec2 normal, float squeeze, float smear, float fan
 ) {
   // Where the line of sight through this pixel meets the sheet, in the sheet's own pixels.
   vec3 ray = -u_eye * FOCAL + u_right * seen.x + u_down * seen.y;
@@ -220,18 +221,22 @@ vec3 starSheet(
       vec2 look = hash2(id * 1.37 + seed + 19.19);
       vec2 away = at - (id + 0.08 + 0.84 * place) * cell;
       float size = mix(smallest, largest, look.x * look.x);
-      // The brighter the star, the longer its streak; none reaches past its own cell.
+      // The brighter the star, the longer its streak. Its length is counted in the sky, where
+      // it is "fan" times longer than on the screen, and stops short of the next cell.
       float longer = 1.0 + (smear - 1.0) * (0.6 + 0.8 * look.y * look.y);
-      float wide = min(max(size * longer, THINNEST / u_scale), cell * 0.12);
+      float wide = min(max(size * longer, THINNEST / u_scale) * fan, cell * 0.12);
       float thin = max(size / squeeze, THINNEST / u_scale);
       float across = dot(away, normal) / squeeze / thin;
       float along = dot(away, vec2(-normal.y, normal.x)) / wide;
       float r2 = across * across + along * along;
       if (r2 < 16.0) {
         vec2 mood = fract(look * vec2(57.13, 91.71) + place.yx * 13.7);
-        float bright = mix(dimmest, brightest, look.y * look.y) * (0.6 + 0.4 * look.x);
-        // A sharp core with faint wings, so the few bright stars glow a little.
-        float shine = 1.0 / pow(1.0 + r2, 3.0);
+        // Squeezed light is a little brighter.
+        float bright =
+          mix(dimmest, brightest, look.y * look.y) * (0.6 + 0.4 * look.x) *
+          (1.0 + 0.1 * (squeeze - 1.0));
+        // A sharp core with soft wings, so the brighter stars glow.
+        float shine = 1.0 / pow(1.0 + r2, 2.75);
         vec3 tint = mood.y > 0.9 ? WARM : mix(vec3(1.0), COOL, mood.x * mood.x);
         light += tint * (shine * bright);
       }
@@ -247,6 +252,7 @@ void main() {
   vec2 normal = vec2(0.0, 1.0);
   float squeeze = 1.0;
   float smear = 1.0;
+  float fan = 1.0;
   vec3 light = vec3(0.0);
 
   if (u_lens.z > 0.0) {
@@ -258,16 +264,21 @@ void main() {
     float beside = smoothstep(-0.5, 1.0, edge);
 
     if (edge > 0.0) {
-      // Outwards from the outline, as if its corners were TURN wide.
+      // Outwards from the outline, as if its corners were at least TURN wide.
       float turn = min(max(u_radius, TURN), min(halfSize.x, halfSize.y));
-      normal = sign(rel) * normalize(max(abs(rel) - halfSize + turn, 0.0) + 0.0001);
+      vec2 turning = max(abs(rel) - halfSize + turn, 0.0);
+      normal = sign(rel) * normalize(turning + 0.0001);
 
       float fall = clamp(1.0 - outside / REACH, 0.0, 1.0);
-      seen = p - normal * (PULL * pow(fall, STEEP));
-      // How many times over the sky is squeezed here: the slope of the bend.
+      float pulled = PULL * (1.0 - pow(fall, STEEP));
+      seen = p + normal * pulled;
+      // How many times over the sky is squeezed here: the slope of the pull.
       squeeze = 1.0 + PULL * STEEP / REACH * pow(fall, STEEP - 1.0);
-      // Squeezed stars draw out along the outline, a little less than they are squeezed.
-      smear = 1.0 + 0.8 * (squeeze - 1.0);
+      // Squeezed stars draw out along the outline, most of all right at the edge.
+      smear = 1.0 + 0.6 * (squeeze - 1.0) + 0.8 * exp(-outside / 6.0);
+      // Round a corner the sky comes from a wider arc than the one it is shown on.
+      float fromTurn = length(turning);
+      if (turning.x > 0.0 && turning.y > 0.0) fan = (fromTurn + pulled) / fromTurn;
     } else {
       seen = u_lens.xy + rel / MAGNIFY;
     }
@@ -275,19 +286,19 @@ void main() {
     // A fine rim of light runs along the box's edge, a little uneven and brighter along the
     // top, like light on a polished edge; a soft glow and a faint haze fade away from it on
     // the outside.
-    float haze = 0.075 * exp(-outside / 22.0) + 0.09 * exp(-outside / 5.0);
+    float haze = 0.09 * exp(-outside / 26.0) + 0.09 * exp(-outside / 5.0);
     float glint = (0.8 + 0.4 * grain(p * 0.045)) * (1.0 - 0.22 * normal.y);
-    float rim = 0.44 * glint * exp(-outside / 1.1) * smoothstep(-1.2, 0.0, edge);
+    float rim = 0.48 * glint * exp(-outside / 1.1) * smoothstep(-1.2, 0.0, edge);
     light += HAZE * haze * beside + vec3(0.9, 0.94, 1.0) * rim;
   }
 
   // The camera looks at the middle of the canvas.
   seen -= u_buffer / u_scale * 0.5;
   vec3 stars =
-    starSheet(seen, -0.3, 40.0, 0.0, 0.6, 1.1, 0.4, 1.0, normal, squeeze, smear) +
-    starSheet(seen, -0.12, 62.0, 37.0, 0.7, 1.4, 0.5, 1.1, normal, squeeze, smear) +
-    starSheet(seen, 0.18, 104.0, 91.0, 0.9, 1.9, 0.6, 1.3, normal, squeeze, smear) +
-    starSheet(seen, 0.42, 200.0, 53.0, 1.2, 2.6, 0.9, 1.7, normal, squeeze, smear);
+    starSheet(seen, -0.3, 40.0, 0.0, 0.75, 1.4, 0.45, 1.15, normal, squeeze, smear, fan) +
+    starSheet(seen, -0.12, 60.0, 37.0, 0.85, 1.75, 0.55, 1.3, normal, squeeze, smear, fan) +
+    starSheet(seen, 0.18, 100.0, 91.0, 1.05, 2.4, 0.65, 1.6, normal, squeeze, smear, fan) +
+    starSheet(seen, 0.42, 190.0, 53.0, 1.4, 3.3, 0.95, 2.1, normal, squeeze, smear, fan);
   light += stars;
 
   // Half a step of noise, so the faint haze does not settle into bands of 8-bit colour.

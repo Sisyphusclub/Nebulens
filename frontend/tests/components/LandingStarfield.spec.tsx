@@ -264,10 +264,10 @@ it('swings the camera towards the mouse, easing rather than jumping, then stops 
   // The camera keeps its distance: it swings round the sky, it does not slide across it.
   expect(Math.hypot(settled, level, depth)).toBeCloseTo(1, 6);
   expect(level).toBe(0);
-  // It leans only a little, under ten degrees even with the mouse near the edge, so the
-  // sky shifts rather than swings.
-  expect(settled).toBeGreaterThan(0.04);
-  expect(settled).toBeLessThan(0.17);
+  // It leans a little, about ten degrees with the mouse near the edge and never fifteen,
+  // so the sky turns visibly without swinging about.
+  expect(settled).toBeGreaterThan(0.15);
+  expect(settled).toBeLessThan(0.26);
   // It takes its time, about three seconds, and nothing is drawn after that.
   expect(end - 1032).toBeGreaterThan(2000);
   expect(end - 1032).toBeLessThan(3600);
@@ -289,7 +289,7 @@ it('swings up and down with the mouse as well', () => {
 
   const [across = 0, down = 0] = eye();
   expect(across).toBe(0);
-  expect(down).toBeGreaterThan(0.03);
+  expect(down).toBeGreaterThan(0.09);
   expect(down).toBeLessThan(0.17);
   // The camera's own axes stay square to each other while it leans.
   const right = uniforms.get('u_right') ?? [];

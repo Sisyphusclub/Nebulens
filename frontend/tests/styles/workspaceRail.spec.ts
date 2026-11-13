@@ -17,9 +17,9 @@ describe('workbench sidebar offset contract', () => {
     expect(workbench).toMatch(
       /\.app-shell \.app-main \{\s*--workspace-sidebar-rail: 0px;\s*padding-left: var\(--sidebar-width\);/,
     );
-    // One width for the page offset and the sidebar panel: the provider's 17rem is 272px.
-    expect(tokens).toContain('--sidebar-width: 272px;');
-    expect(sidebar).toContain("'--sidebar-width': '17rem'");
+    // One width for the page offset and the sidebar panel: the provider's 15.625rem is 250px.
+    expect(tokens).toContain('--sidebar-width: 250px;');
+    expect(sidebar).toContain("'--sidebar-width': '15.625rem'");
   });
 
   it('has no page rule that pulls library pages back under the sidebar', () => {

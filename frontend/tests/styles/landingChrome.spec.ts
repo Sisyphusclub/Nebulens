@@ -38,12 +38,12 @@ describe('landing navigation chrome', () => {
     expect(thumb).toContain('object-fit: cover;');
   });
 
-  it('marks the active rail item with a light glass pill and keeps labels legible', () => {
+  it('marks the active item with a raised row and sets every label at full strength', () => {
     const active = rule(".landing-sidebar [data-sidebar='menu-button'][data-active='true']");
     const item = rule(".landing-sidebar [data-sidebar='menu-button']");
 
-    expect(active).toContain('background: var(--fill-4);');
-    expect(item).toContain('color: var(--text-2);');
+    expect(active).toContain('background: var(--bg-surface-hover);');
+    expect(item).toContain('color: var(--text-1);');
   });
 
   it('puts the header icon buttons on the same glass as the credits pill', () => {

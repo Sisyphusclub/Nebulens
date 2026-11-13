@@ -367,7 +367,7 @@ describe('React application routes', () => {
       '/templates',
     );
     expect(container.querySelector('.landing-navigation-shell')).toHaveStyle({
-      '--sidebar-width': '17rem',
+      '--sidebar-width': '15.625rem',
       '--sidebar-width-icon': '6.875rem',
     });
     expect(container.querySelector(".landing-sidebar [data-sidebar='separator']")).toBeNull();

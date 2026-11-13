@@ -402,7 +402,7 @@ video {
   height: 52px;
   border-radius: var(--radius-sm);
   padding: 0 12px;
-  color: var(--text-2);
+  color: var(--text-1);
   font-size: 11px;
   line-height: 1.1;
   transition:
@@ -420,9 +420,8 @@ video {
   color: var(--foreground);
 }
 .landing-sidebar [data-sidebar='menu-button'][data-active='true'] {
-  background: var(--fill-4);
+  background: var(--bg-surface-hover);
   color: var(--text-1);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
 }
 .landing-sidebar__mobile-footer {
   display: none;
@@ -9375,7 +9374,7 @@ video {
 
 /* Workbench sidebar: one shared sidebar that is always expanded on desktop, with labelled
    navigation and the creation history. It lies flat against the window edge, one
-   full-height panel a shade lighter than the page with a hairline on its right, and the
+   full-height panel a shade lighter than the page and told from it by that alone, and the
    page starts after it instead of running underneath. */
 @media (min-width: 861px) {
   .app-shell .app-main {
@@ -9399,19 +9398,19 @@ video {
   }
   .group[data-state='expanded'] .landing-sidebar [data-sidebar='sidebar'] {
     border: 0;
-    border-right: 1px solid var(--line-1);
     border-radius: 0;
     background: var(--bg-sidebar);
     box-shadow: none;
     backdrop-filter: none;
   }
   .group[data-state='expanded'] .landing-sidebar [data-sidebar='header'] {
-    padding: 18px 12px 14px 14px;
+    padding: 14px 12px 10px 14px;
   }
   /* These sizes are for the main navigation only: scoped to its <nav>, so the creation
-     history below keeps its own smaller rows, spacing and hover actions. */
+     history below keeps its own rows, spacing and hover actions. The icons start under
+     the logo's left edge. */
   .group[data-state='expanded'] .landing-sidebar nav [data-sidebar='group'] {
-    padding: 2px 10px;
+    padding: 2px 12px;
   }
   .group[data-state='expanded'] .landing-sidebar nav [data-sidebar='menu'] {
     gap: var(--space-1);
@@ -9421,19 +9420,27 @@ video {
     gap: 12px;
     border-radius: var(--radius-md);
     padding: 0 12px;
-    font-size: 15px;
+    font-size: 13px;
   }
   .group[data-state='expanded'] .landing-sidebar nav [data-sidebar='menu-button'] svg {
     width: 18px;
     height: 18px;
   }
+  /* The open page: a raised row, and the one orange icon in the sidebar. */
   .group[data-state='expanded']
     .landing-sidebar
     nav
     [data-sidebar='menu-button'][data-active='true'] {
-    background: var(--fill-3);
+    background: var(--bg-surface-hover);
     box-shadow: none;
-    font-weight: 600;
+    font-weight: 500;
+  }
+  .group[data-state='expanded']
+    .landing-sidebar
+    nav
+    [data-sidebar='menu-button'][data-active='true']
+    svg {
+    color: var(--accent);
   }
 }
 /* Space alone separates the creation history from the navigation: no rule between them. */
@@ -9443,7 +9450,7 @@ video {
   min-height: 0;
   flex: 1 1 auto;
   margin-top: var(--space-3);
-  padding: var(--space-3) var(--space-2-5) var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-2);
 }
 .landing-sidebar .sidebar-history [data-sidebar='menu'] {
   gap: var(--space-1);
@@ -9453,7 +9460,7 @@ video {
   padding: 0 12px;
   color: var(--text-3);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
 }
 .sidebar-history [data-sidebar='group-action'] {
   top: 16px;

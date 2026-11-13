@@ -103,11 +103,20 @@ describe('flat workbench sidebar', () => {
   const panel =
     baseStyles.match(/\.group\[data-state='expanded'\] \.landing-sidebar \{([^}]+)\}/)?.[1] ?? '';
 
+  const surface =
+    baseStyles.match(
+      /\.group\[data-state='expanded'\] \.landing-sidebar \[data-sidebar='sidebar'\] \{([^}]+)\}/,
+    )?.[1] ?? '';
+
   it('lies flush against the window edge while expanded', () => {
     expect(panel).toContain('padding: 0;');
-    expect(baseStyles).toMatch(
-      /\.group\[data-state='expanded'\] \.landing-sidebar \[data-sidebar='sidebar'\] \{[^}]*border-radius: 0;/,
-    );
+    expect(surface).toContain('border-radius: 0;');
+  });
+
+  it('is told from the page by its lighter grey alone, with no line down its edge', () => {
+    expect(surface).toContain('background: var(--bg-sidebar);');
+    expect(surface).toContain('border: 0;');
+    expect(surface).not.toContain('border-right');
   });
 
   it('stays exactly as wide as the page offset, however long the creation titles are', () => {
@@ -128,8 +137,11 @@ describe('creation history rows', () => {
       )?.[1] ?? '';
     expect(navButton).toContain('height: var(--nav-item-height);');
     expect(readFileSync(resolve(process.cwd(), 'src/styles/tokens.css'), 'utf8')).toContain(
-      '--nav-item-height: 44px;',
+      '--nav-item-height: 36px;',
     );
+    // Compact rows: small labels in a softly rounded row.
+    expect(navButton).toContain('font-size: 13px;');
+    expect(navButton).toContain('border-radius: var(--radius-md);');
     // No expanded-state rule reaches every menu button or group in the sidebar.
     expect(baseStyles).not.toMatch(
       /\.group\[data-state='expanded'\] \.landing-sidebar \[data-sidebar='(menu-button|group|menu)'\]/,
@@ -138,9 +150,20 @@ describe('creation history rows', () => {
       baseStyles.match(
         /\.landing-sidebar \[data-sidebar='group'\]\.sidebar-history \{([^}]+)\}/,
       )?.[1] ?? '';
-    expect(historyGroup).toContain('padding: var(--space-3) var(--space-2-5) var(--space-2);');
+    expect(historyGroup).toContain('padding: var(--space-3) var(--space-3) var(--space-2);');
     // Space alone separates the history from the navigation.
     expect(historyGroup).not.toContain('border-top');
+  });
+
+  it('mark the open page with a raised row and an orange icon', () => {
+    const active =
+      baseStyles.match(
+        /\.group\[data-state='expanded'\]\s+\.landing-sidebar\s+nav\s+\[data-sidebar='menu-button'\]\[data-active='true'\] \{([^}]+)\}/,
+      )?.[1] ?? '';
+    expect(active).toContain('background: var(--bg-surface-hover);');
+    expect(baseStyles).toMatch(
+      /\.group\[data-state='expanded'\]\s+\.landing-sidebar\s+nav\s+\[data-sidebar='menu-button'\]\[data-active='true'\]\s+svg \{\s*color: var\(--accent\);/,
+    );
   });
 
   it('leave room for the rename and remove actions in the phone menu, where they always show', () => {

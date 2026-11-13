@@ -66,10 +66,10 @@
   --radius-2xl: 28px;
   --radius-full: 999px;
 
-  --sidebar-width: 272px;
+  --sidebar-width: 250px;
   --content-max: 1180px;
   --control-height: 36px;
-  --nav-item-height: 44px;
+  --nav-item-height: 36px;
   --list-row-height: 44px;
   --icon-sm: 14px;
   --icon-md: 16px;

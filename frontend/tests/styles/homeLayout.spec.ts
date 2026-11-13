@@ -81,6 +81,18 @@ describe('home layout', () => {
     expect(rule('.home-hero .landing-composer')).toContain('margin-top: 0;');
   });
 
+  it('keeps the hero narrower than the page, so the sky has room to swirl round its ends', () => {
+    // A composer at least 947px wide keeps its toolbar on one row.
+    expect(rule('.home-hero')).toContain('--home-hero-width: 960px;');
+    expect(rule('.home-hero .landing-composer-anchor')).toContain(
+      'max-width: var(--home-hero-width);',
+    );
+    expect(rule('.home-skill-chips')).toContain('max-width: var(--home-hero-width);');
+    expect(baseStyles).toMatch(
+      /\.home-hero \.ai-insight,\s*\.home-hero \.landing-hero__secondary \{\s*max-width: var\(--home-hero-width\);/,
+    );
+  });
+
   it('lays the inspiration feed out in rows of four wide cards', () => {
     expect(rule('.home-feed__grid')).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
     expect(rule('.home-feed__media')).toContain('aspect-ratio: 4 / 3;');

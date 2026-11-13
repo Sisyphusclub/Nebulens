@@ -9574,7 +9574,10 @@ video {
   right: var(--home-gutter);
 }
 
+/* The hero is narrower than the page, so the sky has room to swirl round the composer's
+   ends. 960px keeps the composer's toolbar on one row. */
 .home-hero {
+  --home-hero-width: 960px;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -9670,7 +9673,7 @@ video {
 }
 .home-hero .landing-composer-anchor {
   width: 100%;
-  max-width: 1180px;
+  max-width: var(--home-hero-width);
   min-height: 0;
   margin-top: var(--space-8);
 }
@@ -9692,14 +9695,14 @@ video {
 }
 .home-hero .ai-insight,
 .home-hero .landing-hero__secondary {
-  max-width: 1180px;
+  max-width: var(--home-hero-width);
 }
 
 .home-skill-chips {
   --chip-height: 36px;
   display: flex;
   width: 100%;
-  max-width: 1180px;
+  max-width: var(--home-hero-width);
   gap: 8px;
   margin-top: var(--space-5);
 }

@@ -56,11 +56,12 @@ describe('home layout', () => {
     }
   });
 
-  it('gives the hero composer five lines to write in, and eight before it scrolls', () => {
-    // 24px lines plus the 14px of padding the text has above and below. A phone keeps the
-    // shared three lines, so the rule waits for a composer at least 560px wide.
+  it('gives the hero composer four lines to write in, and eight before it scrolls', () => {
+    // 24px lines plus the 14px of padding the text has above and below. Three lines looked
+    // too low on the home page and five left an empty band under a short prompt. A phone
+    // keeps the shared three lines, so the rule waits for a composer at least 560px wide.
     expect(baseStyles).toMatch(
-      /@container composer \(min-width: 560px\) \{\s*\.home-hero \.agent-chat-input\.agent-chat-input--modes \.agent-chat-input__textarea \{\s*min-height: 134px !important;\s*max-height: 206px !important;/,
+      /@container composer \(min-width: 560px\) \{\s*\.home-hero \.agent-chat-input\.agent-chat-input--modes \.agent-chat-input__textarea \{\s*min-height: 110px !important;\s*max-height: 206px !important;/,
     );
     // The earlier hero height lost to the shared composer rule and did nothing.
     expect(baseStyles).not.toContain('min-height: 96px !important;');

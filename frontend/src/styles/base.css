@@ -9682,11 +9682,11 @@ video {
   max-width: none;
   margin-top: 0;
 }
-/* The hero composer is the page's main act: it starts with five lines to write in and grows
-   to eight before it scrolls. A phone keeps the shared three lines. */
+/* The hero composer is the page's main act: it starts with four lines to write in, one more
+   than elsewhere, and grows to eight before it scrolls. A phone keeps the shared three. */
 @container composer (min-width: 560px) {
   .home-hero .agent-chat-input.agent-chat-input--modes .agent-chat-input__textarea {
-    min-height: 134px !important;
+    min-height: 110px !important;
     max-height: 206px !important;
   }
 }

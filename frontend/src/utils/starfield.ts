@@ -137,7 +137,8 @@ void main() {
  * box, by an amount that is largest at the box's edge and gone a few dozen pixels out. So
  * the sky beside the box is squeezed into a narrow band along its edge, where the stars
  * turn into fine short streaks that follow the outline; the rest of the sky is untouched.
- * All lengths are CSS pixels.
+ * Behind the box the sky is enlarged a little instead: the box is thick glass, and the stars
+ * show through it larger and fewer. All lengths are CSS pixels.
  */
 export const STARFIELD_FRAGMENT_SHADER = `
 precision highp float;
@@ -163,6 +164,10 @@ const float TURN = 96.0;
 const float FOCAL = 1000.0;
 // A star thinner than this many device pixels would flicker as it moves, so it dims instead.
 const float THINNEST = 1.15;
+// Behind the box the sky is seen this many times larger, about its middle. The page lays
+// its glass over the box and softens what is behind it, so stars of the usual size would be
+// lost there.
+const float MAGNIFY = 1.6;
 
 const vec3 COOL = vec3(0.68, 0.8, 1.0);
 const vec3 WARM = vec3(1.0, 0.86, 0.72);
@@ -242,7 +247,6 @@ void main() {
   vec2 normal = vec2(0.0, 1.0);
   float squeeze = 1.0;
   float smear = 1.0;
-  float open = 1.0;
   vec3 light = vec3(0.0);
 
   if (u_lens.z > 0.0) {
@@ -250,25 +254,31 @@ void main() {
     vec2 halfSize = u_lens.zw;
     float edge = roundedBox(rel, halfSize, u_radius);
     float outside = max(edge, 0.0);
-    // Outwards from the outline, as if its corners were TURN wide.
-    float turn = min(max(u_radius, TURN), min(halfSize.x, halfSize.y));
-    normal = sign(rel) * normalize(max(abs(rel) - halfSize + turn, 0.0) + 0.0001);
+    // 0 behind the box, 1 beside it.
+    float beside = smoothstep(-0.5, 1.0, edge);
 
-    float fall = clamp(1.0 - outside / REACH, 0.0, 1.0);
-    seen = p - normal * (PULL * pow(fall, STEEP));
-    // How many times over the sky is squeezed here: the slope of the bend.
-    squeeze = 1.0 + PULL * STEEP / REACH * pow(fall, STEEP - 1.0);
-    // Squeezed stars draw out along the outline, a little less than they are squeezed.
-    smear = 1.0 + 0.8 * (squeeze - 1.0);
+    if (edge > 0.0) {
+      // Outwards from the outline, as if its corners were TURN wide.
+      float turn = min(max(u_radius, TURN), min(halfSize.x, halfSize.y));
+      normal = sign(rel) * normalize(max(abs(rel) - halfSize + turn, 0.0) + 0.0001);
 
-    // Nothing shows through the box. A fine rim of light runs along its edge, a little
-    // uneven and brighter along the top, like light on a polished edge; a soft glow and a
-    // faint haze fade away from it.
-    open = smoothstep(-0.5, 1.0, edge);
+      float fall = clamp(1.0 - outside / REACH, 0.0, 1.0);
+      seen = p - normal * (PULL * pow(fall, STEEP));
+      // How many times over the sky is squeezed here: the slope of the bend.
+      squeeze = 1.0 + PULL * STEEP / REACH * pow(fall, STEEP - 1.0);
+      // Squeezed stars draw out along the outline, a little less than they are squeezed.
+      smear = 1.0 + 0.8 * (squeeze - 1.0);
+    } else {
+      seen = u_lens.xy + rel / MAGNIFY;
+    }
+
+    // A fine rim of light runs along the box's edge, a little uneven and brighter along the
+    // top, like light on a polished edge; a soft glow and a faint haze fade away from it on
+    // the outside.
     float haze = 0.075 * exp(-outside / 22.0) + 0.09 * exp(-outside / 5.0);
     float glint = (0.8 + 0.4 * grain(p * 0.045)) * (1.0 - 0.22 * normal.y);
     float rim = 0.44 * glint * exp(-outside / 1.1) * smoothstep(-1.2, 0.0, edge);
-    light += HAZE * haze * open + vec3(0.9, 0.94, 1.0) * rim;
+    light += HAZE * haze * beside + vec3(0.9, 0.94, 1.0) * rim;
   }
 
   // The camera looks at the middle of the canvas.
@@ -278,7 +288,7 @@ void main() {
     starSheet(seen, -0.12, 62.0, 37.0, 0.7, 1.4, 0.5, 1.1, normal, squeeze, smear) +
     starSheet(seen, 0.18, 104.0, 91.0, 0.9, 1.9, 0.6, 1.3, normal, squeeze, smear) +
     starSheet(seen, 0.42, 200.0, 53.0, 1.2, 2.6, 0.9, 1.7, normal, squeeze, smear);
-  light += stars * open;
+  light += stars;
 
   // Half a step of noise, so the faint haze does not settle into bands of 8-bit colour.
   light += (hash2(gl_FragCoord.xy).x - 0.5) / 255.0;

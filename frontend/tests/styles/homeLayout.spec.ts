@@ -194,3 +194,19 @@ describe('generate composer', () => {
     );
   });
 });
+
+describe('corner radius scale', () => {
+  it('rounds every surface generously, from small badges to the composer', () => {
+    const tokens = readFileSync(resolve(process.cwd(), 'src/styles/tokens.css'), 'utf8');
+    for (const [name, value] of [
+      ['xs', '8px'],
+      ['sm', '10px'],
+      ['md', '12px'],
+      ['lg', '16px'],
+      ['xl', '20px'],
+      ['2xl', '28px'],
+    ]) {
+      expect(tokens).toContain(`--radius-${name}: ${value};`);
+    }
+  });
+});

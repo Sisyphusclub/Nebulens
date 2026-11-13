@@ -93,9 +93,55 @@ describe('home layout', () => {
     );
   });
 
-  it('lays the inspiration feed out in rows of four wide cards', () => {
-    expect(rule('.home-feed__grid')).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
-    expect(rule('.home-feed__media')).toContain('aspect-ratio: 4 / 3;');
+  it('lays the inspiration feed out as a wall of four columns, each piece at its own proportions', () => {
+    const grid = rule('.home-feed__grid');
+    expect(grid).toContain('--feed-columns: 4;');
+    expect(grid).toContain('grid-template-columns: repeat(var(--feed-columns), minmax(0, 1fr));');
+    // A column's width is divided into rows. Each card spans as many as its picture needs,
+    // and the dense flow drops it into the shortest column.
+    expect(grid).toContain('grid-auto-rows: var(--feed-unit);');
+    expect(grid).toContain('grid-auto-flow: row dense;');
+    expect(grid).toContain('column-gap: var(--feed-gap);');
+    expect(rule('.home-feed__wall')).toContain('container-type: inline-size;');
+    const card = rule('.home-feed .home-feed__card');
+    expect(card).toContain('grid-row: span var(--feed-span);');
+    // The last row of a card's span is the gap under it.
+    expect(card).toContain('height: calc(100% - var(--feed-gap));');
+    expect(card).toContain('border-radius: var(--radius-lg);');
+    expect(baseStyles).not.toContain('.home-feed__media');
+    expect(baseStyles).not.toContain('.home-feed__section');
+  });
+
+  it('narrows the wall to three columns, then two', () => {
+    expect(baseStyles).toMatch(
+      /@media \(max-width: 1240px\) \{\s*\.home-feed__grid \{\s*--feed-columns: 3;/,
+    );
+    expect(baseStyles).toMatch(
+      /@media \(max-width: 860px\) \{[\s\S]*?\.home-feed__grid \{\s*--feed-columns: 2;/,
+    );
+  });
+
+  it('lays the title, author and "make similar" over a picture when it is pointed at', () => {
+    const overlay = rule('.home-feed__overlay');
+    expect(overlay).toContain('opacity: 0;');
+    expect(baseStyles).toMatch(
+      /\.home-feed__card:hover \.home-feed__overlay,\s*\.home-feed__card:focus-visible \.home-feed__overlay \{\s*opacity: 1;/,
+    );
+    const cta = rule('.home-feed__cta');
+    expect(cta).toContain('background: rgb(255 255 255 / 0.95);');
+    expect(cta).toContain('color: var(--on-primary);');
+    // A touch screen has no hover: the caption is always there, and the whole card is the button.
+    expect(baseStyles).toMatch(
+      /@media \(hover: none\) \{\s*\.home-feed__overlay \{[^}]*opacity: 1;[^}]*\}\s*\.home-feed__cta \{\s*display: none;/,
+    );
+  });
+
+  it('heads each part of the page with a display title and an orange mark', () => {
+    const title = rule('.home-section-title');
+    expect(title).toContain('font-family: var(--font-display);');
+    expect(title).toContain('font-size: 20px;');
+    expect(title).toContain('font-weight: 600;');
+    expect(rule('.home-section-title__mark')).toContain('color: var(--accent);');
   });
 });
 

@@ -1,7 +1,8 @@
-import { ArrowUpRight, ChevronRight, Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ArrowRight, Search } from 'lucide-react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 
+import { HomeSectionTitle } from '@/components/landing/HomeSectionTitle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -16,56 +17,59 @@ import { IMAGE_CATEGORY_LABELS, type TeamImageRecord } from '@/types/image';
 import { promptTitle } from '@/utils/promptTitle';
 import { templateThumbnailUrl, thumbnailUrl } from '@/utils/thumbnail';
 
-/** Six rows of four for one category or a search. */
+/** How many pieces one category or a search shows. */
 const FEED_SIZE = 24;
-/** One row of four per section on the featured tab. */
-const SECTION_SIZE = 4;
-/** Shared work gets two rows on the featured tab. */
-const TEAM_SECTION_SIZE = 8;
+/** Templates from each category on the featured wall. */
+const FEATURED_PER_CATEGORY = 4;
+/** Shared work leads the featured wall. */
+const FEATURED_TEAM_SIZE = 8;
+/** A wall at least this long fades out behind its "more" link. */
+const FADED_FROM = 12;
+/** A column's width is this many grid rows, so a square picture is this many rows tall. */
+const ROWS_PER_COLUMN = 40;
+/** A picture taller or wider than this is cropped to it, so no card runs away with a column. */
+const TALLEST = 2;
+const WIDEST = 0.5;
 const FEATURED = '精选';
 const TABS = [FEATURED, ...TEMPLATE_SHORTCUT_CATEGORIES];
 const ORDERED_TEMPLATES = orderTemplatesWithAnimeLast(CREATION_TEMPLATES);
+/** One template from each category in turn, so neighbours on the featured wall differ. */
+const FEATURED_TEMPLATES: readonly CreationTemplate[] = Array.from(
+  { length: FEATURED_PER_CATEGORY },
+  (_, turn) =>
+    TEMPLATE_SHORTCUT_CATEGORIES.flatMap((category) => {
+      const template = ORDERED_TEMPLATES.filter((entry) => entry.category === category)[turn];
+      return template === undefined ? [] : [template];
+    }),
+).flat();
 
-interface FeedSection {
-  title: string;
+type FeedPiece =
+  | { kind: 'record'; record: TeamImageRecord }
+  | { kind: 'template'; template: CreationTemplate };
+
+interface FeedWall {
+  pieces: readonly FeedPiece[];
   more?: { label: string; to: string };
-  records: readonly TeamImageRecord[];
-  templates: readonly CreationTemplate[];
 }
+
+type GridVariables = CSSProperties & { '--feed-rows': number };
+type CardVariables = CSSProperties & { '--feed-span': number };
 
 function categoryHref(category: string): string {
   return `/templates?${new URLSearchParams({ category }).toString()}`;
 }
 
-function featuredSections(records: readonly TeamImageRecord[]): FeedSection[] {
-  const sections: FeedSection[] = [];
-  if (records.length > 0) {
-    sections.push({
-      title: '团队作品',
-      more: { label: '成果库', to: '/team' },
-      records: records.slice(0, TEAM_SECTION_SIZE),
-      templates: [],
-    });
-  }
-  for (const category of TEMPLATE_SHORTCUT_CATEGORIES) {
-    sections.push({
-      title: category,
-      more: { label: `更多${category}`, to: categoryHref(category) },
-      records: [],
-      templates: ORDERED_TEMPLATES.filter((template) => template.category === category).slice(
-        0,
-        SECTION_SIZE,
-      ),
-    });
-  }
-  return sections;
+/** The grid rows a picture of this size takes up, with one more for the gap under it. */
+function rowSpan(width: number, height: number): number {
+  const shape = width > 0 && height > 0 ? height / width : 1;
+  return Math.round(Math.min(Math.max(shape, WIDEST), TALLEST) * ROWS_PER_COLUMN) + 1;
 }
 
 /**
- * Inspiration under the tool cards: category tabs and a search, then rows of large cards.
- * The featured tab shows the team's newest shared work and a row per template category,
- * so it is never empty, even for visitors who are not signed in. Picking a card fills the
- * composer.
+ * Inspiration under the composer: category tabs and a search over a wall of pictures, each
+ * at its own proportions. The featured tab leads with the team's newest shared work and
+ * mixes in templates from every category, so it is never empty, even for visitors who are
+ * not signed in. Picking a picture fills the composer.
  */
 export function LandingShowcase({
   records,
@@ -79,39 +83,44 @@ export function LandingShowcase({
   const [tab, setTab] = useState(FEATURED);
   const [query, setQuery] = useState('');
   const searching = query.trim() !== '';
-  const sections = useMemo<FeedSection[]>(() => {
-    if (tab === FEATURED && !searching) return featuredSections(records);
+  const wall = useMemo<FeedWall>(() => {
+    const ofRecords = (entries: readonly TeamImageRecord[]): FeedPiece[] =>
+      entries.map((record) => ({ kind: 'record', record }));
+    const ofTemplates = (entries: readonly CreationTemplate[]): FeedPiece[] =>
+      entries.map((template) => ({ kind: 'template', template }));
+    if (tab === FEATURED && !searching) {
+      return {
+        pieces: [
+          ...ofRecords(records.slice(0, FEATURED_TEAM_SIZE)),
+          ...ofTemplates(FEATURED_TEMPLATES),
+        ],
+        more: { label: '更多模板', to: '/templates' },
+      };
+    }
     // A category or a search looks through every template; shared work has categories
     // of its own, so it only joins a search on the featured tab.
     const normalizedQuery = query.trim().toLocaleLowerCase('zh-CN');
     const matchingRecords =
       tab === FEATURED
-        ? records.filter((record) =>
-            record.prompt.toLocaleLowerCase('zh-CN').includes(normalizedQuery),
-          )
+        ? records
+            .filter((record) => record.prompt.toLocaleLowerCase('zh-CN').includes(normalizedQuery))
+            .slice(0, FEED_SIZE)
         : [];
     const matchingTemplates = ORDERED_TEMPLATES.filter(
       (template) =>
         (tab === FEATURED || template.category === tab) && templateMatchesQuery(template, query),
-    );
-    const shownRecords = matchingRecords.slice(0, FEED_SIZE);
-    return [
-      {
-        title: searching ? '搜索结果' : tab,
-        ...(searching || tab === FEATURED
-          ? {}
-          : { more: { label: `更多${tab}`, to: categoryHref(tab) } }),
-        records: shownRecords,
-        templates: matchingTemplates.slice(0, Math.max(0, FEED_SIZE - shownRecords.length)),
-      },
-    ];
+    ).slice(0, FEED_SIZE - matchingRecords.length);
+    return {
+      pieces: [...ofRecords(matchingRecords), ...ofTemplates(matchingTemplates)],
+      // A search has already looked through everything there is.
+      ...(searching ? {} : { more: { label: `更多${tab}`, to: categoryHref(tab) } }),
+    };
   }, [query, records, searching, tab]);
-  const empty = sections.every(
-    (section) => section.records.length === 0 && section.templates.length === 0,
-  );
+  const gridStyle: GridVariables = { '--feed-rows': ROWS_PER_COLUMN };
 
   return (
-    <section className="home-feed" aria-label="灵感">
+    <section className="home-feed" aria-labelledby="home-feed-title">
+      <HomeSectionTitle id="home-feed-title">灵感</HomeSectionTitle>
       <div className="home-feed__bar">
         <div className="home-feed__tabs" role="group" aria-label="灵感分类">
           {TABS.map((label) => (
@@ -138,48 +147,55 @@ export function LandingShowcase({
           />
         </label>
       </div>
-      {empty ? (
+      {wall.pieces.length === 0 ? (
         <p className="home-feed__empty">没有找到相关作品，换个关键词试试</p>
       ) : (
-        sections.map((section) =>
-          section.records.length === 0 && section.templates.length === 0 ? null : (
-            <section key={section.title} className="home-feed__section" aria-label={section.title}>
-              <header className="home-feed__section-header">
-                <h2>{section.title}</h2>
-                {section.more === undefined ? null : (
-                  <Link className="home-feed__more" to={section.more.to}>
-                    {section.more.label}
-                    <ChevronRight aria-hidden="true" />
-                  </Link>
-                )}
-              </header>
-              <div className="home-feed__grid">
-                {section.records.map((record) => (
-                  <FeedCard
-                    key={record.id}
-                    label={record.prompt}
-                    title={promptTitle(record.prompt)}
-                    author={record.ownerName}
-                    meta={record.category ? IMAGE_CATEGORY_LABELS[record.category] : undefined}
-                    imageUrl={thumbnailUrl(buildApiUrl(`/api/outputs/${record.id}`), 640)}
-                    onUse={() => onUse(record)}
-                  />
-                ))}
-                {section.templates.map((template) => (
-                  <FeedCard
-                    key={template.id}
-                    label={template.title}
-                    title={template.title}
-                    author="创作模板"
-                    meta={template.category}
-                    imageUrl={templateThumbnailUrl(template.imageUrl)}
-                    onUse={() => onUseTemplate(template)}
-                  />
-                ))}
-              </div>
-            </section>
-          ),
-        )
+        <div
+          className="home-feed__wall"
+          data-fade={
+            wall.more !== undefined && wall.pieces.length >= FADED_FROM ? 'true' : undefined
+          }
+        >
+          <div className="home-feed__grid" style={gridStyle}>
+            {wall.pieces.map((piece) =>
+              piece.kind === 'record' ? (
+                <FeedCard
+                  key={piece.record.id}
+                  label={piece.record.prompt}
+                  title={promptTitle(piece.record.prompt)}
+                  author={piece.record.ownerName}
+                  kind={
+                    piece.record.category ? IMAGE_CATEGORY_LABELS[piece.record.category] : undefined
+                  }
+                  imageUrl={thumbnailUrl(buildApiUrl(`/api/outputs/${piece.record.id}`), 640)}
+                  width={piece.record.width}
+                  height={piece.record.height}
+                  onUse={() => onUse(piece.record)}
+                />
+              ) : (
+                <FeedCard
+                  key={piece.template.id}
+                  label={piece.template.title}
+                  title={piece.template.title}
+                  author="创作模板"
+                  kind={piece.template.category}
+                  imageUrl={templateThumbnailUrl(piece.template.imageUrl)}
+                  width={piece.template.width}
+                  height={piece.template.height}
+                  onUse={() => onUseTemplate(piece.template)}
+                />
+              ),
+            )}
+          </div>
+          {wall.more === undefined ? null : (
+            <div className="home-feed__more">
+              <Link to={wall.more.to}>
+                {wall.more.label}
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            </div>
+          )}
+        </div>
       )}
     </section>
   );
@@ -189,42 +205,49 @@ function FeedCard({
   label,
   title,
   author,
-  meta,
+  kind,
   imageUrl,
+  width,
+  height,
   onUse,
 }: {
   /** The whole prompt or title, for the accessible name. */
   label: string;
   title: string;
   author: string;
-  meta: string | undefined;
+  /** What sort of piece it is: a shared work's category, or a template's. */
+  kind: string | undefined;
   imageUrl: string;
+  width: number;
+  height: number;
   onUse: () => void;
 }) {
+  const style: CardVariables = { '--feed-span': rowSpan(width, height) };
   return (
     <Button
       type="button"
       variant="ghost"
       className="home-feed__card"
       aria-label={`做同款：${label}`}
+      style={style}
       onClick={onUse}
     >
-      <span className="home-feed__media">
-        <img src={imageUrl} alt="" loading="lazy" decoding="async" />
-        <span className="home-feed__cta" aria-hidden="true">
-          做同款
-          <ArrowUpRight />
-        </span>
-      </span>
-      <span className="home-feed__body">
+      <img src={imageUrl} alt="" loading="lazy" decoding="async" />
+      <span className="home-feed__overlay">
         <span className="home-feed__title" title={label}>
           {title}
         </span>
         <span className="home-feed__meta">
-          <span className="home-feed__avatar" aria-hidden="true">
-            {author.slice(0, 1)}
+          <span className="home-feed__author">
+            <span className="home-feed__avatar" aria-hidden="true">
+              {author.slice(0, 1)}
+            </span>
+            {author}
           </span>
-          {meta === undefined ? author : `${author} · ${meta}`}
+          {kind === undefined ? null : <span className="home-feed__kind">{kind}</span>}
+        </span>
+        <span className="home-feed__cta" aria-hidden="true">
+          做同款
         </span>
       </span>
     </Button>

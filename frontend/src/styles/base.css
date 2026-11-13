@@ -9763,6 +9763,193 @@ video {
   height: 14px;
 }
 
+/* What is new, between the hero and the feed: one row of cards. The first invites a
+   visitor to sign in, or offers the day's check-in; the rest are the product's
+   announcements. With room to spare the cards share it; without, the row scrolls sideways. */
+.home-news {
+  margin-top: var(--space-12);
+}
+.home-news__frame {
+  position: relative;
+}
+.home-news__row {
+  display: grid;
+  grid-auto-columns: minmax(268px, 1fr);
+  grid-auto-flow: column;
+  gap: var(--space-2);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.home-news__row::-webkit-scrollbar {
+  display: none;
+}
+.home-news__row > * {
+  scroll-snap-align: start;
+}
+.home-news__promo,
+.home-news__card {
+  display: flex;
+  min-width: 0;
+  min-height: 236px;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  padding: var(--space-5);
+}
+.home-news__card h3,
+.home-news__promo h3 {
+  margin: var(--space-3) 0 0;
+  color: var(--text-1);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+.home-news__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 20px;
+}
+.home-news__kind,
+.home-news__badge {
+  border-radius: var(--radius-xs);
+  background: var(--accent-soft);
+  padding: 0 var(--space-1-5);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.home-news__kind[data-kind='notice'] {
+  background: var(--fill-3);
+  color: var(--text-2);
+}
+.home-news__card ul {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 20px;
+  list-style: none;
+}
+/* Two lines of each point at most, behind a small dot. */
+.home-news__card li {
+  position: relative;
+  display: -webkit-box;
+  overflow: hidden;
+  padding-left: 14px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.home-news__card li::before {
+  position: absolute;
+  top: 8px;
+  left: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--text-4);
+  content: '';
+}
+/* The first card carries the accent: a warm glow rising from the corner the logo sits in. */
+.home-news__promo {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      120% 90% at 100% 100%,
+      color-mix(in oklch, var(--accent) 26%, transparent),
+      transparent 60%
+    ),
+    var(--bg-surface);
+}
+.home-news__promo-mark {
+  position: absolute;
+  right: -14px;
+  bottom: -18px;
+  width: 132px;
+  height: 132px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.home-news__badge {
+  align-self: flex-start;
+}
+.home-news__promo h3 {
+  font-size: 20px;
+  line-height: 28px;
+}
+.home-news__promo p {
+  max-width: 17em;
+  margin: var(--space-1-5) 0 0;
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 20px;
+}
+.home-news__promo .home-news__promo-action {
+  min-height: 36px;
+  align-self: flex-start;
+  margin-top: auto;
+  background: var(--accent);
+  box-shadow: inset 0 -2px 4px rgb(0 0 0 / 0.16);
+  padding: 0 var(--space-4);
+  color: var(--on-primary);
+}
+.home-news__promo .home-news__promo-action:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--accent) 86%, white);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.5),
+    inset 0 -2px 4px rgb(0 0 0 / 0.16);
+}
+.home-news__promo .home-news__promo-action:disabled {
+  background: var(--fill-3);
+  box-shadow: none;
+  color: var(--text-3);
+}
+/* For a mouse, which cannot swipe: round buttons over the ends the row runs past. */
+.home-news .home-news__arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-hover);
+  box-shadow:
+    inset 0 0 0 1px var(--line-2),
+    0 8px 24px -8px rgb(0 0 0 / 0.7);
+  translate: 0 -50%;
+}
+.home-news .home-news__arrow:hover {
+  background: var(--bg-surface-active);
+}
+.home-news__arrow--back {
+  left: calc(-1 * var(--space-2));
+}
+.home-news__arrow--forward {
+  right: calc(-1 * var(--space-2));
+}
+@media (hover: none) {
+  .home-news .home-news__arrow {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-news__row {
+    scroll-behavior: auto;
+  }
+}
+
 .home-feed {
   margin-top: var(--space-12);
 }

@@ -48,9 +48,10 @@ describe('home layout', () => {
     );
   });
 
-  it('goes from the composer and its chips straight to the feed, with no tool cards between', () => {
+  it('offers the skills once under the composer: no tool cards or banner repeat them further down', () => {
     // The banner and the two rows of tool cards repeated what the composer's skill library
-    // and the feed's own tabs already offer.
+    // and the feed's own tabs already offer. The news row that follows the hero is about
+    // other things: signing in, and what has changed.
     for (const gone of ['.home-tools', '.landing-deck', '.landing-feature']) {
       expect(baseStyles).not.toContain(gone);
     }
@@ -142,6 +143,35 @@ describe('home layout', () => {
     expect(title).toContain('font-size: 20px;');
     expect(title).toContain('font-weight: 600;');
     expect(rule('.home-section-title__mark')).toContain('color: var(--accent);');
+  });
+});
+
+describe('news row', () => {
+  it('stands a section apart from the hero above it', () => {
+    expect(rule('.home-news')).toContain('margin-top: var(--space-12);');
+  });
+
+  it('is one row of cards that scrolls sideways when the page is too narrow for them all', () => {
+    const row = rule('.home-news__row');
+    expect(row).toContain('grid-auto-flow: column;');
+    // At least 268px each; with room to spare they share it and nothing scrolls.
+    expect(row).toContain('grid-auto-columns: minmax(268px, 1fr);');
+    expect(row).toContain('overflow-x: auto;');
+    expect(row).toContain('scrollbar-width: none;');
+  });
+
+  it('draws its cards as raised panels with no outline', () => {
+    const card = rule('.home-news__promo,\n.home-news__card');
+    expect(card).toContain('border-radius: var(--radius-lg);');
+    expect(card).toContain('background: var(--bg-surface);');
+    expect(card).not.toContain('border:');
+  });
+
+  it('gives the first card the accent: a warm glow in its corner and a filled button', () => {
+    expect(rule('.home-news__promo')).toMatch(/radial-gradient\([^;]*var\(--accent\)/);
+    const action = rule('.home-news__promo .home-news__promo-action');
+    expect(action).toContain('background: var(--accent);');
+    expect(action).toContain('color: var(--on-primary);');
   });
 });
 

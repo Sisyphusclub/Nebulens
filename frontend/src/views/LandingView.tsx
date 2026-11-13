@@ -6,6 +6,7 @@ import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
 import { GenerationComposerControls } from '@/components/generation/GenerationComposerControls';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
+import { LandingNews } from '@/components/landing/LandingNews';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { AiInsightBar } from '@/components/generation/AiInsightBar';
 import { LandingQuickComposer } from '@/components/landing/LandingQuickComposer';
@@ -409,6 +410,16 @@ export function LandingView() {
           </div>
         ) : null}
       </section>
+      <LandingNews
+        // The check-in is only known once the quota has loaded.
+        isAuthPending={authLoading || quotaPending}
+        isAuthenticated={isAuthenticated}
+        checkedInToday={quota?.checkedInToday ?? false}
+        dailyCheckInReward={quota?.dailyCheckInReward ?? 5}
+        onLogin={openAuthModal}
+        onCheckIn={checkIn}
+        onNotify={notify}
+      />
       <LandingShowcase records={showcase} onUse={makeSimilar} onUseTemplate={fillTemplatePrompt} />
       <LandingQuickComposer
         anchor={composerBoxRef}

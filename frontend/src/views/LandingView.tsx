@@ -1,11 +1,10 @@
 import { LoaderCircle } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
 import { GenerationComposerControls } from '@/components/generation/GenerationComposerControls';
-import { LandingHeroBackdrop } from '@/components/landing/LandingHeroBackdrop';
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { AiInsightBar } from '@/components/generation/AiInsightBar';
@@ -13,6 +12,7 @@ import { LandingQuota } from '@/components/landing/LandingQuota';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingShowcase } from '@/components/landing/LandingShowcase';
 import { LandingSkillBar } from '@/components/landing/LandingSkillBar';
+import { LandingStarfield } from '@/components/landing/LandingStarfield';
 import { LandingModeSwitch, LandingSkillChips } from '@/components/landing/LandingSkillChips';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
@@ -69,6 +69,8 @@ import {
 export function LandingView() {
   const navigate = useNavigate();
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  /** The composer's box: the stars behind the hero bend around it. */
+  const composerBoxRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { quota, isLoading: quotaLoading, checkIn } = useImageQuota();
   const imageApiKey = useImageApiKey();
@@ -264,7 +266,7 @@ export function LandingView() {
       />
       <section className="home-hero" aria-labelledby="landing-title">
         <div className="home-backdrop" aria-hidden="true">
-          <LandingHeroBackdrop reducedMotion={reducedMotion} />
+          <LandingStarfield lens={composerBoxRef} reducedMotion={reducedMotion} />
           <div className="home-backdrop__overlay" />
         </div>
         {/* Each clause stays whole, so a narrow screen breaks the line only between them. */}
@@ -274,7 +276,7 @@ export function LandingView() {
         </h1>
         <LandingModeSwitch />
         <div className="landing-composer-anchor">
-          <div className="landing-composer-presentation landing-composer-hero">
+          <div ref={composerBoxRef} className="landing-composer-presentation landing-composer-hero">
             <LiquidGlassFrame className="landing-composer-content">
               <AgentChatInput
                 value={prompt}

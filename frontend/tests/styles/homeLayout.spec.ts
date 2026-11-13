@@ -11,12 +11,32 @@ function rule(selector: string): string {
 }
 
 describe('home layout', () => {
-  it('starts after the rail and keeps no artwork backdrop', () => {
+  it('starts after the rail', () => {
     expect(rule('.home-page')).toContain(
       'padding: 0 var(--home-gutter) 72px calc(var(--workspace-sidebar-rail) + var(--home-gutter));',
     );
-    expect(baseStyles).not.toContain('.landing-hero__video');
     expect(rule('.home-hero .landing-composer-anchor::before')).toContain('display: none;');
+  });
+
+  it('has a night sky behind the hero, drawn on the page rather than played from a video', () => {
+    // From the sidebar to the window edge, and down through the gap above the feed.
+    expect(rule('.home-backdrop')).toContain(
+      'inset: 0 calc(-1 * var(--home-gutter)) calc(-1 * var(--space-12));',
+    );
+    expect(rule('.home-feed')).toContain('margin-top: var(--space-12);');
+    // It fades in once the first frame is up, and into the page at the bottom.
+    expect(rule('.home-backdrop__stars')).toContain('opacity: 0;');
+    expect(rule(".home-backdrop__stars[data-ready='true']")).toContain('opacity: 1;');
+    expect(rule('.home-backdrop__overlay')).toMatch(
+      /linear-gradient\(180deg, transparent calc\(100% - \d+px\), var\(--background\)\)/,
+    );
+    // The stars bend around the composer's box and read its corner radius from it.
+    expect(rule('.home-hero .landing-composer-presentation')).toContain(
+      'border-radius: var(--radius-2xl);',
+    );
+    for (const gone of ['.home-backdrop__media', '.landing-hero__video']) {
+      expect(baseStyles).not.toContain(gone);
+    }
   });
 
   it('goes from the composer and its chips straight to the feed, with no tool cards between', () => {

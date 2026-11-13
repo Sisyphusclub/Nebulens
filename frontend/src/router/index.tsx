@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router-dom';
 
-import { HERO_BACKDROP_POSTER } from '@/components/landing/LandingHeroBackdrop';
 import { Button } from '@/components/ui/button';
 
 const SITE_TITLE = '贝尔灵画｜AI 图像创作工作台';
@@ -80,16 +79,11 @@ function NotFound() {
   );
 }
 
-/** The home page's own backdrop, so it loads into itself instead of through grey blocks. */
+/** The home page's own dark page, so it loads into itself instead of through grey blocks. */
 function LandingFallback() {
   return (
     <div className="home-page home-page--loading" aria-hidden="true">
-      <div className="home-hero">
-        <div className="home-backdrop">
-          <img className="home-backdrop__media" src={HERO_BACKDROP_POSTER} alt="" />
-          <div className="home-backdrop__overlay" />
-        </div>
-      </div>
+      <div className="home-hero" />
     </div>
   );
 }

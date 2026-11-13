@@ -11,16 +11,16 @@ vi.mock('@/views/HistoryView', () => ({
   HistoryView: () => <Link to="/somewhere-else">离开</Link>,
 }));
 
-it('holds the home page on its backdrop while it loads, with no skeleton blocks', () => {
+it('holds the home page on its own dark page while it loads, with no skeleton blocks', () => {
   const { container } = render(
     <MemoryRouter initialEntries={['/']}>
       <AppRoutes />
     </MemoryRouter>,
   );
 
-  expect(
-    container.querySelector('.home-page--loading img.home-backdrop__media'),
-  ).toBeInTheDocument();
+  expect(container.querySelector('.home-page--loading .home-hero')).toBeInTheDocument();
+  // The page draws its night sky itself once it is in: there is no picture to wait for.
+  expect(container.querySelector('.home-page--loading img')).not.toBeInTheDocument();
   expect(screen.queryByRole('status', { name: '页面加载中' })).not.toBeInTheDocument();
 });
 

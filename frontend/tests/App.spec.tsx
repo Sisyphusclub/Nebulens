@@ -891,6 +891,49 @@ describe('React application routes', () => {
     expect(borderGlow?.style.getPropertyValue('--fill-opacity')).toBe('0');
   });
 
+  it('sends a prompt from the quick composer down the page, with the hero composer’s settings', async () => {
+    // The browser reports the hero composer scrolling away through this observer.
+    const watches: Array<(entries: Array<{ isIntersecting: boolean }>) => void> = [];
+    const originalObserver = globalThis.IntersectionObserver;
+    Object.defineProperty(globalThis, 'IntersectionObserver', {
+      configurable: true,
+      value: class {
+        constructor(callback: (entries: Array<{ isIntersecting: boolean }>) => void) {
+          watches.push(callback);
+        }
+        disconnect(): void {}
+        observe(): void {}
+        unobserve(): void {}
+      },
+    });
+    try {
+      const user = userEvent.setup();
+      renderRoute('/');
+
+      const hero = await screen.findByRole('textbox', { name: '首页创作提示词' });
+      expect(screen.queryByRole('textbox', { name: '快速创作提示词' })).toBeNull();
+      await user.click(screen.getByRole('button', { name: '选择模型' }));
+      await user.click(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-sunburst' }));
+
+      act(() => watches.forEach((watch) => watch([{ isIntersecting: false }])));
+      await user.type(screen.getByRole('textbox', { name: '快速创作提示词' }), '雨夜的未来城市');
+      // One prompt, two places to write it.
+      expect(hero).toHaveTextContent('雨夜的未来城市');
+      await user.click(screen.getByRole('button', { name: '发送提示词' }));
+
+      expect(await screen.findByRole('region', { name: '图像生成工作区' })).toBeInTheDocument();
+      await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
+      expect(generation.generate).toHaveBeenCalledWith(
+        expect.objectContaining({ prompt: '雨夜的未来城市', model: 'gpt-image-2.5-sunburst' }),
+      );
+    } finally {
+      Object.defineProperty(globalThis, 'IntersectionObserver', {
+        configurable: true,
+        value: originalObserver,
+      });
+    }
+  });
+
   it('carries a homepage prompt into the generation workspace and starts generation', async () => {
     const user = userEvent.setup();
     const { container } = renderRoute('/');

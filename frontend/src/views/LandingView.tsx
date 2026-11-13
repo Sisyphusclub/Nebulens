@@ -8,6 +8,7 @@ import { GenerationComposerControls } from '@/components/generation/GenerationCo
 import { LandingAccountActions } from '@/components/landing/LandingAccountActions';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { AiInsightBar } from '@/components/generation/AiInsightBar';
+import { LandingQuickComposer } from '@/components/landing/LandingQuickComposer';
 import { LandingQuota } from '@/components/landing/LandingQuota';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingShowcase } from '@/components/landing/LandingShowcase';
@@ -133,6 +134,7 @@ export function LandingView() {
   });
   const { activeForm, skillFormsError, skillChoices, planning: planningSkill } = composerSkills;
   const agentMode = mode === 'agent' && activeSkill === undefined;
+  const placeholder = mode === 'agent' ? AGENT_PLACEHOLDER : '描述你想生成的画面...';
   const accountName = user?.username ?? user?.name ?? '账户';
   const providerPending = authLoading || (isAuthenticated && imageApiKey.isLoading);
   const quotaPending = isAuthenticated && quotaLoading;
@@ -309,7 +311,7 @@ export function LandingView() {
                 streamingPlaceholders={
                   mode === 'agent' ? AGENT_PROMPT_EXAMPLES : IMAGE_PROMPT_EXAMPLES
                 }
-                placeholder={mode === 'agent' ? AGENT_PLACEHOLDER : '描述你想生成的画面...'}
+                placeholder={placeholder}
                 ariaLabel="首页创作提示词"
                 submitLabel={
                   activeSkill !== undefined
@@ -408,6 +410,14 @@ export function LandingView() {
         ) : null}
       </section>
       <LandingShowcase records={showcase} onUse={makeSimilar} onUseTemplate={fillTemplatePrompt} />
+      <LandingQuickComposer
+        anchor={composerBoxRef}
+        value={prompt}
+        onValueChange={setPrompt}
+        onSubmit={() => submitPrompt(prompt, attachments)}
+        placeholder={placeholder}
+        disabled={planningSkill}
+      />
       <ImageDetailModal
         entry={selectedRecommendationEntry}
         {...(selectedRecommendation === null

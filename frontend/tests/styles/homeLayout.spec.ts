@@ -145,6 +145,50 @@ describe('home layout', () => {
   });
 });
 
+describe('quick composer', () => {
+  it('rides the bottom of the window in the middle of the page column, taking no room of its own', () => {
+    const dock = rule('.home-page .home-quick-composer');
+    // Sticky, not fixed: it stays in the page column whatever the sidebar's width, and at
+    // the end of the page it comes to rest in the space kept above it.
+    expect(dock).toContain('position: sticky;');
+    expect(dock).toContain('bottom: var(--space-6);');
+    expect(dock).toContain('height: 0;');
+    // Over the feed, under the sidebar and every dialog.
+    expect(dock).toContain('z-index: 30;');
+    const bar = rule('.home-quick-composer__bar');
+    expect(bar).toContain('position: absolute;');
+    expect(bar).toContain('bottom: 0;');
+    expect(bar).toContain('width: min(700px, 100%);');
+    expect(bar).toContain('height: 56px;');
+  });
+
+  it('is a pill of glass, like the hero composer it stands in for', () => {
+    const bar = rule('.home-quick-composer__bar');
+    expect(bar).toContain('border-radius: var(--radius-2xl);');
+    expect(bar).toContain('backdrop-filter: blur(24px) saturate(1.2);');
+    expect(bar).toMatch(/background: rgb\(30 30 30 \/ 0\.\d+\);/);
+  });
+
+  it('slides up as it arrives, unless motion is to be kept down', () => {
+    expect(rule('.home-quick-composer__bar')).toContain(
+      'animation: home-quick-composer-in 300ms var(--ease-out-expo) both;',
+    );
+    expect(baseStyles).toMatch(
+      /@keyframes home-quick-composer-in \{\s*from \{\s*opacity: 0;\s*transform: translate\(-50%, 12px\);/,
+    );
+    expect(baseStyles).toMatch(
+      /@media \(prefers-reduced-motion: reduce\) \{\s*\.home-quick-composer__bar \{\s*animation: none;/,
+    );
+  });
+
+  it('gets a neutral light edge when written in, never a coloured frame', () => {
+    const focused = rule('.home-quick-composer__bar:focus-within');
+    expect(focused).toContain('rgb(255 255 255 / 0.4)');
+    expect(focused).not.toContain('accent');
+    expect(rule('.home-quick-composer .home-quick-composer__input')).toContain('outline: none;');
+  });
+});
+
 describe('flat workbench sidebar', () => {
   const panel =
     baseStyles.match(/\.group\[data-state='expanded'\] \.landing-sidebar \{([^}]+)\}/)?.[1] ?? '';

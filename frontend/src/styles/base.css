@@ -10079,6 +10079,109 @@ video {
   }
 }
 
+/* The quick composer: one line of glass that rides the bottom of the window once the hero
+   composer has scrolled away. Sticky rather than fixed, so it stays in the middle of the
+   page column whatever the sidebar's width, and at the end of the page it comes to rest in
+   the space its margin keeps above it. It takes no room of its own: the bar hangs upwards
+   from a line, over the feed and under the sidebar and every dialog. */
+.home-page .home-quick-composer {
+  position: sticky;
+  bottom: var(--space-6);
+  z-index: 30;
+  height: 0;
+  margin-top: 104px;
+  pointer-events: none;
+}
+.home-quick-composer__bar {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  display: flex;
+  width: min(700px, 100%);
+  height: 56px;
+  align-items: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-2xl);
+  background: rgb(30 30 30 / 0.72);
+  box-shadow:
+    inset 0 0 0 1px var(--line-2),
+    0 16px 40px -16px rgb(0 0 0 / 0.7);
+  padding: 0 var(--space-3) 0 var(--space-5);
+  backdrop-filter: blur(24px) saturate(1.2);
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+  transition: box-shadow 150ms ease;
+  animation: home-quick-composer-in 300ms var(--ease-out-expo) both;
+}
+/* The bar is put in the page as the hero composer leaves the window: it slides up into place. */
+@keyframes home-quick-composer-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+/* The same neutral edge as the hero composer's: light, not the accent. */
+.home-quick-composer__bar:focus-within {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.4),
+    0 0 0 4px var(--fill-1),
+    0 16px 40px -16px rgb(0 0 0 / 0.7);
+}
+/* One line: a longer prompt scrolls sideways under the caret. */
+.home-quick-composer .home-quick-composer__input {
+  min-width: 0;
+  height: 24px;
+  flex: 1 1 auto;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--text-1);
+  font-size: 14px;
+  line-height: 24px;
+  outline: none;
+  caret-color: var(--accent);
+  resize: none;
+  white-space: nowrap;
+}
+.home-quick-composer .home-quick-composer__input::placeholder {
+  color: var(--text-4);
+}
+.home-quick-composer .home-quick-composer__send {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  box-shadow: var(--shadow-primary);
+  color: var(--on-primary);
+}
+.home-quick-composer .home-quick-composer__send:hover:not(:disabled) {
+  box-shadow: var(--shadow-primary-hover);
+}
+.home-quick-composer .home-quick-composer__send:disabled {
+  background: var(--fill-2);
+  box-shadow: none;
+  color: var(--text-4);
+}
+@media (max-width: 860px) {
+  .home-page .home-quick-composer {
+    bottom: var(--space-4);
+  }
+  /* 16px keeps a phone from zooming in on the field when it is tapped. */
+  .home-quick-composer .home-quick-composer__input {
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-quick-composer__bar {
+    animation: none;
+  }
+}
+
 .sidebar-history .sidebar-history__login {
   height: auto;
   min-height: 0;

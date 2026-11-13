@@ -264,10 +264,13 @@ it('swings the camera towards the mouse, easing rather than jumping, then stops 
   // The camera keeps its distance: it swings round the sky, it does not slide across it.
   expect(Math.hypot(settled, level, depth)).toBeCloseTo(1, 6);
   expect(level).toBe(0);
-  expect(settled).toBeGreaterThan(0.2);
-  expect(settled).toBeLessThan(0.6);
-  // It has caught up in about two seconds, and nothing is drawn after that.
-  expect(end - 1032).toBeLessThan(2500);
+  // It leans only a little, under ten degrees even with the mouse near the edge, so the
+  // sky shifts rather than swings.
+  expect(settled).toBeGreaterThan(0.04);
+  expect(settled).toBeLessThan(0.17);
+  // It takes its time, about three seconds, and nothing is drawn after that.
+  expect(end - 1032).toBeGreaterThan(2000);
+  expect(end - 1032).toBeLessThan(3600);
   expect(frames).toHaveLength(0);
   const drawn = gl.drawArrays.mock.calls.length;
 
@@ -286,7 +289,8 @@ it('swings up and down with the mouse as well', () => {
 
   const [across = 0, down = 0] = eye();
   expect(across).toBe(0);
-  expect(down).toBeGreaterThan(0.1);
+  expect(down).toBeGreaterThan(0.03);
+  expect(down).toBeLessThan(0.17);
   // The camera's own axes stay square to each other while it leans.
   const right = uniforms.get('u_right') ?? [];
   const below = uniforms.get('u_down') ?? [];
@@ -428,7 +432,7 @@ it('draws nothing while scrolled out of view, and catches up with the mouse when
   act(() => observerCallback?.([{ isIntersecting: true }]));
   expect(frames).toHaveLength(1);
   playUntilStill(60_000);
-  expect(eye()[0]).toBeGreaterThan(0.2);
+  expect(eye()[0]).toBeGreaterThan(0.04);
 });
 
 it('asks for a GPU-backed context only, so a software renderer leaves the hero plain', () => {

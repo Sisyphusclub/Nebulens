@@ -28,7 +28,7 @@ describe('typefaces', () => {
     }
   });
 
-  it('keeps a Song face for the home headline alone', () => {
+  it('keeps a Song face for the two lines the home page opens and closes on', () => {
     const stacks = [...tokens.matchAll(/--font-serif:([^;]+);/g)].map((match) =>
       (match[1] ?? '').replace(/\s+/g, ' ').trim(),
     );
@@ -38,8 +38,9 @@ describe('typefaces', () => {
     expect(stacks[0]?.startsWith("'Noto Serif SC'")).toBe(true);
     expect(stacks[0]).toContain("'Songti SC'");
     // The wordmark, the sign-in title and every other heading stay in the display face.
-    expect(baseStyles.match(/var\(--font-serif\)/g)).toHaveLength(1);
+    expect(baseStyles.match(/var\(--font-serif\)/g)).toHaveLength(2);
     expect(baseStyles).toMatch(/\.home-hero h1 \{[^}]*font-family: var\(--font-serif\);/);
+    expect(baseStyles).toMatch(/\.home-closing h2 \{[^}]*font-family: var\(--font-serif\);/);
   });
 
   it('loads the faces it uses and no others', () => {

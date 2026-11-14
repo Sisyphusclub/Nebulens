@@ -176,14 +176,22 @@ describe('news row', () => {
 });
 
 describe('closing lines and footer', () => {
-  it('centres the closing lines under the wall, the title in the display face', () => {
+  it('centres the closing lines under the wall, the title in the headline’s own Song face', () => {
     const closing = rule('.home-closing');
     expect(closing).toContain('align-items: center;');
     expect(closing).toContain('margin-top: var(--space-12);');
     expect(closing).toContain('text-align: center;');
+    // The page opens and closes on the same voice: light, widely tracked Song.
     const title = rule('.home-closing h2');
-    expect(title).toContain('font-family: var(--font-display);');
-    expect(title).toContain('font-weight: 600;');
+    const headline = rule('.home-hero h1');
+    for (const declaration of [
+      'font-family: var(--font-serif);',
+      'font-weight: 300;',
+      'letter-spacing: 0.05em;',
+    ]) {
+      expect(title).toContain(declaration);
+      expect(headline).toContain(declaration);
+    }
   });
 
   it('sets the footer apart with a hairline and keeps it quiet', () => {

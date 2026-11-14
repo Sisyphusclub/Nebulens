@@ -9636,16 +9636,17 @@ video {
 .home-hero .landing-composer-presentation {
   border-radius: var(--radius-2xl);
 }
-/* The headline is semibold in the display face. 'halt' sets the comma and question mark
-   half width, so the line reads as one phrase. */
+/* The headline alone is in a Song face, light and widely tracked. 'halt' sets the comma and
+   question mark half width, so the line reads as one phrase. */
 .home-hero h1 {
   margin: 0;
   color: var(--foreground);
-  font-family: var(--font-display);
-  font-size: clamp(26px, 2.7vw, 40px);
+  font-family: var(--font-serif);
+  font-size: clamp(26px, 2.7vw, 42px);
   font-feature-settings: 'halt';
-  font-weight: 600;
+  font-weight: 300;
   line-height: 1.25;
+  letter-spacing: 0.05em;
 }
 .home-hero h1 > span {
   display: inline-block;

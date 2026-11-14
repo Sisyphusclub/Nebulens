@@ -343,10 +343,11 @@ describe('brand wordmark', () => {
 });
 
 describe('home headline', () => {
-  it('is set in the display face, semibold', () => {
+  it('is set in a light, widely tracked Song face', () => {
     const headline = rule('.home-hero h1');
-    expect(headline).toContain('font-family: var(--font-display);');
-    expect(headline).toContain('font-weight: 600;');
+    expect(headline).toContain('font-family: var(--font-serif);');
+    expect(headline).toContain('font-weight: 300;');
+    expect(headline).toContain('letter-spacing: 0.05em;');
     expect(rule('.home-hero h1 > span')).toContain('display: inline-block;');
   });
 });

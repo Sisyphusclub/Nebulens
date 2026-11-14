@@ -28,9 +28,18 @@ describe('typefaces', () => {
     }
   });
 
-  it('has no serif left: the wordmark, the sign-in title and the headline use the display face', () => {
-    expect(tokens).not.toContain('--font-serif');
-    expect(baseStyles).not.toContain('var(--font-serif)');
+  it('keeps a Song face for the home headline alone', () => {
+    const stacks = [...tokens.matchAll(/--font-serif:([^;]+);/g)].map((match) =>
+      (match[1] ?? '').replace(/\s+/g, ' ').trim(),
+    );
+    expect(stacks).toHaveLength(2);
+    expect(stacks[0]).toBe(stacks[1]);
+    // The web font first, then the Song faces a Mac or a Windows machine carries.
+    expect(stacks[0]?.startsWith("'Noto Serif SC'")).toBe(true);
+    expect(stacks[0]).toContain("'Songti SC'");
+    // The wordmark, the sign-in title and every other heading stay in the display face.
+    expect(baseStyles.match(/var\(--font-serif\)/g)).toHaveLength(1);
+    expect(baseStyles).toMatch(/\.home-hero h1 \{[^}]*font-family: var\(--font-serif\);/);
   });
 
   it('loads the faces it uses and no others', () => {
@@ -38,8 +47,10 @@ describe('typefaces', () => {
     for (const weight of [400, 500, 600]) {
       expect(entry).toContain(`import '@fontsource/poppins/${weight}.css';`);
     }
+    expect(entry).toContain("import '@fontsource-variable/noto-serif-sc';");
     expect(dependencies.filter((name) => name.includes('fontsource')).sort()).toEqual([
       '@fontsource-variable/inter',
+      '@fontsource-variable/noto-serif-sc',
       '@fontsource/poppins',
     ]);
   });

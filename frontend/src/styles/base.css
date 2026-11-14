@@ -9213,10 +9213,9 @@ video {
   margin: var(--space-5) 0 0;
 }
 /* While writing on the generate page the composer shows four lines at most and scrolls
-   inside, so a long prompt, put back by "reuse settings" say, does not cover the results:
-   four 24px lines and the 14px of padding the text has above and below. */
+   inside, so a long prompt, put back by "reuse settings" say, does not cover the results. */
 .studio-create-bar .generation-composer .agent-chat-input__textarea {
-  max-height: 110px !important;
+  --prompt-max-lines: 4;
 }
 /* On the generate page results scroll underneath the dock, so the strip gets the same dark
    glass as the panel above it instead of floating bare over an image. */
@@ -9705,8 +9704,8 @@ video {
    than elsewhere, and grows to eight before it scrolls. A phone keeps the shared three. */
 @container composer (min-width: 560px) {
   .home-hero .agent-chat-input.agent-chat-input--modes .agent-chat-input__textarea {
-    min-height: 110px !important;
-    max-height: 206px !important;
+    --prompt-min-lines: 4;
+    --prompt-max-lines: 8;
   }
 }
 .home-hero .ai-insight,
@@ -10650,9 +10649,15 @@ video {
 .agent-chat-input.agent-chat-input--modes .agent-chat-input__editor {
   flex: 1 1 0;
 }
+/* The prompt scrolls inside a window a whole number of lines tall: three to six, unless a
+   page sets its own. The room above and below it is margin, outside the window. As padding
+   it was inside, and a line scrolled past was drawn in it, right up against the toolbar. */
 .agent-chat-input.agent-chat-input--modes .agent-chat-input__textarea {
-  min-height: 86px !important;
-  padding: 2px 0 var(--space-3) !important;
+  --prompt-line: 24px;
+  min-height: calc(var(--prompt-min-lines, 3) * var(--prompt-line)) !important;
+  max-height: calc(var(--prompt-max-lines, 6) * var(--prompt-line)) !important;
+  margin: 2px 0 var(--space-3);
+  padding: 0 !important;
   caret-color: var(--accent);
 }
 .agent-chat-input.agent-chat-input--modes

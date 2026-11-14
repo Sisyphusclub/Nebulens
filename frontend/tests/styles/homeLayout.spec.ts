@@ -58,11 +58,11 @@ describe('home layout', () => {
   });
 
   it('gives the hero composer four lines to write in, and eight before it scrolls', () => {
-    // 24px lines plus the 14px of padding the text has above and below. Three lines looked
-    // too low on the home page and five left an empty band under a short prompt. A phone
-    // keeps the shared three lines, so the rule waits for a composer at least 560px wide.
+    // Three lines looked too low on the home page and five left an empty band under a short
+    // prompt. A phone keeps the shared three lines, so the rule waits for a composer at
+    // least 560px wide.
     expect(baseStyles).toMatch(
-      /@container composer \(min-width: 560px\) \{\s*\.home-hero \.agent-chat-input\.agent-chat-input--modes \.agent-chat-input__textarea \{\s*min-height: 110px !important;\s*max-height: 206px !important;/,
+      /@container composer \(min-width: 560px\) \{\s*\.home-hero \.agent-chat-input\.agent-chat-input--modes \.agent-chat-input__textarea \{\s*--prompt-min-lines: 4;\s*--prompt-max-lines: 8;/,
     );
     // The earlier hero height lost to the shared composer rule and did nothing.
     expect(baseStyles).not.toContain('min-height: 96px !important;');
@@ -370,13 +370,25 @@ describe('image detail over the sidebar', () => {
 
 describe('generate composer', () => {
   it('shows four lines of a long prompt at most, so it cannot cover the results', () => {
-    // Four 24px lines and the 14px of padding the text has above and below.
     expect(rule('.studio-create-bar .generation-composer .agent-chat-input__textarea')).toContain(
-      'max-height: 110px !important;',
+      '--prompt-max-lines: 4;',
     );
-    expect(rule('.agent-chat-input.agent-chat-input--modes .agent-chat-input__textarea')).toContain(
-      'padding: 2px 0 var(--space-3) !important;',
+  });
+
+  it('scrolls a longer prompt in a window of whole lines, clear of the toolbar', () => {
+    const text = rule('.agent-chat-input.agent-chat-input--modes .agent-chat-input__textarea');
+    // The window is a whole number of 24px lines tall, three to six unless a page says otherwise.
+    expect(text).toContain('--prompt-line: 24px;');
+    expect(text).toContain(
+      'min-height: calc(var(--prompt-min-lines, 3) * var(--prompt-line)) !important;',
     );
+    expect(text).toContain(
+      'max-height: calc(var(--prompt-max-lines, 6) * var(--prompt-line)) !important;',
+    );
+    // Padding would be inside the window: a line scrolled past was drawn in it, right up
+    // against the toolbar. Margin keeps that room outside, where no text can reach.
+    expect(text).toContain('margin: 2px 0 var(--space-3);');
+    expect(text).toContain('padding: 0 !important;');
   });
 });
 

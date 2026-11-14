@@ -37,9 +37,10 @@ describe('composer with modes', () => {
     expect(rule(`${MODES} .agent-chat-input__references`)).toContain(
       'padding: 0 0 var(--space-3);',
     );
-    expect(rule(`${MODES} .agent-chat-input__textarea`)).toContain(
-      'padding: 2px 0 var(--space-3) !important;',
-    );
+    // The room above and below the text is margin, outside the window it scrolls in.
+    const text = rule(`${MODES} .agent-chat-input__textarea`);
+    expect(text).toContain('margin: 2px 0 var(--space-3);');
+    expect(text).toContain('padding: 0 !important;');
     // The streaming example starts exactly where typed text does.
     const example = rule(
       `${MODES} .agent-chat-input__editor > .agent-chat-input__streaming-placeholder`,

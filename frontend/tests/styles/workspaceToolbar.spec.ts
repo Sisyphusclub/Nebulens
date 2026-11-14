@@ -6,15 +6,36 @@ import { describe, expect, it } from 'vitest';
 const baseStyles = readFileSync(resolve(process.cwd(), 'src/styles/base.css'), 'utf8');
 
 describe('workspace toolbars', () => {
-  it('put search, filters and icon buttons on resting fill pills', () => {
-    const glass =
-      baseStyles.match(
-        /\.operational-toolbar\s*:is\(\s*\.search-field,\s*\.admin-search,\s*\.beui-select-trigger,\s*\.icon-button,\s*\.view-switch\s*\)\s*\{([^}]+)\}/,
-      )?.[1] ?? '';
+  const block = (pattern: RegExp): string => baseStyles.match(pattern)?.[1] ?? '';
 
-    expect(glass).toContain('border-radius: var(--radius-full);');
-    expect(glass).toContain('background: var(--fill-1);');
-    expect(glass).toContain('backdrop-filter: blur(10px) saturate(1.2);');
+  it('make every control a 32px pill, with no glass', () => {
+    const pill = block(
+      /\.operational-toolbar\s*:is\(\s*\.search-field,\s*\.admin-search,\s*\.beui-select-trigger,\s*\.icon-button,\s*\.view-switch,\s*\.asset-ai-toggle\s*\)\s*\{([^}]+)\}/,
+    );
+    expect(pill).toContain('height: 32px;');
+    expect(pill).toContain('min-height: 32px;');
+    expect(pill).toContain('border-radius: var(--radius-full);');
+    expect(pill).toContain('backdrop-filter: none;');
+  });
+
+  it('rest the search on a quiet fill and outline the other controls with a hairline', () => {
+    const search = block(/\.operational-toolbar :is\(\.search-field, \.admin-search\) \{([^}]+)\}/);
+    expect(search).toContain('border: 0;');
+    expect(search).toContain('background: var(--bg-surface);');
+    const outlined = block(
+      /\.operational-toolbar :is\(\.beui-select-trigger, \.icon-button, \.asset-ai-toggle\) \{([^}]+)\}/,
+    );
+    expect(outlined).toContain('border: 1px solid var(--line-2);');
+    expect(outlined).toContain('background: transparent;');
+    expect(outlined).toContain('font-size: 12px;');
+  });
+
+  it('mark a toggle that is on with the accent', () => {
+    const on = block(
+      /\.operational-toolbar\s*:is\(\s*\.icon-button\.is-active,\s*\.icon-button\[aria-pressed='true'\],\s*\.asset-ai-toggle\[aria-pressed='true'\]\s*\)\s*\{([^}]+)\}/,
+    );
+    expect(on).toContain('background: var(--accent-soft);');
+    expect(on).toContain('color: var(--accent);');
   });
 
   it('turn the sticky assets toolbar into frosted glass over the grid', () => {

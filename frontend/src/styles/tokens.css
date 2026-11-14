@@ -134,7 +134,7 @@
   --surface-floating: linear-gradient(180deg, var(--bg-floating), var(--bg-floating-end));
 
   --workspace-content-max: 1580px;
-  --workspace-page-gutter: 32px;
+  --workspace-page-gutter: 24px;
   --workspace-sidebar-rail: 126px;
 
   --shadow-float: 0 16px 48px -28px rgb(0 0 0 / 0.62);

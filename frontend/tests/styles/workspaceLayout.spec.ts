@@ -9,7 +9,7 @@ const tokens = readFileSync(resolve(process.cwd(), 'src/styles/tokens.css'), 'ut
 describe('operational workspace layout contract', () => {
   it('shares one capped width and responsive gutter scale across workspace pages', () => {
     expect(tokens).toContain('--workspace-content-max: 1580px;');
-    expect(tokens).toContain('--workspace-page-gutter: 32px;');
+    expect(tokens).toContain('--workspace-page-gutter: 24px;');
 
     const sharedContract = baseStyles.slice(
       baseStyles.indexOf('/* Operational routes share one content column'),
@@ -30,17 +30,25 @@ describe('operational workspace layout contract', () => {
       ),
     );
 
-    expect(operationalContract).toContain('--operational-header-safe-top: 92px;');
+    // The title row is level with the account buttons in the window's corner, keeps clear
+    // of them, and a toolbar that sticks comes to rest underneath them.
+    expect(operationalContract).toContain('--operational-header-safe-top: 32px;');
+    expect(operationalContract).toContain('--operational-sticky-top: 76px;');
+    expect(operationalContract).toContain('--operational-account-reserve: 320px;');
     expect(operationalContract).toContain('.operational-page-header {');
-    expect(operationalContract).toContain('min-height: 48px;');
-    expect(operationalContract).toContain('margin: 0 0 12px;');
+    expect(operationalContract).toContain('min-height: 32px;');
+    expect(operationalContract).toContain('margin: 0 0 20px;');
     expect(operationalContract).toContain('border-bottom: 0;');
-    expect(operationalContract).toContain('font-size: 22px;');
+    expect(operationalContract).toContain(
+      'padding-right: var(--operational-account-reserve, 0px);',
+    );
+    // A quiet title: the size of body text, medium weight.
+    expect(operationalContract).toContain('font-size: 16px;');
+    expect(operationalContract).toContain('font-weight: 500;');
     expect(operationalContract).toContain('.operational-page-header__meta {');
     expect(operationalContract).toContain('font-size: 12px;');
     expect(operationalContract).toContain('.operational-toolbar {');
-    expect(operationalContract).toContain('height: 40px;');
-    expect(operationalContract).toContain('margin: 0 0 16px;');
+    expect(operationalContract).toContain('height: 32px;');
     expect(operationalContract).toContain('.assets-page .asset-workbench__chrome {');
     expect(operationalContract).toContain('padding-top: 0;');
     expect(operationalContract).toContain('.admin-page .admin-panel {');
@@ -57,7 +65,7 @@ describe('operational workspace layout contract', () => {
       operationalContract.indexOf('.admin-page .admin-table-toolbar {'),
       operationalContract.indexOf('.admin-page .admin-search {'),
     );
-    expect(adminToolbarContract).toContain('min-height: 56px;');
+    expect(adminToolbarContract).toContain('min-height: 32px;');
     expect(adminToolbarContract).toContain('gap: 8px;');
     expect(operationalContract).toContain('@media (min-width: 1600px) {');
     expect(operationalContract).toContain('grid-template-columns: repeat(5, minmax(0, 1fr));');

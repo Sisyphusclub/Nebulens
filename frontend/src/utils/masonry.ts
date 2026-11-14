@@ -21,11 +21,29 @@ export function masonrySpan(width: number, height: number, extraRows = 0): numbe
   return Math.round(Math.min(Math.max(shape, WIDEST), TALLEST) * MASONRY_ROWS) + extraRows + 1;
 }
 
-type GridVariables = CSSProperties & { '--masonry-rows': number };
+/**
+ * The rows a card with a caption under its picture sets aside for the caption: a title and
+ * a line of detail. Columns are at least 264px wide on such walls, which makes ten rows
+ * at least 66px.
+ */
+export const MEDIA_CARD_INFO_ROWS = 10;
+/**
+ * What such a card adds to its picture's rows: the caption, and one row more than a bare
+ * picture needs for the gap, because these walls are spaced 16px apart rather than 8px.
+ */
+export const MEDIA_CARD_EXTRA_ROWS = MEDIA_CARD_INFO_ROWS + 1;
+
+type GridVariables = CSSProperties & { '--masonry-rows': number; '--masonry-info-rows'?: number };
 type CardVariables = CSSProperties & { '--masonry-span': number };
 
-/** The style a `.masonry__grid` carries. */
+/** The style a `.masonry__grid` of pictures alone carries. */
 export const MASONRY_GRID_STYLE: GridVariables = { '--masonry-rows': MASONRY_ROWS };
+
+/** The style a `.masonry__grid` of captioned cards carries. */
+export const MEDIA_CARD_GRID_STYLE: GridVariables = {
+  '--masonry-rows': MASONRY_ROWS,
+  '--masonry-info-rows': MEDIA_CARD_INFO_ROWS,
+};
 
 /** The style of one card in the grid. */
 export function masonryCardStyle(width: number, height: number, extraRows = 0): CardVariables {

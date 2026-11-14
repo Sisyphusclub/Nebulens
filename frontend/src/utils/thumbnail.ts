@@ -11,9 +11,6 @@ export function thumbnailUrl(imageUrl: string, width: ThumbnailWidth): string {
   return `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}w=${width}`;
 }
 
-/** Width of the template thumbnails the backend's `templates:thumbnails` script builds. */
-export const TEMPLATE_THUMBNAIL_WIDTH = 640;
-
 /**
  * The pre-built card-sized copy of a creation template image, made by the backend's
  * `templates:thumbnails` script next to the original in a `thumbs` folder.

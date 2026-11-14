@@ -5,6 +5,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 
 import { ToastProvider } from '@/components/common/ToastProvider';
 import { CREATION_TEMPLATES, orderTemplatesWithAnimeLast } from '@/data/creationTemplates';
+import { MEDIA_CARD_EXTRA_ROWS, masonrySpan } from '@/utils/masonry';
 import { TemplatesView } from '@/views/TemplatesView';
 
 function LocationProbe() {
@@ -130,4 +131,41 @@ it('scrolls the chip row so a linked category is in view on a narrow screen', ()
   } finally {
     Reflect.deleteProperty(HTMLElement.prototype, 'scrollTo');
   }
+});
+
+it('lays the templates out as a wall of cards, the picture on top and what it is underneath', () => {
+  const template = orderTemplatesWithAnimeLast(CREATION_TEMPLATES)[0]!;
+  const { container } = renderView();
+
+  const grid = container.querySelector('.template-gallery') as HTMLElement;
+  expect(grid).toHaveClass('masonry__grid');
+  expect(grid.parentElement).toHaveClass('masonry', 'masonry--cards');
+  // A column's width is forty rows; the caption under each picture takes ten more.
+  expect(grid.style.getPropertyValue('--masonry-rows')).toBe('40');
+  expect(grid.style.getPropertyValue('--masonry-info-rows')).toBe('10');
+  expect(MEDIA_CARD_EXTRA_ROWS).toBe(11);
+
+  const card = screen
+    .getByRole('button', { name: `预览模板：${template.title}` })
+    .closest('article') as HTMLElement;
+  expect(card).toHaveClass('template-tile', 'media-card');
+  expect(card.style.getPropertyValue('--masonry-span')).toBe(
+    // The picture's rows, the caption's ten, and two for the 16px gap under the card.
+    String(masonrySpan(template.width, template.height, MEDIA_CARD_EXTRA_ROWS)),
+  );
+  expect(card.querySelector('.media-card__title')).toHaveTextContent(template.title);
+  expect(card.querySelector('.media-card__meta')).toHaveTextContent(template.category);
+  // Every card is one column wide: the wall has no double-width cards to leave holes around.
+  expect(container.querySelector('.template-tile--wide')).toBeNull();
+});
+
+it('says what "use" does once a card is pointed at, beside the favourite toggle', () => {
+  const template = orderTemplatesWithAnimeLast(CREATION_TEMPLATES)[0]!;
+  renderView();
+
+  const use = screen.getByRole('button', { name: `使用模板 ${template.title}` });
+  expect(use).toHaveClass('template-tile__use');
+  // The word is for the eye; the button's name already says which template it uses.
+  expect(use.querySelector('.template-tile__use-label')).toHaveTextContent('使用');
+  expect(use.querySelector('.template-tile__use-label')).toHaveAttribute('aria-hidden', 'true');
 });

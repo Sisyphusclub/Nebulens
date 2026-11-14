@@ -2823,17 +2823,6 @@ video {
   padding-top: 18px;
   gap: 28px;
 }
-.template-gallery {
-  gap: 14px;
-}
-.template-tile {
-  border: 1px solid var(--border);
-  background: var(--surface-media);
-}
-.template-tile:hover,
-.template-tile:focus-within {
-  border-color: var(--border-strong);
-}
 
 .generation-console {
   position: relative;
@@ -3667,135 +3656,130 @@ video {
   padding-top: 0;
 }
 .templates-page .template-toolbar {
-  margin-bottom: 22px;
-  border-top: 0;
-}
-.templates-page .template-toolbar {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(132px, 156px) minmax(132px, 156px) 40px;
   align-items: center;
   gap: 8px;
+  border-top: 0;
 }
-.templates-page .template-search {
-  width: auto;
-  min-width: 0;
-  flex: none;
+/* A wall of captioned cards, on the template, asset and gallery pages. The shared masonry
+   lays it out; here it takes as many columns as it has room for, each at least 264px wide,
+   which keeps a column's forty rows tall enough for the ten a caption needs. */
+.masonry--cards .masonry__grid {
+  --masonry-columns: 1;
+  --masonry-gap: 16px;
 }
-.templates-page .template-toolbar .beui-select-trigger {
-  width: 100%;
-  min-width: 0;
-}
-.templates-page .template-toolbar > .icon-button,
-.templates-page .template-toolbar .icon-button {
-  justify-self: end;
-}
-
-@media (max-width: 920px) {
-  .templates-page .template-toolbar {
-    grid-template-columns: minmax(180px, 1fr) repeat(2, minmax(120px, 136px)) 40px;
+@container (min-width: 544px) {
+  .masonry--cards .masonry__grid {
+    --masonry-columns: 2;
   }
 }
-
-@media (max-width: 680px) {
-  .templates-page .template-toolbar {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px;
-  }
-  .templates-page .template-search {
-    grid-column: 1 / -1;
-  }
-  .templates-page .template-toolbar .beui-select-trigger {
-    min-width: 0;
+@container (min-width: 824px) {
+  .masonry--cards .masonry__grid {
+    --masonry-columns: 3;
   }
 }
-
-@media (max-width: 420px) {
-  .templates-page .template-toolbar {
-    grid-template-columns: minmax(0, 1fr) 40px;
-  }
-  .templates-page .template-toolbar .beui-select-trigger:first-of-type {
-    grid-column: 1 / -1;
+@container (min-width: 1104px) {
+  .masonry--cards .masonry__grid {
+    --masonry-columns: 4;
   }
 }
-.template-gallery {
-  display: grid;
-  grid-auto-flow: dense;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+@container (min-width: 1384px) {
+  .masonry--cards .masonry__grid {
+    --masonry-columns: 5;
+  }
 }
-.template-tile {
+/* One card on such a wall: the picture on top and what it is underneath, on a panel a shade
+   above the page. The caption takes exactly the rows the script set aside for it, so the
+   picture above keeps its own proportions. */
+.media-card {
   position: relative;
+  display: flex;
+  height: calc(100% - var(--masonry-gap));
   min-width: 0;
+  min-height: 0;
+  grid-row: span var(--masonry-span);
+  flex-direction: column;
   overflow: hidden;
   border-radius: var(--radius-xl);
-  background: var(--surface-media);
+  background: var(--bg-surface-hover);
 }
-.template-tile--wide {
-  grid-column: span 2;
+.media-card__info {
+  display: flex;
+  height: calc(var(--masonry-info-rows) * var(--masonry-unit));
+  min-width: 0;
+  flex: 0 0 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 12px;
+  text-align: left;
 }
+.media-card__title {
+  overflow: hidden;
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.media-card__meta {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Template cards: the whole card opens the preview. The favourite and "use" buttons sit in
+   the caption's corner, dimmed rather than hidden so they can be found without hovering. */
 .template-tile__morph {
-  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
   overflow: hidden;
   border-radius: var(--radius-xl) !important;
 }
 .template-tile__preview {
-  position: relative;
-  display: block;
+  display: flex;
   width: 100%;
   height: 100%;
-  min-height: 310px;
-  aspect-ratio: 4 / 5;
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
   overflow: hidden;
   border: 0;
-  background: var(--surface-media);
+  border-radius: 0;
+  background: transparent;
   padding: 0;
+  font-weight: 400;
   text-align: left;
 }
-.template-tile--wide .template-tile__preview {
-  aspect-ratio: 8 / 5;
-}
-.template-tile__preview::after {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 104px;
-  background: oklch(0.08 0 0 / 0.78);
-  content: '';
-}
 .template-tile__preview img {
+  display: block;
   width: 100%;
-  height: 100%;
+  min-height: 0;
+  flex: 1 1 0;
   object-fit: cover;
-  transition: transform 420ms var(--ease-out-expo);
+  transition: scale 300ms ease;
 }
 .template-tile:hover .template-tile__preview img {
-  transform: scale(1.025);
+  scale: 1.03;
 }
-.template-tile__label {
-  position: absolute;
-  right: 16px;
-  bottom: 15px;
-  left: 16px;
-  z-index: 1;
-  display: grid;
-  gap: 4px;
-  color: oklch(0.96 0 0);
+/* Room for the two buttons beside the line of detail. */
+.template-tile .media-card__meta {
+  padding-right: 68px;
 }
-.template-tile__label small {
-  font-size: 11px;
-}
-.template-tile__label strong {
-  font-size: 15px;
-  font-weight: 600;
-}
-/* The template's original English title, quietly under the Chinese one. */
 .template-tile__actions {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  right: 8px;
+  bottom: calc((var(--masonry-info-rows) * var(--masonry-unit) - 45px) / 2 - 2px);
   z-index: 3;
   display: flex;
-  gap: 5px;
+  align-items: center;
+  gap: 4px;
   /* Dimmed rather than hidden, so people can find them without hovering first. */
   opacity: 0.72;
   transition: opacity 160ms var(--ease-out-expo);
@@ -3805,18 +3789,58 @@ video {
   opacity: 1;
 }
 .template-tile__actions button {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border: 1px solid var(--line-3);
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0;
   border-radius: var(--radius-full);
-  background: oklch(0.12 0 0 / 0.88);
-  color: oklch(0.96 0 0);
+  background: transparent;
   padding: 0;
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 500;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+.template-tile__actions button:hover {
+  background: var(--fill-3);
+  color: var(--text-1);
+}
+/* A template that has been kept: its heart is filled, in the accent. */
+.template-tile__actions button[aria-pressed='true'] {
+  color: var(--accent);
 }
 .template-tile__actions svg {
-  width: 16px;
+  width: 15px;
+  height: 15px;
+}
+/* The word only shows with the pill. */
+.template-tile__use-label {
+  display: none;
+}
+/* Pointed at, the card says what its arrow does: the button becomes an orange pill. */
+.template-tile:hover .template-tile__use,
+.template-tile:focus-within .template-tile__use {
+  width: auto;
+  background: var(--accent);
+  padding: 0 6px 0 10px;
+  color: var(--on-primary);
+}
+.template-tile:hover .template-tile__use-label,
+.template-tile:focus-within .template-tile__use-label {
+  display: inline;
+}
+.template-tile:hover .template-tile__use:hover,
+.template-tile:focus-within .template-tile__use:hover {
+  background: color-mix(in oklch, var(--accent) 86%, white);
+  color: var(--on-primary);
 }
 .template-gallery-more {
   display: flex;
@@ -4294,15 +4318,6 @@ video {
 }
 
 @media (max-width: 1180px) {
-  .template-gallery {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .template-tile--wide {
-    grid-column: span 1;
-  }
-  .template-tile--wide .template-tile__preview {
-    aspect-ratio: 4 / 5;
-  }
   .asset-loading {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -4337,9 +4352,6 @@ video {
   .image-tile__actions,
   .template-tile__actions {
     opacity: 1;
-  }
-  .template-gallery {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .template-detail-modal {
     inset: 0 !important;
@@ -4451,14 +4463,6 @@ video {
   .generation-error-grid {
     grid-template-columns: 1fr;
   }
-  .template-gallery {
-    grid-template-columns: 1fr;
-  }
-  .template-tile__preview,
-  .template-tile--wide .template-tile__preview {
-    min-height: 360px;
-    aspect-ratio: 4 / 5;
-  }
   .templates-page,
   .assets-page {
     padding-top: 0;
@@ -4539,9 +4543,6 @@ video {
 .assets-page .asset-library {
   margin-top: 18px;
   gap: 28px;
-}
-.template-gallery {
-  gap: 14px;
 }
 .generation-console {
   width: min(100%, 1240px);
@@ -8244,33 +8245,25 @@ video {
   backdrop-filter: blur(16px) saturate(1.2);
 }
 
+/* The search on the left; sorting and the favourites filter at the far end of the row. The
+   category pills follow close under it, as one group of filters. */
 .templates-page .template-toolbar {
-  display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(132px, 156px) minmax(132px, 156px) 40px;
-  margin: 0 0 16px;
+  display: flex;
+  margin: 0 0 12px;
 }
 .templates-page .template-search {
-  width: 100%;
+  width: min(360px, 100%);
+  flex: 0 1 auto;
+  margin-right: auto;
 }
 .templates-page .template-toolbar .beui-select-trigger {
-  width: 100%;
-  min-width: 0;
+  width: auto;
+  min-width: 124px;
+  flex: 0 0 auto;
 }
-.templates-page .template-toolbar .icon-button {
-  justify-self: end;
+.templates-page .template-category-chips {
+  margin: 0 0 20px;
 }
-.template-tile__actions button {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
-  flex: 0 0 32px;
-}
-.template-tile__actions svg {
-  width: 15px;
-  height: 15px;
-}
-
 .assets-page .asset-workbench__chrome {
   top: var(--operational-sticky-top);
   padding-top: 0;
@@ -8333,7 +8326,6 @@ video {
 }
 
 @media (min-width: 1600px) {
-  .templates-page .template-gallery,
   .assets-page .image-grid,
   .assets-page .asset-loading {
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -8341,16 +8333,9 @@ video {
 }
 
 @media (max-width: 1180px) {
-  .templates-page .template-gallery,
   .assets-page .image-grid,
   .assets-page .asset-loading {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .templates-page .template-tile--wide {
-    grid-column: span 1;
-  }
-  .templates-page .template-tile--wide .template-tile__preview {
-    aspect-ratio: 4 / 5;
   }
   .assets-page .asset-commandbar {
     align-items: stretch;
@@ -8366,9 +8351,6 @@ video {
     /* The account buttons are in the phone menu here, so the title row has its full width. */
     --operational-account-reserve: 0px;
     padding-top: var(--operational-header-safe-top);
-  }
-  .templates-page .template-toolbar {
-    grid-template-columns: minmax(0, 1fr) minmax(120px, 140px) minmax(120px, 140px) 40px;
   }
   .assets-page .asset-workbench__chrome {
     top: calc(76px + env(safe-area-inset-top));
@@ -8393,11 +8375,13 @@ video {
   .operational-page-header__actions .button {
     flex: 1;
   }
+  /* On a phone the search takes the first row to itself. */
   .templates-page .template-toolbar {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px;
+    flex-wrap: wrap;
   }
   .templates-page .template-search {
-    grid-column: 1 / -1;
+    width: 100%;
+    flex: 1 1 100%;
   }
   .admin-page .admin-table-toolbar {
     grid-template-columns: minmax(0, 1fr) 120px;
@@ -8409,7 +8393,6 @@ video {
   .admin-page .admin-page-size {
     width: 120px;
   }
-  .templates-page .template-gallery,
   .assets-page .image-grid,
   .assets-page .asset-loading {
     grid-template-columns: 1fr;
@@ -8418,10 +8401,13 @@ video {
 
 @media (hover: none) and (pointer: coarse) {
   .template-tile__actions {
-    top: 4px;
-    right: 4px;
+    right: 2px;
+    bottom: calc((var(--masonry-info-rows) * var(--masonry-unit) - 44px) / 2);
     gap: 0;
     opacity: 1;
+  }
+  .template-tile .media-card__meta {
+    padding-right: 84px;
   }
   .button--icon,
   .icon-button,

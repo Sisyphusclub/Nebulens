@@ -20,7 +20,8 @@ import {
 import { useTemplatePreferences } from '@/hooks/useTemplatePreferences';
 import { cn } from '@/lib/utils';
 import { ASPECT_RATIO_LABELS, IMAGE_RESOLUTION_LABELS } from '@/types/image';
-import { TEMPLATE_THUMBNAIL_WIDTH, templateThumbnailUrl } from '@/utils/thumbnail';
+import { MEDIA_CARD_EXTRA_ROWS, MEDIA_CARD_GRID_STYLE, masonryCardStyle } from '@/utils/masonry';
+import { templateThumbnailUrl } from '@/utils/thumbnail';
 
 type TemplateSort = 'featured' | 'recent' | 'title';
 type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
@@ -212,80 +213,85 @@ export function TemplatesView() {
       </div>
 
       {filtered.length ? (
-        <div className="template-gallery" aria-label="创作模板列表">
-          {visibleTemplates.map((template, index) => {
-            const favorite = favoriteIds.includes(template.id);
-            const used = recent[template.id] !== undefined;
-            const wide = index % 5 === 0;
-            return (
-              <article
-                className={cn('template-tile', wide && 'template-tile--wide')}
-                key={template.id}
-              >
-                <MorphicCard id={`template-${template.id}`} className="template-tile__morph">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="template-tile__preview"
-                    aria-label={`预览模板：${template.title}`}
-                    onClick={() => setSelectedId(template.id)}
-                  >
-                    <img
-                      src={templateThumbnailUrl(template.imageUrl)}
-                      // Wide cards span about 620px, so sharp screens pick the original.
-                      {...(wide
-                        ? {
-                            srcSet: `${templateThumbnailUrl(template.imageUrl)} ${TEMPLATE_THUMBNAIL_WIDTH}w, ${template.imageUrl} ${template.width}w`,
-                            sizes: '(min-width: 861px) 620px, 100vw',
-                          }
-                        : {})}
-                      alt={`${template.title}示例`}
-                      loading="lazy"
-                      onError={(event) => {
-                        // A template added without running the thumbnail script still shows.
-                        const image = event.currentTarget;
-                        if (image.dataset.fallback === 'true') return;
-                        image.dataset.fallback = 'true';
-                        image.removeAttribute('srcset');
-                        image.src = template.imageUrl;
-                      }}
-                    />
-                    <span className="template-tile__label">
-                      <small>{used ? '最近使用' : template.category}</small>
-                      <strong>{template.title}</strong>
-                    </span>
-                  </Button>
-                </MorphicCard>
-                <div className="template-tile__actions">
-                  <IconTooltip label={favorite ? '取消收藏模板' : '收藏模板'}>
+        <div className="masonry masonry--cards">
+          <div
+            className="template-gallery masonry__grid"
+            style={MEDIA_CARD_GRID_STYLE}
+            aria-label="创作模板列表"
+          >
+            {visibleTemplates.map((template) => {
+              const favorite = favoriteIds.includes(template.id);
+              const used = recent[template.id] !== undefined;
+              return (
+                <article
+                  className="template-tile media-card"
+                  key={template.id}
+                  style={masonryCardStyle(template.width, template.height, MEDIA_CARD_EXTRA_ROWS)}
+                >
+                  <MorphicCard id={`template-${template.id}`} className="template-tile__morph">
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon"
-                      aria-label={
-                        favorite ? `取消收藏 ${template.title}` : `收藏 ${template.title}`
-                      }
-                      aria-pressed={favorite}
-                      onClick={() => toggleFavorite(template.id)}
+                      className="template-tile__preview"
+                      aria-label={`预览模板：${template.title}`}
+                      onClick={() => setSelectedId(template.id)}
                     >
-                      <Heart aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
+                      <img
+                        src={templateThumbnailUrl(template.imageUrl)}
+                        alt={`${template.title}示例`}
+                        loading="lazy"
+                        onError={(event) => {
+                          // A template added without running the thumbnail script still shows.
+                          const image = event.currentTarget;
+                          if (image.dataset.fallback === 'true') return;
+                          image.dataset.fallback = 'true';
+                          image.src = template.imageUrl;
+                        }}
+                      />
+                      <span className="template-tile__label media-card__info">
+                        <strong className="media-card__title">{template.title}</strong>
+                        <small className="media-card__meta">
+                          {used ? '最近使用' : template.category}
+                        </small>
+                      </span>
                     </Button>
-                  </IconTooltip>
-                  <IconTooltip label="使用模板">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`使用模板 ${template.title}`}
-                      onClick={() => applyTemplate(template)}
-                    >
-                      <ArrowUpRight aria-hidden="true" />
-                    </Button>
-                  </IconTooltip>
-                </div>
-              </article>
-            );
-          })}
+                  </MorphicCard>
+                  <div className="template-tile__actions">
+                    <IconTooltip label={favorite ? '取消收藏模板' : '收藏模板'}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={
+                          favorite ? `取消收藏 ${template.title}` : `收藏 ${template.title}`
+                        }
+                        aria-pressed={favorite}
+                        onClick={() => toggleFavorite(template.id)}
+                      >
+                        <Heart aria-hidden="true" fill={favorite ? 'currentColor' : 'none'} />
+                      </Button>
+                    </IconTooltip>
+                    <IconTooltip label="使用模板">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="template-tile__use"
+                        aria-label={`使用模板 ${template.title}`}
+                        onClick={() => applyTemplate(template)}
+                      >
+                        {/* Shown with the pill the button turns into when the card is pointed at. */}
+                        <span className="template-tile__use-label" aria-hidden="true">
+                          使用
+                        </span>
+                        <ArrowUpRight aria-hidden="true" />
+                      </Button>
+                    </IconTooltip>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       ) : (
         <div className="empty-state template-empty" role="status">

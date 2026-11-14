@@ -332,8 +332,8 @@ describe('React application routes', () => {
     const [image] = await screen.findAllByRole('img', { name: /示例$/ });
     const original = image?.getAttribute('src')?.replace('/thumbs/', '/') ?? '';
     expect(image).toHaveAttribute('src', expect.stringMatching(/\/thumbs\/[^/]+\.webp$/));
-    // The first card is a wide one, so sharp screens can still pick the original.
-    expect(image).toHaveAttribute('srcset', expect.stringContaining(`${original} `));
+    // Every card is one column wide, which the thumbnail covers: no card asks for the original.
+    expect(image).not.toHaveAttribute('srcset');
 
     if (image) fireEvent.error(image);
     expect(image?.getAttribute('src')).toMatch(/\/media\/templates\/[^/]+\/[^/]+\.\w+$/);

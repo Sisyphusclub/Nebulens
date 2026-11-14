@@ -105,7 +105,8 @@ describe('home layout', () => {
     );
     expect(grid).toContain('grid-auto-rows: var(--masonry-unit);');
     expect(grid).toContain('grid-auto-flow: row dense;');
-    expect(grid).toContain('column-gap: var(--masonry-gap);');
+    // Only columns are spaced by the grid: the gap under a card is part of its own span.
+    expect(grid).toContain('gap: 0 var(--masonry-gap);');
     expect(rule('.masonry')).toContain('container-type: inline-size;');
     const card = rule('.home-feed .home-feed__card');
     expect(card).toContain('grid-row: span var(--masonry-span);');

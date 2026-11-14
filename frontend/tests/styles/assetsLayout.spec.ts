@@ -12,10 +12,13 @@ describe('assets media layout contract', () => {
       baseStyles.indexOf('.assets-page .asset-list {'),
     );
 
-    expect(assetsContract).toContain('aspect-ratio: inherit;');
+    // The card's rows carry the picture's proportions, so the box ignores the size the
+    // record claims, and the picture is shown whole inside it: never cropped or stretched.
+    expect(assetsContract).toContain('aspect-ratio: auto !important;');
     expect(assetsContract).toContain('object-fit: contain;');
-    expect(assetsContract).toContain('.assets-page .image-tile__preview:hover img {');
-    expect(assetsContract).toContain('transform: none;');
+    expect(baseStyles).not.toContain('.image-tile__preview:hover img');
+    // The wall is the shared one: no column layout of the page's own is left.
+    expect(baseStyles).not.toContain('column-count');
     expect(assetsContract).toContain('.assets-page .image-tile__favorite-trigger {');
     expect(assetsContract).toContain('min-height: 32px;');
     expect(assetsContract).toContain('.assets-page .image-tile:hover .image-tile__actions,');

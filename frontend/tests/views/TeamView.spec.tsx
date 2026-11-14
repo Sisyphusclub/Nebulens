@@ -72,6 +72,15 @@ it('lists teammates shared work and shows who made it', async () => {
   expect(api.fetchTeamHistory).toHaveBeenCalledWith({});
 });
 
+it('titles each shared piece on the wall and names who made it', async () => {
+  const { container } = renderView();
+  await screen.findByRole('button', { name: '查看图片：周年庆海报' });
+
+  const card = container.querySelector('.image-tile') as HTMLElement;
+  expect(card.querySelector('.media-card__title')).toHaveTextContent(/^周年庆海报$/);
+  expect(card.querySelector('.image-tile__caption')).toHaveTextContent(/^alice$/);
+});
+
 it('reloads for a usage category and loads the next page on demand', async () => {
   const user = userEvent.setup();
   renderView();

@@ -188,15 +188,13 @@ export function TeamView() {
                       ? '成果库还是空的。新生成的图片默认会共享到成果库。'
                       : `“${IMAGE_CATEGORY_LABELS[category]}”下还没有共享成果。`
               }
-              {...(search.active
-                ? {
-                    captionFor: (entry: HistoryEntry) => {
-                      const match = findRecord(entry);
-                      const reason = reasons.get(entry.record.id);
-                      return match && reason ? `${match.ownerName} · ${reason}` : undefined;
-                    },
-                  }
-                : {})}
+              // Who made it, and why the AI search picked it when it did.
+              captionFor={(entry: HistoryEntry) => {
+                const match = findRecord(entry);
+                if (match === null) return undefined;
+                const reason = search.active ? reasons.get(entry.record.id) : undefined;
+                return reason ? `${match.ownerName} · ${reason}` : match.ownerName;
+              }}
               onSelect={(entry) => setSelected(findRecord(entry))}
               onCopyPrompt={(entry) => void copyPrompt(entry)}
               onReuse={reuse}

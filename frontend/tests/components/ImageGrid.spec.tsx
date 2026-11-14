@@ -3,6 +3,7 @@ import { expect, it, vi } from 'vitest';
 
 import { ImageGrid } from '@/components/gallery/ImageGrid';
 import type { HistoryEntry } from '@/types/image';
+import { MEDIA_CARD_EXTRA_ROWS, masonrySpan } from '@/utils/masonry';
 
 const entry: HistoryEntry = {
   record: {
@@ -109,4 +110,52 @@ it('shows an optional caption under each image', () => {
   render(<ImageGrid entries={[entry]} onSelect={vi.fn()} captionFor={() => 'alice · 同为海报'} />);
 
   expect(screen.getByText('alice · 同为海报')).toBeInTheDocument();
+});
+
+it('lays the images out as a wall of cards, each titled by the start of its prompt', () => {
+  const long: HistoryEntry = {
+    ...entry,
+    record: {
+      ...entry.record,
+      id: 'long.png',
+      prompt: '3:4 竖版卖点详情图。商品为山川明前绿茶茶罐，置于浅色背景',
+      width: 1024,
+      height: 1360,
+    },
+  };
+  const { container } = render(<ImageGrid entries={[entry, long]} onSelect={vi.fn()} />);
+
+  const grid = container.querySelector('.image-grid') as HTMLElement;
+  expect(grid).toHaveClass('masonry__grid');
+  expect(grid.parentElement).toHaveClass('masonry', 'masonry--cards');
+  expect(grid.style.getPropertyValue('--masonry-rows')).toBe('40');
+  expect(grid.style.getPropertyValue('--masonry-info-rows')).toBe('10');
+
+  const [wide, tall] = [...container.querySelectorAll<HTMLElement>('.image-tile')];
+  expect(wide).toHaveClass('media-card');
+  // The picture's rows, ten for the caption and two for the gap under the card.
+  expect(wide?.style.getPropertyValue('--masonry-span')).toBe(
+    String(masonrySpan(1792, 1024, MEDIA_CARD_EXTRA_ROWS)),
+  );
+  expect(tall?.style.getPropertyValue('--masonry-span')).toBe(
+    String(masonrySpan(1024, 1360, MEDIA_CARD_EXTRA_ROWS)),
+  );
+  expect(wide?.querySelector('.media-card__title')).toHaveTextContent(/^雨夜城市街角$/);
+  expect(tall?.querySelector('.media-card__title')).toHaveTextContent(/^竖版卖点详情图$/);
+  // The whole prompt is still the picture's name, for whoever cannot see it.
+  expect(screen.getByRole('button', { name: `查看图片：${long.record.prompt}` })).toBeTruthy();
+});
+
+it('puts the caption on the line under the title, and leaves that line out when there is none', () => {
+  const { container, rerender } = render(
+    <ImageGrid entries={[entry]} onSelect={vi.fn()} captionFor={() => 'alice · 同为海报'} />,
+  );
+  const caption = container.querySelector('.image-tile__caption');
+  expect(caption).toHaveClass('media-card__meta');
+  expect(caption).toHaveTextContent('alice · 同为海报');
+  expect(caption?.closest('.media-card__info')).not.toBeNull();
+
+  rerender(<ImageGrid entries={[entry]} onSelect={vi.fn()} />);
+  expect(container.querySelector('.image-tile__caption')).toBeNull();
+  expect(container.querySelector('.media-card__title')).toHaveTextContent('雨夜城市街角');
 });

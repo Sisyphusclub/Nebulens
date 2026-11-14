@@ -116,6 +116,7 @@ vi.mock('@/hooks/useImageHistory', () => ({
 }));
 
 import { ToastProvider } from '@/components/common/ToastProvider';
+import { formatDateTime } from '@/utils/format';
 import { HistoryView } from '@/views/HistoryView';
 
 function renderView() {
@@ -306,6 +307,19 @@ describe('HistoryView asset workflows', () => {
     expect(table).toBeInTheDocument();
     expect(screen.getByText('森林建筑')).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: '可见范围' })).not.toBeInTheDocument();
+  });
+
+  it('titles each asset on the wall and says when it was made', () => {
+    const { container } = renderView();
+
+    const card = screen
+      .getByRole('button', { name: '查看图片：雨夜城市' })
+      .closest('.image-tile') as HTMLElement;
+    expect(card.querySelector('.media-card__title')).toHaveTextContent(/^雨夜城市$/);
+    expect(card.querySelector('.image-tile__caption')).toHaveTextContent(
+      formatDateTime('2026-07-30T08:00:00.000Z'),
+    );
+    expect(container.querySelectorAll('.image-tile')).toHaveLength(2);
   });
 
   it('opens square, landscape, and portrait assets with their source framing', async () => {

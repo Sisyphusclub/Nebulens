@@ -1254,54 +1254,23 @@ video {
   }
 }
 
-/* Image collections and dialogs */
-.image-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-}
-.image-tile {
-  position: relative;
-  min-width: 0;
-  border-bottom: 1px solid var(--line-2);
-  background: transparent;
-  padding-bottom: 12px;
-}
-/* Why an AI search picked an image, and who made it. */
-.image-tile__caption {
-  overflow: hidden;
-  margin: 8px 2px 0;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  line-height: 1.4;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+/* Image collections and dialogs. An image card is laid out by the shared wall of cards
+   (.masonry--cards and .media-card); these are the parts of it that hold the picture. */
 .image-tile__morph {
   display: block;
   overflow: hidden;
-  border-radius: var(--radius-xl);
-  background: var(--surface-raised);
   box-shadow: none;
 }
 .image-tile__preview {
   display: block;
   width: 100%;
-  aspect-ratio: 1;
   overflow: hidden;
   border: 0;
-  border-radius: var(--radius-xl);
-  background: var(--surface-raised);
   padding: 0;
 }
 .image-tile__preview img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform 0.45s ease;
-}
-.image-tile__preview:hover img {
-  transform: scale(1.025);
 }
 /* One charcoal surface for everything that floats over the page: dialogs, menus,
    popovers, toasts and the mobile drawer. Nested controls read the semantic
@@ -2291,9 +2260,6 @@ video {
   .template-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .image-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
   .admin-create {
     grid-template-columns: 1fr 1fr;
   }
@@ -2422,10 +2388,6 @@ video {
   }
   .landing-account-actions {
     display: none;
-  }
-  .image-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
   }
   .image-detail {
     min-height: 0;
@@ -2595,15 +2557,6 @@ video {
   }
   .landing-composer .agent-chat-input__reasoning-label {
     max-width: 42px;
-  }
-  .image-grid {
-    gap: 5px;
-  }
-  .image-tile {
-    padding-bottom: 9px;
-  }
-  .image-tile__preview {
-    border-radius: var(--radius-sm);
   }
   .image-tile__morph {
     border-radius: var(--radius-sm) !important;
@@ -3715,6 +3668,7 @@ video {
 }
 .media-card__title {
   overflow: hidden;
+  margin: 0;
   color: var(--text-1);
   font-size: 14px;
   font-weight: 600;
@@ -3724,6 +3678,7 @@ video {
 }
 .media-card__meta {
   overflow: hidden;
+  margin: 0;
   color: var(--text-2);
   font-size: 11px;
   font-weight: 400;
@@ -4132,16 +4087,6 @@ video {
   width: 14px;
   height: 14px;
 }
-.image-tile {
-  overflow: hidden;
-  border: 1px solid transparent;
-  border-radius: var(--radius-xl);
-  padding-bottom: 0;
-}
-.image-tile.is-selected {
-  border-color: var(--ring);
-  box-shadow: var(--shadow-focus);
-}
 .image-tile__select,
 .image-tile__favorite {
   position: absolute;
@@ -4486,10 +4431,6 @@ video {
   }
   .selection-bar .beui-select-trigger {
     width: 100%;
-  }
-  .image-grid {
-    grid-template-columns: 1fr;
-    gap: 14px;
   }
   .image-tile__actions {
     opacity: 1;
@@ -7419,42 +7360,40 @@ video {
   margin-top: 16px;
   gap: 24px;
 }
-.assets-page .image-grid,
 .assets-page .asset-loading {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: start;
   gap: 12px;
 }
-.assets-page .image-tile {
-  overflow: hidden;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-}
+/* A chosen card is ringed outside its own edge, clear of the picture. */
 .assets-page .image-tile.is-selected {
-  border-color: var(--ring);
-  box-shadow: var(--shadow-focus);
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 .assets-page .image-tile__morph,
 .assets-page .image-tile__preview {
-  border-radius: calc(var(--radius-sm) - 1px) !important;
+  border-radius: 0 !important;
+  background: transparent;
 }
+/* The card's rows carry the picture's proportions: the box only fills the room above the
+   caption, whatever size the record claims. */
 .assets-page .image-tile__morph {
   position: relative;
   width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  aspect-ratio: auto !important;
 }
 .assets-page .image-tile__preview {
   width: 100%;
   height: 100%;
   min-height: 0;
-  aspect-ratio: inherit;
 }
+/* An asset is shown whole. If its record's size is stale the picture sits in the card
+   with room to spare, rather than cropped or stretched. */
 .assets-page .image-tile__preview img {
   display: block;
   object-fit: contain;
-}
-.assets-page .image-tile__preview:hover img {
-  transform: none;
 }
 .assets-page .image-tile__select,
 .assets-page .image-tile__favorite {
@@ -7782,7 +7721,6 @@ video {
 }
 
 @media (min-width: 1600px) {
-  .assets-page .image-grid,
   .assets-page .asset-loading {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
@@ -7800,7 +7738,6 @@ video {
   .asset-commandbar__controls {
     justify-content: flex-start;
   }
-  .assets-page .image-grid,
   .assets-page .asset-loading {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -7877,7 +7814,6 @@ video {
   .asset-workbench__chrome {
     top: calc(76px + env(safe-area-inset-top));
   }
-  .assets-page .image-grid,
   .assets-page .asset-loading {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -7947,7 +7883,6 @@ video {
   .assets-page .selection-bar .beui-select-trigger {
     width: 100%;
   }
-  .assets-page .image-grid,
   .assets-page .asset-loading {
     grid-template-columns: 1fr;
   }
@@ -8326,14 +8261,12 @@ video {
 }
 
 @media (min-width: 1600px) {
-  .assets-page .image-grid,
   .assets-page .asset-loading {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 1180px) {
-  .assets-page .image-grid,
   .assets-page .asset-loading {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -8393,7 +8326,6 @@ video {
   .admin-page .admin-page-size {
     width: 120px;
   }
-  .assets-page .image-grid,
   .assets-page .asset-loading {
     grid-template-columns: 1fr;
   }
@@ -8913,43 +8845,6 @@ video {
   }
   .generation-custom-option--aspect {
     min-height: 52px;
-  }
-}
-
-/* Natural image dimensions prevent cropping and stale metadata from distorting assets. */
-.assets-page .image-grid {
-  display: block;
-  column-count: 4;
-  column-gap: 12px;
-}
-.assets-page .image-grid .image-tile {
-  break-inside: avoid;
-  padding-bottom: 0;
-  margin-bottom: 12px;
-}
-.assets-page .image-grid .image-tile__morph {
-  aspect-ratio: auto !important;
-}
-.assets-page .image-grid .image-tile__preview {
-  height: auto;
-  aspect-ratio: auto;
-}
-.assets-page .image-grid .image-tile__preview img {
-  height: auto;
-}
-@media (min-width: 1600px) {
-  .assets-page .image-grid {
-    column-count: 5;
-  }
-}
-@media (max-width: 1180px) {
-  .assets-page .image-grid {
-    column-count: 2;
-  }
-}
-@media (max-width: 640px) {
-  .assets-page .image-grid {
-    column-count: 1;
   }
 }
 
@@ -10051,7 +9946,8 @@ video {
   grid-template-columns: repeat(var(--masonry-columns), minmax(0, 1fr));
   grid-auto-rows: var(--masonry-unit);
   grid-auto-flow: row dense;
-  column-gap: var(--masonry-gap);
+  /* The gap under a card is the last rows of its own span, not a gap between rows. */
+  gap: 0 var(--masonry-gap);
 }
 /* The home wall: every piece at its own proportions, the caption laid over the picture. */
 .home-feed__wall {

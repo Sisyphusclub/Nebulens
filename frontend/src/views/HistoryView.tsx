@@ -554,9 +554,11 @@ export function HistoryView() {
             ) : view === 'grid' ? (
               <ImageGrid
                 entries={filtered}
-                {...(aiActive
-                  ? { captionFor: (entry: HistoryEntry) => aiReasons.get(entry.record.id) }
-                  : {})}
+                // Why the AI search picked it, when it did; otherwise when it was made.
+                captionFor={(entry: HistoryEntry) =>
+                  (aiActive ? aiReasons.get(entry.record.id) : undefined) ??
+                  formatDateTime(entry.record.createdAt)
+                }
                 selectedIds={selectedIds}
                 onSelect={setSelected}
                 onToggleSelection={toggleSelection}

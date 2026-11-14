@@ -5,6 +5,22 @@ import { describe, expect, it } from 'vitest';
 
 const baseStyles = readFileSync(resolve(process.cwd(), 'src/styles/base.css'), 'utf8');
 
+describe('assets compact list', () => {
+  it('sits on the same kind of panel as the user table: a shade above the page, no outline, hairlines between rows', () => {
+    // The last rules for the list, after the older column and row sizes.
+    const panel = baseStyles.slice(baseStyles.lastIndexOf('.assets-page .asset-list {'));
+    const list = panel.slice(0, panel.indexOf('}'));
+    expect(list).toContain('border: 0;');
+    expect(list).toContain('border-radius: var(--radius-lg);');
+    expect(list).toContain('background: var(--bg-surface);');
+    const head = panel.slice(panel.indexOf('.assets-page .asset-list__head {'));
+    expect(head.slice(0, head.indexOf('}'))).toContain('background: transparent;');
+    expect(panel).toMatch(
+      /\.assets-page \.asset-list__row:hover \{\s*background: var\(--fill-1\);/,
+    );
+  });
+});
+
 describe('assets media layout contract', () => {
   it('preserves source media ratios and fixed icon-button geometry', () => {
     const assetsContract = baseStyles.slice(

@@ -7973,26 +7973,28 @@ video {
   border-top: 0;
   padding-top: 20px;
 }
+/* The compact list sits on one panel a shade above the page, like the user table: no
+   outline, its head and rows parted by hairlines. */
 .assets-page .asset-list {
   overflow: hidden;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-md);
-  background: color-mix(in oklch, var(--card) 58%, var(--background));
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
 }
 .assets-page .asset-list__head {
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in oklch, var(--muted) 32%, var(--background));
-  padding-inline: 10px;
+  border-bottom: 1px solid var(--line-1);
+  background: transparent;
+  padding-inline: 16px;
 }
 .assets-page .asset-list__row {
   border-top: 0;
-  padding: 10px;
+  padding: 10px 16px;
 }
 .assets-page .asset-list__row + .asset-list__row {
   border-top: 1px solid var(--line-1);
 }
 .assets-page .asset-list__row:hover {
-  background: color-mix(in oklch, var(--muted) 36%, transparent);
+  background: var(--fill-1);
 }
 
 .admin-page .admin-table-shell {

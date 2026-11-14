@@ -1,5 +1,5 @@
 import { ArrowRight, Search } from 'lucide-react';
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { HomeSectionTitle } from '@/components/landing/HomeSectionTitle';
@@ -14,6 +14,7 @@ import {
 } from '@/data/creationTemplates';
 import { buildApiUrl } from '@/services/api/imagesApi';
 import { IMAGE_CATEGORY_LABELS, type TeamImageRecord } from '@/types/image';
+import { MASONRY_GRID_STYLE, masonryCardStyle } from '@/utils/masonry';
 import { promptTitle } from '@/utils/promptTitle';
 import { templateThumbnailUrl, thumbnailUrl } from '@/utils/thumbnail';
 
@@ -25,11 +26,6 @@ const FEATURED_PER_CATEGORY = 4;
 const FEATURED_TEAM_SIZE = 8;
 /** A wall at least this long fades out behind its "more" link. */
 const FADED_FROM = 12;
-/** A column's width is this many grid rows, so a square picture is this many rows tall. */
-const ROWS_PER_COLUMN = 40;
-/** A picture taller or wider than this is cropped to it, so no card runs away with a column. */
-const TALLEST = 2;
-const WIDEST = 0.5;
 const FEATURED = '精选';
 const TABS = [FEATURED, ...TEMPLATE_SHORTCUT_CATEGORIES];
 const ORDERED_TEMPLATES = orderTemplatesWithAnimeLast(CREATION_TEMPLATES);
@@ -52,17 +48,8 @@ interface FeedWall {
   more?: { label: string; to: string };
 }
 
-type GridVariables = CSSProperties & { '--feed-rows': number };
-type CardVariables = CSSProperties & { '--feed-span': number };
-
 function categoryHref(category: string): string {
   return `/templates?${new URLSearchParams({ category }).toString()}`;
-}
-
-/** The grid rows a picture of this size takes up, with one more for the gap under it. */
-function rowSpan(width: number, height: number): number {
-  const shape = width > 0 && height > 0 ? height / width : 1;
-  return Math.round(Math.min(Math.max(shape, WIDEST), TALLEST) * ROWS_PER_COLUMN) + 1;
 }
 
 /**
@@ -116,7 +103,6 @@ export function LandingShowcase({
       ...(searching ? {} : { more: { label: `更多${tab}`, to: categoryHref(tab) } }),
     };
   }, [query, records, searching, tab]);
-  const gridStyle: GridVariables = { '--feed-rows': ROWS_PER_COLUMN };
 
   return (
     <section className="home-feed" aria-labelledby="home-feed-title">
@@ -151,12 +137,12 @@ export function LandingShowcase({
         <p className="home-feed__empty">没有找到相关作品，换个关键词试试</p>
       ) : (
         <div
-          className="home-feed__wall"
+          className="home-feed__wall masonry"
           data-fade={
             wall.more !== undefined && wall.pieces.length >= FADED_FROM ? 'true' : undefined
           }
         >
-          <div className="home-feed__grid" style={gridStyle}>
+          <div className="home-feed__grid masonry__grid" style={MASONRY_GRID_STYLE}>
             {wall.pieces.map((piece) =>
               piece.kind === 'record' ? (
                 <FeedCard
@@ -222,14 +208,13 @@ function FeedCard({
   height: number;
   onUse: () => void;
 }) {
-  const style: CardVariables = { '--feed-span': rowSpan(width, height) };
   return (
     <Button
       type="button"
       variant="ghost"
       className="home-feed__card"
       aria-label={`做同款：${label}`}
-      style={style}
+      style={masonryCardStyle(width, height)}
       onClick={onUse}
     >
       <img src={imageUrl} alt="" loading="lazy" decoding="async" />

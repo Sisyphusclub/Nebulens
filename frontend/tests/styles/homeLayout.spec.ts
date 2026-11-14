@@ -95,19 +95,22 @@ describe('home layout', () => {
   });
 
   it('lays the inspiration feed out as a wall of four columns, each piece at its own proportions', () => {
-    const grid = rule('.home-feed__grid');
-    expect(grid).toContain('--feed-columns: 4;');
-    expect(grid).toContain('grid-template-columns: repeat(var(--feed-columns), minmax(0, 1fr));');
-    // A column's width is divided into rows. Each card spans as many as its picture needs,
-    // and the dense flow drops it into the shortest column.
-    expect(grid).toContain('grid-auto-rows: var(--feed-unit);');
+    // The wall is the shared masonry: a column's width is divided into rows, each card
+    // spans as many as its picture needs, and the dense flow drops it into the shortest
+    // column.
+    const grid = rule('.masonry__grid');
+    expect(grid).toContain('--masonry-columns: 4;');
+    expect(grid).toContain(
+      'grid-template-columns: repeat(var(--masonry-columns), minmax(0, 1fr));',
+    );
+    expect(grid).toContain('grid-auto-rows: var(--masonry-unit);');
     expect(grid).toContain('grid-auto-flow: row dense;');
-    expect(grid).toContain('column-gap: var(--feed-gap);');
-    expect(rule('.home-feed__wall')).toContain('container-type: inline-size;');
+    expect(grid).toContain('column-gap: var(--masonry-gap);');
+    expect(rule('.masonry')).toContain('container-type: inline-size;');
     const card = rule('.home-feed .home-feed__card');
-    expect(card).toContain('grid-row: span var(--feed-span);');
+    expect(card).toContain('grid-row: span var(--masonry-span);');
     // The last row of a card's span is the gap under it.
-    expect(card).toContain('height: calc(100% - var(--feed-gap));');
+    expect(card).toContain('height: calc(100% - var(--masonry-gap));');
     expect(card).toContain('border-radius: var(--radius-lg);');
     expect(baseStyles).not.toContain('.home-feed__media');
     expect(baseStyles).not.toContain('.home-feed__section');
@@ -115,10 +118,10 @@ describe('home layout', () => {
 
   it('narrows the wall to three columns, then two', () => {
     expect(baseStyles).toMatch(
-      /@media \(max-width: 1240px\) \{\s*\.home-feed__grid \{\s*--feed-columns: 3;/,
+      /@media \(max-width: 1240px\) \{\s*\.home-feed__grid \{\s*--masonry-columns: 3;/,
     );
     expect(baseStyles).toMatch(
-      /@media \(max-width: 860px\) \{[\s\S]*?\.home-feed__grid \{\s*--feed-columns: 2;/,
+      /@media \(max-width: 860px\) \{[\s\S]*?\.home-feed__grid \{\s*--masonry-columns: 2;/,
     );
   });
 

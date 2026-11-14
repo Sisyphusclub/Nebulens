@@ -178,7 +178,7 @@ it('gives each card the rows its picture needs: forty to a column’s width, and
   const span = (id: string): string =>
     within(feed)
       .getByRole('button', { name: `做同款：${id} 的提示词` })
-      .style.getPropertyValue('--feed-span');
+      .style.getPropertyValue('--masonry-span');
   expect(span('portrait.png')).toBe('54');
   expect(span('square.png')).toBe('41');
   expect(span('wide.png')).toBe('24');
@@ -186,7 +186,9 @@ it('gives each card the rows its picture needs: forty to a column’s width, and
   expect(span('scroll.png')).toBe('81');
   // The stylesheet divides a column into the same number of rows.
   expect(
-    (feed.querySelector('.home-feed__grid') as HTMLElement).style.getPropertyValue('--feed-rows'),
+    (feed.querySelector('.home-feed__grid') as HTMLElement).style.getPropertyValue(
+      '--masonry-rows',
+    ),
   ).toBe('40');
 });
 

@@ -54,6 +54,8 @@ export interface AgentTurn {
   planningMs?: number;
   planTitle?: string;
   plan?: SkillRunRequest;
+  /** How many pictures the plan had when it came back, before any were dropped from it. */
+  plannedCount?: number;
   /** How many of the plan's pictures have been started, and how many of them failed. */
   started: number;
   failed: number;
@@ -107,6 +109,7 @@ function parseTurn(value: unknown): AgentTurn | null {
     ...(isDuration(value.planningMs) ? { planningMs: value.planningMs } : {}),
     ...(isString(value.planTitle) ? { planTitle: value.planTitle } : {}),
     ...(plan === null ? {} : { plan }),
+    ...(isCount(value.plannedCount) ? { plannedCount: value.plannedCount } : {}),
     started: isCount(value.started) ? value.started : 0,
     failed: isCount(value.failed) ? value.failed : 0,
     batchIds: [...value.batchIds],

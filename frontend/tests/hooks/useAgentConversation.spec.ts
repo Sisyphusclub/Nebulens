@@ -79,6 +79,7 @@ describe('the conversation with the Agent', () => {
           turn('running', { status: 'running', started: 1 }),
           turn('waiting', {
             status: 'awaiting',
+            plannedCount: 2,
             plan: {
               skillLabel: '雨夜',
               steps: [
@@ -110,6 +111,8 @@ describe('the conversation with the Agent', () => {
       ['waiting', 'awaiting'],
     ]);
     expect(result.current[2]?.plan?.steps[0]?.settings.prompt).toBe('雨夜');
+    // One of the two pictures planned was dropped before it was confirmed.
+    expect(result.current[2]?.plannedCount).toBe(2);
   });
 
   it('remembers after a reload that the text model could not pick a skill', () => {

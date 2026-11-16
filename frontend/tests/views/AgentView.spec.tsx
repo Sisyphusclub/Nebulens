@@ -274,6 +274,10 @@ it('says when a plan costs more credits than are left, and lets pictures be drop
   await user.click(within(plan).getByRole('button', { name: '去掉「方图」' }));
 
   expect(plan).toHaveTextContent('1 张 · 预计 1 积分');
+  // What the Agent planned stays told as it was, with what was dropped after.
+  const steps = screen.getByRole('list', { name: 'Agent 的步骤' });
+  expect(steps).toHaveTextContent('规划了 2 张图');
+  expect(steps).toHaveTextContent('已去掉 1 张');
   expect(plan).not.toHaveTextContent('不够生成');
   expect(within(plan).queryByRole('button', { name: /^去掉/ })).not.toBeInTheDocument();
   await user.click(within(plan).getByRole('button', { name: '开始生成' }));

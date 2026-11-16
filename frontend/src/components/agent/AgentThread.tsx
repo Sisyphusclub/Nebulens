@@ -52,11 +52,16 @@ function turnSteps(turn: AgentTurn): Step[] {
   }
   const total = turn.plan?.steps.length ?? 0;
   if (turn.plan !== undefined) {
+    // What the Agent planned stays as it was; pictures dropped from the plan are told after.
+    const planned = Math.max(turn.plannedCount ?? total, total);
     steps.push({
       key: 'plan',
-      text: `规划了 ${total} 张图${turn.planningMs === undefined ? '' : ` ${seconds(turn.planningMs)}`}`,
+      text: `规划了 ${planned} 张图${turn.planningMs === undefined ? '' : ` ${seconds(turn.planningMs)}`}`,
       state: 'done',
     });
+    if (planned > total) {
+      steps.push({ key: 'trim', text: `已去掉 ${planned - total} 张`, state: 'note' });
+    }
   } else if (planning && (turn.requestedSkill !== undefined || turn.thinkingMs !== undefined)) {
     steps.push({ key: 'plan', text: '正在规划每张图…', state: 'active' });
   }

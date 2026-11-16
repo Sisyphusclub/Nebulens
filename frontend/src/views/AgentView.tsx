@@ -315,6 +315,7 @@ export function AgentView() {
     updateAgentTurn(target.sessionId, target.turnId, {
       planTitle: title,
       plan: request,
+      plannedCount: request.steps.length,
       status: auto ? 'running' : 'awaiting',
     });
     if (auto) startRun(target, request);

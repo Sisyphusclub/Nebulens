@@ -23,13 +23,13 @@ describe('streaming placeholder style contract', () => {
     expect(clickable).toContain('cursor: pointer;');
   });
 
-  it('streams the example in the brand gradient without a fake caret', () => {
+  it('streams the example in light that fades towards its end, without a fake caret', () => {
     const text =
       baseStyles.match(/\n\.agent-chat-input__streaming-placeholder-text \{([^}]+)\}/)?.[1] ?? '';
     const caret =
       baseStyles.match(/\n\.agent-chat-input__streaming-placeholder-caret \{([^}]+)\}/)?.[1] ?? '';
 
-    expect(text).toContain('linear-gradient(90deg, var(--text-1) 52%, var(--glow-warm) 100%)');
+    expect(text).toContain('linear-gradient(90deg, var(--text-1) 52%, var(--text-3) 100%)');
     expect(text).toContain('background-clip: text;');
     // A blinking caret made it look as if the box had focus and content.
     expect(caret).toContain('display: none;');

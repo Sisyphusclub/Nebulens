@@ -67,7 +67,7 @@ function buildPill(skill: AgentChatSkill) {
   pill.contentEditable = 'false';
   pill.setAttribute('role', 'img');
   pill.setAttribute('aria-label', `Skill: ${skill.label}`);
-  pill.className = 'agent-chat-input__skill-pill font-medium text-accent';
+  pill.className = 'agent-chat-input__skill-pill font-medium text-foreground';
   if (skill.icon) {
     // The icon is app-provided markup; the label stays plain text.
     const icon = document.createElement('span');

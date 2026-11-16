@@ -31,8 +31,9 @@ describe('workspace toolbars', () => {
   });
 
   it('mark a toggle that is on with the accent', () => {
+    // The AI search has a colour of its own: tests/styles/aiColors.spec.ts.
     const on = block(
-      /\.operational-toolbar\s*:is\(\s*\.icon-button\.is-active,\s*\.icon-button\[aria-pressed='true'\],\s*\.asset-ai-toggle\[aria-pressed='true'\]\s*\)\s*\{([^}]+)\}/,
+      /\.operational-toolbar\s*:is\(\s*\.icon-button\.is-active,\s*\.icon-button\[aria-pressed='true'\]\s*\)\s*\{([^}]+)\}/,
     );
     expect(on).toContain('background: var(--accent-soft);');
     expect(on).toContain('color: var(--accent);');

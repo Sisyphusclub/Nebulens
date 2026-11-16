@@ -31,10 +31,15 @@
   --brand-blue: #005bf9;
   --brand-cyan: #00a3fe;
   --brand-orange: #f9931b;
-  /* The one interactive accent, the deep orange of the ribbon: links, the AI mark, expandable
-     tags, focus rings. Blue stays in the logo. */
+  /* The one interactive accent, the deep orange of the ribbon: the chosen filter, toggles
+     that are on, calls to action, focus rings. Blue stays in the logo. */
   --accent: #f76a00;
   --accent-soft: rgb(247 106 0 / 0.16);
+  /* What the AI says and does is marked in plain light, never the accent: its badge, a
+     skill's pill, its switches when on, what it reports while it works. */
+  --ai: var(--text-1);
+  --ai-soft: rgb(255 255 255 / 0.14);
+  --ai-line: rgb(255 255 255 / 0.32);
   --glow-warm: #ffe1c2;
   /* The filled accent, for the one chosen filter in a row: a warm highlight in the top left
      over orange that deepens towards the bottom right. */

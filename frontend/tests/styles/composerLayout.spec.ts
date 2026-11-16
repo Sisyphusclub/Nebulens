@@ -74,7 +74,7 @@ describe('composer with modes', () => {
     for (const state of [GLASS, `${GLASS}:hover`, `${GLASS}.agent-chat-input--focused`]) {
       expect(rule(state)).toContain('var(--composer-glass)');
     }
-    expect(rule(`${MODES} .agent-chat-input__textarea`)).toContain('caret-color: var(--accent);');
+    expect(rule(`${MODES} .agent-chat-input__textarea`)).toContain('caret-color: var(--text-1);');
     // The home page used to hide the caret of an empty box.
     expect(flat).not.toContain('caret-color: transparent');
   });

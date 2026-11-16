@@ -77,7 +77,7 @@ export function SkillSelector({
                   ) : null}
                 </span>
                 {selected ? (
-                  <Check className="size-4 shrink-0 text-accent" />
+                  <Check className="size-4 shrink-0 text-foreground" />
                 ) : (
                   <span className="shrink-0 text-muted-foreground">Personal</span>
                 )}

@@ -5172,7 +5172,7 @@ video {
   height: 15px;
 }
 .generation-history-panel__eyebrow {
-  color: color-mix(in oklch, var(--accent) 64%, var(--muted-foreground));
+  color: var(--muted-foreground);
   font-size: 11px;
   font-weight: 650;
   letter-spacing: 0.12em;
@@ -5321,9 +5321,9 @@ video {
   align-items: center;
   gap: 10px;
   margin: 4px 2px 10px;
-  border: 1px solid color-mix(in oklch, var(--accent) 26%, var(--border));
+  border: 1px solid var(--line-3);
   border-radius: var(--radius-md);
-  background: color-mix(in oklch, var(--accent-soft) 48%, transparent);
+  background: var(--fill-2);
   padding: 9px 10px;
   animation: generation-history-pending-pulse 1.8s ease-in-out infinite;
 }
@@ -5334,8 +5334,8 @@ video {
   flex: 0 0 auto;
   place-items: center;
   border-radius: var(--radius-sm);
-  background: color-mix(in oklch, var(--accent) 14%, transparent);
-  color: var(--accent);
+  background: var(--ai-soft);
+  color: var(--ai);
 }
 .generation-history-pending__icon svg {
   width: 14px;
@@ -5483,13 +5483,13 @@ video {
 .agent-chat-input__streaming-placeholder[data-active='true'] {
   opacity: 1;
 }
-/* The example streams in the brand gradient, a touch dimmed so it still reads as a
-   hint; hovering brightens it to show a click fills it in. */
+/* The example streams in light that fades towards its end, a touch dimmed so it still
+   reads as a hint; hovering brightens it to show a click fills it in. */
 .agent-chat-input__streaming-placeholder-text {
   display: inline;
   border: 0;
   padding: 0;
-  background: linear-gradient(90deg, var(--text-1) 52%, var(--glow-warm) 100%);
+  background: linear-gradient(90deg, var(--text-1) 52%, var(--text-3) 100%);
   background-clip: text;
   color: transparent;
   font: inherit;
@@ -5513,8 +5513,8 @@ video {
   height: 1.05em;
   margin-left: 3px;
   translate: 0 0.15em;
-  background: var(--accent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 58%, transparent);
+  background: var(--ai);
+  box-shadow: 0 0 8px var(--ai-line);
   animation: streaming-placeholder-caret 820ms step-end infinite;
 }
 @keyframes streaming-placeholder-caret {
@@ -5803,8 +5803,8 @@ video {
   background: var(--muted-foreground);
 }
 .studio-toolbar-status__dot[data-active='true'] {
-  background: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 18%, transparent);
+  background: var(--ai);
+  box-shadow: 0 0 0 3px var(--ai-soft);
 }
 .studio-toolbar-quota > span {
   color: var(--muted-foreground);
@@ -5910,14 +5910,14 @@ video {
   align-self: flex-end;
   align-items: center;
   gap: 6px;
-  color: color-mix(in oklch, var(--foreground) 78%, var(--accent));
+  color: var(--text-2);
   font-size: 12px;
   font-weight: 600;
 }
 .session-batch__completion svg {
   width: 16px;
   height: 16px;
-  color: var(--accent);
+  color: var(--ai);
 }
 /* Reference images sent with the prompt sit right above it, like a chat attachment. */
 .session-batch__references {
@@ -6337,17 +6337,11 @@ video {
   font-weight: 500;
 }
 .studio-agent-input .agent-chat-input__submit {
-  background: var(--accent);
-  color: var(--accent-foreground);
   transition:
     background 160ms var(--ease-out-expo),
     box-shadow 160ms var(--ease-out-expo),
     transform 160ms var(--ease-out-expo),
     color 160ms var(--ease-out-expo);
-}
-.studio-agent-input .agent-chat-input__submit:hover:not(:disabled) {
-  background: color-mix(in oklch, var(--accent) 86%, var(--foreground));
-  box-shadow: 0 8px 18px -12px color-mix(in oklch, var(--accent) 72%, transparent);
 }
 .studio-agent-input .agent-chat-input__submit:active:not(:disabled) {
   transform: scale(0.94);
@@ -6740,7 +6734,7 @@ video {
   animation: generation-batch-enter 280ms var(--ease-out-expo) both;
 }
 .studio-toolbar-status[data-active='true'] {
-  color: color-mix(in oklch, var(--foreground) 92%, var(--accent));
+  color: var(--foreground);
   font-size: 12px;
   font-weight: 600;
 }
@@ -8165,16 +8159,17 @@ video {
   width: 14px;
   height: 14px;
 }
-/* A toggle that is on, such as the favourites filter or the AI search, takes the accent. */
-.operational-toolbar
-  :is(
-    .icon-button.is-active,
-    .icon-button[aria-pressed='true'],
-    .asset-ai-toggle[aria-pressed='true']
-  ) {
+/* A toggle that is on, such as the favourites filter, takes the accent. */
+.operational-toolbar :is(.icon-button.is-active, .icon-button[aria-pressed='true']) {
   border-color: color-mix(in oklch, var(--accent) 45%, transparent);
   background: var(--accent-soft);
   color: var(--accent);
+}
+/* The AI search is the AI's switch, so it turns on in the AI's light instead. */
+.operational-toolbar .asset-ai-toggle[aria-pressed='true'] {
+  border-color: var(--ai-line);
+  background: var(--ai-soft);
+  color: var(--ai);
 }
 .workspace-page .asset-workbench__chrome {
   border-bottom-color: var(--line-1);
@@ -9010,7 +9005,7 @@ video {
   font-size: 13px;
 }
 .landing-recommendations__reason {
-  color: var(--accent);
+  color: var(--text-2);
   font-size: 12px;
 }
 .landing-recommendations__owner {
@@ -9021,7 +9016,7 @@ video {
   height: 26px;
   padding: 0 8px;
   margin-left: -8px;
-  color: var(--accent);
+  color: var(--ai);
   font-size: 12px;
 }
 
@@ -9096,7 +9091,7 @@ video {
   align-items: center;
   gap: 4px;
   margin-right: 2px;
-  color: var(--accent);
+  color: var(--ai);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -9112,7 +9107,7 @@ video {
   padding: 3px 8px;
   line-height: 1.4;
 }
-/* The similar-work count opens the panel above it, so it reads as a link-coloured chip. */
+/* The similar-work count opens the panel above it: a chip with an arrow, in the AI's light. */
 .ai-insight .ai-insight__fact--toggle {
   display: inline-flex;
   height: auto;
@@ -9123,7 +9118,7 @@ video {
   border-radius: var(--radius-sm);
   background: var(--fill-2);
   padding: 3px 6px 3px 8px;
-  color: var(--accent);
+  color: var(--ai);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.4;
@@ -9131,7 +9126,7 @@ video {
 .ai-insight .ai-insight__fact--toggle:hover,
 .ai-insight .ai-insight__fact--toggle:focus-visible,
 .ai-insight .ai-insight__fact--toggle[aria-expanded='true'] {
-  background: var(--accent-soft);
+  background: var(--ai-soft);
   color: var(--text-1);
 }
 .ai-insight__fact--toggle svg {
@@ -9178,12 +9173,13 @@ video {
 }
 /* Polishing is the strip's main action. */
 .ai-insight .ai-insight__action--enhance {
-  border-color: color-mix(in oklch, var(--accent) 45%, transparent);
-  background: var(--accent-soft);
-  color: var(--text-1);
+  border-color: var(--ai-line);
+  background: var(--ai-soft);
+  color: var(--ai);
 }
 .ai-insight .ai-insight__action--enhance:hover:not(:disabled) {
-  background: color-mix(in oklch, var(--accent) 26%, transparent);
+  border-color: color-mix(in oklch, var(--ai) 48%, transparent);
+  background: color-mix(in oklch, var(--ai) 22%, transparent);
 }
 .home-hero .ai-insight {
   width: 100%;
@@ -9210,8 +9206,8 @@ video {
   display: inline-block;
   margin-right: 2px;
   border-radius: var(--radius-full);
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--ai-soft);
+  color: var(--ai);
   padding: 0 8px;
   line-height: 1.6;
 }
@@ -9255,7 +9251,7 @@ video {
   width: 17px;
   height: 17px;
   flex: none;
-  color: var(--accent);
+  color: var(--ai);
 }
 .landing-skill-card__title strong {
   color: var(--text-1);
@@ -9308,7 +9304,7 @@ video {
   overflow: hidden;
   padding: 0;
   background: transparent;
-  color: var(--accent);
+  color: var(--text-2);
   font-size: 12px;
   font-weight: 400;
   text-align: left;
@@ -10344,7 +10340,7 @@ video {
   font-size: 14px;
   line-height: 24px;
   outline: none;
-  caret-color: var(--accent);
+  caret-color: var(--text-1);
   resize: none;
   white-space: nowrap;
 }
@@ -10641,7 +10637,7 @@ video {
   max-height: calc(var(--prompt-max-lines, 6) * var(--prompt-line)) !important;
   margin: 2px 0 var(--space-3);
   padding: 0 !important;
-  caret-color: var(--accent);
+  caret-color: var(--text-1);
 }
 .agent-chat-input.agent-chat-input--modes
   .agent-chat-input__editor

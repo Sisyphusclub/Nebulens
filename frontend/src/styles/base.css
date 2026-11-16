@@ -8661,11 +8661,16 @@ video {
 .generation-model-menu [role='menuitemradio'][data-state='checked'] {
   background: var(--fill-4);
 }
+/* The panel opens from its button's left edge and is not moved for collisions, so it
+   slides left itself by whatever it is wider than the room Radix reports to the window's
+   right edge. That room already leaves 12px clear, and the panel is never wider than the
+   window less 24px, so neither edge is lost, wherever the button is in the toolbar. */
 .generation-custom-panel {
   width: min(540px, calc(100vw - 24px));
   max-width: calc(100vw - 24px);
   overflow-x: hidden;
   padding: 16px !important;
+  translate: min(0px, var(--radix-dropdown-menu-content-available-width, 100%) - 100%) 0;
 }
 .generation-custom-panel__header {
   display: flex;
@@ -8882,10 +8887,9 @@ video {
     display: none;
   }
   .generation-custom-panel {
-    width: min(360px, calc(100vw - 20px));
-    max-width: calc(100vw - 20px);
+    width: min(360px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
     padding: 10px !important;
-    translate: calc(-100% + var(--radix-dropdown-menu-trigger-width) + 18px) 0;
   }
   .generation-custom-panel__header {
     min-height: 34px;

@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { AgentCanvas, type CanvasFocus } from '@/components/agent/AgentCanvas';
-import { AgentThread } from '@/components/agent/AgentThread';
+import { AgentThread, type PlanBudget } from '@/components/agent/AgentThread';
 import { useToast } from '@/components/common/ToastProvider';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
 import { GenerationComposerControls } from '@/components/generation/GenerationComposerControls';
@@ -54,6 +54,8 @@ import {
   DEFAULT_IMAGE_RESOLUTION,
   imageGenerationCreditCost,
   MAX_REFERENCE_IMAGES,
+  supportsImageQuality,
+  type GenerationSettingsSnapshot,
   type HistoryEntry,
   type ImageModel,
   type ImageQuality,
@@ -113,7 +115,7 @@ export function AgentView() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const history = useImageHistory();
   const { sessions, create: createSession } = useGenerationSessions();
-  const { refresh: refreshQuota } = useImageQuota();
+  const { quota, refresh: refreshQuota } = useImageQuota();
   const imageApiKey = useImageApiKey();
   const generation = useImageGeneration();
   const upload = useFileUpload();
@@ -438,6 +440,22 @@ export function AgentView() {
     generation.cancel();
   };
 
+  /** A plan waiting for a yes is made with the settings in the composer when it gets one. */
+  const withCurrentSettings = (plan: SkillRunRequest): SkillRunRequest => ({
+    ...plan,
+    steps: plan.steps.map((step) => {
+      const settings: GenerationSettingsSnapshot = {
+        ...step.settings,
+        model,
+        resolution,
+        isShared: !isPrivate,
+      };
+      if (supportsImageQuality(model)) settings.quality = quality;
+      else delete settings.quality;
+      return { ...step, settings };
+    }),
+  });
+
   const confirmPlan = (turn: AgentTurn): void => {
     if (activeSessionId === null || turn.plan === undefined) return;
     if (!isAuthenticated) {
@@ -448,8 +466,21 @@ export function AgentView() {
       notify('Agent 还在生成上一组图，等它完成再开始。');
       return;
     }
-    updateAgentTurn(activeSessionId, turn.id, { status: 'running' });
-    startRun({ sessionId: activeSessionId, turnId: turn.id }, turn.plan);
+    const shortfall = planBudget(turn).shortfall;
+    if (shortfall !== undefined) {
+      notify(shortfall, 'error');
+      return;
+    }
+    const plan = withCurrentSettings(turn.plan);
+    updateAgentTurn(activeSessionId, turn.id, { status: 'running', plan });
+    startRun({ sessionId: activeSessionId, turnId: turn.id }, plan);
+  };
+
+  const removeStep = (turn: AgentTurn, index: number): void => {
+    if (activeSessionId === null || turn.plan === undefined || turn.plan.steps.length <= 1) return;
+    updateAgentTurn(activeSessionId, turn.id, {
+      plan: { ...turn.plan, steps: turn.plan.steps.filter((_, position) => position !== index) },
+    });
   };
 
   const revealTurn = (turn: AgentTurn): void => {
@@ -525,14 +556,25 @@ export function AgentView() {
     resolution === DEFAULT_IMAGE_RESOLUTION
       ? imageApiKey.status?.configured === true
       : imageApiKey.status?.highResConfigured === true;
-  const costLabel = (turn: AgentTurn): string => {
-    if (usesOwnKey) return '使用个人 Key';
-    const credits = (turn.plan?.steps ?? []).reduce(
-      (sum, step) => sum + imageGenerationCreditCost(step.settings.resolution, step.settings.model),
-      0,
-    );
-    return `预计 ${credits} 积分`;
-  };
+  /** Priced with the composer's settings, which the plan is made with once confirmed. */
+  function planBudget(turn: AgentTurn): PlanBudget {
+    if (usesOwnKey) return { label: '使用个人 Key', isPrivate };
+    const count = turn.plan?.steps.length ?? 0;
+    const credits = count * imageGenerationCreditCost(resolution, model);
+    const remaining = quota?.remaining;
+    return {
+      label: `预计 ${credits} 积分`,
+      isPrivate,
+      ...(typeof remaining === 'number' && credits > remaining
+        ? {
+            shortfall:
+              count > 1
+                ? `剩余 ${remaining} 积分，不够生成这 ${count} 张。可以去掉几张，或签到领积分后再开始。`
+                : `剩余 ${remaining} 积分，不够生成这张图。签到领积分后再开始。`,
+          }
+        : {}),
+    };
+  }
 
   const insetLeft = !narrow && panelOpen ? PANEL_WIDTH + PANEL_MARGIN * 2 : 0;
   const insetBottom = narrow && panelOpen ? panelHeight + PANEL_MARGIN : 0;
@@ -610,9 +652,10 @@ export function AgentView() {
           <AgentThread
             turns={turns}
             busy={busy}
-            costLabel={costLabel}
+            planBudget={planBudget}
             examples={EXAMPLES}
             onConfirm={confirmPlan}
+            onRemoveStep={removeStep}
             onCancel={(turn) =>
               activeSessionId !== null &&
               updateAgentTurn(activeSessionId, turn.id, { status: 'cancelled' })

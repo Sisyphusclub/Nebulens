@@ -50,9 +50,15 @@ vi.mock('@/hooks/useAuth', () => ({
     logout: vi.fn(),
   }),
 }));
+const quotaMocks = vi.hoisted(() => ({ remaining: 18 }));
 vi.mock('@/hooks/useImageQuota', () => ({
   useImageQuota: () => ({
-    quota: { total: 20, remaining: 18, checkedInToday: false, dailyCheckInReward: 5 },
+    quota: {
+      total: 20,
+      remaining: quotaMocks.remaining,
+      checkedInToday: false,
+      dailyCheckInReward: 5,
+    },
     isLoading: false,
     refresh: vi.fn().mockResolvedValue(undefined),
     checkIn: vi.fn(),
@@ -165,6 +171,7 @@ beforeEach(() => {
   resetGenerationSessionsForTests();
   resetAgentConversationsForTests();
   historyMocks.batches = [];
+  quotaMocks.remaining = 18;
   skills.fetchSkillForms.mockResolvedValue([]);
   skills.selectSkillForBrief.mockResolvedValue(null);
   skills.planFreely.mockResolvedValue(PLAN);
@@ -250,6 +257,66 @@ it('reads a request, shows its plan and what it costs, and makes it only once co
   expect(await screen.findByText('生成了 2 张图')).toBeInTheDocument();
   expect(screen.queryByRole('region', { name: '待确认的方案' })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: '在画布上查看' })).toBeInTheDocument();
+});
+
+it('says when a plan costs more credits than are left, and lets pictures be dropped to fit', async () => {
+  const user = userEvent.setup();
+  quotaMocks.remaining = 1;
+  renderAgent();
+
+  await send(user, '雨夜的未来城市，做两张');
+
+  const plan = await screen.findByRole('region', { name: '待确认的方案' });
+  expect(plan).toHaveTextContent('剩余 1 积分，不够生成这 2 张');
+  const start = within(plan).getByRole('button', { name: '开始生成' });
+  expect(start).toBeDisabled();
+
+  await user.click(within(plan).getByRole('button', { name: '去掉「方图」' }));
+
+  expect(plan).toHaveTextContent('1 张 · 预计 1 积分');
+  expect(plan).not.toHaveTextContent('不够生成');
+  expect(within(plan).queryByRole('button', { name: /^去掉/ })).not.toBeInTheDocument();
+  await user.click(within(plan).getByRole('button', { name: '开始生成' }));
+  await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
+  expect(generation.generate).toHaveBeenCalledWith(
+    expect.objectContaining({ prompt: '雨夜的未来城市，竖版构图' }),
+  );
+});
+
+it('makes a waiting plan with the settings in the composer when it is confirmed', async () => {
+  const user = userEvent.setup();
+  renderAgent();
+
+  await send(user, '雨夜的未来城市，做两张');
+  const plan = await screen.findByRole('region', { name: '待确认的方案' });
+  expect(plan).not.toHaveTextContent('仅自己可见');
+
+  // Asked first, the settings can still change before anything is made.
+  await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
+  await user.click(
+    within(screen.getByRole('group', { name: '可见范围' })).getByRole('menuitemradio', {
+      name: '仅自己可见',
+    }),
+  );
+  await user.click(
+    within(screen.getByRole('group', { name: '清晰度' })).getByRole('menuitemradio', {
+      name: '2K',
+    }),
+  );
+  await user.keyboard('{Escape}');
+  expect(plan).toHaveTextContent('仅自己可见');
+  expect(plan).toHaveTextContent('预计 6 积分');
+
+  await user.click(within(plan).getByRole('button', { name: '开始生成' }));
+
+  await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(2));
+  expect(generation.generate).toHaveBeenCalledWith(
+    expect.objectContaining({
+      prompt: '雨夜的未来城市，竖版构图',
+      isShared: false,
+      resolution: '2k',
+    }),
+  );
 });
 
 it('runs by itself once told to, and keeps the pictures to their maker when asked', async () => {

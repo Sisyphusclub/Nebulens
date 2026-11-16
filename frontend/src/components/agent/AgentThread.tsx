@@ -1,4 +1,4 @@
-import { Check, CircleAlert, LoaderCircle, Minus } from 'lucide-react';
+import { Check, CircleAlert, LoaderCircle, Lock, Minus, X } from 'lucide-react';
 import { useLayoutEffect, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -91,16 +91,27 @@ function StepIcon({ state }: { state: StepState }) {
   return <Check aria-hidden="true" />;
 }
 
+/** What a plan will cost with the settings in the composer, and what stops it starting. */
+export interface PlanBudget {
+  label: string;
+  /** Set when the credits left cannot pay for every picture. */
+  shortfall?: string;
+  /** New pictures will be kept to their maker. */
+  isPrivate: boolean;
+}
+
 function PlanCard({
   turn,
-  costLabel,
+  budget,
   onConfirm,
   onCancel,
+  onRemove,
 }: {
   turn: AgentTurn;
-  costLabel: string;
+  budget: PlanBudget;
   onConfirm: () => void;
   onCancel: () => void;
+  onRemove: (index: number) => void;
 }) {
   const steps = turn.plan?.steps ?? [];
   return (
@@ -108,15 +119,33 @@ function PlanCard({
       <header className="agent-plan__header">
         <strong>{turn.planTitle ?? turn.plan?.skillLabel ?? '方案'}</strong>
         <span>
-          {steps.length} 张 · {costLabel}
+          {steps.length} 张 · {budget.label}
         </span>
       </header>
+      {budget.isPrivate ? (
+        <span className="agent-plan__visibility">
+          <Lock aria-hidden="true" />
+          仅自己可见
+        </span>
+      ) : null}
       <ol className="agent-plan__list">
         {steps.map((step, index) => (
           <li key={`${step.label}-${index}`} className="agent-plan__item">
             <span className="agent-plan__meta">
               <span className="agent-plan__label">{step.label}</span>
               <span className="agent-plan__aspect">{step.settings.aspectRatio}</span>
+              {steps.length > 1 ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="agent-plan__remove"
+                  aria-label={`去掉「${step.label}」`}
+                  onClick={() => onRemove(index)}
+                >
+                  <X aria-hidden="true" />
+                </Button>
+              ) : null}
             </span>
             <p className="agent-plan__prompt" title={step.settings.prompt}>
               {step.settings.prompt}
@@ -124,11 +153,21 @@ function PlanCard({
           </li>
         ))}
       </ol>
+      {budget.shortfall === undefined ? null : (
+        <p className="agent-plan__shortfall" role="status">
+          {budget.shortfall}
+        </p>
+      )}
       <footer className="agent-plan__actions">
         <Button type="button" variant="ghost" size="compact" onClick={onCancel}>
           取消
         </Button>
-        <Button type="button" size="compact" onClick={onConfirm}>
+        <Button
+          type="button"
+          size="compact"
+          disabled={budget.shortfall !== undefined}
+          onClick={onConfirm}
+        >
           开始生成
         </Button>
       </footer>
@@ -150,10 +189,11 @@ const TIME_FORMAT = new Intl.DateTimeFormat('zh-CN', {
 export function AgentThread({
   turns,
   busy,
-  costLabel,
+  planBudget,
   examples,
   onConfirm,
   onCancel,
+  onRemoveStep,
   onRetry,
   onReveal,
   onExample,
@@ -161,10 +201,12 @@ export function AgentThread({
   turns: readonly AgentTurn[];
   /** The Agent is at work, so an ended request cannot be sent again yet. */
   busy: boolean;
-  costLabel: (turn: AgentTurn) => string;
+  planBudget: (turn: AgentTurn) => PlanBudget;
   examples: readonly string[];
   onConfirm: (turn: AgentTurn) => void;
   onCancel: (turn: AgentTurn) => void;
+  /** Drops one picture from a plan waiting for a yes. */
+  onRemoveStep: (turn: AgentTurn, index: number) => void;
   onRetry: (turn: AgentTurn) => void;
   onReveal: (turn: AgentTurn) => void;
   onExample: (example: string) => void;
@@ -245,9 +287,10 @@ export function AgentThread({
             {turn.status === 'awaiting' && turn.plan !== undefined ? (
               <PlanCard
                 turn={turn}
-                costLabel={costLabel(turn)}
+                budget={planBudget(turn)}
                 onConfirm={() => onConfirm(turn)}
                 onCancel={() => onCancel(turn)}
+                onRemove={(index) => onRemoveStep(turn, index)}
               />
             ) : null}
             {turn.status === 'done' && turn.batchIds.length > 0 ? (

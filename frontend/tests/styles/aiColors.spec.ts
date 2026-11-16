@@ -20,16 +20,36 @@ const ORANGE = /--accent|--glow-warm|--brand-orange/;
 const GRADIENT_STROKE = 'stroke: url(#ai-gradient) var(--ai);';
 
 describe('what the AI says and does', () => {
-  it('has a light blue-to-violet gradient of its own, apart from the accent', () => {
-    expect(tokens).toContain('--ai-from: #9ec3ff;');
-    expect(tokens).toContain('--ai-to: #cba9ff;');
+  it('has a pale pearl of its own, a light blue turning lilac, apart from the accent', () => {
+    expect(tokens).toContain('--ai-from: #bfd0ff;');
+    expect(tokens).toContain('--ai-to: #d7c4ff;');
     expect(tokens).toContain(
       '--ai-gradient: linear-gradient(120deg, var(--ai-from) 0%, var(--ai-to) 100%);',
     );
-    // A solid tone between the two, for text on its wash and where a gradient cannot go.
-    expect(tokens).toContain('--ai: #b4b6ff;');
+    // A solid tone between the two, where a gradient cannot go.
+    expect(tokens).toContain('--ai: #ccc9fb;');
     expect(tokens).toMatch(/--ai-wash: linear-gradient\(/);
+    // Handing work to the Agent fills a button nearly white, the tint only a sheen on it.
+    expect(tokens).toMatch(/--ai-pearl: linear-gradient\(/);
     expect(tokens).not.toContain('--ai: var(--text-1);');
+  });
+
+  it('writes no word in its colour or a gradient: the tint is in icons, washes and lines', () => {
+    for (const selector of [
+      '.ai-insight__badge',
+      '.ai-insight .ai-insight__fact--toggle',
+      '.ai-insight .ai-insight__action--enhance',
+      '.ai-insight .ai-insight__action--enhance:hover:not(:disabled)',
+      '.landing-recommendations .landing-recommendations__use',
+      '.landing-composer [data-skill-id]',
+      ".operational-toolbar .asset-ai-toggle[aria-pressed='true']",
+      ".agent-chat-input__mode--selected[data-mode='agent']",
+    ]) {
+      const body = rule(selector);
+      expect(body, selector).toContain('color: var(--text-1);');
+      expect(body, selector).not.toContain('background-clip: text');
+    }
+    expect(rule(".agent-chat-input__mode--selected[data-mode='agent'] > span")).toBe('');
   });
 
   it('draws its icons in the same gradient, defined once in the page', () => {
@@ -77,20 +97,12 @@ describe('what the AI says and does', () => {
     for (const body of bodies) expect(body).not.toMatch(ORANGE);
   });
 
-  it('writes the AI badge in the gradient, and sets the skill pill and polishing on its wash', () => {
-    const badge = rule('.ai-insight__badge');
-    expect(badge).toContain('background: var(--ai-gradient);');
-    expect(badge).toContain('-webkit-background-clip: text;');
-    expect(badge).toContain('background-clip: text;');
-    expect(badge).toContain('color: transparent;');
+  it('marks the AI badge by its icon, and sets the skill pill and polishing on its wash', () => {
     expect(rule('.ai-insight__badge svg')).toContain(GRADIENT_STROKE);
-    const pill = rule('.landing-composer [data-skill-id]');
-    expect(pill).toContain('background: var(--ai-wash);');
-    expect(pill).toContain('color: var(--ai);');
+    expect(rule('.landing-composer [data-skill-id]')).toContain('background: var(--ai-wash);');
     const enhance = rule('.ai-insight .ai-insight__action--enhance');
     expect(enhance).toContain('border-color: var(--ai-line);');
     expect(enhance).toContain('background: var(--ai-wash);');
-    expect(enhance).toContain('color: var(--ai);');
     expect(rule('.ai-insight .ai-insight__action--enhance svg')).toContain(GRADIENT_STROKE);
   });
 
@@ -112,31 +124,28 @@ describe('what the AI says and does', () => {
     }
   });
 
-  it('fills Agent mode once chosen, and the buttons that hand work to the Agent, with it', () => {
-    const mode = rule(".agent-chat-input__mode--selected[data-mode='agent']");
-    expect(mode).toContain('background: var(--ai-wash);');
-    expect(mode).toContain('color: var(--ai);');
+  it('sets Agent mode once chosen on its wash, and gives the buttons that hand work over a pearl sheen', () => {
+    expect(rule(".agent-chat-input__mode--selected[data-mode='agent']")).toContain(
+      'background: var(--ai-wash);',
+    );
     expect(rule(".agent-chat-input__mode--selected[data-mode='agent'] svg")).toContain(
       GRADIENT_STROKE,
-    );
-    // Its name is written in the gradient itself, the wash staying on the button.
-    expect(rule(".agent-chat-input__mode--selected[data-mode='agent'] > span")).toContain(
-      'background-clip: text;',
     );
     // Sending in Agent mode, sending from the Agent's panel, and starting its plan.
     const handOver =
       baseStyles.match(
         /\.agent-chat-input\[data-mode='agent'\] \.agent-chat-input__submit:not\(:disabled\),\n\.agent-panel \.agent-composer \.agent-chat-input__submit:not\(:disabled\),\n\.agent-plan \.agent-plan__start:not\(:disabled\) \{([^}]+)\}/,
       )?.[1] ?? '';
-    expect(handOver).toContain('background: var(--ai-gradient);');
+    expect(handOver).toContain('background: var(--ai-pearl);');
     expect(handOver).toContain('color: var(--on-ai);');
+    // No coloured glow round it: it is lit and shaded like the other light buttons.
+    expect(handOver).not.toContain('var(--ai)');
   });
 
   it('turns the asset AI search on in its wash, while other toggles keep the accent', () => {
     const on = rule(".operational-toolbar .asset-ai-toggle[aria-pressed='true']");
     expect(on).toContain('border-color: var(--ai-line);');
     expect(on).toContain('background: var(--ai-wash);');
-    expect(on).toContain('color: var(--ai);');
     expect(rule(".operational-toolbar .asset-ai-toggle[aria-pressed='true'] svg")).toContain(
       GRADIENT_STROKE,
     );

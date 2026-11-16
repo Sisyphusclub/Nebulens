@@ -287,7 +287,10 @@ const FREE_PLAN_RULES = [
 const FREE_PLAN_MAX_IMAGES = 4;
 const TEXT_MODEL_UNAVAILABLE =
   'Agent 需要文本模型来规划画面，当前没有配置。可以先用图片生成，或从技能库选一个技能。';
-const FREE_PLAN_FAILED = 'Agent 这次没能规划好画面，请稍后重试。';
+// A skill has templates to fall back on, so naming one still gets a plan while the text
+// model is busy or out of credit.
+const FREE_PLAN_FAILED =
+  'Agent 这次没能规划好画面，请稍后重试；也可以在请求里点名一个技能，如「做一套分镜脚本：…」，技能不依赖文本模型也能出方案。';
 
 function freePlanRequest(brief: string, hasReference: boolean): string {
   return [`已上传参考图：${hasReference ? '是' : '否'}`, `用户需求：${brief}`].join('\n');

@@ -469,6 +469,8 @@ describe('createSkillPlanner planFreely', () => {
     await expect(failing.planFreely('雨夜', false)).rejects.toMatchObject({
       code: 'PROVIDER_ERROR',
       status: 502,
+      // A skill still gets a plan from its templates, so the message points there.
+      message: expect.stringContaining('点名一个技能') as unknown,
     });
     const empty = createSkillPlanner({
       ...chatConfig,

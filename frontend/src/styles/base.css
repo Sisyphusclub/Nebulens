@@ -3549,7 +3549,7 @@ video {
 .generation-error-card {
   display: grid;
   min-width: 0;
-  overflow: hidden;
+  /* Not clipped, so a card shaped like a wide picture grows taller to fit its text. */
   place-items: center;
   border: 1px solid color-mix(in oklch, var(--destructive) 22%, var(--border));
   background: color-mix(in oklch, var(--destructive) 4%, var(--surface-media));
@@ -3558,13 +3558,16 @@ video {
 }
 .generation-error-card__content {
   display: flex;
-  max-width: 360px;
+  /* The request id never wraps; without these it stretched the content past the card. */
+  min-width: 0;
+  max-width: min(360px, 100%);
   align-items: center;
   flex-direction: column;
   gap: 8px;
   color: var(--muted-foreground);
   font-size: 12px;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .generation-error-card__content > svg {
   width: 17px;

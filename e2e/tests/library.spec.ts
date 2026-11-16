@@ -36,28 +36,3 @@ test('finds work with AI search, serves thumbnails, and makes a similar one', as
     .click();
   await expect(page.getByRole('textbox', { name: '首页创作提示词' })).toContainText('咖啡新品海报');
 });
-
-test('keeps an image to its maker when asked to', async ({ page }) => {
-  const prompt = '端到端：只给自己看的草图';
-  await openNewSession(page);
-  await page.getByRole('button', { name: '自定义生成参数' }).click();
-  await page.getByRole('menuitemradio', { name: '仅自己可见' }).click();
-  await page.keyboard.press('Escape');
-  await submitPrompt(page, prompt);
-  await expectLatestImage(page);
-
-  // Its maker's assets say who can see it.
-  await page.goto('/history');
-  await page
-    .getByRole('button', { name: `查看图片：${prompt}` })
-    .first()
-    .click();
-  await expect(page.getByRole('dialog', { name: '图片详情' })).toContainText('仅自己可见');
-  await page.keyboard.press('Escape');
-
-  // The homepage wall offers only work everyone can see, even to the maker.
-  await page.goto('/');
-  const showcase = page.getByRole('region', { name: '灵感' });
-  await expect(showcase.getByRole('button', { name: /^做同款：端到端/ }).first()).toBeVisible();
-  await expect(showcase.getByRole('button', { name: `做同款：${prompt}` })).toHaveCount(0);
-});

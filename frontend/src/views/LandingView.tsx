@@ -417,10 +417,9 @@ export function LandingView() {
             </LiquidGlassFrame>
           </div>
         </div>
-        {/* The chips start an empty composer; once there is a prompt, the AI strip takes their row. */}
-        {activeSkill === undefined && prompt.trim() === '' ? (
-          <LandingSkillChips onSelect={selectSkill} />
-        ) : null}
+        {/* The chips stay put while typing: one picked takes what is written as its brief. The AI
+            strip, once it has something to say, sits under them. */}
+        {activeSkill === undefined ? <LandingSkillChips onSelect={selectSkill} /> : null}
         {activeSkill === undefined ? (
           <AiInsightBar
             prompt={prompt}

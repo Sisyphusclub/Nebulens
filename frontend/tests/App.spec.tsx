@@ -695,18 +695,23 @@ describe('React application routes', () => {
     expect(screen.getByLabelText('当前路由')).toHaveTextContent(/^\/agent$/);
   });
 
-  it('swaps the skill chips for the AI strip once something is typed on the home page', async () => {
+  it('keeps the skill chips while typing, the AI strip under them, and a chip takes what is written', async () => {
     const user = userEvent.setup();
     renderRoute('/');
     expect(await screen.findByRole('navigation', { name: '快捷技能' })).toBeInTheDocument();
+    const editor = screen.getByRole('textbox', { name: '首页创作提示词' });
 
-    await user.type(
-      screen.getByRole('textbox', { name: '首页创作提示词' }),
-      '周年庆海报，标题“店庆”',
-    );
+    await user.type(editor, '周年庆海报，标题“店庆”');
 
-    expect(screen.queryByRole('navigation', { name: '快捷技能' })).not.toBeInTheDocument();
-    expect(screen.getByRole('status', { name: 'AI 理解' })).toBeInTheDocument();
+    // Typing changes nothing about the chips: they stay where they were, the strip below.
+    const chips = screen.getByRole('navigation', { name: '快捷技能' });
+    const strip = screen.getByRole('status', { name: 'AI 理解' });
+    expect(chips.compareDocumentPosition(strip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Picking one keeps what is written, as that skill's brief.
+    await user.click(within(chips).getByRole('button', { name: '活动海报' }));
+    expect(await screen.findByRole('group', { name: '技能：活动海报' })).toBeInTheDocument();
+    expect(editor).toHaveTextContent('活动海报');
+    expect(editor).toHaveTextContent('周年庆海报，标题“店庆”');
   });
 
   it('greets visitors with a Chinese headline', async () => {

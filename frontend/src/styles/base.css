@@ -3613,29 +3613,29 @@ video {
   gap: 8px;
   border-top: 0;
 }
-/* A wall of captioned cards, on the template, asset and gallery pages. The shared masonry
-   lays it out; here it takes as many columns as it has room for, each at least 264px wide,
-   which keeps a column's forty rows tall enough for the ten a caption needs. */
+/* A wall of captioned cards, on the template and asset pages. The shared masonry lays it
+   out, spaced as the home wall is; here it takes as many columns as it has room for, each
+   at least 264px wide, which keeps a column's forty rows tall enough for the ten a caption
+   needs. */
 .masonry--cards .masonry__grid {
   --masonry-columns: 1;
-  --masonry-gap: 16px;
 }
-@container (min-width: 544px) {
+@container (min-width: 536px) {
   .masonry--cards .masonry__grid {
     --masonry-columns: 2;
   }
 }
-@container (min-width: 824px) {
+@container (min-width: 808px) {
   .masonry--cards .masonry__grid {
     --masonry-columns: 3;
   }
 }
-@container (min-width: 1104px) {
+@container (min-width: 1080px) {
   .masonry--cards .masonry__grid {
     --masonry-columns: 4;
   }
 }
-@container (min-width: 1384px) {
+@container (min-width: 1352px) {
   .masonry--cards .masonry__grid {
     --masonry-columns: 5;
   }

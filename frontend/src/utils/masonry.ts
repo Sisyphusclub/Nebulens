@@ -22,16 +22,11 @@ export function masonrySpan(width: number, height: number, extraRows = 0): numbe
 }
 
 /**
- * The rows a card with a caption under its picture sets aside for the caption: a title and
- * a line of detail. Columns are at least 264px wide on such walls, which makes ten rows
- * at least 66px.
+ * The rows a card with a caption under its picture adds for the caption: a title and a
+ * line of detail. Columns are at least 264px wide on such walls, which makes ten rows at
+ * least 66px.
  */
 export const MEDIA_CARD_INFO_ROWS = 10;
-/**
- * What such a card adds to its picture's rows: the caption, and one row more than a bare
- * picture needs for the gap, because these walls are spaced 16px apart rather than 8px.
- */
-export const MEDIA_CARD_EXTRA_ROWS = MEDIA_CARD_INFO_ROWS + 1;
 
 type GridVariables = CSSProperties & { '--masonry-rows': number; '--masonry-info-rows'?: number };
 type CardVariables = CSSProperties & { '--masonry-span': number };

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
 import { cn } from '@/lib/utils';
 import type { HistoryEntry } from '@/types/image';
-import { MEDIA_CARD_EXTRA_ROWS, MEDIA_CARD_GRID_STYLE, masonryCardStyle } from '@/utils/masonry';
+import { MEDIA_CARD_GRID_STYLE, MEDIA_CARD_INFO_ROWS, masonryCardStyle } from '@/utils/masonry';
 import { promptTitle } from '@/utils/promptTitle';
 import { thumbnailUrl } from '@/utils/thumbnail';
 
@@ -60,7 +60,7 @@ export function ImageGrid({
               style={masonryCardStyle(
                 entry.record.width,
                 entry.record.height,
-                MEDIA_CARD_EXTRA_ROWS,
+                MEDIA_CARD_INFO_ROWS,
               )}
             >
               <MorphicCard

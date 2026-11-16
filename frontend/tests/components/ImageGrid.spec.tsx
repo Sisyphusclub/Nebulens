@@ -3,7 +3,7 @@ import { expect, it, vi } from 'vitest';
 
 import { ImageGrid } from '@/components/gallery/ImageGrid';
 import type { HistoryEntry } from '@/types/image';
-import { MEDIA_CARD_EXTRA_ROWS, masonrySpan } from '@/utils/masonry';
+import { masonrySpan } from '@/utils/masonry';
 
 const entry: HistoryEntry = {
   record: {
@@ -133,13 +133,10 @@ it('lays the images out as a wall of cards, each titled by the start of its prom
 
   const [wide, tall] = [...container.querySelectorAll<HTMLElement>('.image-tile')];
   expect(wide).toHaveClass('media-card');
-  // The picture's rows, ten for the caption and two for the gap under the card.
-  expect(wide?.style.getPropertyValue('--masonry-span')).toBe(
-    String(masonrySpan(1792, 1024, MEDIA_CARD_EXTRA_ROWS)),
-  );
-  expect(tall?.style.getPropertyValue('--masonry-span')).toBe(
-    String(masonrySpan(1024, 1360, MEDIA_CARD_EXTRA_ROWS)),
-  );
+  // The picture's rows, ten for the caption and one for the gap under the card, which is
+  // the home wall's 8px.
+  expect(wide?.style.getPropertyValue('--masonry-span')).toBe(String(masonrySpan(1792, 1024, 10)));
+  expect(tall?.style.getPropertyValue('--masonry-span')).toBe(String(masonrySpan(1024, 1360, 10)));
   expect(wide?.querySelector('.media-card__title')).toHaveTextContent(/^雨夜城市街角$/);
   expect(tall?.querySelector('.media-card__title')).toHaveTextContent(/^竖版卖点详情图$/);
   // The whole prompt is still the picture's name, for whoever cannot see it.

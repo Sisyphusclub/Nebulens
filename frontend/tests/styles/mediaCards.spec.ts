@@ -14,13 +14,15 @@ describe('walls of cards', () => {
   it('fit as many columns as the wall has room for, each at least 264px wide', () => {
     const grid = rule('.masonry--cards .masonry__grid');
     expect(grid).toContain('--masonry-columns: 1;');
-    expect(grid).toContain('--masonry-gap: 16px;');
+    // Spaced like the home wall: the gap is the shared wall's own, not one set here.
+    expect(grid).not.toContain('--masonry-gap');
+    expect(rule('.masonry__grid')).toContain('--masonry-gap: 8px;');
     // 264px keeps a column's forty rows tall enough for the caption's ten.
     for (const [width, columns] of [
-      [544, 2],
-      [824, 3],
-      [1104, 4],
-      [1384, 5],
+      [536, 2],
+      [808, 3],
+      [1080, 4],
+      [1352, 5],
     ]) {
       expect(baseStyles).toMatch(
         new RegExp(

@@ -20,7 +20,7 @@ import {
 import { useTemplatePreferences } from '@/hooks/useTemplatePreferences';
 import { cn } from '@/lib/utils';
 import { ASPECT_RATIO_LABELS, IMAGE_RESOLUTION_LABELS } from '@/types/image';
-import { MEDIA_CARD_EXTRA_ROWS, MEDIA_CARD_GRID_STYLE, masonryCardStyle } from '@/utils/masonry';
+import { MEDIA_CARD_GRID_STYLE, MEDIA_CARD_INFO_ROWS, masonryCardStyle } from '@/utils/masonry';
 import { templateThumbnailUrl } from '@/utils/thumbnail';
 
 type TemplateSort = 'featured' | 'recent' | 'title';
@@ -226,7 +226,7 @@ export function TemplatesView() {
                 <article
                   className="template-tile media-card"
                   key={template.id}
-                  style={masonryCardStyle(template.width, template.height, MEDIA_CARD_EXTRA_ROWS)}
+                  style={masonryCardStyle(template.width, template.height, MEDIA_CARD_INFO_ROWS)}
                 >
                   <MorphicCard id={`template-${template.id}`} className="template-tile__morph">
                     <Button

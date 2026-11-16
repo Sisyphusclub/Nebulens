@@ -5337,12 +5337,13 @@ video {
   flex: 0 0 auto;
   place-items: center;
   border-radius: var(--radius-sm);
-  background: var(--ai-soft);
+  background: var(--ai-wash);
   color: var(--ai);
 }
 .generation-history-pending__icon svg {
   width: 14px;
   height: 14px;
+  stroke: url(#ai-gradient) var(--ai);
 }
 .generation-history-pending > span:last-child {
   display: grid;
@@ -5516,7 +5517,7 @@ video {
   height: 1.05em;
   margin-left: 3px;
   translate: 0 0.15em;
-  background: var(--ai);
+  background: var(--ai-gradient);
   box-shadow: 0 0 8px var(--ai-line);
   animation: streaming-placeholder-caret 820ms step-end infinite;
 }
@@ -5806,7 +5807,7 @@ video {
   background: var(--muted-foreground);
 }
 .studio-toolbar-status__dot[data-active='true'] {
-  background: var(--ai);
+  background: var(--ai-gradient);
   box-shadow: 0 0 0 3px var(--ai-soft);
 }
 .studio-toolbar-quota > span {
@@ -5921,6 +5922,7 @@ video {
   width: 16px;
   height: 16px;
   color: var(--ai);
+  stroke: url(#ai-gradient) var(--ai);
 }
 /* Reference images sent with the prompt sit right above it, like a chat attachment. */
 .session-batch__references {
@@ -6416,7 +6418,9 @@ video {
   position: absolute;
   width: 18px;
   height: 18px;
-  color: var(--text-4);
+  color: var(--ai);
+  opacity: 0.85;
+  stroke: url(#ai-gradient) var(--ai);
   stroke-width: 1.2;
 }
 .generation-empty-state__sparkle--top {
@@ -8171,8 +8175,16 @@ video {
 /* The AI search is the AI's switch, so it turns on in the AI's light instead. */
 .operational-toolbar .asset-ai-toggle[aria-pressed='true'] {
   border-color: var(--ai-line);
-  background: var(--ai-soft);
+  background: var(--ai-wash);
   color: var(--ai);
+}
+.operational-toolbar .asset-ai-toggle[aria-pressed='true'] svg {
+  stroke: url(#ai-gradient) var(--ai);
+}
+/* Pointed at while on, it deepens its wash rather than turning grey like the others. */
+.operational-toolbar .asset-ai-toggle[aria-pressed='true']:hover:not(:disabled) {
+  border-color: color-mix(in oklch, var(--ai) 56%, transparent);
+  background: var(--ai-wash-strong);
 }
 .workspace-page .asset-workbench__chrome {
   border-bottom-color: var(--line-1);
@@ -9091,7 +9103,10 @@ video {
   align-items: center;
   gap: 4px;
   margin-right: 2px;
-  color: var(--ai);
+  background: var(--ai-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -9099,6 +9114,7 @@ video {
 .ai-insight__badge svg {
   width: 13px;
   height: 13px;
+  stroke: url(#ai-gradient) var(--ai);
 }
 .ai-insight__fact {
   border-radius: var(--radius-sm);
@@ -9126,8 +9142,8 @@ video {
 .ai-insight .ai-insight__fact--toggle:hover,
 .ai-insight .ai-insight__fact--toggle:focus-visible,
 .ai-insight .ai-insight__fact--toggle[aria-expanded='true'] {
-  background: var(--ai-soft);
-  color: var(--text-1);
+  background: var(--ai-wash);
+  color: var(--ai);
 }
 .ai-insight__fact--toggle svg {
   width: 13px;
@@ -9174,12 +9190,16 @@ video {
 /* Polishing is the strip's main action. */
 .ai-insight .ai-insight__action--enhance {
   border-color: var(--ai-line);
-  background: var(--ai-soft);
+  background: var(--ai-wash);
   color: var(--ai);
 }
 .ai-insight .ai-insight__action--enhance:hover:not(:disabled) {
-  border-color: color-mix(in oklch, var(--ai) 48%, transparent);
-  background: color-mix(in oklch, var(--ai) 22%, transparent);
+  border-color: color-mix(in oklch, var(--ai) 56%, transparent);
+  background: var(--ai-wash-strong);
+  color: var(--ai);
+}
+.ai-insight .ai-insight__action--enhance svg {
+  stroke: url(#ai-gradient) var(--ai);
 }
 .home-hero .ai-insight {
   width: 100%;
@@ -9206,7 +9226,7 @@ video {
   display: inline-block;
   margin-right: 2px;
   border-radius: var(--radius-full);
-  background: var(--ai-soft);
+  background: var(--ai-wash);
   color: var(--ai);
   padding: 0 8px;
   line-height: 1.6;
@@ -9252,6 +9272,7 @@ video {
   height: 17px;
   flex: none;
   color: var(--ai);
+  stroke: url(#ai-gradient) var(--ai);
 }
 .landing-skill-card__title strong {
   color: var(--text-1);
@@ -11233,12 +11254,14 @@ video {
   flex: 0 0 auto;
   place-items: center;
   border-radius: var(--radius-full);
-  background: var(--fill-3);
-  color: var(--text-1);
+  background: var(--ai-wash);
+  box-shadow: inset 0 0 0 1px var(--ai-line);
+  color: var(--ai);
 }
 .agent-panel__mark svg {
   width: 15px;
   height: 15px;
+  stroke: url(#ai-gradient) var(--ai);
 }
 .agent-panel__title {
   min-width: 0;
@@ -11692,4 +11715,57 @@ video {
     top: auto;
     bottom: 16px;
   }
+}
+
+/* The AI's blue-to-violet. Its stops take the tokens, so icons drawn with
+   stroke: url(#ai-gradient) follow them. */
+#ai-gradient stop:first-child {
+  stop-color: var(--ai-from);
+}
+#ai-gradient stop:last-child {
+  stop-color: var(--ai-to);
+}
+/* Agent mode, once chosen, wears the AI's wash. */
+.agent-chat-input__mode--selected[data-mode='agent'] {
+  background: var(--ai-wash);
+  box-shadow: inset 0 0 0 1px var(--ai-line);
+  color: var(--ai);
+}
+.agent-chat-input__mode--selected[data-mode='agent'] svg {
+  stroke: url(#ai-gradient) var(--ai);
+}
+.agent-chat-input__mode--selected[data-mode='agent'] > span {
+  background: var(--ai-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* Handing work to the Agent: sending in Agent mode, sending from its panel, starting its
+   plan. Filled with the AI's light gradient, dark text on it; kept last so it outranks the
+   pages' own send buttons. */
+.agent-chat-input[data-mode='agent'] .agent-chat-input__submit:not(:disabled),
+.agent-panel .agent-composer .agent-chat-input__submit:not(:disabled),
+.agent-plan .agent-plan__start:not(:disabled) {
+  border-color: transparent;
+  background: var(--ai-gradient);
+  color: var(--on-ai);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    0 8px 22px -12px color-mix(in oklch, var(--ai) 60%, transparent);
+}
+.agent-chat-input[data-mode='agent'] .agent-chat-input__submit:hover:not(:disabled),
+.agent-panel .agent-composer .agent-chat-input__submit:hover:not(:disabled),
+.agent-plan .agent-plan__start:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--ai-gradient-bright);
+  color: var(--on-ai);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.7),
+    0 10px 26px -12px color-mix(in oklch, var(--ai) 75%, transparent);
+}
+.agent-chat-input[data-mode='agent'] .agent-chat-input__submit:focus-visible:not(:disabled),
+.agent-panel .agent-composer .agent-chat-input__submit:focus-visible:not(:disabled),
+.agent-plan .agent-plan__start:focus-visible:not(:disabled) {
+  outline: 2px solid color-mix(in oklch, var(--ai) 72%, transparent);
+  outline-offset: 2px;
 }

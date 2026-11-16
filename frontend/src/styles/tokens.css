@@ -35,11 +35,24 @@
      that are on, calls to action, focus rings. Blue stays in the logo. */
   --accent: #f76a00;
   --accent-soft: rgb(247 106 0 / 0.16);
-  /* What the AI says and does is marked in plain light, never the accent: its badge, a
-     skill's pill, its switches when on, what it reports while it works. */
-  --ai: var(--text-1);
-  --ai-soft: rgb(255 255 255 / 0.14);
-  --ai-line: rgb(255 255 255 / 0.32);
+  /* What the AI says and does is marked in a light blue that turns violet, never the
+     accent: its badge, a skill's pill, its switches when on, what it reports while it works.
+     The buttons that hand work to the Agent are filled with it, dark text on top. Icons
+     take the same gradient from the page's #ai-gradient. */
+  --ai-from: #9ec3ff;
+  --ai-to: #cba9ff;
+  --ai: #b4b6ff;
+  --ai-gradient: linear-gradient(120deg, var(--ai-from) 0%, var(--ai-to) 100%);
+  --ai-gradient-bright: linear-gradient(120deg, #b8d4ff 0%, #dac2ff 100%);
+  --ai-wash: linear-gradient(120deg, rgb(158 195 255 / 0.15) 0%, rgb(203 169 255 / 0.17) 100%);
+  --ai-wash-strong: linear-gradient(
+    120deg,
+    rgb(158 195 255 / 0.24) 0%,
+    rgb(203 169 255 / 0.27) 100%
+  );
+  --ai-soft: rgb(180 182 255 / 0.16);
+  --ai-line: rgb(180 182 255 / 0.36);
+  --on-ai: #15122b;
   --glow-warm: #ffe1c2;
   /* The filled accent, for the one chosen filter in a row: a warm highlight in the top left
      over orange that deepens towards the bottom right. */

@@ -32,6 +32,7 @@ export function ComposerModeSwitch({
             key={mode.id}
             type="button"
             aria-pressed={selected}
+            data-mode={mode.id}
             disabled={disabled}
             whileTap={reduce ? {} : { scale: 0.96 }}
             transition={SPRING_PRESS}

@@ -691,6 +691,8 @@ export function AgentChatInput({
     <BorderGlow
       data-slot="agent-chat-input"
       data-status={status}
+      // Named so a page can colour Agent mode in the AI's gradient.
+      data-mode={modes.length > 0 ? (mode ?? modes[0]?.id) : undefined}
       animated={false}
       backgroundColor="var(--muted)"
       borderRadius={20}

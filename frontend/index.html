@@ -10,6 +10,9 @@
       html {
         background: #0c0c0c;
       }
+      .ai-gradient-defs {
+        position: absolute;
+      }
     </style>
     <meta
       name="description"
@@ -19,6 +22,23 @@
     <title>贝尔灵画｜AI 图像创作工作台</title>
   </head>
   <body>
+    <!-- The AI's blue-to-violet for icon strokes (stroke: url(#ai-gradient)); the stylesheet
+         sets its stops from --ai-from and --ai-to. -->
+    <svg class="ai-gradient-defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient
+          id="ai-gradient"
+          x1="2"
+          y1="2"
+          x2="22"
+          y2="22"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0" stop-color="#9ec3ff" />
+          <stop offset="1" stop-color="#cba9ff" />
+        </linearGradient>
+      </defs>
+    </svg>
     <div id="app"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

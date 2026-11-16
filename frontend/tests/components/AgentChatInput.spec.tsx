@@ -401,6 +401,25 @@ describe('AgentChatInput composer box', () => {
     expect(onModeChange).toHaveBeenCalledWith('video');
   });
 
+  it('names the current mode on the box and each mode on its button, for the AI colour', () => {
+    const modes = [
+      { id: 'agent', label: 'Agent 模式' },
+      { id: 'image', label: '图片生成' },
+    ];
+    const { container, getByRole, rerender } = render(
+      <AgentChatInput {...baseProps} modes={modes} mode="image" />,
+    );
+    const box = container.querySelector('[data-slot="agent-chat-input"]');
+
+    expect(box).toHaveAttribute('data-mode', 'image');
+    expect(getByRole('button', { name: 'Agent 模式' })).toHaveAttribute('data-mode', 'agent');
+    rerender(<AgentChatInput {...baseProps} modes={modes} mode="agent" />);
+    expect(box).toHaveAttribute('data-mode', 'agent');
+    // A box without modes names none.
+    rerender(<AgentChatInput {...baseProps} />);
+    expect(box).not.toHaveAttribute('data-mode');
+  });
+
   it('counts reference images against the limit and stops adding at it', () => {
     const file = new File(['a'], 'a.png', { type: 'image/png' });
     const first: AgentChatAttachment = { id: 'a', name: 'a.png', type: 'image/png', file };

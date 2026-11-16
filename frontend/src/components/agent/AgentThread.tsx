@@ -177,6 +177,7 @@ function PlanCard({
         <Button
           type="button"
           size="compact"
+          className="agent-plan__start"
           disabled={budget.shortfall !== undefined}
           onClick={onConfirm}
         >

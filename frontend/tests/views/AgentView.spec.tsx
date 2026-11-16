@@ -226,6 +226,8 @@ it('reads a request, shows its plan and what it costs, and makes it only once co
 
   const plan = await screen.findByRole('region', { name: '待确认的方案' });
   expect(plan).toHaveTextContent('2 张 · 预计 2 积分');
+  // The go-ahead hands the work to the Agent, so it wears the AI's gradient.
+  expect(within(plan).getByRole('button', { name: '开始生成' })).toHaveClass('agent-plan__start');
   expect(within(plan).getByText('雨夜的未来城市，竖版构图')).toBeInTheDocument();
   const steps = screen.getByRole('list', { name: 'Agent 的步骤' });
   expect(steps).toHaveTextContent(/理解需求 \d+\.\ds/);

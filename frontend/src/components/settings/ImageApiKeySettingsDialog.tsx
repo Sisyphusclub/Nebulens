@@ -63,7 +63,7 @@ export function ImageApiKeySettingsDialog({ open, onClose }: ImageApiKeySettings
       await (group === 'high-res' ? remove(group) : remove());
       if (group === 'high-res') setHighResApiKey('');
       else setApiKey('');
-      setSuccess(group === 'high-res' ? '2K/4K Key 已移除。' : '已移除，将使用平台额度。');
+      setSuccess(group === 'high-res' ? '2K/4K Key 已移除。' : '已移除，将使用平台积分。');
     } catch {
       // The shared hook exposes a localized error below.
     }
@@ -105,7 +105,7 @@ export function ImageApiKeySettingsDialog({ open, onClose }: ImageApiKeySettings
                 ? '正在同步'
                 : status?.configured
                   ? `已连接 · 尾号 ${status.keySuffix ?? '未知'}`
-                  : '未配置 · 使用平台额度'}
+                  : '未配置 · 使用平台积分'}
             </p>
           </div>
         </div>

@@ -31,7 +31,7 @@ export async function fetchImageQuota(): Promise<QuotaResponse> {
   const payload = await parseJsonResponse(response);
   if (!response.ok) throw buildApiError(response.status, payload);
   if (!isQuotaResponse(payload)) {
-    throw new ImageApiError(response.status, 'INVALID_RESPONSE', '额度接口返回了无法识别的响应。');
+    throw new ImageApiError(response.status, 'INVALID_RESPONSE', '积分接口返回了无法识别的响应。');
   }
   return payload;
 }

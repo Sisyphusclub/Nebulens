@@ -139,11 +139,11 @@ describe('AdminUsersView workbench', () => {
     expect(createTrigger).toHaveAttribute('aria-expanded', 'true');
     await user.type(within(form).getByLabelText('用户名'), 'new_member');
     await user.type(within(form).getByLabelText('初始密码'), 'password-123');
-    await user.clear(within(form).getByLabelText('永久额度'));
-    await user.type(within(form).getByLabelText('永久额度'), '10001');
+    await user.clear(within(form).getByLabelText('永久积分'));
+    await user.type(within(form).getByLabelText('永久积分'), '10001');
     expect(within(form).getByRole('button', { name: '确认创建' })).toBeDisabled();
-    await user.clear(within(form).getByLabelText('永久额度'));
-    await user.type(within(form).getByLabelText('永久额度'), '35');
+    await user.clear(within(form).getByLabelText('永久积分'));
+    await user.type(within(form).getByLabelText('永久积分'), '35');
     await user.click(within(form).getByRole('button', { name: '确认创建' }));
 
     await waitFor(() =>
@@ -196,27 +196,27 @@ describe('AdminUsersView workbench', () => {
     await user.clear(screen.getByRole('searchbox', { name: '搜索用户' }));
     const memberRow = screen.getByText('member1').closest('[role="row"]');
     expect(memberRow).not.toBeNull();
-    const quotaInput = within(memberRow as HTMLElement).getByLabelText('设置 member1 的永久额度');
+    const quotaInput = within(memberRow as HTMLElement).getByLabelText('设置 member1 的永久积分');
     await user.clear(quotaInput);
     await user.type(quotaInput, '42');
-    await user.click(within(memberRow as HTMLElement).getByRole('button', { name: '保存额度' }));
+    await user.click(within(memberRow as HTMLElement).getByRole('button', { name: '保存积分' }));
 
     await waitFor(() => expect(adminMocks.updateQuota).toHaveBeenCalledWith('user-1', 42));
-    expect(screen.queryByText('额度已更新。')).not.toBeInTheDocument();
+    expect(screen.queryByText('积分已更新。')).not.toBeInTheDocument();
     expect(quotaMocks.refresh).not.toHaveBeenCalled();
 
     const adminRow = screen.getByText('member0').closest('[role="row"]');
     expect(adminRow).not.toBeNull();
     const adminQuotaInput = within(adminRow as HTMLElement).getByLabelText(
-      '设置 member0 的永久额度',
+      '设置 member0 的永久积分',
     );
     await user.clear(adminQuotaInput);
     await user.type(adminQuotaInput, '1000');
-    await user.click(within(adminRow as HTMLElement).getByRole('button', { name: '保存额度' }));
+    await user.click(within(adminRow as HTMLElement).getByRole('button', { name: '保存积分' }));
 
     await waitFor(() => expect(adminMocks.updateQuota).toHaveBeenCalledWith('user-0', 1000));
     await waitFor(() => expect(quotaMocks.refresh).toHaveBeenCalledOnce());
-    expect(screen.queryByText('额度已更新。')).not.toBeInTheDocument();
+    expect(screen.queryByText('积分已更新。')).not.toBeInTheDocument();
   });
 
   it('edits only the permanent quota, leaving sign-in grants out of the saved amount', async () => {
@@ -237,26 +237,26 @@ describe('AdminUsersView workbench', () => {
     renderView();
 
     const row = screen.getByText('member0').closest('[role="row"]') as HTMLElement;
-    expect(within(row).getByLabelText('设置 member0 的永久额度')).toHaveValue(10_000);
-    await user.click(within(row).getByRole('button', { name: '保存额度' }));
+    expect(within(row).getByLabelText('设置 member0 的永久积分')).toHaveValue(10_000);
+    await user.click(within(row).getByRole('button', { name: '保存积分' }));
 
     await waitFor(() => expect(adminMocks.updateQuota).toHaveBeenCalledWith('user-0', 10_000));
   });
 
   it('keeps quota update errors visible without showing a success toast', async () => {
     const user = userEvent.setup();
-    adminMocks.updateQuota.mockRejectedValueOnce(new Error('额度更新失败，请稍后重试。'));
+    adminMocks.updateQuota.mockRejectedValueOnce(new Error('积分更新失败，请稍后重试。'));
     renderView();
 
     const memberRow = screen.getByText('member1').closest('[role="row"]');
     expect(memberRow).not.toBeNull();
-    const quotaInput = within(memberRow as HTMLElement).getByLabelText('设置 member1 的永久额度');
+    const quotaInput = within(memberRow as HTMLElement).getByLabelText('设置 member1 的永久积分');
     await user.clear(quotaInput);
     await user.type(quotaInput, '42');
-    await user.click(within(memberRow as HTMLElement).getByRole('button', { name: '保存额度' }));
+    await user.click(within(memberRow as HTMLElement).getByRole('button', { name: '保存积分' }));
 
-    await waitFor(() => expect(screen.getByText('额度更新失败，请稍后重试。')).toBeInTheDocument());
-    expect(screen.queryByText('额度已更新。')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('积分更新失败，请稍后重试。')).toBeInTheDocument());
+    expect(screen.queryByText('积分已更新。')).not.toBeInTheDocument();
     expect(quotaMocks.refresh).not.toHaveBeenCalled();
   });
 

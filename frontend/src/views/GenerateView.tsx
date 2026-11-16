@@ -896,17 +896,17 @@ export function GenerateView() {
                 ) : (
                   <span
                     className="studio-toolbar-quota"
-                    aria-label={activeImageApiKeyConfigured ? '当前使用个人 API Key' : '生成额度'}
+                    aria-label={activeImageApiKeyConfigured ? '当前使用个人 API Key' : '积分'}
                   >
                     {imageApiKey.isLoading
                       ? '调用：同步中'
                       : activeImageApiKeyConfigured
                         ? `调用：个人 Key · ${activeImageApiKeySuffix ?? '已配置'}`
                         : quotaLoading
-                          ? '额度：同步中'
+                          ? '积分：同步中'
                           : isAuthenticated
-                            ? `额度：${activeQuotaRemaining ?? '—'} / ${activeQuotaTotal ?? '—'}`
-                            : '额度：登录后查看'}
+                            ? `积分：${activeQuotaRemaining ?? '—'} / ${activeQuotaTotal ?? '—'}`
+                            : '积分：登录后查看'}
                   </span>
                 )}
               </span>

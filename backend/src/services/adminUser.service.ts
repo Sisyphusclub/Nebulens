@@ -59,7 +59,7 @@ function normalizeAndValidateUsername(raw: string): string {
 
 function assertValidPermanentTotal(permanentTotal: number): void {
   if (!Number.isInteger(permanentTotal) || permanentTotal < 0 || permanentTotal > 10_000) {
-    throw new AppError('BAD_REQUEST', '永久额度需为 0 到 10000 之间的整数。', 400, undefined, {
+    throw new AppError('BAD_REQUEST', '永久积分需为 0 到 10000 之间的整数。', 400, undefined, {
       field: 'permanentTotal',
     });
   }

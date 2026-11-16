@@ -144,9 +144,7 @@ describe('LoginModal', () => {
       });
       expect(auth.complete).toHaveBeenCalledTimes(1);
     });
-    expect(
-      screen.getByText('注册成功，已为你登录。每天签到还能领取生成额度。'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('注册成功，已为你登录。每天签到还能领积分。')).toBeInTheDocument();
   });
 
   it('opens fresh after a successful sign-up closed it', async () => {

@@ -25,7 +25,7 @@ const updateQuotaBodySchema = z
     permanentTotal: z.number().int().min(0).max(10_000).optional(),
   })
   .refine((value) => value.permanentTotal !== undefined || value.dailyTotal !== undefined, {
-    message: '需要提供永久额度。',
+    message: '需要提供永久积分。',
   });
 
 export interface AdminUsersListResponse {
@@ -93,10 +93,10 @@ export function buildAdminUsersController(): {
         if (typeof targetUserId !== 'string' || targetUserId.length === 0) {
           throw new AppError('BAD_REQUEST', '用户 ID 无效。', 400, undefined, { field: 'id' });
         }
-        const parsed = parseBody(updateQuotaBodySchema, req.body, '额度请求无效。');
+        const parsed = parseBody(updateQuotaBodySchema, req.body, '积分请求无效。');
         const permanentTotal = parsed.permanentTotal ?? parsed.dailyTotal;
         if (permanentTotal === undefined) {
-          throw new AppError('BAD_REQUEST', '需要提供永久额度。', 400);
+          throw new AppError('BAD_REQUEST', '需要提供永久积分。', 400);
         }
         const updated = setUserPermanentQuota(targetUserId, permanentTotal);
         const body: AdminUserResponse = { user: updated };

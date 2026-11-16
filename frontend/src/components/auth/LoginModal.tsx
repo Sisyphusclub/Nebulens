@@ -28,7 +28,7 @@ const COPY: Record<
   },
   signup: {
     title: '创建账户，开始创作',
-    subtitle: '注册后即可生成图片，每天签到还能领额度。',
+    subtitle: '注册后即可生成图片，每天签到还能领积分。',
     submit: '创建账户',
     username: '如：studio_lin',
     password: '至少 8 个字符',
@@ -127,7 +127,7 @@ export function LoginModal() {
         notify(`欢迎回来，${normalizedUsername}。`);
       } else {
         await signUpWithUsername({ username: normalizedUsername, password });
-        notify('注册成功，已为你登录。每天签到还能领取生成额度。');
+        notify('注册成功，已为你登录。每天签到还能领积分。');
       }
       resetForm();
       await complete();

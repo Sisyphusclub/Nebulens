@@ -64,7 +64,7 @@ it('removes the configured key through an explicit action', async () => {
   await user.click(screen.getByRole('button', { name: '移除 Key' }));
 
   await waitFor(() => expect(imageApiKey.remove).toHaveBeenCalledOnce());
-  expect(screen.getByRole('status')).toHaveTextContent('已移除，将使用平台额度。');
+  expect(screen.getByRole('status')).toHaveTextContent('已移除，将使用平台积分。');
 });
 
 it('renders a localized validation error without exposing a raw provider response', () => {

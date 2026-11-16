@@ -640,14 +640,14 @@ describe('React application routes', () => {
     const user = userEvent.setup();
     const { container } = renderRoute('/');
 
-    const quota = await screen.findByRole('status', { name: '剩余额度 16，总额度 20' });
+    const quota = await screen.findByRole('status', { name: '剩余积分 16，总积分 20' });
     expect(quota.closest('.agent-chat-input__submit-note')).not.toBeNull();
     // The settings no longer carry a tail of their own: the toolbar is one row.
     expect(container.querySelector('.generation-controls-tail')).toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'Agent 模式' }));
 
-    expect(screen.queryByRole('status', { name: /剩余额度/ })).toBeNull();
+    expect(screen.queryByRole('status', { name: /剩余积分/ })).toBeNull();
     expect(container.querySelector('.agent-chat-input__submit-note')).toHaveTextContent(
       '按实际用量计费',
     );
@@ -1073,7 +1073,7 @@ describe('React application routes', () => {
     );
     const generate = within(workspace);
     expect(generate.getByRole('button', { name: '选择模型' })).toHaveTextContent('gpt-image-2');
-    expect(generate.getByLabelText('生成额度')).toBeInTheDocument();
+    expect(generate.getByLabelText('积分')).toBeInTheDocument();
     expect(generate.getByRole('button', { name: '自定义生成参数' })).toBeInTheDocument();
     expect(generate.getByRole('button', { name: /生成图片/ })).toBeInTheDocument();
     expect(workspace).toHaveClass('is-empty');

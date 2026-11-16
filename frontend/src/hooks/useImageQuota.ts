@@ -30,7 +30,7 @@ async function loadQuota(authenticated: boolean): Promise<void> {
           ? { total: 0, remaining: 0, checkedInToday: false, dailyCheckInReward: 5 }
           : null,
         isLoading: false,
-        error: new Error('无法读取剩余额度。'),
+        error: new Error('无法读取剩余积分。'),
       });
     }
   } finally {

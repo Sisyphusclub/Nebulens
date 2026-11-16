@@ -123,7 +123,7 @@ export function AdminUsersView() {
         return next;
       });
     } catch (caught) {
-      notify(caught instanceof Error ? caught.message : '更新额度失败。', 'error');
+      notify(caught instanceof Error ? caught.message : '更新积分失败。', 'error');
     } finally {
       setSavingId(null);
     }
@@ -225,7 +225,7 @@ export function AdminUsersView() {
                 />
               </label>
               <label>
-                <span>永久额度</span>
+                <span>永久积分</span>
                 <Input
                   type="number"
                   min="0"
@@ -242,7 +242,7 @@ export function AdminUsersView() {
               </Button>
             </form>
           ) : null}
-          <section className="admin-panel" aria-label="用户额度列表" aria-busy={isLoading}>
+          <section className="admin-panel" aria-label="用户积分列表" aria-busy={isLoading}>
             <h2 className="sr-only">账号列表</h2>
             {error ? (
               <div className="inline-error" role="alert">
@@ -290,7 +290,7 @@ export function AdminUsersView() {
                       <div className="admin-row admin-row--head" role="row">
                         <span role="columnheader">用户</span>
                         <span role="columnheader">创建时间</span>
-                        <span role="columnheader">永久额度</span>
+                        <span role="columnheader">永久积分</span>
                         <span role="columnheader">操作</span>
                       </div>
                       {visibleUsers.map((item) => (
@@ -308,9 +308,9 @@ export function AdminUsersView() {
                           <time role="cell" data-label="创建时间" dateTime={item.createdAt}>
                             {new Date(item.createdAt).toLocaleString('zh-CN', { hour12: false })}
                           </time>
-                          <div className="admin-quota" role="cell" data-label="永久额度">
+                          <div className="admin-quota" role="cell" data-label="永久积分">
                             <label htmlFor={`quota-${item.id}`}>
-                              <span className="sr-only">设置 {displayName(item)} 的永久额度</span>
+                              <span className="sr-only">设置 {displayName(item)} 的永久积分</span>
                               <Input
                                 id={`quota-${item.id}`}
                                 type="number"
@@ -330,7 +330,7 @@ export function AdminUsersView() {
                               已用 {item.quota.permanentUsed ?? item.quota.usedToday}，可用{' '}
                               {item.quota.remainingToday}
                               {(item.quota.bonusRemaining ?? 0) > 0
-                                ? `（签到额度 ${item.quota.bonusRemaining}）`
+                                ? `（签到积分 ${item.quota.bonusRemaining}）`
                                 : ''}
                             </span>
                             <div aria-hidden="true">
@@ -353,7 +353,7 @@ export function AdminUsersView() {
                               onClick={() => void saveQuota(item)}
                             >
                               <Save aria-hidden="true" />
-                              {savingId === item.id ? '保存中…' : '保存额度'}
+                              {savingId === item.id ? '保存中…' : '保存积分'}
                             </Button>
                             <Button
                               type="button"

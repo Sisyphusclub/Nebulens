@@ -152,7 +152,7 @@ export function LandingAccountActions({
                 <KeyRound aria-hidden="true" />
                 <span>生图 API Key</span>
                 <small>
-                  {imageApiKeyConfigured ? `尾号 ${imageApiKeySuffix ?? '未知'}` : '使用平台额度'}
+                  {imageApiKeyConfigured ? `尾号 ${imageApiKeySuffix ?? '未知'}` : '使用平台积分'}
                 </small>
               </Button>
               <Button type="button" variant="ghost" onClick={() => void handleLogout()}>

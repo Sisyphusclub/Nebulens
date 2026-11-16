@@ -177,7 +177,7 @@ function LandingSidebarContent({
               </span>
               <Button type="button" variant="ghost" onClick={openImageApiKeySettings}>
                 <KeyRound aria-hidden="true" />
-                生图 API Key · {imageApiKeyConfigured ? '已配置' : '平台额度'}
+                生图 API Key · {imageApiKeyConfigured ? '已配置' : '平台积分'}
               </Button>
               <Button
                 type="button"

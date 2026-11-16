@@ -147,23 +147,23 @@ export function LandingView() {
   const quotaPending = isAuthenticated && quotaLoading;
   // While it syncs the label keeps its shape, rather than flicking through status words.
   const quotaLabel = providerPending
-    ? '额度 —/—'
+    ? '积分 —/—'
     : imageApiKey.status?.configured === true
       ? '个人 Key'
       : quotaPending
-        ? '额度 —/—'
+        ? '积分 —/—'
         : isAuthenticated
-          ? `额度 ${quota?.remaining ?? '—'}/${quota?.total ?? '—'}`
-          : '登录查额度';
+          ? `积分 ${quota?.remaining ?? '—'}/${quota?.total ?? '—'}`
+          : '登录查积分';
   const quotaAriaLabel = providerPending
     ? '生图调用方式同步中'
     : imageApiKey.status?.configured === true
       ? '当前使用个人 API Key'
       : quotaPending
-        ? '生成额度同步中'
+        ? '积分同步中'
         : isAuthenticated
-          ? `剩余额度 ${quota?.remaining ?? '未知'}，总额度 ${quota?.total ?? '未知'}`
-          : '登录后查看生成额度';
+          ? `剩余积分 ${quota?.remaining ?? '未知'}，总积分 ${quota?.total ?? '未知'}`
+          : '登录后查看积分';
   const updateAttachments = (next: AgentChatAttachment[]): void => {
     if (next.length > MAX_REFERENCE_IMAGES) {
       notify(

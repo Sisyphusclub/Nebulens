@@ -121,8 +121,12 @@ describe('landing composer surface contract', () => {
     expect(glass).not.toContain('conic-gradient');
     expect(glass).not.toContain('animation:');
     expect(glass).toContain('border-radius: var(--radius-2xl);');
-    // Controls inside the glass are glass pills, including the send button.
+    // Controls inside the glass are glass pills. The send button is the light pearl one every
+    // composer shares (see aiColors), dimmed into the glass only while it cannot send.
     expect(glass).toMatch(
+      /\.liquid-glass-frame > \.generation-composer \.agent-chat-input__submit:disabled\s*\{[^}]*background: var\(--fill-2\)/s,
+    );
+    expect(glass).not.toMatch(
       /\.liquid-glass-frame > \.generation-composer \.agent-chat-input__submit\s*\{[^}]*background: var\(--fill-4\)/s,
     );
     expect(baseStyles).not.toContain('border-glow-liquid-glass');

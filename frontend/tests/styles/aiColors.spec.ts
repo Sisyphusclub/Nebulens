@@ -124,22 +124,24 @@ describe('what the AI says and does', () => {
     }
   });
 
-  it('sets Agent mode once chosen on its wash, and gives the buttons that hand work over a pearl sheen', () => {
+  it('sets Agent mode once chosen on its wash, and gives every send button a pearl sheen', () => {
     expect(rule(".agent-chat-input__mode--selected[data-mode='agent']")).toContain(
       'background: var(--ai-wash);',
     );
     expect(rule(".agent-chat-input__mode--selected[data-mode='agent'] svg")).toContain(
       GRADIENT_STROKE,
     );
-    // Sending in Agent mode, sending from the Agent's panel, and starting its plan.
-    const handOver =
+    // Sending in any mode on any page, and starting the Agent's plan, look the same; stopping a
+    // run keeps its own look, and a send that cannot go yet keeps the page's dim one.
+    const send =
       baseStyles.match(
-        /\.agent-chat-input\[data-mode='agent'\] \.agent-chat-input__submit:not\(:disabled\),\n\.agent-panel \.agent-composer \.agent-chat-input__submit:not\(:disabled\),\n\.agent-plan \.agent-plan__start:not\(:disabled\) \{([^}]+)\}/,
+        /\.agent-chat-input \.agent-chat-input__submit:not\(:disabled\):not\(\.agent-chat-input__submit--stop\),\n\.agent-plan \.agent-plan__start:not\(:disabled\) \{([^}]+)\}/,
       )?.[1] ?? '';
-    expect(handOver).toContain('background: var(--ai-pearl);');
-    expect(handOver).toContain('color: var(--on-ai);');
+    expect(send).toContain('background: var(--ai-pearl);');
+    expect(send).toContain('color: var(--on-ai);');
     // No coloured glow round it: it is lit and shaded like the other light buttons.
-    expect(handOver).not.toContain('var(--ai)');
+    expect(send).not.toContain('var(--ai)');
+    expect(baseStyles).not.toContain("[data-mode='agent'] .agent-chat-input__submit");
   });
 
   it('turns the asset AI search on in its wash, while other toggles keep the accent', () => {

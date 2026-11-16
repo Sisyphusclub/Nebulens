@@ -472,6 +472,8 @@ export function MorphicTooltip({
   const generatedId = useId();
   const context = useContext(MorphicTooltipContext);
   const triggerRef = useRef<HTMLSpanElement>(null);
+  /** Between a press on the trigger and its release, when focus comes from the pointer. */
+  const pressedRef = useRef(false);
 
   useEffect(() => {
     if (!context) return undefined;
@@ -537,10 +539,21 @@ export function MorphicTooltip({
           openTooltip('pointer');
         }
       }}
-      onPointerDown={closeTooltip}
-      onPointerLeave={closeTooltip}
+      onPointerDown={() => {
+        pressedRef.current = true;
+        closeTooltip();
+      }}
+      onPointerUp={() => {
+        pressedRef.current = false;
+      }}
+      onPointerLeave={() => {
+        pressedRef.current = false;
+        closeTooltip();
+      }}
       onFocusCapture={() => {
-        if (showOnFocus) openTooltip('focus');
+        // The focus a click leaves behind would show the help the click just hid, with a
+        // label the click may have changed; only focus from the keyboard shows it.
+        if (showOnFocus && !pressedRef.current) openTooltip('focus');
       }}
       onBlurCapture={onBlur}
       className={cn('inline-flex', className)}

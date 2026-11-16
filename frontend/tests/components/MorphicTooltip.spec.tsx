@@ -53,3 +53,25 @@ it('can keep focus from opening a tooltip while retaining pointer hover help', a
   await user.hover(trigger);
   expect(await screen.findByText('关闭图片详情')).toBeInTheDocument();
 });
+
+it('does not bring the help back through the focus a click gives, but shows it to the keyboard', async () => {
+  const user = userEvent.setup();
+  render(
+    <MorphicTooltipProvider delay={0}>
+      <button type="button">别处</button>
+      <MorphicTooltip content="设为仅自己可见">
+        <button type="button">切换</button>
+      </MorphicTooltip>
+    </MorphicTooltipProvider>,
+  );
+
+  // A click hides the help, and the focus it leaves on the button does not show it again:
+  // the button's label may have just changed under it.
+  await user.click(screen.getByRole('button', { name: '切换' }));
+  await waitFor(() => expect(screen.queryByText('设为仅自己可见')).not.toBeInTheDocument());
+
+  await user.click(screen.getByRole('button', { name: '别处' }));
+  await user.tab();
+  expect(screen.getByRole('button', { name: '切换' })).toHaveFocus();
+  expect(await screen.findByText('设为仅自己可见')).toBeInTheDocument();
+});

@@ -381,6 +381,7 @@ export function AgentView() {
       failed: 0,
       batchIds: [],
       notes: [],
+      ...(currentUserId === null ? {} : { userId: currentUserId }),
     });
     planningTurn.current = target;
     setPrompt('');

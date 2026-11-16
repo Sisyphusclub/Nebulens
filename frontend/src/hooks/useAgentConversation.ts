@@ -64,6 +64,11 @@ export interface AgentTurn {
   /** What happened along the way, such as a picture redrawn for wrong text. */
   notes: string[];
   error?: string;
+  /**
+   * The account that sent it. Conversations sit in storage every account on the device
+   * shares, so the sidebar lists only the signed-in account's.
+   */
+  userId?: string;
 }
 
 type Conversations = Readonly<Record<string, readonly AgentTurn[]>>;
@@ -115,6 +120,7 @@ function parseTurn(value: unknown): AgentTurn | null {
     batchIds: [...value.batchIds],
     notes: Array.isArray(value.notes) ? value.notes.filter(isString) : [],
     ...(isString(value.error) ? { error: value.error } : {}),
+    ...(isString(value.userId) ? { userId: value.userId } : {}),
   };
 }
 
@@ -184,6 +190,25 @@ export function useAgentConversation(sessionId: string | null): readonly AgentTu
 export function useAgentSessionIds(): ReadonlySet<string> {
   const conversations = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   return useMemo(() => new Set(Object.keys(conversations)), [conversations]);
+}
+
+/**
+ * The sessions holding a request this account sent, so a conversation is listed before it
+ * makes a picture. Requests kept from before turns named their sender belong to no one.
+ */
+export function useAgentSessionIdsOf(userId: string | null): ReadonlySet<string> {
+  const conversations = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  return useMemo(
+    () =>
+      new Set(
+        userId === null
+          ? []
+          : Object.entries(conversations)
+              .filter(([, turns]) => turns.some((turn) => turn.userId === userId))
+              .map(([sessionId]) => sessionId),
+      ),
+    [conversations, userId],
+  );
 }
 
 export function resetAgentConversationsForTests(): void {

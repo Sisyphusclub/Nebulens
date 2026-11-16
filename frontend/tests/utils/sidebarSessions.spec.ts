@@ -109,6 +109,19 @@ describe('sidebarSessions', () => {
       session(`s${index}`, `会话${index}`, ['b1']),
     );
 
-    expect(sidebarSessions(sessions, batches, null, 3)).toHaveLength(3);
+    expect(sidebarSessions(sessions, batches, null, { limit: 3 })).toHaveLength(3);
+  });
+
+  it('lists a session holding this account’s Agent conversation before it makes a picture', () => {
+    const sessions = [
+      session('agent-mine', '雨夜的未来城市', [], '2026-10-28T03:00:00.000Z'),
+      session('agent-other', '别人的 Agent 对话', [], '2026-10-28T04:00:00.000Z'),
+      session('empty', '空会话', [], '2026-10-28T05:00:00.000Z'),
+    ];
+
+    // Another account's conversation, kept in the same device storage, stays out.
+    expect(sidebarSessions(sessions, [], null, { agentSessions: new Set(['agent-mine']) })).toEqual(
+      [{ id: 'agent-mine', title: '雨夜的未来城市' }],
+    );
   });
 });

@@ -8,6 +8,7 @@ import {
   updateAgentTurn,
   useAgentConversation,
   useAgentSessionIds,
+  useAgentSessionIdsOf,
   type AgentTurn,
 } from '@/hooks/useAgentConversation';
 
@@ -113,6 +114,23 @@ describe('the conversation with the Agent', () => {
     expect(result.current[2]?.plan?.steps[0]?.settings.prompt).toBe('雨夜');
     // One of the two pictures planned was dropped before it was confirmed.
     expect(result.current[2]?.plannedCount).toBe(2);
+  });
+
+  it('names the sessions holding a request an account sent, and none without an account', () => {
+    addAgentTurn('mine', turn('a', { userId: 'user-1' }));
+    addAgentTurn('theirs', turn('b', { userId: 'user-2' }));
+    // Requests kept from before turns named their sender belong to no one.
+    addAgentTurn('unowned', turn('c'));
+    // The sender survives a reload.
+    window.dispatchEvent(new StorageEvent('storage', { key: AGENT_CONVERSATIONS_STORAGE_KEY }));
+    const initialProps: { userId: string | null } = { userId: 'user-1' };
+    const { result, rerender } = renderHook(({ userId }) => useAgentSessionIdsOf(userId), {
+      initialProps,
+    });
+
+    expect([...result.current]).toEqual(['mine']);
+    rerender({ userId: null });
+    expect(result.current.size).toBe(0);
   });
 
   it('remembers after a reload that the text model could not pick a skill', () => {

@@ -164,7 +164,7 @@ import {
   orderTemplatesWithAnimeLast,
   TEMPLATE_SHORTCUT_CATEGORIES,
 } from '@/data/creationTemplates';
-import { resetAgentConversationsForTests } from '@/hooks/useAgentConversation';
+import { addAgentTurn, resetAgentConversationsForTests } from '@/hooks/useAgentConversation';
 import {
   attachGenerationBatch,
   createGenerationSession,
@@ -1106,6 +1106,33 @@ describe('React application routes', () => {
       'href',
       '/generate?prompt=',
     );
+  });
+
+  it('keeps an Agent conversation this account started in the history before it makes a picture', () => {
+    const agentTurn = (id: string, userId: string) => ({
+      id,
+      createdAt: '2026-11-16T08:00:00.000Z',
+      brief: '雨夜的未来城市',
+      references: [],
+      status: 'cancelled' as const,
+      started: 0,
+      failed: 0,
+      batchIds: [],
+      notes: [],
+      userId,
+    });
+    const mine = createGenerationSession('雨夜的未来城市');
+    addAgentTurn(mine.id, agentTurn('mine', 'admin'));
+    const theirs = createGenerationSession('别人的 Agent 对话');
+    addAgentTurn(theirs.id, agentTurn('theirs', 'someone-else'));
+    renderRoute('/templates');
+
+    const history = within(screen.getByRole('list', { name: '创作记录' }));
+    expect(history.getByRole('link', { name: '雨夜的未来城市' })).toHaveAttribute(
+      'href',
+      `/agent?session=${mine.id}`,
+    );
+    expect(history.queryByRole('link', { name: '别人的 Agent 对话' })).not.toBeInTheDocument();
   });
 
   it('renames a creation in place: the old name is selected, typing replaces it, the order stays', async () => {

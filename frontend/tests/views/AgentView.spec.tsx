@@ -82,7 +82,10 @@ vi.mock('@/hooks/useImageHistory', () => ({
 }));
 
 import { ToastProvider } from '@/components/common/ToastProvider';
-import { resetAgentConversationsForTests } from '@/hooks/useAgentConversation';
+import {
+  AGENT_CONVERSATIONS_STORAGE_KEY,
+  resetAgentConversationsForTests,
+} from '@/hooks/useAgentConversation';
 import {
   attachGenerationBatch,
   createGenerationSession,
@@ -235,6 +238,16 @@ it('reads a request, shows its plan and what it costs, and makes it only once co
   expect(steps).toHaveTextContent('规划了 2 张图');
   expect(skills.selectSkillForBrief).toHaveBeenCalledWith('雨夜的未来城市，做两张', false);
   expect(generation.generate).not.toHaveBeenCalled();
+  // The request names its sender: sessions are kept in storage every account on the device
+  // shares, and the sidebar lists only this account's.
+  const stored = JSON.parse(
+    localStorage.getItem(AGENT_CONVERSATIONS_STORAGE_KEY) ?? '{}',
+  ) as Record<string, Array<{ userId?: string }>>;
+  expect(
+    Object.values(stored)
+      .flat()
+      .map((turn) => turn.userId),
+  ).toEqual(['user-a']);
   await waitFor(() =>
     expect(screen.getByLabelText('当前路由')).toHaveTextContent('/agent?session='),
   );

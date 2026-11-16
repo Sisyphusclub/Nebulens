@@ -14,7 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { useAgentSessionIds } from '@/hooks/useAgentConversation';
+import { useAgentSessionIds, useAgentSessionIdsOf } from '@/hooks/useAgentConversation';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { SESSION_TITLE_MAX_LENGTH, useGenerationSessions } from '@/hooks/useGenerationSessions';
@@ -39,9 +39,10 @@ interface SidebarCreationHistoryProps {
  * a sign-in prompt in their place.
  */
 export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { sessions, rename, remove } = useGenerationSessions();
   const agentSessionIds = useAgentSessionIds();
+  const ownAgentSessionIds = useAgentSessionIdsOf(isAuthenticated ? (user?.id ?? null) : null);
   const history = useImageHistory();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -55,8 +56,11 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
       ? searchParams.get('session')
       : null;
   const items = useMemo(
-    () => sidebarSessions(sessions, history.batches, activeSessionId),
-    [activeSessionId, history.batches, sessions],
+    () =>
+      sidebarSessions(sessions, history.batches, activeSessionId, {
+        agentSessions: ownAgentSessionIds,
+      }),
+    [activeSessionId, history.batches, ownAgentSessionIds, sessions],
   );
 
   if (!isAuthenticated) {

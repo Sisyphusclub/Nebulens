@@ -24,6 +24,12 @@ export interface StarfieldFrame {
   /** The share of the usual sharpness to draw at, from 0 to 1. */
   quality: number;
   lens: StarfieldLens | null;
+  /**
+   * Where the camera looks, in CSS pixels from the canvas's top left corner; the middle of
+   * the canvas when absent. A page that keeps it fixed can let the canvas grow or shrink
+   * without any star moving.
+   */
+  center?: { x: number; y: number };
   /** How far the camera has swung round the sky, in radians: to the right, and downwards. */
   yaw: number;
   pitch: number;
@@ -112,6 +118,7 @@ export const STARFIELD_UNIFORMS = [
   'u_scale',
   'u_lens',
   'u_radius',
+  'u_center',
   'u_eye',
   'u_right',
   'u_down',
@@ -147,6 +154,7 @@ uniform vec2 u_buffer;
 uniform float u_scale;
 uniform vec4 u_lens;
 uniform float u_radius;
+uniform vec2 u_center;
 uniform vec3 u_eye;
 uniform vec3 u_right;
 uniform vec3 u_down;
@@ -319,8 +327,8 @@ void main() {
     light += HAZE * haze * beside + vec3(0.9, 0.94, 1.0) * rim;
   }
 
-  // The camera looks at the middle of the canvas.
-  seen -= u_buffer / u_scale * 0.5;
+  // The camera looks at u_center, which the page keeps still while the canvas changes size.
+  seen -= u_center;
   vec3 stars =
     starSheet(seen, -0.3, 40.0, 0.0, 0.75, 1.4, 0.45, 1.15, normal, squeeze, smear, fan) +
     starSheet(seen, -0.12, 60.0, 37.0, 0.85, 1.75, 0.55, 1.3, normal, squeeze, smear, fan) +
@@ -403,6 +411,7 @@ export function createStarfieldRenderer(canvas: HTMLCanvasElement): StarfieldRen
   const scale = uniform('u_scale');
   const lens = uniform('u_lens');
   const radius = uniform('u_radius');
+  const center = uniform('u_center');
   const eye = uniform('u_eye');
   const right = uniform('u_right');
   const down = uniform('u_down');
@@ -416,6 +425,12 @@ export function createStarfieldRenderer(canvas: HTMLCanvasElement): StarfieldRen
         canvas.width = width;
         canvas.height = height;
       }
+      // Sized on the page in pixels rather than stretched to its box, so until this frame is
+      // up a canvas whose box changed shows the old frame as it was, not squashed.
+      const shownWidth = `${frame.width}px`;
+      const shownHeight = `${frame.height}px`;
+      if (canvas.style.width !== shownWidth) canvas.style.width = shownWidth;
+      if (canvas.style.height !== shownHeight) canvas.style.height = shownHeight;
       const camera = orbitCamera(frame.yaw, frame.pitch);
       gl.viewport(0, 0, width, height);
       gl.uniform2f(buffer, width, height);
@@ -428,6 +443,7 @@ export function createStarfieldRenderer(canvas: HTMLCanvasElement): StarfieldRen
         frame.lens?.halfHeight ?? 0,
       );
       gl.uniform1f(radius, frame.lens?.radius ?? 0);
+      gl.uniform2f(center, frame.center?.x ?? frame.width / 2, frame.center?.y ?? frame.height / 2);
       gl.uniform3f(eye, ...camera.eye);
       gl.uniform3f(right, ...camera.right);
       gl.uniform3f(down, ...camera.down);

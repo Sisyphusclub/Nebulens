@@ -80,6 +80,13 @@ export function LandingStarfield({
     let aimX = 0;
     let aimY = 0;
     let pointer: { x: number; y: number } | null = null;
+    /**
+     * Where the camera looks, from the sky's top left corner: settled once for each width the
+     * sky is laid out at. The hero changes height below the composer while the user types
+     * (the skill chips hide, the AI strip and similar work show), and a centre that followed
+     * it would jolt every star each time.
+     */
+    let center: { width: number; x: number; y: number } | null = null;
     let measured: HTMLElement | null = null;
     let radius = 0;
     let quality = 1;
@@ -93,6 +100,10 @@ export function LandingStarfield({
         return;
       }
       const box = host.getBoundingClientRect();
+      if (center === null || center.width !== box.width) {
+        center = { width: box.width, x: box.width / 2, y: box.height / 2 };
+      }
+      const look = center;
       const target = lens.current;
       if (target !== measured) {
         measured = target;
@@ -117,13 +128,13 @@ export function LandingStarfield({
             judgedFrames = 0;
           }
         }
-        // The mouse counts from the middle of the sky. Half the sky's width is a full swing,
+        // The mouse counts from where the camera looks. Half the sky's width is a full swing,
         // across and down alike, and the camera goes no further than that.
         const half = box.width / 2;
         const swing = (offset: number): number =>
           pointer === null || half === 0 ? 0 : Math.min(Math.max(offset / half, -1), 1);
-        const goalX = swing((pointer?.x ?? 0) - box.left - half);
-        const goalY = swing((pointer?.y ?? 0) - box.top - box.height / 2);
+        const goalX = swing((pointer?.x ?? 0) - box.left - look.x);
+        const goalY = swing((pointer?.y ?? 0) - box.top - look.y);
         const ease = 1 - Math.exp(-Math.min(gap, LONGEST_STEP) / EASE_SECONDS);
         aimX += (goalX - aimX) * ease;
         aimY += (goalY - aimY) * ease;
@@ -141,6 +152,7 @@ export function LandingStarfield({
           pixelRatio: window.devicePixelRatio || 1,
           quality,
           lens: lensWithin(box, target?.getBoundingClientRect() ?? null, radius),
+          center: { x: look.x, y: look.y },
           yaw: aimX * SWING,
           pitch: aimY * SWING,
         });

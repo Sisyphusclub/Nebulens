@@ -215,6 +215,13 @@ it('draws the stars bending around the composer, and fades in once the first fra
   // 1160×640 at two device pixels per pixel.
   expect(uniforms.get('u_buffer')).toEqual([2320, 1280]);
   expect(uniforms.get('u_scale')).toEqual([2]);
+  // The camera looks at the middle of the sky as it is first laid out.
+  expect(uniforms.get('u_center')).toEqual([580, 320]);
+  // The canvas is sized in pixels from its top left corner, so a hero that changes height
+  // never stretches what is already drawn.
+  const canvas = stars.querySelector('canvas')!;
+  expect(canvas.style.width).toBe('1160px');
+  expect(canvas.style.height).toBe('640px');
   // The camera faces the sky head on until the mouse says otherwise.
   expect(eye()).toEqual([0, 0, 1]);
   expect(uniforms.get('u_right')).toEqual([1, 0, 0]);
@@ -244,6 +251,44 @@ it('follows the composer when it grows', () => {
   expect(uniforms.get('u_lens')).toEqual([580, 409, 560, 129]);
   expect(uniforms.get('u_buffer')).toEqual([2320, 1376]);
   expect(frames).toHaveLength(0);
+});
+
+it('keeps the sky in place while the hero grows or shrinks below the composer, as when typing', () => {
+  render(<Hero />);
+  step(0);
+
+  // Typing hides the skill chips under the composer, and the AI strip shows later: the hero,
+  // and the sky behind it, get shorter or taller while the composer stays where it is.
+  measure.mockImplementation(function (this: HTMLElement) {
+    if (this.classList.contains('home-backdrop__stars')) return rect(280, 0, 1160, 588);
+    if (this.dataset.testid === 'composer') return rect(300, 280, 1120, 210);
+    return rect(0, 0, 0, 0);
+  });
+  resizeObserved();
+  step(16);
+
+  expect(uniforms.get('u_buffer')).toEqual([2320, 1176]);
+  expect(uniforms.get('u_center')).toEqual([580, 320]);
+  expect(document.querySelector('.home-backdrop__stars canvas')).toHaveStyle({ height: '588px' });
+  // The mouse is measured from the same centre, so one resting on it sends the camera nowhere.
+  movePointer(860, 320);
+  playUntilStill(32);
+  expect(eye()).toEqual([0, 0, 1]);
+});
+
+it('centres the camera again when the window gives the sky a new width', () => {
+  render(<Hero />);
+  step(0);
+
+  measure.mockImplementation(function (this: HTMLElement) {
+    if (this.classList.contains('home-backdrop__stars')) return rect(280, 0, 900, 600);
+    if (this.dataset.testid === 'composer') return rect(300, 280, 860, 210);
+    return rect(0, 0, 0, 0);
+  });
+  resizeObserved();
+  step(16);
+
+  expect(uniforms.get('u_center')).toEqual([450, 300]);
 });
 
 it('swings the camera towards the mouse, easing rather than jumping, then stops drawing', () => {

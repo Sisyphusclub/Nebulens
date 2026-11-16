@@ -9615,10 +9615,11 @@ video {
 .home-backdrop__stars[data-ready='true'] {
   opacity: 1;
 }
+/* LandingStarfield sizes the canvas in pixels from the top left, and keeps the camera's
+   centre where it was laid out: a hero that grows or shrinks below the composer as the user
+   types neither stretches nor shifts the sky. */
 .home-backdrop__stars > canvas {
   display: block;
-  width: 100%;
-  height: 100%;
 }
 .home-backdrop__overlay {
   position: absolute;

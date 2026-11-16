@@ -348,8 +348,16 @@ describe('createSkillPlanner selectSkill', () => {
     const fetchImpl = vi.fn();
     const planner = createSkillPlanner({ ...chatConfig, fetchImpl });
 
-    expect(await planner.selectSkill('给周年庆做一套活动海报', false)).toBe('poster');
+    expect(await planner.selectSkill('给周年庆做一套活动海报', false)).toEqual({
+      skillId: 'poster',
+      modelUnavailable: false,
+    });
     expect(fetchImpl).not.toHaveBeenCalled();
+    // Naming a skill works without any text model.
+    expect(await createSkillPlanner().selectSkill('给周年庆做一套活动海报', false)).toEqual({
+      skillId: 'poster',
+      modelUnavailable: false,
+    });
     // A skill that redraws an uploaded image is only named once there is one.
     expect(skillNamedIn('把这张图做风格重绘', false)).toBeNull();
     expect(skillNamedIn('把这张图做风格重绘', true)).toBe('restyle');
@@ -359,9 +367,10 @@ describe('createSkillPlanner selectSkill', () => {
     const fetchImpl = vi.fn(async () => chatResponse('{"skillId": "ecommerce"}'));
     const planner = createSkillPlanner({ ...chatConfig, fetchImpl });
 
-    expect(await planner.selectSkill('山川明前绿茶的淘宝首图，突出高山云雾', false)).toBe(
-      'ecommerce',
-    );
+    expect(await planner.selectSkill('山川明前绿茶的淘宝首图，突出高山云雾', false)).toEqual({
+      skillId: 'ecommerce',
+      modelUnavailable: false,
+    });
     const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     const body = JSON.parse(String(init.body)) as {
       temperature: number;
@@ -374,23 +383,30 @@ describe('createSkillPlanner selectSkill', () => {
     expect(body.messages[1]?.content).toContain('已上传参考图：否');
   });
 
-  it('answers null for unknown picks, image skills without an image, no model and failures', async () => {
-    const answering = (content: string, status = 200) =>
-      createSkillPlanner({
-        ...chatConfig,
-        fetchImpl: vi.fn(async () => chatResponse(content, status)),
-      });
+  it('answers no skill for unknown picks and for image skills without an image', async () => {
+    const answering = (content: string) =>
+      createSkillPlanner({ ...chatConfig, fetchImpl: vi.fn(async () => chatResponse(content)) });
+    const none = { skillId: null, modelUnavailable: false };
 
-    expect(await answering('{"skillId": "nope"}').selectSkill('一张海边日落', false)).toBeNull();
-    expect(await answering('{"skillId": null}').selectSkill('一张海边日落', false)).toBeNull();
+    expect(await answering('{"skillId": "nope"}').selectSkill('一张海边日落', false)).toEqual(none);
+    expect(await answering('{"skillId": null}').selectSkill('一张海边日落', false)).toEqual(none);
     expect(
       await answering('{"skillId": "background"}').selectSkill('给这款香水换个海边背景', false),
-    ).toBeNull();
+    ).toEqual(none);
     expect(
       await answering('{"skillId": "background"}').selectSkill('给这款香水换个海边背景', true),
-    ).toBe('background');
-    expect(await answering('', 500).selectSkill('一张海边日落', false)).toBeNull();
-    expect(await createSkillPlanner().selectSkill('一张海边日落', false)).toBeNull();
+    ).toEqual({ skillId: 'background', modelUnavailable: false });
+  });
+
+  it('says so when the text model could not be asked, instead of finding no skill fits', async () => {
+    const failing = createSkillPlanner({
+      ...chatConfig,
+      fetchImpl: vi.fn(async () => chatResponse('', 500)),
+    });
+    const unavailable = { skillId: null, modelUnavailable: true };
+
+    expect(await failing.selectSkill('一张海边日落', false)).toEqual(unavailable);
+    expect(await createSkillPlanner().selectSkill('一张海边日落', false)).toEqual(unavailable);
   });
 });
 

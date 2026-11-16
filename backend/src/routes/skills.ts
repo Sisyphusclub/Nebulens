@@ -63,8 +63,9 @@ export function buildSkillsRouter(deps: SkillsRouterDeps): Router {
     },
   );
 
-  // POST /api/skills/select { brief, hasReference } -> { skillId } naming the skill that fits
-  // a request typed in Agent mode, or null when none does and the text model plans it freely.
+  // POST /api/skills/select { brief, hasReference } -> { skillId, modelUnavailable } naming the
+  // skill that fits a request typed in Agent mode, or null when none does and the text model
+  // plans it freely. `modelUnavailable` tells a text model that could not be asked from no fit.
   router.post(
     '/select',
     deps.authMiddleware ?? requireAuth,
@@ -82,11 +83,11 @@ export function buildSkillsRouter(deps: SkillsRouterDeps): Router {
               { issues: parsed.error.issues },
             );
           }
-          const skillId = await deps.planner.selectSkill(
+          const { skillId, modelUnavailable } = await deps.planner.selectSkill(
             parsed.data.brief,
             parsed.data.hasReference,
           );
-          res.status(200).json({ skillId });
+          res.status(200).json({ skillId, modelUnavailable });
         } catch (err) {
           next(err);
         }

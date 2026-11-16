@@ -113,14 +113,19 @@ export async function planFreely(brief: string, hasReference: boolean): Promise<
   return readSkillPlan(response, await parseJsonResponse(response));
 }
 
-/**
- * Agent mode: asks the server which skill fits a request typed in the composer. Null
- * means none does, and the text model plans the request itself (`planFreely`).
- */
+/** The skill the server picked for an Agent request. */
+export interface SkillSelection {
+  /** Null when none fits, and the text model plans the request itself (`planFreely`). */
+  skillId: string | null;
+  /** The text model could not be asked, so no skill was weighed at all. */
+  modelUnavailable: boolean;
+}
+
+/** Agent mode: asks the server which skill fits a request typed in the composer. */
 export async function selectSkillForBrief(
   brief: string,
   hasReference: boolean,
-): Promise<string | null> {
+): Promise<SkillSelection> {
   const response = await authedFetch(buildApiUrl('/api/skills/select'), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -131,5 +136,5 @@ export async function selectSkillForBrief(
   if (!isRecord(payload) || !(payload.skillId === null || typeof payload.skillId === 'string')) {
     throw new ImageApiError(response.status, 'INVALID_RESPONSE', '技能接口返回了无法识别的响应。');
   }
-  return payload.skillId;
+  return { skillId: payload.skillId, modelUnavailable: payload.modelUnavailable === true };
 }

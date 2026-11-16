@@ -293,6 +293,7 @@ export function AgentView() {
       updateAgentTurn(target.sessionId, target.turnId, {
         thinkingMs: progress.ms,
         chosenSkill: progress.skillLabel,
+        ...(progress.modelUnavailable ? { selectionFailed: true } : {}),
       });
     } else if (progress.kind === 'planned') {
       updateAgentTurn(target.sessionId, target.turnId, { planningMs: progress.ms });

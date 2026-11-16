@@ -29,6 +29,13 @@ export interface SkillPlan {
 /** Raw answers to a skill's text and list fields, before `readSkillValues` checks them. */
 export type SkillAnswers = Record<string, string | string[]>;
 
+/** The skill picked for an Agent request, and whether the text model could be asked at all. */
+export interface SkillSelection {
+  skillId: string | null;
+  /** No text model, or it failed: no skill was weighed, as opposed to none fitting. */
+  modelUnavailable: boolean;
+}
+
 /** Turns a skill's form answers into one ready-to-generate prompt per output image. */
 export interface SkillPlanner {
   plan(skill: SkillDefinition, values: SkillValues, hasReference: boolean): Promise<SkillPlan>;
@@ -38,7 +45,7 @@ export interface SkillPlanner {
    * Picks the skill that fits a one-line request typed in Agent mode, or null when none
    * does and the request goes to `planFreely`.
    */
-  selectSkill(brief: string, hasReference: boolean): Promise<string | null>;
+  selectSkill(brief: string, hasReference: boolean): Promise<SkillSelection>;
   /**
    * Agent mode when no skill fits: the text model breaks the request into one to four images
    * and writes each one's prompt. Throws when there is no text model or it fails.
@@ -477,14 +484,16 @@ export function createSkillPlanner(config?: SkillPlannerConfig): SkillPlanner {
     async selectSkill(brief, hasReference) {
       // A request that names a skill needs no model, and without one nothing else is guessed.
       const named = skillNamedIn(brief, hasReference);
-      if (named !== null || config === undefined) return named;
+      if (named !== null) return { skillId: named, modelUnavailable: false };
+      if (config === undefined) return { skillId: null, modelUnavailable: true };
       try {
         const answer = await askChat(config, 0, SELECT_RULES, selectRequest(brief, hasReference));
         const skill = typeof answer.skillId === 'string' ? findSkill(answer.skillId) : undefined;
-        return skill !== undefined && usableSkill(skill, hasReference) ? skill.id : null;
+        const fits = skill !== undefined && usableSkill(skill, hasReference);
+        return { skillId: fits ? skill.id : null, modelUnavailable: false };
       } catch (err) {
         logger.warn({ err }, 'skill selection failed; the request is planned freely');
-        return null;
+        return { skillId: null, modelUnavailable: true };
       }
     },
     async planFreely(brief, hasReference) {

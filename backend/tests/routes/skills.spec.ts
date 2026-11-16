@@ -56,7 +56,7 @@ describe('POST /api/skills/:id/plan', () => {
         outputs: [{ id: 'portrait', label: '竖版海报', aspect: '3:4' as const, prompt: '海报' }],
       })),
       readBrief: vi.fn(async () => ({})),
-      selectSkill: vi.fn(async () => null),
+      selectSkill: vi.fn(async () => ({ skillId: null, modelUnavailable: false })),
       planFreely: vi.fn(),
     };
     const app = createApp({ provider, skillPlanner, authMiddleware: signedIn });
@@ -125,7 +125,7 @@ describe('POST /api/skills/select', () => {
     const skillPlanner: SkillPlanner = {
       plan: vi.fn(),
       readBrief: vi.fn(),
-      selectSkill: vi.fn(async () => 'ecommerce'),
+      selectSkill: vi.fn(async () => ({ skillId: 'ecommerce', modelUnavailable: false })),
       planFreely: vi.fn(),
     };
     const app = createApp({ provider, skillPlanner, authMiddleware: signedIn });
@@ -135,21 +135,21 @@ describe('POST /api/skills/select', () => {
       .send({ brief: ' 给山川明前绿茶做一套主图 ', hasReference: true });
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ skillId: 'ecommerce' });
+    expect(response.body).toEqual({ skillId: 'ecommerce', modelUnavailable: false });
     expect(skillPlanner.selectSkill).toHaveBeenCalledWith('给山川明前绿茶做一套主图', true);
   });
 
-  it('answers null without a chat model unless the request names a skill', async () => {
+  it('says the text model is unavailable without one, unless the request names a skill', async () => {
     const app = createApp({ provider, authMiddleware: signedIn });
 
     const plain = await request(app)
       .post('/api/skills/select')
       .send({ brief: '雨后的未来都市街道' });
-    expect(plain.body).toEqual({ skillId: null });
+    expect(plain.body).toEqual({ skillId: null, modelUnavailable: true });
     const named = await request(app)
       .post('/api/skills/select')
       .send({ brief: '周年庆做一套活动海报' });
-    expect(named.body).toEqual({ skillId: 'poster' });
+    expect(named.body).toEqual({ skillId: 'poster', modelUnavailable: false });
   });
 
   it('rejects an empty request and signed-out requests', async () => {

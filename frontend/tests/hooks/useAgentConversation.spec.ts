@@ -111,4 +111,21 @@ describe('the conversation with the Agent', () => {
     ]);
     expect(result.current[2]?.plan?.steps[0]?.settings.prompt).toBe('雨夜');
   });
+
+  it('remembers after a reload that the text model could not pick a skill', () => {
+    const tried = { status: 'failed', thinkingMs: 900, chosenSkill: null } as const;
+    localStorage.setItem(
+      AGENT_CONVERSATIONS_STORAGE_KEY,
+      JSON.stringify({
+        'session-1': [
+          turn('down', { ...tried, selectionFailed: true }),
+          { ...turn('odd', tried), selectionFailed: 'yes' },
+        ],
+      }),
+    );
+    window.dispatchEvent(new StorageEvent('storage', { key: AGENT_CONVERSATIONS_STORAGE_KEY }));
+    const { result } = renderHook(() => useAgentConversation('session-1'));
+
+    expect(result.current.map((item) => item.selectionFailed)).toEqual([true, undefined]);
+  });
 });

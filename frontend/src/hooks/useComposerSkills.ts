@@ -29,7 +29,7 @@ import type { SkillRunRequest } from '@/utils/skillRun';
 
 /** What the Agent is doing, for a page that shows its work instead of toasts. */
 export type AgentProgress =
-  | { kind: 'selected'; skillLabel: string | null; ms: number }
+  | { kind: 'selected'; skillLabel: string | null; modelUnavailable: boolean; ms: number }
   | { kind: 'planned'; ms: number }
   | { kind: 'failed'; message: string };
 
@@ -233,7 +233,10 @@ export function useComposerSkills({
     setPlanning(true);
     try {
       const startedAt = Date.now();
-      const skillId = await selectSkillForBrief(brief, referenceFiles.length > 0);
+      const { skillId, modelUnavailable } = await selectSkillForBrief(
+        brief,
+        referenceFiles.length > 0,
+      );
       const skill = skillId === null ? undefined : findLandingSkill(skillId);
       const forms = skill === undefined ? null : (skillForms ?? (await fetchSkillForms()));
       if (forms !== null && skillForms === null) setSkillForms(forms);
@@ -242,6 +245,7 @@ export function useComposerSkills({
       onAgentProgress?.({
         kind: 'selected',
         skillLabel: chosen?.label ?? null,
+        modelUnavailable,
         ms: Date.now() - startedAt,
       });
       if (chosen !== undefined && form !== undefined) {

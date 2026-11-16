@@ -32,6 +32,13 @@ function turnSteps(turn: AgentTurn): Step[] {
     steps.push({ key: 'skill', text: `使用技能「${turn.requestedSkill}」`, state: 'done' });
   } else if (turn.thinkingMs === undefined) {
     if (planning) steps.push({ key: 'think', text: '正在理解需求…', state: 'active' });
+  } else if (turn.selectionFailed === true) {
+    // Nothing read the request, so there is no understanding to time and no fit to report.
+    steps.push({
+      key: 'skill',
+      text: '文本模型暂不可用，没能挑选技能，改为自己规划画面',
+      state: 'error',
+    });
   } else {
     steps.push({ key: 'think', text: `理解需求 ${seconds(turn.thinkingMs)}`, state: 'done' });
     steps.push({

@@ -49,6 +49,8 @@ export interface AgentTurn {
   thinkingMs?: number;
   /** The skill it picked; null when none fitted and it planned the pictures itself. */
   chosenSkill?: string | null;
+  /** The text model could not be asked, so no skill was weighed before planning freely. */
+  selectionFailed?: boolean;
   planningMs?: number;
   planTitle?: string;
   plan?: SkillRunRequest;
@@ -101,6 +103,7 @@ function parseTurn(value: unknown): AgentTurn | null {
     ...(isString(value.chosenSkill) || value.chosenSkill === null
       ? { chosenSkill: value.chosenSkill }
       : {}),
+    ...(value.selectionFailed === true ? { selectionFailed: true } : {}),
     ...(isDuration(value.planningMs) ? { planningMs: value.planningMs } : {}),
     ...(isString(value.planTitle) ? { planTitle: value.planTitle } : {}),
     ...(plan === null ? {} : { plan }),

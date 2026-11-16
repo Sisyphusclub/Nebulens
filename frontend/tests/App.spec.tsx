@@ -502,7 +502,10 @@ describe('React application routes', () => {
 
   it('runs Agent mode: the server picks the skill, then its images are planned and made', async () => {
     const user = userEvent.setup();
-    skillMocks.selectSkillForBrief.mockResolvedValue('ecommerce');
+    skillMocks.selectSkillForBrief.mockResolvedValue({
+      skillId: 'ecommerce',
+      modelUnavailable: false,
+    });
     skillMocks.planSkill.mockResolvedValue({
       title: '电商主图 · 山川绿茶',
       outputs: [{ id: 'main', label: '主图', aspect: '1:1', prompt: '山川绿茶主图' }],
@@ -545,7 +548,7 @@ describe('React application routes', () => {
 
   it('has the text model plan the images when no skill fits an Agent mode request', async () => {
     const user = userEvent.setup();
-    skillMocks.selectSkillForBrief.mockResolvedValue(null);
+    skillMocks.selectSkillForBrief.mockResolvedValue({ skillId: null, modelUnavailable: false });
     skillMocks.planFreely.mockResolvedValue({
       title: '雨夜城市',
       outputs: [
@@ -616,7 +619,7 @@ describe('React application routes', () => {
 
   it('says plainly when Agent mode has no text model, and makes nothing', async () => {
     const user = userEvent.setup();
-    skillMocks.selectSkillForBrief.mockResolvedValue(null);
+    skillMocks.selectSkillForBrief.mockResolvedValue({ skillId: null, modelUnavailable: true });
     skillMocks.planFreely.mockRejectedValue(
       new Error(
         'Agent 需要文本模型来规划画面，当前没有配置。可以先用图片生成，或从技能库选一个技能。',
@@ -631,6 +634,9 @@ describe('React application routes', () => {
     // Told in the conversation, under the request, rather than in a passing toast.
     const step = await screen.findByText(/Agent 需要文本模型/);
     expect(step.closest('.agent-step')).toHaveAttribute('data-state', 'error');
+    expect(screen.getByRole('list', { name: 'Agent 的步骤' })).not.toHaveTextContent(
+      '没有合适的技能',
+    );
     expect(generation.generate).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: '重新发送' })).toBeInTheDocument();
     expect(screen.getByLabelText('当前路由')).not.toHaveTextContent('/generate');

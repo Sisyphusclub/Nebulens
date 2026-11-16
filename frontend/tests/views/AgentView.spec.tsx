@@ -173,7 +173,7 @@ beforeEach(() => {
   historyMocks.batches = [];
   quotaMocks.remaining = 18;
   skills.fetchSkillForms.mockResolvedValue([]);
-  skills.selectSkillForBrief.mockResolvedValue(null);
+  skills.selectSkillForBrief.mockResolvedValue({ skillId: null, modelUnavailable: false });
   skills.planFreely.mockResolvedValue(PLAN);
   images.fetchOutputBlob.mockResolvedValue(new Blob(['png'], { type: 'image/png' }));
   images.uploadReferenceImages.mockImplementation((files: File[]) =>
@@ -373,6 +373,23 @@ it('sends the pictures selected on the canvas with the request, as its reference
   expect(generation.generate).toHaveBeenCalledWith(
     expect.objectContaining({ referenceIds: ['ref-0'] }),
   );
+});
+
+it('says the text model could not pick a skill, rather than that no skill fits', async () => {
+  const user = userEvent.setup();
+  skills.selectSkillForBrief.mockResolvedValueOnce({ skillId: null, modelUnavailable: true });
+  renderAgent();
+
+  await send(user, '雨夜的未来城市，做两张');
+
+  // The free plan can still come through once the model answers again.
+  expect(await screen.findByRole('region', { name: '待确认的方案' })).toBeInTheDocument();
+  const steps = screen.getByRole('list', { name: 'Agent 的步骤' });
+  const step = within(steps).getByText('文本模型暂不可用，没能挑选技能，改为自己规划画面');
+  expect(step.closest('.agent-step')).toHaveAttribute('data-state', 'error');
+  expect(steps).not.toHaveTextContent('没有合适的技能');
+  expect(steps).not.toHaveTextContent('理解需求');
+  expect(steps).toHaveTextContent('规划了 2 张图');
 });
 
 it('tells in the conversation when a request cannot be planned, and sends it again on asking', async () => {

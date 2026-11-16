@@ -16,6 +16,8 @@ interface UseSkillRunOptions {
   runGeneration: (settings: GenerationSettingsSnapshot) => Promise<string | undefined>;
   fixText: (item: FeedItem, entry: HistoryEntry) => Promise<void>;
   notify: (message: string, tone?: 'success' | 'error') => void;
+  /** False where the plan is already on screen, so starting it says nothing more. */
+  announceStart?: boolean;
 }
 
 /**
@@ -29,6 +31,7 @@ export function useSkillRun({
   runGeneration,
   fixText,
   notify,
+  announceStart = true,
 }: UseSkillRunOptions) {
   const [queue, setQueue] = useState<SkillJob[]>([]);
   const [running, setRunning] = useState(false);
@@ -37,8 +40,8 @@ export function useSkillRun({
    * not a ref, so an image whose check landed before it was registered is still seen.
    */
   const [awaitingCheck, setAwaitingCheck] = useState<ReadonlyMap<string, string>>(new Map());
-  const latest = useRef({ feed, runGeneration, fixText, notify });
-  latest.current = { feed, runGeneration, fixText, notify };
+  const latest = useRef({ feed, runGeneration, fixText, notify, announceStart });
+  latest.current = { feed, runGeneration, fixText, notify, announceStart };
 
   const start = useCallback((request: SkillRunRequest) => {
     setQueue((current) => [
@@ -47,9 +50,11 @@ export function useSkillRun({
         (step): SkillJob => ({ kind: 'generate', label: step.label, settings: step.settings }),
       ),
     ]);
-    latest.current.notify(
-      `「${request.skillLabel}」会依次生成 ${request.steps.length} 张图，并自动检查文字。`,
-    );
+    if (latest.current.announceStart) {
+      latest.current.notify(
+        `「${request.skillLabel}」会依次生成 ${request.steps.length} 张图，并自动检查文字。`,
+      );
+    }
   }, []);
 
   /** Drops the images not yet started; the one in flight is stopped by the caller. */

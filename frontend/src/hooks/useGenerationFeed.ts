@@ -53,6 +53,8 @@ interface UseGenerationFeedOptions {
   onItemReplaced: (item: FeedItem) => void;
   /** A composer-initiated generation succeeded with this (trimmed) prompt. */
   onComposerSubmitted: (prompt: string) => void;
+  /** The page a session created on the fly opens on. */
+  basePath?: string;
 }
 
 /**
@@ -74,6 +76,7 @@ export function useGenerationFeed({
   onSessionCreated,
   onItemReplaced,
   onComposerSubmitted,
+  basePath = '/generate',
 }: UseGenerationFeedOptions) {
   const navigate = useNavigate();
   const [feed, setFeed] = useState<FeedItem[]>([]);
@@ -186,7 +189,7 @@ export function useGenerationFeed({
       if (settings.quality !== undefined) {
         nextSearch.set('quality', settings.quality);
       }
-      void navigate(`/generate?${nextSearch.toString()}`, { replace: true });
+      void navigate(`${basePath}?${nextSearch.toString()}`, { replace: true });
     }
     if (generationUserId !== null) {
       rememberGenerationSession(generationUserId, generationSessionId);

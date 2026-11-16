@@ -5,7 +5,7 @@ import { SKILLS_STATE } from '../playwright.config';
 // The skills account has its own quota, so these generations leave the shared one alone.
 test.use({ storageState: SKILLS_STATE });
 
-test('plans the images with the text model when no skill fits an Agent mode request', async ({
+test('plans the images on the Agent canvas, asks first, then lays them out there', async ({
   page,
 }) => {
   await page.goto('/');
@@ -22,10 +22,24 @@ test('plans the images with the text model when no skill fits an Agent mode requ
   await page.keyboard.type('端到端 Agent 规划，雨夜的未来城市');
   await page.keyboard.press('Enter');
 
-  // The mock text model picks no skill, so it plans two images itself; both are made in a
-  // session of their own.
-  await expect(page).toHaveURL(/\/generate\?session=/);
-  const prompts = page.locator('.session-batch__prompt');
-  await expect(prompts.filter({ hasText: '模拟规划' })).toHaveCount(2, { timeout: 30_000 });
-  await expect(page.getByRole('link', { name: /模拟规划/ }).first()).toBeVisible();
+  // The request carries on in the Agent's workspace. The mock text model picks no skill, so
+  // it plans two images itself, and shows the plan before spending anything on it.
+  await expect(page).toHaveURL(/\/agent\?session=/);
+  const plan = page.getByRole('region', { name: '待确认的方案' });
+  await expect(plan).toContainText('模拟规划');
+  await expect(page.getByText('没有合适的技能，自己规划画面')).toBeVisible();
+  await plan.getByRole('button', { name: '开始生成' }).click();
+
+  // Both pictures land on the canvas, and the session opens there from the sidebar.
+  const pictures = page.getByRole('button', { name: /^画布图片：.*模拟规划/ });
+  await expect(pictures).toHaveCount(2, { timeout: 30_000 });
+  await expect(page.getByText('生成了 2 张图')).toBeVisible();
+  await expect(page.getByRole('link', { name: /端到端 Agent 规划/ }).first()).toHaveAttribute(
+    'href',
+    /\/agent\?session=/,
+  );
+
+  // A picture selected on the canvas goes with the next request as its reference.
+  await pictures.first().click();
+  await expect(page.getByLabel('作为参考的图')).toContainText('选中的 1 张图');
 });

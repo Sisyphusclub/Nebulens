@@ -12,6 +12,7 @@ export function App() {
   const location = useLocation();
   const isLanding = location.pathname === '/';
   const isGenerate = location.pathname === '/generate';
+  const isAgent = location.pathname === '/agent';
   const { isImageDetailModalOpen } = useImageDetailModalState();
   return (
     <div
@@ -19,6 +20,7 @@ export function App() {
         'app-shell',
         isLanding && 'app-shell--landing',
         isGenerate && 'app-shell--generate',
+        isAgent && 'app-shell--agent',
         isImageDetailModalOpen && 'app-shell--detail-open',
       )}
     >
@@ -29,6 +31,7 @@ export function App() {
           'app-main',
           isLanding && 'app-main--landing',
           isGenerate && 'app-main--generate',
+          isAgent && 'app-main--agent',
         )}
         aria-label={isLanding ? '贝尔灵画首页' : '贝尔灵画工作区'}
       >

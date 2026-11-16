@@ -10949,3 +10949,703 @@ video {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* The Agent's workspace: an endless canvas filling the page, the conversation floating on
+   its left as a panel a shade above the page, a tool rail beside the panel and the view
+   controls in the bottom right corner. Pictures are drawn in board units and scaled with
+   the view, so lines that must stay one pixel are divided by the zoom. */
+.app-main--agent {
+  height: 100svh;
+  min-height: 0;
+  overflow: hidden;
+}
+.app-main--agent .app-workspace {
+  height: 100%;
+  min-height: 0;
+}
+.agent-workspace {
+  position: relative;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--bg-page);
+}
+.agent-canvas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: var(--bg-page);
+  background-image: radial-gradient(circle, var(--fill-3) 1px, transparent 1.3px);
+  cursor: default;
+  outline: none;
+  touch-action: none;
+  user-select: none;
+}
+.agent-canvas[data-tool='hand'] {
+  cursor: grab;
+}
+.agent-canvas[data-panning='true'] {
+  cursor: grabbing;
+}
+.agent-canvas__world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.agent-canvas .agent-node {
+  position: absolute;
+  display: block;
+  min-height: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-hover);
+  padding: 0;
+  box-shadow: 0 18px 40px -28px rgb(0 0 0 / 0.85);
+  outline: 0 solid transparent;
+  outline-offset: 4px;
+  transition: outline-color 0.15s ease;
+}
+.agent-canvas .agent-node.button:hover {
+  background: var(--bg-surface-hover);
+  box-shadow: 0 18px 40px -28px rgb(0 0 0 / 0.85);
+}
+.agent-canvas .agent-node img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+.agent-canvas[data-tool='select'] .agent-node:hover {
+  outline: 2px solid var(--line-3);
+}
+.agent-canvas .agent-node[data-selected='true'],
+.agent-canvas .agent-node:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.92);
+}
+.agent-canvas .agent-node--pending {
+  display: flex;
+  align-items: flex-end;
+  background: var(--bg-surface);
+  padding: 14px;
+}
+.agent-node__shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgb(255 255 255 / 0.06) 50%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+  animation: agent-node-shimmer 1.6s linear infinite;
+}
+.agent-node__status {
+  position: relative;
+  color: var(--text-3);
+  font-size: 12px;
+}
+@keyframes agent-node-shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+.agent-canvas .agent-node--error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid color-mix(in oklch, var(--danger) 32%, transparent);
+  background: color-mix(in oklch, var(--danger) 8%, var(--bg-surface));
+  padding: 18px;
+  color: var(--text-2);
+  font-size: 12px;
+  text-align: center;
+}
+.agent-node--error > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--danger);
+}
+.agent-node--error strong {
+  color: var(--text-1);
+  font-size: 13px;
+  font-weight: 600;
+}
+.agent-node--error span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.agent-canvas__marquee {
+  position: absolute;
+  border: 1px solid rgb(255 255 255 / 0.55);
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.06);
+  pointer-events: none;
+}
+.agent-canvas__empty {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  color: var(--text-3);
+  font-size: 12px;
+  text-align: center;
+  pointer-events: none;
+}
+.agent-canvas__empty strong {
+  color: var(--text-2);
+  font-size: 15px;
+  font-weight: 500;
+}
+/* Floating chrome over the board: the selection's tools, the tool rail, the view controls. */
+.agent-canvas__selection,
+.agent-canvas__rail,
+.agent-canvas__controls {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-full);
+  background: var(--surface-floating);
+  padding: 4px;
+  box-shadow: var(--shadow-floating);
+}
+.agent-canvas__selection {
+  z-index: 5;
+  white-space: nowrap;
+}
+.agent-canvas__selection-count {
+  padding: 0 8px 0 10px;
+  color: var(--text-2);
+  font-size: 12px;
+}
+.agent-canvas__rail {
+  top: 50%;
+  flex-direction: column;
+  transform: translateY(-50%);
+}
+.agent-canvas__controls {
+  right: 16px;
+}
+.agent-canvas__selection .button--icon,
+.agent-canvas__rail .button--icon,
+.agent-canvas__controls .button--icon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border: 0;
+  border-radius: var(--radius-full);
+  padding: 0;
+  color: var(--text-2);
+  box-shadow: none;
+}
+.agent-canvas__selection .button--icon:hover:not(:disabled),
+.agent-canvas__rail .button--icon:hover:not(:disabled),
+.agent-canvas__controls .button--icon:hover:not(:disabled) {
+  background: var(--fill-3);
+  color: var(--text-1);
+}
+.agent-canvas__selection svg,
+.agent-canvas__rail svg,
+.agent-canvas__controls svg {
+  width: 16px;
+  height: 16px;
+}
+.agent-canvas__rail .button--icon {
+  width: 36px;
+  height: 36px;
+}
+/* The tool in use is lit like a pressed light button, not in the accent. */
+.agent-canvas__rail .button--icon[aria-pressed='true'],
+.agent-canvas__rail .button--icon[aria-pressed='true']:hover {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: var(--shadow-primary);
+}
+.agent-canvas__controls .agent-canvas__zoom {
+  min-width: 52px;
+  height: 32px;
+  min-height: 32px;
+  border: 0;
+  border-radius: var(--radius-full);
+  padding: 0 8px;
+  color: var(--text-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  box-shadow: none;
+}
+.agent-canvas__controls .agent-canvas__zoom:hover {
+  background: var(--fill-3);
+  color: var(--text-1);
+}
+
+/* The conversation: a panel a shade above the page, the steps of each request in small
+   grey type under it, and the composer at its foot. */
+.agent-panel {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 12px;
+  z-index: 6;
+  display: flex;
+  width: 380px;
+  flex-direction: column;
+  /* Clipped, not hidden: a hidden overflow can still be scrolled sideways by focus. */
+  overflow: hidden;
+  overflow: clip;
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-xl);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-floating);
+}
+.agent-panel__header {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 10px 6px 14px;
+}
+.agent-panel__mark {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--fill-3);
+  color: var(--text-1);
+}
+.agent-panel__mark svg {
+  width: 15px;
+  height: 15px;
+}
+.agent-panel__title {
+  min-width: 0;
+  flex: 1;
+  margin: 0 0 0 6px;
+  overflow: hidden;
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agent-panel__header .button--icon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border: 0;
+  border-radius: var(--radius-full);
+  padding: 0;
+  color: var(--text-3);
+  box-shadow: none;
+}
+.agent-panel__header .button--icon:hover {
+  background: var(--fill-2);
+  color: var(--text-1);
+}
+.agent-panel__header svg {
+  width: 16px;
+  height: 16px;
+}
+.agent-thread {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 16px 16px;
+  scrollbar-width: thin;
+}
+/* The intro sits at the foot, near the composer; pushed down by a margin rather than by
+   justify-content, which would put an overflow out of scrolling reach on a short screen. */
+.agent-thread--empty {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.agent-thread--empty > :first-child {
+  margin-top: auto;
+}
+.agent-thread__intro h2 {
+  margin: 0 0 6px;
+  color: var(--text-1);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+}
+.agent-thread__intro p {
+  margin: 0;
+  color: var(--text-3);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.agent-thread__examples {
+  display: grid;
+  gap: 6px;
+}
+.agent-thread .agent-thread__example {
+  height: auto;
+  min-height: 0;
+  justify-content: flex-start;
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-md);
+  background: var(--fill-1);
+  padding: 10px 12px;
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  box-shadow: none;
+}
+.agent-thread .agent-thread__example:hover {
+  border-color: var(--line-2);
+  background: var(--fill-2);
+  color: var(--text-1);
+}
+.agent-thread__turns {
+  display: flex;
+  margin: 0;
+  flex-direction: column;
+  gap: 22px;
+  padding: 0;
+  list-style: none;
+}
+.agent-turn__request {
+  margin-left: 28px;
+  border-radius: 16px 16px 4px 16px;
+  background: var(--bg-surface-hover);
+  padding: 10px 12px;
+}
+.agent-turn__request p {
+  margin: 0;
+  color: var(--text-1);
+  font-size: 13.5px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.agent-turn__references {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.agent-turn__references img {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-xs);
+  object-fit: cover;
+}
+.agent-turn__time {
+  display: block;
+  margin: 10px 0 6px;
+  color: var(--text-4);
+  font-size: 11px;
+}
+.agent-steps {
+  display: grid;
+  margin: 0;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+.agent-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: var(--text-3);
+  font-size: 12.5px;
+  line-height: 18px;
+}
+.agent-step svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.agent-step[data-state='active'] {
+  color: var(--text-1);
+}
+.agent-step[data-state='note'] {
+  color: var(--text-4);
+}
+.agent-step[data-state='error'] {
+  color: var(--danger);
+}
+.agent-turn .agent-turn__action {
+  height: 28px;
+  min-height: 28px;
+  margin-top: 8px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-full);
+  padding: 0 12px;
+  color: var(--text-2);
+  font-size: 12px;
+  box-shadow: none;
+}
+.agent-turn .agent-turn__action:hover:not(:disabled) {
+  background: var(--fill-2);
+  color: var(--text-1);
+}
+.agent-plan {
+  margin-top: 10px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-lg);
+  background: var(--fill-1);
+  padding: 12px;
+}
+.agent-plan__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.agent-plan__header strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-1);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agent-plan__header span {
+  flex: 0 0 auto;
+  color: var(--text-3);
+  font-size: 11.5px;
+}
+.agent-plan__list {
+  display: grid;
+  margin: 10px 0;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+.agent-plan__item {
+  border-radius: var(--radius-sm);
+  background: var(--fill-1);
+  padding: 8px 10px;
+}
+.agent-plan__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.agent-plan__label {
+  color: var(--text-1);
+  font-size: 12px;
+  font-weight: 600;
+}
+.agent-plan__aspect {
+  border-radius: var(--radius-full);
+  background: var(--fill-3);
+  padding: 1px 6px;
+  color: var(--text-3);
+  font-size: 10.5px;
+}
+.agent-plan__prompt {
+  display: -webkit-box;
+  margin: 4px 0 0;
+  overflow: hidden;
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.agent-plan__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.agent-plan__actions .button {
+  height: 30px;
+  min-height: 30px;
+  border-radius: var(--radius-full);
+  padding: 0 14px;
+  font-size: 12px;
+}
+.agent-panel__references {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 8px;
+  border-radius: var(--radius-md);
+  background: var(--fill-2);
+  padding: 6px 6px 6px 12px;
+  color: var(--text-2);
+  font-size: 12px;
+}
+.agent-panel__reference-thumbs {
+  display: flex;
+  flex: 0 0 auto;
+}
+.agent-panel__reference-thumbs img {
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--bg-surface);
+  border-radius: var(--radius-xs);
+  object-fit: cover;
+}
+.agent-panel__reference-thumbs img + img {
+  margin-left: -8px;
+}
+.agent-panel__reference-label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agent-panel__references .button {
+  height: 26px;
+  min-height: 26px;
+  border-radius: var(--radius-full);
+  padding: 0 10px;
+  color: var(--text-3);
+  font-size: 12px;
+  box-shadow: none;
+}
+/* The composer at the panel's foot: its settings take the first row of the toolbar, the
+   skill library and the send button the second. */
+.agent-panel .agent-composer.border-glow-card {
+  width: auto;
+  max-width: none;
+  margin: 0 12px 12px;
+  border-color: var(--line-2);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface-hover);
+  box-shadow: none;
+}
+/* The composer's pointer glow reaches past its edge, which the panel would clip. */
+.agent-panel .agent-composer.border-glow-card::before,
+.agent-panel .agent-composer.border-glow-card::after,
+.agent-panel .agent-composer.border-glow-card > .edge-light {
+  display: none;
+}
+.agent-panel .agent-composer .agent-chat-input__surface {
+  border-radius: inherit;
+  background: transparent;
+  padding: 0 6px 6px;
+}
+.agent-panel .agent-composer .agent-chat-input__references {
+  padding: 10px 6px 0;
+}
+.agent-panel .agent-composer .agent-chat-input__reference-add,
+.agent-panel .agent-composer .agent-chat-input__reference {
+  width: 40px;
+  height: 40px;
+}
+.agent-panel .agent-composer .agent-chat-input__textarea {
+  min-height: 48px !important;
+  max-height: 144px !important;
+  padding: 8px 6px 4px !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+.agent-panel .agent-composer .agent-chat-input__toolbar {
+  flex-wrap: wrap;
+  row-gap: 6px;
+  padding-top: 4px;
+}
+.agent-panel .agent-composer .agent-chat-input__toolbar-content {
+  order: -1;
+  flex: 1 0 100%;
+  justify-content: flex-start;
+  gap: 4px;
+}
+.agent-panel .agent-composer .agent-chat-input__toolbar-group--end {
+  margin-left: auto;
+}
+.agent-panel .agent-composer .generation-composer-controls {
+  width: auto;
+  min-width: 0;
+  flex: 1;
+  gap: 4px;
+}
+.agent-panel
+  .agent-composer
+  :is(.agent-execution-select, .generation-model-select, .generation-custom-trigger) {
+  width: auto;
+  min-width: 0;
+  height: 30px;
+  min-height: 30px;
+  flex: 0 1 auto;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--fill-2);
+  padding: 0 10px;
+  color: var(--text-2);
+  font-size: 12px;
+  box-shadow: none;
+}
+.agent-panel
+  .agent-composer
+  :is(.agent-execution-select, .generation-model-select, .generation-custom-trigger):hover:not(
+    :disabled
+  ) {
+  background: var(--fill-3);
+  color: var(--text-1);
+}
+.agent-panel .agent-composer .agent-execution-select {
+  flex: 0 0 auto;
+  gap: 6px;
+}
+.agent-panel .agent-composer .generation-model-select {
+  min-width: 0;
+  max-width: 120px;
+}
+.agent-panel .agent-composer .generation-custom-trigger > small {
+  display: none;
+}
+.agent-panel-toggle.button {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 6;
+  height: 36px;
+  min-height: 36px;
+  gap: 6px;
+  border-radius: var(--radius-full);
+  padding: 0 14px 0 12px;
+}
+.agent-panel-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 860px) {
+  .agent-panel {
+    top: auto;
+    right: 12px;
+    width: auto;
+    height: min(58svh, 520px);
+  }
+  .agent-canvas__rail {
+    top: 84px;
+    transform: none;
+  }
+  .agent-panel-toggle.button {
+    top: auto;
+    bottom: 16px;
+  }
+}

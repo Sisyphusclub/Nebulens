@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useAgentSessionIds } from '@/hooks/useAgentConversation';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { SESSION_TITLE_MAX_LENGTH, useGenerationSessions } from '@/hooks/useGenerationSessions';
@@ -40,6 +41,7 @@ interface SidebarCreationHistoryProps {
 export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryProps) {
   const { isAuthenticated } = useAuth();
   const { sessions, rename, remove } = useGenerationSessions();
+  const agentSessionIds = useAgentSessionIds();
   const history = useImageHistory();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -48,7 +50,10 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
   const [draftTitle, setDraftTitle] = useState('');
   const [initialTitle, setInitialTitle] = useState('');
 
-  const activeSessionId = location.pathname === '/generate' ? searchParams.get('session') : null;
+  const activeSessionId =
+    location.pathname === '/generate' || location.pathname === '/agent'
+      ? searchParams.get('session')
+      : null;
   const items = useMemo(
     () => sidebarSessions(sessions, history.batches, activeSessionId),
     [activeSessionId, history.batches, sessions],
@@ -137,7 +142,7 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
                 <SidebarMenuItem key={item.id} className="sidebar-history__item">
                   <SidebarMenuButton asChild isActive={active}>
                     <Link
-                      to={`/generate?session=${encodeURIComponent(item.id)}`}
+                      to={`${agentSessionIds.has(item.id) ? '/agent' : '/generate'}?session=${encodeURIComponent(item.id)}`}
                       aria-current={active ? 'page' : undefined}
                       title={item.title}
                       onClick={onNavigate}

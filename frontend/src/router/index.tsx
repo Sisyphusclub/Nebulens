@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 const SITE_TITLE = '贝尔灵画｜AI 图像创作工作台';
 const PAGE_TITLES: Readonly<Record<string, string>> = {
   '/generate': '生图',
+  '/agent': 'Agent 画布',
   '/templates': '创作模板',
   '/history': '资产',
   '/admin/users': '用户管理',
@@ -16,6 +17,9 @@ const LandingView = lazy(() =>
 );
 const GenerateView = lazy(() =>
   import('@/views/GenerateView').then((module) => ({ default: module.GenerateView })),
+);
+const AgentView = lazy(() =>
+  import('@/views/AgentView').then((module) => ({ default: module.AgentView })),
 );
 const TemplatesView = lazy(() =>
   import('@/views/TemplatesView').then((module) => ({ default: module.TemplatesView })),
@@ -50,6 +54,7 @@ export function AppRoutes() {
       <Routes>
         <Route path="/" element={<LandingView />} />
         <Route path="/generate" element={<GenerateView />} />
+        <Route path="/agent" element={<AgentView />} />
         <Route path="/templates" element={<TemplatesView />} />
         <Route path="/history" element={<HistoryView />} />
         <Route path="/admin/users" element={<AdminUsersView />} />

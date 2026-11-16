@@ -2407,18 +2407,21 @@ it('keeps an unsent prompt through a remount and forgets it once it is generated
   expect(screen.getByRole('textbox', { name: '图像提示词' })).toHaveTextContent('');
 });
 
-it('has the text model plan the images when no skill fits an Agent mode request', async () => {
-  skillsApiMocks.selectSkillForBrief.mockResolvedValue(null);
-  skillsApiMocks.planFreely.mockResolvedValue({
-    title: '晨雾灯塔',
-    outputs: [
-      { id: 'image-1', label: '主视觉', aspect: '3:4', prompt: '晨雾里的灯塔，胶片质感，竖版构图' },
-    ],
-  });
+it('hands an Agent mode request to the Agent canvas, in the session being viewed', async () => {
+  const session = createGenerationSession('晨雾');
   const user = userEvent.setup();
+  const seen: { current: { pathname: string; search: string; state: unknown } | null } = {
+    current: null,
+  };
+  function AgentProbe() {
+    const location = useLocation();
+    seen.current = { pathname: location.pathname, search: location.search, state: location.state };
+    return null;
+  }
   render(
-    <MemoryRouter initialEntries={['/generate']}>
+    <MemoryRouter initialEntries={[`/generate?session=${session.id}`]}>
       <ToastProvider>
+        <AgentProbe />
         <GenerateView />
       </ToastProvider>
     </MemoryRouter>,
@@ -2428,23 +2431,15 @@ it('has the text model plan the images when no skill fits an Agent mode request'
   await user.type(screen.getByRole('textbox', { name: '图像提示词' }), '晨雾里的灯塔');
   await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
 
-  await waitFor(() =>
-    expect(generation.generate).toHaveBeenCalledWith(
-      expect.objectContaining({ prompt: '晨雾里的灯塔，胶片质感，竖版构图' }),
-    ),
-  );
-  expect(skillsApiMocks.planFreely).toHaveBeenCalledWith('晨雾里的灯塔', false);
-  expect(skillsApiMocks.planSkill).not.toHaveBeenCalled();
+  await waitFor(() => expect(seen.current?.pathname).toBe('/agent'));
+  expect(seen.current?.search).toBe(`?session=${session.id}`);
+  expect(seen.current?.state).toEqual({ agentRequest: { brief: '晨雾里的灯塔', files: [] } });
+  // The canvas reads and plans the request; nothing is planned or made here.
+  expect(skillsApiMocks.selectSkillForBrief).not.toHaveBeenCalled();
+  expect(generation.generate).not.toHaveBeenCalled();
 });
 
-it('makes images only their maker can see once that is chosen, for plain and planned runs alike', async () => {
-  skillsApiMocks.selectSkillForBrief.mockResolvedValue(null);
-  skillsApiMocks.planFreely.mockResolvedValue({
-    title: '晨雾灯塔',
-    outputs: [
-      { id: 'image-1', label: '主视觉', aspect: '3:4', prompt: '晨雾里的灯塔，胶片质感，竖版构图' },
-    ],
-  });
+it('makes images only their maker can see once that is chosen', async () => {
   const user = userEvent.setup();
   render(
     <MemoryRouter initialEntries={['/generate']}>
@@ -2467,16 +2462,6 @@ it('makes images only their maker can see once that is chosen, for plain and pla
   await waitFor(() =>
     expect(generation.generate).toHaveBeenCalledWith(
       expect.objectContaining({ prompt: '私密草图', isShared: false }),
-    ),
-  );
-
-  await user.click(screen.getByRole('button', { name: 'Agent 模式' }));
-  await user.type(screen.getByRole('textbox', { name: '图像提示词' }), '晨雾里的灯塔');
-  await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
-
-  await waitFor(() =>
-    expect(generation.generate).toHaveBeenCalledWith(
-      expect.objectContaining({ prompt: '晨雾里的灯塔，胶片质感，竖版构图', isShared: false }),
     ),
   );
 });

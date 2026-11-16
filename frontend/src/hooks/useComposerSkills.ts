@@ -27,6 +27,12 @@ import type { SkillForm, SkillPlan } from '@/types/skill';
 import { resolveAspectChoice } from '@/utils/imageAspect';
 import type { SkillRunRequest } from '@/utils/skillRun';
 
+/** What the Agent is doing, for a page that shows its work instead of toasts. */
+export type AgentProgress =
+  | { kind: 'selected'; skillLabel: string | null; ms: number }
+  | { kind: 'planned'; ms: number }
+  | { kind: 'failed'; message: string };
+
 interface UseComposerSkillsOptions {
   prompt: string;
   setPrompt: (prompt: string) => void;
@@ -39,10 +45,17 @@ interface UseComposerSkillsOptions {
   isShared: boolean;
   /** Starts a planned run: the homepage opens it in a new session, the generate page in place. */
   onPlanned: (title: string, request: SkillRunRequest) => void;
+  /**
+   * Given, the hook reports each step and failure here instead of in toasts, and an Agent
+   * run sends every attached image as a reference rather than the first alone.
+   */
+  onAgentProgress?: (progress: AgentProgress) => void;
 }
 
-function firstReferenceFile(attachments: readonly AgentChatAttachment[]): File | null {
-  return attachments.find((attachment) => attachment.file !== undefined)?.file ?? null;
+function attachedFiles(attachments: readonly AgentChatAttachment[]): File[] {
+  return attachments.flatMap((attachment) =>
+    attachment.file === undefined ? [] : [attachment.file],
+  );
 }
 
 /**
@@ -59,6 +72,7 @@ export function useComposerSkills({
   quality,
   isShared,
   onPlanned,
+  onAgentProgress,
 }: UseComposerSkillsOptions) {
   const activeSkill = skillInPrompt(prompt);
   const [skillForms, setSkillForms] = useState<SkillForm[] | null>(null);
@@ -90,6 +104,10 @@ export function useComposerSkills({
     setPrompt(`/${skill.label} ${withoutSkills(prompt)}`);
   };
   const exitSkill = (): void => setPrompt(withoutSkills(prompt));
+  const fail = (message: string): void => {
+    if (onAgentProgress === undefined) notify(message, 'error');
+    else onAgentProgress({ kind: 'failed', message });
+  };
   const setSkillChoice = (fieldId: string, value: string): void =>
     setSkillChoices((current) => ({ ...current, [fieldId]: value }));
 
@@ -122,30 +140,39 @@ export function useComposerSkills({
     onPlanned(plan.title, { skillLabel: runLabel, steps });
   };
 
-  /** Uploads the skill's image once, has the server plan a prompt per output, and starts it. */
+  /** Uploads the skill's images once, has the server plan a prompt per output, and starts it. */
   const planAndStart = async (
     skill: LandingSkill,
     form: SkillForm,
     brief: string,
-    referenceFile: File | null,
+    referenceFiles: readonly File[],
     choices: Record<string, string>,
   ): Promise<void> => {
-    const referenceFiles = referenceFile === null ? [] : [referenceFile];
-    const referenceIds = (await uploadReferenceImages(referenceFiles)).map((upload) => upload.id);
+    const referenceIds = (await uploadReferenceImages([...referenceFiles])).map(
+      (upload) => upload.id,
+    );
+    const startedAt = Date.now();
     const plan = await planSkill(form.id, {
       brief,
       values: choices,
-      hasReference: referenceFile !== null,
+      hasReference: referenceFiles.length > 0,
     });
+    onAgentProgress?.({ kind: 'planned', ms: Date.now() - startedAt });
     await startPlan(plan, skill.label, referenceFiles, referenceIds);
   };
 
   /** No skill fits: the text model plans the images, then they are made like a skill's. */
-  const planFreelyAndStart = async (brief: string, referenceFile: File | null): Promise<void> => {
+  const planFreelyAndStart = async (
+    brief: string,
+    referenceFiles: readonly File[],
+  ): Promise<void> => {
     // Planning comes first, so a missing text model is reported before anything is uploaded.
-    const plan = await planFreely(brief, referenceFile !== null);
-    const referenceFiles = referenceFile === null ? [] : [referenceFile];
-    const referenceIds = (await uploadReferenceImages(referenceFiles)).map((upload) => upload.id);
+    const startedAt = Date.now();
+    const plan = await planFreely(brief, referenceFiles.length > 0);
+    onAgentProgress?.({ kind: 'planned', ms: Date.now() - startedAt });
+    const referenceIds = (await uploadReferenceImages([...referenceFiles])).map(
+      (upload) => upload.id,
+    );
     await startPlan(plan, plan.title, referenceFiles, referenceIds);
   };
 
@@ -157,7 +184,7 @@ export function useComposerSkills({
   ): Promise<void> => {
     const form = skillForms?.find((candidate) => candidate.id === skill.id);
     if (form === undefined) {
-      notify(skillFormsError ?? '技能还在加载，请稍后再试。', 'error');
+      fail(skillFormsError ?? '技能还在加载，请稍后再试。');
       return;
     }
     if (!isAuthenticated) {
@@ -165,21 +192,22 @@ export function useComposerSkills({
       openAuthModal();
       return;
     }
-    const referenceFile = firstReferenceFile(attachments);
-    if (form.reference === 'required' && referenceFile === null) {
-      notify(`请先上传${form.referenceLabel ?? '参考图'}。`, 'error');
+    // A skill is written for one image, its own; the rest stay out of it.
+    const referenceFiles = attachedFiles(attachments).slice(0, 1);
+    if (form.reference === 'required' && referenceFiles.length === 0) {
+      fail(`请先上传${form.referenceLabel ?? '参考图'}。`);
       return;
     }
     const required = form.fields.find((field) => field.required && field.kind !== 'choice');
     if (required !== undefined && brief.length === 0) {
-      notify(`请在描述里写上${required.label}。`, 'error');
+      fail(`请在描述里写上${required.label}。`);
       return;
     }
     setPlanning(true);
     try {
-      await planAndStart(skill, form, brief, referenceFile, skillChoices);
+      await planAndStart(skill, form, brief, referenceFiles, skillChoices);
     } catch (err) {
-      notify(err instanceof Error ? err.message : '技能启动失败，请稍后重试。', 'error');
+      fail(err instanceof Error ? err.message : '技能启动失败，请稍后重试。');
     } finally {
       setPlanning(false);
     }
@@ -198,22 +226,34 @@ export function useComposerSkills({
       openAuthModal();
       return;
     }
-    const referenceFile = firstReferenceFile(attachments);
+    const files = attachedFiles(attachments);
+    // The composer sends one reference, as it always has; a page showing the Agent's work
+    // sends every picture picked for the request.
+    const referenceFiles = onAgentProgress === undefined ? files.slice(0, 1) : files;
     setPlanning(true);
     try {
-      const skillId = await selectSkillForBrief(brief, referenceFile !== null);
+      const startedAt = Date.now();
+      const skillId = await selectSkillForBrief(brief, referenceFiles.length > 0);
       const skill = skillId === null ? undefined : findLandingSkill(skillId);
       const forms = skill === undefined ? null : (skillForms ?? (await fetchSkillForms()));
       if (forms !== null && skillForms === null) setSkillForms(forms);
       const form = skill === undefined ? undefined : forms?.find((item) => item.id === skill.id);
-      if (skill !== undefined && form !== undefined) {
-        notify(`Agent 选用了「${skill.label}」，正在规划每张图。`);
-        await planAndStart(skill, form, briefForSkill(brief, skill), referenceFile, {});
+      const chosen = skill !== undefined && form !== undefined ? skill : undefined;
+      onAgentProgress?.({
+        kind: 'selected',
+        skillLabel: chosen?.label ?? null,
+        ms: Date.now() - startedAt,
+      });
+      if (chosen !== undefined && form !== undefined) {
+        if (onAgentProgress === undefined) {
+          notify(`Agent 选用了「${chosen.label}」，正在规划每张图。`);
+        }
+        await planAndStart(chosen, form, briefForSkill(brief, chosen), referenceFiles, {});
         return;
       }
-      await planFreelyAndStart(brief, referenceFile);
+      await planFreelyAndStart(brief, referenceFiles);
     } catch (err) {
-      notify(err instanceof Error ? err.message : 'Agent 暂时无法开始，请稍后重试。', 'error');
+      fail(err instanceof Error ? err.message : 'Agent 暂时无法开始，请稍后重试。');
     } finally {
       setPlanning(false);
     }

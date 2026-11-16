@@ -69,6 +69,7 @@ import {
   normalizeAspectChoiceForResolution,
   supportsImageQuality,
 } from '@/types/image';
+import { agentRequestState } from '@/utils/agentRequest';
 
 export function LandingView() {
   const navigate = useNavigate();
@@ -231,10 +232,30 @@ export function LandingView() {
     const trimmed = value.trim();
     if (!trimmed) return;
     if (mode === 'agent') {
-      void composerSkills.runAgent(trimmed, selectedAttachments);
+      openAgent(trimmed, selectedAttachments);
       return;
     }
     generatePlain(trimmed, selectedAttachments);
+  };
+  /** Agent mode carries on in the Agent's workspace, which reads the request there. */
+  const openAgent = (
+    trimmed: string,
+    selectedAttachments: readonly AgentChatAttachment[],
+  ): void => {
+    if (!isAuthenticated) {
+      // The request stays in the composer, so sending again after signing in works.
+      openAuthModal();
+      return;
+    }
+    clearPromptDraft();
+    void navigate('/agent', {
+      state: agentRequestState(
+        trimmed,
+        selectedAttachments.flatMap((attachment) =>
+          attachment.file === undefined ? [] : [attachment.file],
+        ),
+      ),
+    });
   };
   const generatePlain = (
     trimmed: string,

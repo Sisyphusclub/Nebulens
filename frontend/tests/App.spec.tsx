@@ -164,6 +164,7 @@ import {
   orderTemplatesWithAnimeLast,
   TEMPLATE_SHORTCUT_CATEGORIES,
 } from '@/data/creationTemplates';
+import { resetAgentConversationsForTests } from '@/hooks/useAgentConversation';
 import {
   attachGenerationBatch,
   createGenerationSession,
@@ -287,6 +288,7 @@ function RouteFixture({ entry }: { entry: TestRouteEntry }) {
 beforeEach(() => {
   vi.clearAllMocks();
   resetGenerationSessionsForTests();
+  resetAgentConversationsForTests();
   authMocks.user = {
     id: 'admin',
     email: 'admin@example.com',
@@ -519,16 +521,26 @@ describe('React application routes', () => {
     );
     await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
 
+    // The request carries on in the Agent's workspace, which asks before it spends credits.
+    const plan = await screen.findByRole('region', { name: '待确认的方案' });
     await waitFor(() =>
-      expect(skillMocks.planSkill).toHaveBeenCalledWith('ecommerce', {
-        brief: '给山川绿茶做一套淘宝主图',
-        values: {},
-        hasReference: false,
-      }),
+      expect(screen.getByLabelText('当前路由')).toHaveTextContent('/agent?session='),
     );
     expect(skillMocks.selectSkillForBrief).toHaveBeenCalledWith('给山川绿茶做一套淘宝主图', false);
+    expect(skillMocks.planSkill).toHaveBeenCalledWith('ecommerce', {
+      brief: '给山川绿茶做一套淘宝主图',
+      values: {},
+      hasReference: false,
+    });
+    expect(screen.getByText('选用技能「电商主图」')).toBeInTheDocument();
+    expect(within(plan).getByText('山川绿茶主图')).toBeInTheDocument();
+    expect(generation.generate).not.toHaveBeenCalled();
+
+    await user.click(within(plan).getByRole('button', { name: '开始生成' }));
     await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
-    expect(screen.getByLabelText('当前路由')).toHaveTextContent('/generate?session=');
+    expect(generation.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ prompt: '山川绿茶主图', aspectRatio: '1:1', isShared: true }),
+    );
   });
 
   it('has the text model plan the images when no skill fits an Agent mode request', async () => {
@@ -586,13 +598,20 @@ describe('React application routes', () => {
     );
     await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
 
-    await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(2));
+    const plan = await screen.findByRole('region', { name: '待确认的方案' });
+    expect(screen.getByText('没有合适的技能，自己规划画面')).toBeInTheDocument();
     expect(skillMocks.planFreely).toHaveBeenCalledWith('雨夜的未来城市，做两张', false);
     expect(skillMocks.planSkill).not.toHaveBeenCalled();
+    await user.click(within(plan).getByRole('button', { name: '开始生成' }));
+
+    await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(2));
     expect(
       generation.generate.mock.calls.map(([options]) => (options as { prompt: string }).prompt),
     ).toEqual(['雨夜的未来城市，霓虹倒影，竖版构图', '雨夜的未来城市，霓虹倒影，方图构图']);
-    expect(screen.getByLabelText('当前路由')).toHaveTextContent('/generate?session=');
+    // Both pictures are laid out on the canvas, and the request says what it made.
+    expect(await screen.findAllByRole('button', { name: /^画布图片：/ })).toHaveLength(2);
+    expect(await screen.findByText('生成了 2 张图')).toBeInTheDocument();
+    expect(screen.getByLabelText('当前路由')).toHaveTextContent('/agent?session=');
   });
 
   it('says plainly when Agent mode has no text model, and makes nothing', async () => {
@@ -609,8 +628,11 @@ describe('React application routes', () => {
     await user.type(screen.getByRole('textbox', { name: '首页创作提示词' }), '雨夜的未来城市');
     await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
 
-    expect(await screen.findByText(/Agent 需要文本模型/)).toBeInTheDocument();
+    // Told in the conversation, under the request, rather than in a passing toast.
+    const step = await screen.findByText(/Agent 需要文本模型/);
+    expect(step.closest('.agent-step')).toHaveAttribute('data-state', 'error');
     expect(generation.generate).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: '重新发送' })).toBeInTheDocument();
     expect(screen.getByLabelText('当前路由')).not.toHaveTextContent('/generate');
   });
 
@@ -654,17 +676,17 @@ describe('React application routes', () => {
     expect(await screen.findByRole('group', { name: '技能：活动海报' })).toBeInTheDocument();
   });
 
-  it('offers a canvas beside generating that says it is not open yet', async () => {
+  it('opens the Agent canvas from beside generating', async () => {
     const user = userEvent.setup();
     renderRoute('/');
     const modes = await screen.findByRole('group', { name: '创作方式' });
 
     expect(within(modes).getByText('生成')).toHaveAttribute('aria-current', 'page');
-    expect(within(modes).queryByRole('link')).not.toBeInTheDocument();
-    await user.click(within(modes).getByRole('button', { name: '画布' }));
+    await user.click(within(modes).getByRole('link', { name: '画布' }));
 
-    expect(await screen.findByText('画布暂未开放，敬请期待')).toBeInTheDocument();
-    expect(screen.getByLabelText('当前路由')).toHaveTextContent(/^\/$/);
+    expect(await screen.findByRole('region', { name: '画布' })).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Agent 对话' })).toBeInTheDocument();
+    expect(screen.getByLabelText('当前路由')).toHaveTextContent(/^\/agent$/);
   });
 
   it('swaps the skill chips for the AI strip once something is typed on the home page', async () => {

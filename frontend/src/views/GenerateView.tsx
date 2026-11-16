@@ -72,6 +72,7 @@ import { downloadUrl } from '@/utils/download';
 import { buildTextFixPrompt, isTextFixPrompt } from '@/utils/textCheck';
 import type { FeedItem } from '@/utils/generationFeed';
 import { readInitialReferenceFiles, requestsAutoGeneration } from '@/utils/generationRouteState';
+import { agentRequestState } from '@/utils/agentRequest';
 import { readSkillRun } from '@/utils/skillRun';
 import { useReleaseJumpTarget, useViewedBatchId } from '@/hooks/useViewedBatchId';
 import {
@@ -558,7 +559,25 @@ export function GenerateView() {
       return;
     }
     if (mode === 'agent' && text.trim() !== '') {
-      void composerSkills.runAgent(text.trim(), attachments);
+      // Agent mode carries on in the Agent's workspace, in this session.
+      if (!isAuthenticated) {
+        openAuthModal();
+        return;
+      }
+      const search =
+        activeSessionId !== null && sessions.some((session) => session.id === activeSessionId)
+          ? `?${new URLSearchParams({ session: activeSessionId }).toString()}`
+          : '';
+      setPrompt('');
+      upload.clear();
+      void navigate(`/agent${search}`, {
+        state: agentRequestState(
+          text.trim(),
+          attachments.flatMap((attachment) =>
+            attachment.file === undefined ? [] : [attachment.file],
+          ),
+        ),
+      });
       return;
     }
     submitCurrent(text);

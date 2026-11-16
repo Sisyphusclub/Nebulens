@@ -722,7 +722,7 @@ describe('React application routes', () => {
     ];
     renderRoute('/');
 
-    const panel = await screen.findByRole('region', { name: '成果库里相似的作品' });
+    const panel = await screen.findByRole('region', { name: '大家做过的相似作品' });
     await user.click(within(panel).getByRole('button', { name: '用这个提示词' }));
 
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(

@@ -460,10 +460,10 @@ describe('HistoryView team sharing', () => {
     historyMocks.entries = categorized;
     renderView();
 
-    await user.click(screen.getAllByRole('button', { name: '设为仅自己' })[0]!);
+    await user.click(screen.getAllByRole('button', { name: '设为仅自己可见' })[0]!);
     expect(historyMocks.update).toHaveBeenCalledWith('image-one.png', { isShared: false });
 
-    await user.click(screen.getByRole('button', { name: '共享到成果库' }));
+    await user.click(screen.getByRole('button', { name: '设为所有人可见' }));
     expect(historyMocks.update).toHaveBeenCalledWith('image-two.png', { isShared: true });
   });
 

@@ -130,7 +130,7 @@ describe('ImageDetailModal team details', () => {
     const dialog = screen.getByRole('dialog', { name: '图片详情' });
 
     expect(within(dialog).getByText('海报')).toBeInTheDocument();
-    expect(within(dialog).getByText('已入库')).toBeInTheDocument();
+    expect(within(dialog).getByText('所有人可见')).toBeInTheDocument();
     expect(within(dialog).getByText('奶茶新品海报')).toBeInTheDocument();
     expect(within(dialog).getByRole('list', { name: '标签' })).toHaveTextContent('奶茶清新');
   });
@@ -152,7 +152,7 @@ describe('ImageDetailModal team details', () => {
     await user.click(screen.getByRole('menuitemradio', { name: '品牌 Logo' }));
     expect(onCategoryChange).toHaveBeenCalledWith(analyzed, 'logo');
 
-    await user.click(screen.getByRole('button', { name: '设为仅自己' }));
+    await user.click(screen.getByRole('button', { name: '设为仅自己可见' }));
     expect(onToggleShared).toHaveBeenCalledWith(analyzed);
   });
 
@@ -160,6 +160,6 @@ describe('ImageDetailModal team details', () => {
     render(<ImageDetailModal entry={analyzed} ownerName="alice" onClose={vi.fn()} />);
     expect(screen.getByText('alice')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '修改用途' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '设为仅自己' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '设为仅自己可见' })).not.toBeInTheDocument();
   });
 });

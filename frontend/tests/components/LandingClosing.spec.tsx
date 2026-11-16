@@ -42,7 +42,6 @@ it('ends on a footer with the product’s name, its pages and the way back up', 
     ['生图', '/generate'],
     ['创作模板', '/templates'],
     ['资产', '/history'],
-    ['成果库', '/team'],
   ]);
 
   await user.click(within(footer).getByRole('button', { name: '回到顶部' }));

@@ -2,7 +2,9 @@ import { expect, test } from '@playwright/test';
 
 import { batches, expectLatestImage, openNewSession, submitPrompt } from './support';
 
-test('checks quoted text after generation, fixes it, and shares the work', async ({ page }) => {
+test('checks quoted text after generation, fixes it, and shows the work to everyone', async ({
+  page,
+}) => {
   const prompt = '端到端：海报标题写“错字检查”';
   await openNewSession(page);
   await submitPrompt(page, prompt);
@@ -16,7 +18,8 @@ test('checks quoted text after generation, fixes it, and shares the work', async
   await expect(batches(page)).toHaveCount(2);
   await expectLatestImage(page);
 
-  await page.goto('/team');
+  // The work is in its maker's assets, filed under its usage and visible to everyone.
+  await page.goto('/history');
   await page.getByRole('button', { name: '用途筛选' }).click();
   await page.getByRole('menuitemradio', { name: '海报' }).click();
   await page
@@ -25,14 +28,14 @@ test('checks quoted text after generation, fixes it, and shares the work', async
     .click();
   const dialog = page.getByRole('dialog', { name: '图片详情' });
   await expect(dialog).toContainText('模拟分析：一张测试海报');
-  await expect(dialog).toContainText('已入库');
+  await expect(dialog).toContainText('所有人可见');
   await page.keyboard.press('Escape');
 
   // Describing a similar need on the homepage recommends that work.
   await page.goto('/');
   await page.getByRole('textbox', { name: '首页创作提示词' }).click();
   await page.keyboard.type('海报标题写错字检查');
-  const recommendations = page.getByRole('region', { name: '成果库里相似的作品' });
+  const recommendations = page.getByRole('region', { name: '大家做过的相似作品' });
   await expect(recommendations).toContainText('同为海报');
   await recommendations.getByRole('button', { name: '用这个提示词' }).first().click();
   await expect(page.getByRole('textbox', { name: '首页创作提示词' })).toContainText('错字检查');

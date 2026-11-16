@@ -1,4 +1,4 @@
-import { GalleryVerticalEnd, Image } from 'lucide-react';
+import { Image } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 
 import { getAppNavigation } from '@/config/navigation';
@@ -11,12 +11,13 @@ describe('app navigation', () => {
     });
   });
 
-  it('gives the shared results library a gallery icon, apart from the admin people icon', () => {
-    const navigation = getAppNavigation(true);
-    const library = navigation.find((item) => item.to === '/team');
-    const admin = navigation.find((item) => item.to === '/admin/users');
-
-    expect(library).toMatchObject({ label: '成果库', icon: GalleryVerticalEnd });
-    expect(library?.icon).not.toBe(admin?.icon);
+  it('lists four pages, and user management for an admin; there is no gallery page', () => {
+    expect(getAppNavigation().map((item) => [item.label, item.to])).toEqual([
+      ['发现', '/'],
+      ['生图', '/generate'],
+      ['创作模板', '/templates'],
+      ['资产', '/history'],
+    ]);
+    expect(getAppNavigation(true).at(-1)).toMatchObject({ label: '用户管理', to: '/admin/users' });
   });
 });

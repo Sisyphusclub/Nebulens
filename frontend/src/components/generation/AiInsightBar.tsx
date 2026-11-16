@@ -9,7 +9,7 @@ const MIN_PROMPT_CHARS = 4;
 
 /**
  * Shows, while typing, what the AI has understood from the prompt: the usage, the text it
- * will render, whether small text calls for 2K, and how much similar work the library holds.
+ * will render, whether small text calls for 2K, and how much similar work others have shared.
  */
 export function AiInsightBar({
   prompt,
@@ -72,11 +72,11 @@ export function AiInsightBar({
               aria-expanded={similarOpen}
               onClick={onToggleSimilar}
             >
-              {`成果库有 ${similarCount} 个相似作品`}
+              {`有 ${similarCount} 个相似作品`}
               <ChevronUp aria-hidden="true" />
             </Button>
           ) : (
-            <span className="ai-insight__fact">{`成果库有 ${similarCount} 个相似作品`}</span>
+            <span className="ai-insight__fact">{`有 ${similarCount} 个相似作品`}</span>
           )
         ) : null}
         {facts.length === 0 && similarCount === 0 ? (

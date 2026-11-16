@@ -29,7 +29,7 @@ it('says what the AI understood and offers 2K for dense text', async () => {
   const bar = screen.getByRole('status', { name: 'AI 理解' });
   expect(bar).toHaveTextContent('识别为海报');
   expect(bar).toHaveTextContent('3 段画面文字');
-  expect(bar).toHaveTextContent('成果库有 4 个相似作品');
+  expect(bar).toHaveTextContent('有 4 个相似作品');
   await user.click(screen.getByRole('button', { name: '切换到 2K' }));
   expect(onUse2k).toHaveBeenCalledTimes(1);
   // What it read sits apart from what can be done about it.
@@ -118,7 +118,7 @@ it('turns the similar-work count into a toggle for the panel when asked to', asy
   const onToggleSimilar = vi.fn();
   renderBar({ similarCount: 2, similarOpen: false, onToggleSimilar });
 
-  const toggle = screen.getByRole('button', { name: '成果库有 2 个相似作品' });
+  const toggle = screen.getByRole('button', { name: '有 2 个相似作品' });
   expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await user.click(toggle);
   expect(onToggleSimilar).toHaveBeenCalledTimes(1);
@@ -128,6 +128,6 @@ it('names similar work without the writing tip when it is all there is to say', 
   renderBar({ prompt: '一只猫在窗边晒太阳', similarCount: 3 });
 
   const bar = screen.getByRole('status', { name: 'AI 理解' });
-  expect(bar).toHaveTextContent('成果库有 3 个相似作品');
+  expect(bar).toHaveTextContent('有 3 个相似作品');
   expect(bar).not.toHaveTextContent('用引号写出');
 });

@@ -171,8 +171,8 @@ export function ImageDetailModal({
               </div>
               {entry.record.isShared !== undefined ? (
                 <div>
-                  <dt>共享</dt>
-                  <dd>{entry.record.isShared ? '已入库' : '仅自己'}</dd>
+                  <dt>可见范围</dt>
+                  <dd>{entry.record.isShared ? '所有人可见' : '仅自己可见'}</dd>
                 </div>
               ) : null}
             </dl>
@@ -213,7 +213,7 @@ export function ImageDetailModal({
             {onToggleShared ? (
               <Button type="button" variant="ghost" onClick={() => onToggleShared(entry)}>
                 {entry.record.isShared ? <Lock aria-hidden="true" /> : <Users aria-hidden="true" />}
-                {entry.record.isShared ? '设为仅自己' : '共享到成果库'}
+                {entry.record.isShared ? '设为仅自己可见' : '设为所有人可见'}
               </Button>
             ) : null}
             {canDelete && onDelete ? (

@@ -1,12 +1,4 @@
-import {
-  Compass,
-  FolderOpen,
-  GalleryVerticalEnd,
-  Image,
-  LayoutTemplate,
-  Users,
-  type LucideIcon,
-} from 'lucide-react';
+import { Compass, FolderOpen, Image, LayoutTemplate, Users, type LucideIcon } from 'lucide-react';
 
 export interface AppNavigationItem {
   label: string;
@@ -19,7 +11,6 @@ const primaryNavigation = [
   { label: '生图', to: '/generate', icon: Image },
   { label: '创作模板', to: '/templates', icon: LayoutTemplate },
   { label: '资产', to: '/history', icon: FolderOpen },
-  { label: '成果库', to: '/team', icon: GalleryVerticalEnd },
 ] as const satisfies readonly AppNavigationItem[];
 
 const adminNavigation = {

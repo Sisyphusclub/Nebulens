@@ -124,12 +124,14 @@ export function ImageGrid({
                     </IconTooltip>
                   ) : null}
                   {onToggleShared && entry.record.isShared !== undefined ? (
-                    <IconTooltip label={entry.record.isShared ? '设为仅自己' : '共享到成果库'}>
+                    <IconTooltip
+                      label={entry.record.isShared ? '设为仅自己可见' : '设为所有人可见'}
+                    >
                       <Button
                         type="button"
                         variant="secondary"
                         size="icon"
-                        aria-label={entry.record.isShared ? '设为仅自己' : '共享到成果库'}
+                        aria-label={entry.record.isShared ? '设为仅自己可见' : '设为所有人可见'}
                         onClick={() => onToggleShared(entry)}
                       >
                         {entry.record.isShared ? (

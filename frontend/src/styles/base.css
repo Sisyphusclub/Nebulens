@@ -8206,10 +8206,6 @@ video {
 .assets-page .asset-commandbar.operational-toolbar {
   margin-bottom: 0;
 }
-/* The gallery has no sticky chrome around its toolbar to space it from the pictures. */
-.team-page .asset-commandbar.operational-toolbar {
-  margin-bottom: 20px;
-}
 
 .admin-page .admin-panel {
   margin-inline: 0;
@@ -9018,13 +9014,6 @@ video {
   margin-left: -8px;
   color: var(--ai);
   font-size: 12px;
-}
-
-/* Team works: load-more sits under the shared asset grid. */
-.team-page__more {
-  display: flex;
-  justify-content: center;
-  padding-block: 8px 32px;
 }
 
 /* Generate page: the same teammate matches, compact and on the app surface. */

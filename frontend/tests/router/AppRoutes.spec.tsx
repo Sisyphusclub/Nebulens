@@ -45,6 +45,16 @@ it('tells the user a page does not exist instead of quietly going home', () => {
   expect(screen.getByRole('link', { name: '返回首页' })).toHaveAttribute('href', '/');
 });
 
+it('has no gallery page: shared work is on the home page, and the old address says it is gone', () => {
+  render(
+    <MemoryRouter initialEntries={['/team']}>
+      <AppRoutes />
+    </MemoryRouter>,
+  );
+
+  expect(screen.getByRole('heading', { name: '页面不存在' })).toBeInTheDocument();
+});
+
 it.each([
   ['/templates', '创作模板 · 贝尔灵画'],
   ['/no-such-page', '页面不存在 · 贝尔灵画'],

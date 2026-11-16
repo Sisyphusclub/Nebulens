@@ -8937,13 +8937,13 @@ video {
    loose cards on the page. */
 .landing-recommendations {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   margin-top: 12px;
   border: 1px solid var(--line-1);
   border-radius: var(--radius-xl);
   background: var(--bg-surface);
-  padding: 10px 10px 10px 14px;
+  padding: 12px;
   box-shadow: 0 18px 40px -30px rgb(0 0 0 / 0.9);
 }
 .landing-recommendations__header {
@@ -8969,10 +8969,12 @@ video {
   letter-spacing: 0.04em;
   text-align: left;
 }
+/* Fit rather than fill, so two cards share the row instead of leaving an empty third column;
+   the cards sit as far apart as the panel's padding. */
 .landing-recommendations__list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
 }
 .landing-recommendations__item {
   display: flex;
@@ -8982,7 +8984,7 @@ video {
   border: 0;
   border-radius: var(--radius-md);
   background: var(--fill-1);
-  padding: 6px;
+  padding: 8px;
   transition: background-color 160ms var(--ease-out-expo);
 }
 .landing-recommendations__item:hover,
@@ -9047,7 +9049,7 @@ video {
   color: var(--muted-foreground);
 }
 .generation-inspiration .landing-recommendations__list {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 6px;
 }
 .generation-inspiration .landing-recommendations__item {

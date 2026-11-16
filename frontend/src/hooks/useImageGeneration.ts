@@ -82,7 +82,9 @@ function generationError(error: unknown): Error {
     return new Error('生成失败，请检查后端服务是否可用后重试。');
   }
   const suffix = error.requestId ? `（请求编号：${error.requestId}）` : '';
-  const quotaMessage = 'GPT 号池剩余额度不足，请稍后补充额度后再试。';
+  // The user's own credits, called 积分 everywhere else on screen.
+  const quotaMessage =
+    '积分不足，这次没能生成。每天签到可以领积分，也可以在账户菜单里换用个人 API Key。';
   const messages: Record<string, string> = {
     PAYLOAD_TOO_LARGE: '参考图超过后端限制，请压缩后重试。',
     UNSUPPORTED_MEDIA_TYPE: '后端无法识别此参考图格式，请改用 PNG、JPEG 或 WebP。',

@@ -218,7 +218,9 @@ describe('useImageGeneration', () => {
     await act(async () => {
       await expect(
         result.current.generate({ prompt: 'high resolution', resolution: '2k' }),
-      ).rejects.toThrow('GPT 号池剩余额度不足，请稍后补充额度后再试。');
+      ).rejects.toThrow(
+        '积分不足，这次没能生成。每天签到可以领积分，也可以在账户菜单里换用个人 API Key。',
+      );
     });
   });
 
@@ -234,7 +236,7 @@ describe('useImageGeneration', () => {
 
     await act(async () => {
       await expect(result.current.generate({ prompt: 'standard resolution' })).rejects.toThrow(
-        'GPT 号池剩余额度不足，请稍后补充额度后再试。',
+        '积分不足，这次没能生成。每天签到可以领积分，也可以在账户菜单里换用个人 API Key。',
       );
     });
 

@@ -240,6 +240,8 @@ export function useImageHistory() {
             resolution: entry.record.resolution ?? DEFAULT_IMAGE_RESOLUTION,
             ...(entry.record.quality === undefined ? {} : { quality: entry.record.quality }),
             isPublic: entry.record.isPublic,
+            // Made again, a batch stays as visible as it was.
+            ...(entry.record.isShared === undefined ? {} : { isShared: entry.record.isShared }),
             referenceIds:
               entry.record.referenceIds ??
               (entry.record.referenceId ? [entry.record.referenceId] : []),

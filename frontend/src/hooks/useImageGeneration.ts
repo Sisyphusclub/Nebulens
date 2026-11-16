@@ -35,6 +35,8 @@ export interface GenerateImageOptions {
   resolution?: ImageResolution;
   quality?: ImageQuality;
   isPublic?: boolean;
+  /** False keeps the images to their maker; left out, the server shares them. */
+  isShared?: boolean;
   demoPresetId?: string;
   /** Called once reference files are uploaded, so a retry can reuse them if generation fails. */
   onReferencesUploaded?: (referenceIds: string[]) => void;
@@ -175,6 +177,7 @@ export function useImageGeneration() {
             ...(quality === undefined ? {} : { quality }),
             ...(referenceIds.length ? { referenceIds } : {}),
             isPublic: options.isPublic ?? false,
+            ...(options.isShared === undefined ? {} : { isShared: options.isShared }),
             ...(options.demoPresetId === undefined ? {} : { demoPresetId: options.demoPresetId }),
           }),
           controller.signal,
@@ -196,6 +199,7 @@ export function useImageGeneration() {
             ...(quality === undefined ? {} : { quality }),
             elapsedMs: Date.now() - startedAt,
             isPublic: options.isPublic ?? false,
+            isShared: options.isShared ?? true,
             isFavorite: false,
             ...(referenceIds[0] === undefined ? {} : { referenceId: referenceIds[0] }),
             ...(referenceIds.length ? { referenceIds } : {}),

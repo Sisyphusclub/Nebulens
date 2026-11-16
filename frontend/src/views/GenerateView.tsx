@@ -117,6 +117,8 @@ export function GenerateView() {
     setQuality,
     aspect,
     setAspect,
+    isPrivate,
+    setIsPrivate,
     applySnapshot,
     buildSnapshot,
   } = useGenerationSettings(searchParams);
@@ -533,6 +535,7 @@ export function GenerateView() {
     model,
     resolution,
     quality,
+    isShared: !isPrivate,
     // A run planned here stays in this session; its images join the feed below.
     onPlanned: (_title, request) => {
       setPrompt('');
@@ -917,6 +920,7 @@ export function GenerateView() {
                 count={count}
                 resolution={resolution}
                 quality={quality}
+                isPrivate={isPrivate}
                 disabled={generation.isLoading}
                 planned={mode === 'agent' || activeSkill !== undefined}
                 customPanelSide="top"
@@ -925,6 +929,7 @@ export function GenerateView() {
                 onCountChange={setCount}
                 onResolutionChange={updateResolution}
                 onQualityChange={setQuality}
+                onPrivateChange={setIsPrivate}
               />
             }
             className="generation-composer studio-agent-input"

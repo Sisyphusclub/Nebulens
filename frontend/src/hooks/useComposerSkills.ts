@@ -36,6 +36,7 @@ interface UseComposerSkillsOptions {
   model: ImageModel;
   resolution: ImageResolution;
   quality: ImageQuality;
+  isShared: boolean;
   /** Starts a planned run: the homepage opens it in a new session, the generate page in place. */
   onPlanned: (title: string, request: SkillRunRequest) => void;
 }
@@ -56,6 +57,7 @@ export function useComposerSkills({
   model,
   resolution,
   quality,
+  isShared,
   onPlanned,
 }: UseComposerSkillsOptions) {
   const activeSkill = skillInPrompt(prompt);
@@ -111,6 +113,7 @@ export function useComposerSkills({
           resolution,
           ...(supportsImageQuality(model) ? { quality } : {}),
           isPublic: false,
+          isShared,
           referenceIds: [...referenceIds],
         };
         return { label: output.label, settings };

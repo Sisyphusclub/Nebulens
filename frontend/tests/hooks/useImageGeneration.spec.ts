@@ -114,6 +114,49 @@ describe('useImageGeneration', () => {
     expect(history.addImageRecord.mock.calls[1]?.[0]).not.toHaveProperty('quality');
   });
 
+  it('asks for an image only its maker can see, and records it that way', async () => {
+    api.generateImage.mockResolvedValue({
+      batchId: 'batch-private',
+      aspectRatio: '1:1',
+      generationMode: 'text-to-image',
+      images: [
+        {
+          id: 'private.png',
+          outputUrl: '/api/outputs/private.png',
+          filename: 'private.png',
+          mime: 'image/png',
+          width: 1024,
+          height: 1024,
+        },
+      ],
+    });
+    history.addImageRecord.mockImplementation((record: unknown) => ({
+      record,
+      imageUrl: '/api/outputs/private.png',
+    }));
+    const { result } = renderHook(() => useImageGeneration());
+
+    await act(async () => {
+      await result.current.generate({ prompt: '私密草图', isShared: false });
+    });
+    expect(api.generateImage).toHaveBeenLastCalledWith(
+      expect.objectContaining({ isShared: false }),
+      expect.any(AbortSignal),
+    );
+    expect(history.addImageRecord).toHaveBeenLastCalledWith(
+      expect.objectContaining({ isShared: false }),
+    );
+
+    // Without a choice the request says nothing, and the server shares the image.
+    await act(async () => {
+      await result.current.generate({ prompt: '公开作品' });
+    });
+    expect(api.generateImage.mock.calls[1]?.[0]).not.toHaveProperty('isShared');
+    expect(history.addImageRecord).toHaveBeenLastCalledWith(
+      expect.objectContaining({ isShared: true }),
+    );
+  });
+
   it('discards a generation response after the authenticated account changes', async () => {
     const response = deferred<{
       batchId: string;

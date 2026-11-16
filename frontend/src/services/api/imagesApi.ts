@@ -205,6 +205,7 @@ export function createGenerateRequest(input: {
   resolution?: ImageResolution;
   quality?: ImageQuality;
   isPublic?: boolean;
+  isShared?: boolean;
   demoPresetId?: string;
 }): GenerateRequest {
   const request: GenerateRequest = {
@@ -233,6 +234,9 @@ export function createGenerateRequest(input: {
   }
   if (input.isPublic !== undefined) {
     request.isPublic = input.isPublic;
+  }
+  if (input.isShared !== undefined) {
+    request.isShared = input.isShared;
   }
   if (input.demoPresetId !== undefined) {
     request.demoPresetId = input.demoPresetId;

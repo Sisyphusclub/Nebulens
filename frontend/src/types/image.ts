@@ -322,6 +322,11 @@ export interface GenerationSettingsSnapshot {
   resolution: ImageResolution;
   quality?: ImageQuality;
   isPublic: boolean;
+  /**
+   * Whether everyone signed in may see the images; false keeps them to their maker.
+   * Settings stored before the choice existed leave it out, and the server then shares.
+   */
+  isShared?: boolean;
   referenceIds: readonly string[];
 }
 
@@ -350,6 +355,7 @@ export interface GenerateRequest {
   resolution?: ImageResolution;
   quality?: ImageQuality;
   isPublic?: boolean;
+  isShared?: boolean;
   demoPresetId?: string;
 }
 

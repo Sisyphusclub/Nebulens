@@ -43,6 +43,7 @@ import { useImageQuota } from '@/hooks/useImageQuota';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { useGenerationSessions } from '@/hooks/useGenerationSessions';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { usePrivateGeneration } from '@/hooks/usePrivateGeneration';
 import { usePromptDraft } from '@/hooks/usePromptDraft';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
@@ -115,6 +116,8 @@ export function LandingView() {
     imageApiKey.status?.highResConfigured === true ||
     (quota?.remaining ?? 0) >= imageGenerationCreditCost('2k', model);
   const [quality, setQuality] = useState<ImageQuality>(DEFAULT_IMAGE_QUALITY);
+  // The generate page reads the same remembered choice, so it needs no place in the address.
+  const [isPrivate, setIsPrivate] = usePrivateGeneration();
   const [imageApiKeySettingsOpen, setImageApiKeySettingsOpen] = useState(false);
   const [mode, setMode] = useState<ComposerModeId>('image');
   const composerSkills = useComposerSkills({
@@ -125,6 +128,7 @@ export function LandingView() {
     model,
     resolution,
     quality,
+    isShared: !isPrivate,
     // The run opens in a new session on the generate page, which makes the images one by one.
     onPlanned: (title, skillRun) => {
       const session = createSession(title);
@@ -376,6 +380,7 @@ export function LandingView() {
                     count={count}
                     resolution={resolution}
                     quality={quality}
+                    isPrivate={isPrivate}
                     disabled={authLoading}
                     planned={mode === 'agent' || activeSkill !== undefined}
                     onModelChange={setModel}
@@ -383,6 +388,7 @@ export function LandingView() {
                     onCountChange={setCount}
                     onResolutionChange={updateResolution}
                     onQualityChange={setQuality}
+                    onPrivateChange={setIsPrivate}
                   />
                 }
                 className="generation-composer landing-composer"

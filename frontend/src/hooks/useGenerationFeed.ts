@@ -250,6 +250,7 @@ export function useGenerationFeed({
         aspectRatio: settings.aspectRatio,
         resolution: settings.resolution,
         ...(settings.quality === undefined ? {} : { quality: settings.quality }),
+        ...(settings.isShared === undefined ? {} : { isShared: settings.isShared }),
         referenceIds: [...settings.referenceIds],
         ...(referenceFiles.length ? { referenceFiles: [...referenceFiles] } : {}),
         onReferencesUploaded: (ids) => {

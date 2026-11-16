@@ -1,5 +1,5 @@
-import { ChevronDown, SlidersHorizontal, Sparkles } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { ChevronDown, Lock, SlidersHorizontal, Sparkles } from 'lucide-react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { ModelLogo } from '@/components/premium/agent-chat-input/model-logo';
 import {
@@ -48,12 +48,20 @@ function keepCustomPanelOpen(event: Event): void {
   event.preventDefault();
 }
 
+/** Who may see the images a run makes; the values are what the radio group passes around. */
+const VISIBILITY_OPTIONS = [
+  { value: 'shared', label: '所有人', name: '所有人可见' },
+  { value: 'private', label: '仅自己', name: '仅自己可见' },
+] as const;
+
 interface GenerationComposerControlsProps {
   model: ImageModel;
   aspect: AspectChoice;
   count: number;
   resolution: ImageResolution;
   quality: ImageQuality;
+  /** New images are kept to their maker instead of shown to everyone. */
+  isPrivate: boolean;
   disabled?: boolean;
   customPanelSide?: 'top' | 'bottom';
   /** A skill decides each image's ratio and count, so only the other settings are offered. */
@@ -63,6 +71,7 @@ interface GenerationComposerControlsProps {
   onCountChange: (count: number) => void;
   onResolutionChange: (resolution: ImageResolution) => void;
   onQualityChange: (quality: ImageQuality) => void;
+  onPrivateChange: (isPrivate: boolean) => void;
 }
 
 export function GenerationComposerControls({
@@ -71,6 +80,7 @@ export function GenerationComposerControls({
   count,
   resolution,
   quality,
+  isPrivate,
   disabled = false,
   customPanelSide = 'bottom',
   planned = false,
@@ -79,6 +89,7 @@ export function GenerationComposerControls({
   onCountChange,
   onResolutionChange,
   onQualityChange,
+  onPrivateChange,
 }: GenerationComposerControlsProps) {
   const visibleAspect = aspect === 'auto' ? '智能' : aspect;
   const qualitySupported = supportsImageQuality(model);
@@ -88,6 +99,11 @@ export function GenerationComposerControls({
     ...(qualitySupported ? [IMAGE_QUALITY_LABELS[quality]] : []),
     ...(planned ? [] : [`${count}张`]),
   ].join(' · ');
+  const visibility = isPrivate ? VISIBILITY_OPTIONS[1] : VISIBILITY_OPTIONS[0];
+  // Sharpness, count and visibility share one row; a planned run has no count to choose.
+  const compactColumns: CSSProperties & { '--compact-columns': number } = {
+    '--compact-columns': planned ? 2 : 3,
+  };
 
   return (
     <div className="generation-composer-controls" aria-label="生成设置">
@@ -109,11 +125,16 @@ export function GenerationComposerControls({
             variant="ghost"
             className="generation-custom-trigger"
             aria-label="自定义生成参数"
+            data-private={isPrivate ? 'true' : undefined}
             disabled={disabled}
           >
-            <SlidersHorizontal aria-hidden="true" />
+            {/* The lock takes the sliders' place, so the toolbar keeps its width. */}
+            {isPrivate ? <Lock aria-hidden="true" /> : <SlidersHorizontal aria-hidden="true" />}
             <span>自定义</span>
             <small>{parameterSummary}</small>
+            {isPrivate ? (
+              <span className="generation-custom-trigger__private sr-only">仅自己可见</span>
+            ) : null}
             <ChevronDown aria-hidden="true" />
           </Button>
         </AnimatedDropdownTrigger>
@@ -175,7 +196,7 @@ export function GenerationComposerControls({
               </ParameterGroup>
             )}
 
-            <div className="generation-custom-panel__compact-groups">
+            <div className="generation-custom-panel__compact-groups" style={compactColumns}>
               {qualitySupported ? (
                 <ParameterGroup
                   label="质量"
@@ -254,6 +275,33 @@ export function GenerationComposerControls({
                   </AnimatedDropdownRadioGroup>
                 </ParameterGroup>
               )}
+
+              <ParameterGroup
+                label="可见范围"
+                value={visibility.label}
+                className="generation-custom-group--visibility"
+              >
+                <AnimatedDropdownRadioGroup
+                  value={visibility.value}
+                  className="generation-custom-options generation-custom-options--compact generation-custom-options--visibility"
+                  aria-label="可见范围"
+                  onValueChange={(value) => onPrivateChange(value === 'private')}
+                >
+                  {VISIBILITY_OPTIONS.map((option) => (
+                    <AnimatedDropdownRadioItem
+                      key={option.value}
+                      value={option.value}
+                      aria-label={option.name}
+                      className="generation-custom-option generation-custom-option--compact"
+                      onSelect={keepCustomPanelOpen}
+                    >
+                      <AnimatedDropdownItemText className="generation-custom-option__text group-data-[highlighted]:translate-x-0">
+                        {option.label}
+                      </AnimatedDropdownItemText>
+                    </AnimatedDropdownRadioItem>
+                  ))}
+                </AnimatedDropdownRadioGroup>
+              </ParameterGroup>
             </div>
           </div>
         </AnimatedDropdownContent>

@@ -53,6 +53,7 @@ function parseGenerationSettings(value: unknown): GenerationSettingsSnapshot | n
     resolution === undefined ||
     (quality !== undefined && !isImageQuality(quality)) ||
     typeof candidate.isPublic !== 'boolean' ||
+    (candidate.isShared !== undefined && typeof candidate.isShared !== 'boolean') ||
     !Array.isArray(candidate.referenceIds) ||
     !candidate.referenceIds.every((referenceId) => typeof referenceId === 'string')
   ) {
@@ -66,6 +67,7 @@ function parseGenerationSettings(value: unknown): GenerationSettingsSnapshot | n
     resolution,
     ...(quality === undefined ? {} : { quality }),
     isPublic: candidate.isPublic,
+    ...(candidate.isShared === undefined ? {} : { isShared: candidate.isShared }),
     referenceIds: [...candidate.referenceIds],
   };
 }

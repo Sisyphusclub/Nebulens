@@ -132,6 +132,24 @@ describe('useGenerationFeed', () => {
     expect(notify).not.toHaveBeenCalled();
   });
 
+  it('passes on who may see the images, when the settings say', async () => {
+    const session = createGenerationSession('会话');
+    const { result: hook, generate } = setup(session);
+    generate.mockResolvedValue(result('batch-private'));
+
+    await act(async () => {
+      await hook.current.performGeneration({ ...settings, isShared: false }, [], true);
+    });
+    expect(generate).toHaveBeenLastCalledWith(expect.objectContaining({ isShared: false }));
+
+    // Settings stored before the choice existed say nothing, and the server shares the image.
+    generate.mockResolvedValue(result('batch-legacy'));
+    await act(async () => {
+      await hook.current.performGeneration(settings, [], true);
+    });
+    expect(generate.mock.calls[1]?.[0]).not.toHaveProperty('isShared');
+  });
+
   it('keeps a failed item with its error and reports the message without the request id', async () => {
     const session = createGenerationSession('会话');
     const { result: hook, generate, notify, onComposerSubmitted } = setup(session);

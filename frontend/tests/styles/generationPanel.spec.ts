@@ -11,6 +11,15 @@ function rule(selector: string): string {
 }
 
 describe('the generation settings panel', () => {
+  it('puts sharpness, count and visibility in one row, as many columns as there are groups', () => {
+    expect(rule('.generation-custom-panel__compact-groups')).toContain(
+      'grid-template-columns: repeat(var(--compact-columns, 2), minmax(0, 1fr));',
+    );
+    expect(rule('.generation-custom-options--visibility')).toContain(
+      'grid-template-columns: repeat(2, minmax(0, 1fr));',
+    );
+  });
+
   it('never hangs off the window: it slides left by what it is wider than the room it has', () => {
     const panel = rule('.generation-custom-panel');
     expect(panel).toContain('max-width: calc(100vw - 24px);');

@@ -22,6 +22,8 @@ import {
 } from '@/types/image';
 import { resolveAspectChoice } from '@/utils/imageAspect';
 
+import { usePrivateGeneration } from './usePrivateGeneration';
+
 export function readCount(searchParams: URLSearchParams): number {
   const value = Number(searchParams.get('count'));
   return Number.isInteger(value) && value >= MIN_COUNT && value <= MAX_COUNT
@@ -72,6 +74,8 @@ export function useGenerationSettings(searchParams: URLSearchParams) {
       readResolution(searchParams),
     ),
   );
+  // Not in the address and not part of a reused snapshot: see usePrivateGeneration.
+  const [isPrivate, setIsPrivate] = usePrivateGeneration();
 
   useEffect(() => {
     setModel(normalizeImageModel(searchParams.get('model')));
@@ -108,6 +112,7 @@ export function useGenerationSettings(searchParams: URLSearchParams) {
     ...(supportsImageQuality(model) ? { quality } : {}),
     // Publishing to Discover was retired; snapshots keep the field for stored sessions.
     isPublic: false,
+    isShared: !isPrivate,
     referenceIds,
   });
 
@@ -122,6 +127,8 @@ export function useGenerationSettings(searchParams: URLSearchParams) {
     setQuality,
     aspect,
     setAspect,
+    isPrivate,
+    setIsPrivate,
     applySnapshot,
     buildSnapshot,
   };

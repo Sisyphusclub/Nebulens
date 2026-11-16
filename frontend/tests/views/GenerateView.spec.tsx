@@ -2437,6 +2437,50 @@ it('has the text model plan the images when no skill fits an Agent mode request'
   expect(skillsApiMocks.planSkill).not.toHaveBeenCalled();
 });
 
+it('makes images only their maker can see once that is chosen, for plain and planned runs alike', async () => {
+  skillsApiMocks.selectSkillForBrief.mockResolvedValue(null);
+  skillsApiMocks.planFreely.mockResolvedValue({
+    title: '晨雾灯塔',
+    outputs: [
+      { id: 'image-1', label: '主视觉', aspect: '3:4', prompt: '晨雾里的灯塔，胶片质感，竖版构图' },
+    ],
+  });
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter initialEntries={['/generate']}>
+      <ToastProvider>
+        <GenerateView />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+  await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
+  await user.click(
+    within(screen.getByRole('group', { name: '可见范围' })).getByRole('menuitemradio', {
+      name: '仅自己可见',
+    }),
+  );
+  await user.keyboard('{Escape}');
+  await user.type(screen.getByRole('textbox', { name: '图像提示词' }), '私密草图');
+  await user.click(screen.getByRole('button', { name: '生成图片' }));
+
+  await waitFor(() =>
+    expect(generation.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ prompt: '私密草图', isShared: false }),
+    ),
+  );
+
+  await user.click(screen.getByRole('button', { name: 'Agent 模式' }));
+  await user.type(screen.getByRole('textbox', { name: '图像提示词' }), '晨雾里的灯塔');
+  await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
+
+  await waitFor(() =>
+    expect(generation.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ prompt: '晨雾里的灯塔，胶片质感，竖版构图', isShared: false }),
+    ),
+  );
+});
+
 it('keeps the quota beside the send button, with the billing note in its place in Agent mode', async () => {
   const user = userEvent.setup();
   const { container } = render(

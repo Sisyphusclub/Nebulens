@@ -67,8 +67,37 @@ describe('useGenerationSettings', () => {
       aspectRatio: '3:2',
       resolution: '4k',
       isPublic: false,
+      isShared: true,
       referenceIds: ['ref-1'],
     });
+  });
+
+  it('keeps new images to their maker once asked, in every snapshot it builds', async () => {
+    const params = new URLSearchParams();
+    const { result } = renderHook(() => useGenerationSettings(params));
+    expect(result.current.isPrivate).toBe(false);
+
+    act(() => result.current.setIsPrivate(true));
+
+    expect(result.current.isPrivate).toBe(true);
+    expect(await result.current.buildSnapshot('私密草图', [], [])).toMatchObject({
+      isShared: false,
+    });
+
+    // Reusing an earlier batch's settings never opens new work up again.
+    act(() => {
+      result.current.applySnapshot({
+        prompt: '旧图',
+        model: 'gpt-image-2',
+        count: 1,
+        aspectRatio: '1:1',
+        resolution: 'standard',
+        isPublic: false,
+        isShared: true,
+        referenceIds: [],
+      });
+    });
+    expect(result.current.isPrivate).toBe(true);
   });
 });
 

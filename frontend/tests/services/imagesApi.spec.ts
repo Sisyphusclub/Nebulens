@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   claimDailyCheckIn,
+  createGenerateRequest,
   fetchImageQuota,
   generateImage,
   registerUnauthorizedHandler,
@@ -146,6 +147,15 @@ describe('imagesApi', () => {
       prompt: 'publish me',
       isPublic: true,
     });
+  });
+
+  it('says who may see the new images only when the composer chose', () => {
+    expect(createGenerateRequest({ prompt: '私密草图', isShared: false })).toEqual({
+      prompt: '私密草图',
+      isShared: false,
+    });
+    // Left out, the server shares the image as it always has.
+    expect(createGenerateRequest({ prompt: '公开作品' })).not.toHaveProperty('isShared');
   });
 
   it('sends the selected quality in generate requests', async () => {

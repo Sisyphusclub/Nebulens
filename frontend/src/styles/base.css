@@ -9557,8 +9557,8 @@ video {
 /* Home: a creation workbench. A short greeting, a switch between writing and the canvas,
    the wide composer with one row of skill chips, then an inspiration feed of large cards
    under category tabs. Every skill with its example is in the composer's own library, so
-   nothing else stands between the composer and the feed. A night sky sits behind the
-   greeting and composer only, and scrolls away with them. */
+   nothing else stands between the composer and the feed. A faint glow in the brand's
+   colours lights the greeting only, and scrolls away with it. */
 .home-page {
   --home-gutter: clamp(20px, 2.4vw, 44px);
   position: relative;
@@ -9579,8 +9579,7 @@ video {
   right: var(--home-gutter);
 }
 
-/* The hero is narrower than the page, so the sky has room to swirl round the composer's
-   ends. 960px keeps the composer's toolbar on one row. */
+/* The hero is narrower than the page: 960px keeps the composer's toolbar on one row. */
 .home-hero {
   --home-hero-width: 960px;
   z-index: 2;
@@ -9591,10 +9590,8 @@ video {
   padding-bottom: var(--space-12);
   text-align: center;
 }
-/* A night sky covers the hero from the sidebar to the window edge. LandingStarfield draws
-   it: the stars bend around the composer, drift, and slide against the mouse. It fades in
-   once the first frame is up, and the overlay fades its bottom into the page, so the feed
-   below sits on a plain background. */
+/* The hero's backdrop runs from the sidebar to the window edge, and the overlay fades its
+   bottom into the page, so the feed below sits on a plain background. */
 .home-backdrop {
   position: absolute;
   inset: 0 calc(-1 * var(--home-gutter)) calc(-1 * var(--space-12));
@@ -9602,30 +9599,14 @@ video {
   overflow: hidden;
   pointer-events: none;
 }
-.home-backdrop__stars {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 900ms var(--ease-out-expo);
-}
-.home-backdrop__stars[data-ready='true'] {
-  opacity: 1;
-}
-/* LandingStarfield sizes the canvas in pixels from the top left, and keeps the camera's
-   centre where it was laid out: a hero that grows or shrinks below the composer as the user
-   types neither stretches nor shifts the sky. */
-.home-backdrop__stars > canvas {
-  display: block;
-}
 .home-backdrop__overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, transparent calc(100% - 120px), var(--background));
 }
-/* The hero's light, by default (the night sky only on ?backdrop=stars while the two are
-   compared): a faint glow along the top edge in the logo ribbon's blue, cyan and orange over
-   the plain page, gone well before the feed, so the composer and the work below carry the
-   colour. Gradients only, nothing moving. */
+/* The hero's light: a faint glow along the top edge in the logo ribbon's blue, cyan and
+   orange over the plain page, gone well before the feed, so the composer and the work below
+   carry the colour. Gradients only, nothing moving. */
 .home-backdrop__glow {
   position: absolute;
   inset: 0;
@@ -9647,10 +9628,6 @@ video {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.7 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   content: '';
   opacity: 0.05;
-}
-/* The stars bend around this box, and read its corner radius from here. */
-.home-hero .landing-composer-presentation {
-  border-radius: var(--radius-2xl);
 }
 /* The headline alone is in a Song face, light and widely tracked. 'halt' sets the comma and
    question mark half width, so the line reads as one phrase. */

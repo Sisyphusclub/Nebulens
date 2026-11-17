@@ -1,6 +1,6 @@
 import { LoaderCircle } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
@@ -15,7 +15,6 @@ import { LandingQuota } from '@/components/landing/LandingQuota';
 import { LandingRecommendations } from '@/components/landing/LandingRecommendations';
 import { LandingShowcase } from '@/components/landing/LandingShowcase';
 import { LandingSkillBar } from '@/components/landing/LandingSkillBar';
-import { LandingStarfield } from '@/components/landing/LandingStarfield';
 import { LandingModeSwitch, LandingSkillChips } from '@/components/landing/LandingSkillChips';
 import { ImageApiKeySettingsDialog } from '@/components/settings/ImageApiKeySettingsDialog';
 import { useToast } from '@/components/common/ToastProvider';
@@ -42,7 +41,6 @@ import { useComposerSkills } from '@/hooks/useComposerSkills';
 import { useImageQuota } from '@/hooks/useImageQuota';
 import { useImageApiKey } from '@/hooks/useImageApiKey';
 import { useGenerationSessions } from '@/hooks/useGenerationSessions';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { usePrivateGeneration } from '@/hooks/usePrivateGeneration';
 import { usePromptDraft } from '@/hooks/usePromptDraft';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
@@ -73,11 +71,8 @@ import { agentRequestState } from '@/utils/agentRequest';
 
 export function LandingView() {
   const navigate = useNavigate();
-  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const [searchParams] = useSearchParams();
-  // While the brand glow and the night sky are compared, ?backdrop=stars brings the sky back.
-  const starryBackdrop = searchParams.get('backdrop') === 'stars';
-  /** The composer's box: the stars behind the hero bend around it. */
+  /** The composer's box: the closing lines lead back to it, and the quick composer stands in
+   * for it once it has scrolled away. */
   const composerBoxRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { quota, isLoading: quotaLoading, checkIn } = useImageQuota();
@@ -305,15 +300,8 @@ export function LandingView() {
         onClose={() => setImageApiKeySettingsOpen(false)}
       />
       <section className="home-hero" aria-labelledby="landing-title">
-        <div
-          className={starryBackdrop ? 'home-backdrop' : 'home-backdrop home-backdrop--glow'}
-          aria-hidden="true"
-        >
-          {starryBackdrop ? (
-            <LandingStarfield lens={composerBoxRef} reducedMotion={reducedMotion} />
-          ) : (
-            <div className="home-backdrop__glow" />
-          )}
+        <div className="home-backdrop" aria-hidden="true">
+          <div className="home-backdrop__glow" />
           <div className="home-backdrop__overlay" />
         </div>
         {/* Each clause stays whole, so a narrow screen breaks the line only between them. */}

@@ -37,24 +37,24 @@ describe('home layout', () => {
     expect(rule('.home-backdrop__glow::after')).toContain(
       'background-image: url("data:image/svg+xml',
     );
-    // The night sky stays available while the two are compared.
-    // It fades in once the first frame is up, and into the page at the bottom.
-    expect(rule('.home-backdrop__stars')).toContain('opacity: 0;');
-    expect(rule(".home-backdrop__stars[data-ready='true']")).toContain('opacity: 1;');
+    // The backdrop fades into the page at the bottom.
     expect(rule('.home-backdrop__overlay')).toMatch(
       /linear-gradient\(180deg, transparent calc\(100% - \d+px\), var\(--background\)\)/,
     );
-    // The stars bend around the composer's box and read its corner radius from it.
-    expect(rule('.home-hero .landing-composer-presentation')).toContain(
-      'border-radius: var(--radius-2xl);',
-    );
-    for (const gone of ['.home-backdrop__media', '.landing-hero__video']) {
+    // The video and the night sky that came before it are gone, with the composer corner
+    // the stars bent around.
+    for (const gone of [
+      '.home-backdrop__media',
+      '.landing-hero__video',
+      '.home-backdrop__stars',
+      '.home-hero .landing-composer-presentation',
+    ]) {
       expect(baseStyles).not.toContain(gone);
     }
   });
 
-  it('leaves the hero composer as clear glass, so the sky shows through it', () => {
-    // A black box over the sky read as a hole in the page. The composer keeps the same glass
+  it('leaves the hero composer as clear glass, the same as on the generate page', () => {
+    // A black box in the hero read as a hole in the page. The composer keeps the same glass
     // as on the generate page: nothing on the home page repaints or flattens it.
     expect(baseStyles).not.toMatch(/\.home-hero [^{]*\.generation-composer[^{]*\{[^}]*background:/);
     expect(baseStyles).not.toMatch(
@@ -96,7 +96,7 @@ describe('home layout', () => {
     expect(rule('.home-hero .landing-composer')).toContain('margin-top: 0;');
   });
 
-  it('keeps the hero narrower than the page, so the sky has room to swirl round its ends', () => {
+  it('keeps the hero narrower than the page, just wide enough for the composer', () => {
     // A composer at least 947px wide keeps its toolbar on one row.
     expect(rule('.home-hero')).toContain('--home-hero-width: 960px;');
     expect(rule('.home-hero .landing-composer-anchor')).toContain(

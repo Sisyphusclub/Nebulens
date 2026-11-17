@@ -19,7 +19,7 @@ it('holds the home page on its own dark page while it loads, with no skeleton bl
   );
 
   expect(container.querySelector('.home-page--loading .home-hero')).toBeInTheDocument();
-  // The page draws its night sky itself once it is in: there is no picture to wait for.
+  // The hero's light is a gradient in the stylesheet: there is no picture to wait for.
   expect(container.querySelector('.home-page--loading img')).not.toBeInTheDocument();
   expect(screen.queryByRole('status', { name: '页面加载中' })).not.toBeInTheDocument();
 });

@@ -714,19 +714,19 @@ describe('React application routes', () => {
     expect(editor).toHaveTextContent('周年庆海报，标题“店庆”');
   });
 
-  it('lights the home hero with a faint brand glow, and the night sky only when asked for', async () => {
+  it('lights the home hero with a faint brand glow, and draws nothing behind it', async () => {
     const { container, unmount } = renderRoute('/');
     await screen.findByRole('heading', { level: 1, name: '今天，想把什么变成画面？' });
 
-    expect(container.querySelector('.home-backdrop--glow .home-backdrop__glow')).not.toBeNull();
-    expect(container.querySelector('.home-backdrop__stars')).toBeNull();
+    expect(container.querySelector('.home-backdrop .home-backdrop__glow')).not.toBeNull();
+    expect(container.querySelector('.home-backdrop canvas')).toBeNull();
     unmount();
 
-    // While the two are compared, ?backdrop=stars brings the sky back.
-    const stars = renderRoute('/?backdrop=stars');
+    // The night sky it replaced is gone, and so is the address that brought it back.
+    const asked = renderRoute('/?backdrop=stars');
     await screen.findByRole('heading', { level: 1, name: '今天，想把什么变成画面？' });
-    expect(stars.container.querySelector('.home-backdrop__stars')).not.toBeNull();
-    expect(stars.container.querySelector('.home-backdrop__glow')).toBeNull();
+    expect(asked.container.querySelector('.home-backdrop .home-backdrop__glow')).not.toBeNull();
+    expect(asked.container.querySelector('.home-backdrop canvas')).toBeNull();
   });
 
   it('greets visitors with a Chinese headline', async () => {

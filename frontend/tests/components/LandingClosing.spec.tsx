@@ -10,11 +10,11 @@ it('closes the page with one line about the product and a way to start', async (
   const onStart = vi.fn();
   render(<LandingClosing onStart={onStart} />);
 
-  const closing = screen.getByRole('region', { name: '开始用贝尔灵画创作' });
+  const closing = screen.getByRole('region', { name: '下一套物料，交给贝尔灵画' });
   expect(
-    within(closing).getByRole('heading', { level: 2, name: '开始用贝尔灵画创作' }),
+    within(closing).getByRole('heading', { level: 2, name: '下一套物料，交给贝尔灵画' }),
   ).toBeInTheDocument();
-  expect(closing).toHaveTextContent('把提示词和参考图，变成成组的作品。');
+  expect(closing).toHaveTextContent('说一句需求，Agent 规划、生成、校对，交付一整套。');
   // The logo is decoration here: the heading already names the product.
   expect(closing.querySelector('img')).toHaveAttribute('alt', '');
 

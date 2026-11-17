@@ -500,7 +500,7 @@ describe('React application routes', () => {
     expect(screen.getByLabelText('当前路由')).toHaveTextContent('/generate?session=');
   });
 
-  it('runs Agent mode: the server picks the skill, then its images are planned and made', async () => {
+  it('starts in Agent mode: the server picks the skill, then its images are planned and made', async () => {
     const user = userEvent.setup();
     skillMocks.selectSkillForBrief.mockResolvedValue({
       skillId: 'ecommerce',
@@ -512,8 +512,8 @@ describe('React application routes', () => {
     });
     renderRoute('/');
 
-    await user.click(await screen.findByRole('button', { name: 'Agent 模式' }));
-    expect(screen.getByRole('button', { name: 'Agent 模式' })).toHaveAttribute(
+    // The home composer starts in Agent mode, with nothing to pick first.
+    expect(await screen.findByRole('button', { name: 'Agent 模式' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -642,21 +642,23 @@ describe('React application routes', () => {
     expect(screen.getByLabelText('当前路由')).not.toHaveTextContent('/generate');
   });
 
-  it('keeps the credits beside the send button, with the billing note in their place in Agent mode', async () => {
+  it('keeps the billing note beside the send button in Agent mode, and the credits there for single pictures', async () => {
     const user = userEvent.setup();
     const { container } = renderRoute('/');
+
+    // Agent mode comes first, and it bills what the plan uses rather than a fixed count.
+    expect(await screen.findByRole('button', { name: '交给 Agent 开始创作' })).toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: /剩余积分/ })).toBeNull();
+    expect(container.querySelector('.agent-chat-input__submit-note')).toHaveTextContent(
+      '按实际用量计费',
+    );
+
+    await user.click(screen.getByRole('button', { name: '图片生成' }));
 
     const quota = await screen.findByRole('status', { name: '剩余积分 16，总积分 20' });
     expect(quota.closest('.agent-chat-input__submit-note')).not.toBeNull();
     // The settings no longer carry a tail of their own: the toolbar is one row.
     expect(container.querySelector('.generation-controls-tail')).toBeNull();
-
-    await user.click(screen.getByRole('button', { name: 'Agent 模式' }));
-
-    expect(screen.queryByRole('status', { name: /剩余积分/ })).toBeNull();
-    expect(container.querySelector('.agent-chat-input__submit-note')).toHaveTextContent(
-      '按实际用量计费',
-    );
   });
 
   it('says video is on its way and keeps the current mode', async () => {
@@ -666,7 +668,7 @@ describe('React application routes', () => {
     await user.click(await screen.findByRole('button', { name: /视频生成/ }));
 
     expect(await screen.findByText(/视频生成即将上线/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '图片生成' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Agent 模式' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -716,7 +718,7 @@ describe('React application routes', () => {
 
   it('lights the home hero with a faint brand glow, and draws nothing behind it', async () => {
     const { container, unmount } = renderRoute('/');
-    await screen.findByRole('heading', { level: 1, name: '今天，想把什么变成画面？' });
+    await screen.findByRole('heading', { level: 1, name: '今天，要出什么物料？' });
 
     expect(container.querySelector('.home-backdrop .home-backdrop__glow')).not.toBeNull();
     expect(container.querySelector('.home-backdrop canvas')).toBeNull();
@@ -724,7 +726,7 @@ describe('React application routes', () => {
 
     // The night sky it replaced is gone, and so is the address that brought it back.
     const asked = renderRoute('/?backdrop=stars');
-    await screen.findByRole('heading', { level: 1, name: '今天，想把什么变成画面？' });
+    await screen.findByRole('heading', { level: 1, name: '今天，要出什么物料？' });
     expect(asked.container.querySelector('.home-backdrop .home-backdrop__glow')).not.toBeNull();
     expect(asked.container.querySelector('.home-backdrop canvas')).toBeNull();
   });
@@ -733,7 +735,7 @@ describe('React application routes', () => {
     renderRoute('/');
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: '今天，想把什么变成画面？' }),
+      await screen.findByRole('heading', { level: 1, name: '今天，要出什么物料？' }),
     ).toBeInTheDocument();
   });
 
@@ -776,6 +778,11 @@ describe('React application routes', () => {
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
       '奶茶新品上市海报，清新绿色',
     );
+    // A finished picture's prompt makes that picture again, so the Agent steps aside.
+    expect(screen.getByRole('button', { name: '图片生成' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('3:4');
   });
 
@@ -804,6 +811,10 @@ describe('React application routes', () => {
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
       '奶茶新品上市海报，清新绿色',
     );
+    expect(screen.getByRole('button', { name: '图片生成' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('3:4');
   });
 
@@ -819,6 +830,10 @@ describe('React application routes', () => {
 
     expect(screen.getByRole('textbox', { name: '首页创作提示词' })).toHaveTextContent(
       template!.prompt.slice(0, 24),
+    );
+    expect(screen.getByRole('button', { name: '图片生成' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
     );
   });
 
@@ -871,7 +886,9 @@ describe('React application routes', () => {
     const user = userEvent.setup();
     renderRoute('/');
 
-    const submit = await screen.findByRole('button', { name: '带着提示词开始创作' });
+    // A single picture's cost shows on the send button.
+    await user.click(await screen.findByRole('button', { name: '图片生成' }));
+    const submit = screen.getByRole('button', { name: '带着提示词开始创作' });
     expect(submit).toHaveTextContent('1');
     expect(submit).toBeDisabled();
 
@@ -944,7 +961,7 @@ describe('React application routes', () => {
     const { container } = renderRoute('/');
     const hero = await screen.findByRole('textbox', { name: '首页创作提示词' });
 
-    const closing = screen.getByRole('region', { name: '开始用贝尔灵画创作' });
+    const closing = screen.getByRole('region', { name: '下一套物料，交给贝尔灵画' });
     const footer = screen.getByRole('contentinfo');
     // The quick composer rests between the two once the page has been scrolled to its end.
     const quick = container.querySelector('.home-quick-composer')!;
@@ -977,6 +994,7 @@ describe('React application routes', () => {
 
       const hero = await screen.findByRole('textbox', { name: '首页创作提示词' });
       expect(screen.queryByRole('textbox', { name: '快速创作提示词' })).toBeNull();
+      await user.click(screen.getByRole('button', { name: '图片生成' }));
       await user.click(screen.getByRole('button', { name: '选择模型' }));
       await user.click(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-sunburst' }));
 
@@ -1008,7 +1026,9 @@ describe('React application routes', () => {
         new File([`reference-${index + 1}`], `reference-${index + 1}.png`, { type: 'image/png' }),
     );
 
-    await user.click(await screen.findByRole('button', { name: '添加参考图' }));
+    // Single pictures go straight to the generate page.
+    await user.click(await screen.findByRole('button', { name: '图片生成' }));
+    await user.click(screen.getByRole('button', { name: '添加参考图' }));
     const fileInput = container.querySelector<HTMLInputElement>('input[type="file"]');
     expect(fileInput).toHaveAttribute('accept', 'image/png,image/jpeg,image/webp');
     await user.upload(fileInput!, referenceFiles);

@@ -118,7 +118,9 @@ export function LandingView() {
   // The generate page reads the same remembered choice, so it needs no place in the address.
   const [isPrivate, setIsPrivate] = usePrivateGeneration();
   const [imageApiKeySettingsOpen, setImageApiKeySettingsOpen] = useState(false);
-  const [mode, setMode] = useState<ComposerModeId>('image');
+  // The Agent is the main way in, so the home composer starts there. The generate page keeps
+  // single pictures first.
+  const [mode, setMode] = useState<ComposerModeId>('agent');
   const composerSkills = useComposerSkills({
     prompt,
     setPrompt,
@@ -175,7 +177,10 @@ export function LandingView() {
     setResolution(next);
     setAspect((current) => normalizeAspectChoiceForResolution(current, next));
   };
+  // A finished picture's prompt is for making that picture again, so reusing one goes back to
+  // image generation; the Agent would plan a whole set from it instead.
   const applyRecommendedPrompt = (recommendation: TeamRecommendation): void => {
+    setMode('image');
     setPrompt(recommendation.record.prompt);
     if (recommendation.record.aspectRatio !== undefined) {
       setAspect(normalizeAspectChoiceForResolution(recommendation.record.aspectRatio, resolution));
@@ -197,6 +202,7 @@ export function LandingView() {
   };
   /** A teammate's reference images stay theirs, so only the prompt and framing carry over. */
   const makeSimilar = (record: TeamImageRecord): void => {
+    setMode('image');
     setPrompt(record.prompt);
     if (record.aspectRatio) {
       setAspect(normalizeAspectChoiceForResolution(record.aspectRatio, resolution));
@@ -205,6 +211,7 @@ export function LandingView() {
     if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const fillTemplatePrompt = (template: CreationTemplate): void => {
+    setMode('image');
     setPrompt(template.prompt);
     setAspect(normalizeAspectChoiceForResolution(template.settings.aspectRatio, resolution));
     notify('已填入这个模板的提示词，可以直接生成，或改几个字再生成。');
@@ -305,9 +312,9 @@ export function LandingView() {
           <div className="home-backdrop__overlay" />
         </div>
         {/* Each clause stays whole, so a narrow screen breaks the line only between them. */}
-        <h1 id="landing-title" aria-label="今天，想把什么变成画面？">
+        <h1 id="landing-title" aria-label="今天，要出什么物料？">
           <span>今天，</span>
-          <span>想把什么变成画面？</span>
+          <span>要出什么物料？</span>
         </h1>
         <LandingModeSwitch />
         <div className="landing-composer-anchor">

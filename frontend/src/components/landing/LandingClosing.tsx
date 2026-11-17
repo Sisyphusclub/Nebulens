@@ -15,8 +15,12 @@ export function LandingClosing({ onStart }: { onStart: () => void }) {
   return (
     <section className="home-closing" aria-labelledby="home-closing-title">
       <img src="/brand/logo.png" alt="" />
-      <h2 id="home-closing-title">开始用贝尔灵画创作</h2>
-      <p>把提示词和参考图，变成成组的作品。</p>
+      {/* Like the headline, each clause stays whole, so a narrow screen breaks between them. */}
+      <h2 id="home-closing-title" aria-label="下一套物料，交给贝尔灵画">
+        <span>下一套物料，</span>
+        <span>交给贝尔灵画</span>
+      </h2>
+      <p>说一句需求，Agent 规划、生成、校对，交付一整套。</p>
       <Button type="button" onClick={onStart}>
         开始创作
       </Button>

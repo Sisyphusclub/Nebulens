@@ -10289,6 +10289,9 @@ video {
   line-height: 1.3;
   letter-spacing: 0.05em;
 }
+.home-closing h2 > span {
+  display: inline-block;
+}
 .home-closing p {
   margin: var(--space-2) 0 0;
   color: var(--text-2);

@@ -210,6 +210,8 @@ describe('closing lines and footer', () => {
       expect(title).toContain(declaration);
       expect(headline).toContain(declaration);
     }
+    // Like the headline's, each clause of the title stays whole on a narrow screen.
+    expect(rule('.home-closing h2 > span')).toContain('display: inline-block;');
   });
 
   it('sets the footer apart with a hairline and keeps it quiet', () => {

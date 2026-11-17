@@ -120,9 +120,14 @@ export function AgentView() {
   const generation = useImageGeneration();
   const upload = useFileUpload();
   const narrow = useMediaQuery('(max-width: 860px)');
-  const [model, setModel] = useState<ImageModel>(DEFAULT_IMAGE_MODEL);
-  const [resolution, setResolution] = useState<ImageResolution>(DEFAULT_IMAGE_RESOLUTION);
-  const [quality, setQuality] = useState<ImageQuality>(DEFAULT_IMAGE_QUALITY);
+  // A request sent from another page brings the settings it was written with. They are the
+  // starting point, since its plan is made, priced and run with these from the first render.
+  const [carried] = useState(() => readAgentRequest(location.state)?.settings);
+  const [model, setModel] = useState<ImageModel>(carried?.model ?? DEFAULT_IMAGE_MODEL);
+  const [resolution, setResolution] = useState<ImageResolution>(
+    carried?.resolution ?? DEFAULT_IMAGE_RESOLUTION,
+  );
+  const [quality, setQuality] = useState<ImageQuality>(carried?.quality ?? DEFAULT_IMAGE_QUALITY);
   const [isPrivate, setIsPrivate] = usePrivateGeneration();
   const [execution, setExecution] = useAgentExecution();
   const executionRef = useRef(execution);

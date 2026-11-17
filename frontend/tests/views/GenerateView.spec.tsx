@@ -2428,12 +2428,21 @@ it('hands an Agent mode request to the Agent canvas, in the session being viewed
   );
 
   await user.click(screen.getByRole('button', { name: 'Agent 模式' }));
+  await user.click(screen.getByRole('button', { name: '选择模型' }));
+  await user.click(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-sunburst' }));
   await user.type(screen.getByRole('textbox', { name: '图像提示词' }), '晨雾里的灯塔');
   await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
 
   await waitFor(() => expect(seen.current?.pathname).toBe('/agent'));
   expect(seen.current?.search).toBe(`?session=${session.id}`);
-  expect(seen.current?.state).toEqual({ agentRequest: { brief: '晨雾里的灯塔', files: [] } });
+  // The settings go along, so the canvas plans and prices with them.
+  expect(seen.current?.state).toEqual({
+    agentRequest: {
+      brief: '晨雾里的灯塔',
+      files: [],
+      settings: { model: 'gpt-image-2.5-sunburst', resolution: 'standard', quality: 'medium' },
+    },
+  });
   // The canvas reads and plans the request; nothing is planned or made here.
   expect(skillsApiMocks.selectSkillForBrief).not.toHaveBeenCalled();
   expect(generation.generate).not.toHaveBeenCalled();

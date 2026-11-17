@@ -445,6 +445,34 @@ it('starts on a request sent from another page, in the session it came from', as
   await waitFor(() => expect(route).toHaveAttribute('data-state', 'none'));
 });
 
+it('plans, prices and makes a request from another page with the settings it was written with', async () => {
+  const user = userEvent.setup();
+  renderAgent({
+    pathname: '/agent',
+    state: agentRequestState('雨夜的未来城市，做两张', [], {
+      model: 'gpt-image-2.5-sunburst',
+      resolution: '2k',
+      quality: 'high',
+    }),
+  });
+
+  const plan = await screen.findByRole('region', { name: '待确认的方案' });
+  // Two pictures at 2K on sunburst cost 4 credits each.
+  expect(plan).toHaveTextContent('2 张 · 预计 8 积分');
+  expect(screen.getByRole('button', { name: '自定义生成参数' })).toHaveTextContent('2K · 精细');
+  await user.click(within(plan).getByRole('button', { name: '开始生成' }));
+
+  await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(2));
+  expect(generation.generate).toHaveBeenCalledWith(
+    expect.objectContaining({
+      prompt: '雨夜的未来城市，竖版构图',
+      model: 'gpt-image-2.5-sunburst',
+      resolution: '2k',
+      quality: 'high',
+    }),
+  );
+});
+
 it('stops a request while it is being planned, and nothing comes of the plan', async () => {
   const user = userEvent.setup();
   let resolvePlan!: (plan: typeof PLAN) => void;

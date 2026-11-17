@@ -259,6 +259,8 @@ export function LandingView() {
         selectedAttachments.flatMap((attachment) =>
           attachment.file === undefined ? [] : [attachment.file],
         ),
+        // The model, quality and sharpness chosen here go along with the request.
+        { model, resolution, quality },
       ),
     });
   };

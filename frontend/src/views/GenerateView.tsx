@@ -576,6 +576,7 @@ export function GenerateView() {
           attachments.flatMap((attachment) =>
             attachment.file === undefined ? [] : [attachment.file],
           ),
+          { model, resolution, quality },
         ),
       });
       return;

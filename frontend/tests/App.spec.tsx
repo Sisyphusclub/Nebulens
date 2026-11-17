@@ -617,6 +617,52 @@ describe('React application routes', () => {
     expect(screen.getByLabelText('当前路由')).toHaveTextContent('/agent?session=');
   });
 
+  it('takes the home composer’s model, quality and sharpness along to the Agent canvas', async () => {
+    const user = userEvent.setup();
+    skillMocks.selectSkillForBrief.mockResolvedValue({ skillId: null, modelUnavailable: false });
+    skillMocks.planFreely.mockResolvedValue({
+      title: '雨夜城市',
+      outputs: [
+        { id: 'image-1', label: '主视觉', aspect: '3:4', prompt: '雨夜的未来城市，竖版构图' },
+      ],
+    });
+    renderRoute('/');
+
+    await user.type(
+      await screen.findByRole('textbox', { name: '首页创作提示词' }),
+      '雨夜的未来城市',
+    );
+    await user.click(screen.getByRole('button', { name: '选择模型' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'gpt-image-2.5-sunburst' }));
+    await user.click(screen.getByRole('button', { name: '自定义生成参数' }));
+    await user.click(
+      within(screen.getByRole('group', { name: '质量' })).getByRole('menuitemradio', {
+        name: '精细',
+      }),
+    );
+    await user.click(
+      within(screen.getByRole('group', { name: '清晰度' })).getByRole('menuitemradio', {
+        name: '2K',
+      }),
+    );
+    await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
+
+    // The plan is priced with them: one picture at 2K on sunburst.
+    const plan = await screen.findByRole('region', { name: '待确认的方案' });
+    expect(plan).toHaveTextContent('1 张 · 预计 4 积分');
+    await user.click(within(plan).getByRole('button', { name: '开始生成' }));
+
+    await waitFor(() => expect(generation.generate).toHaveBeenCalledTimes(1));
+    expect(generation.generate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: '雨夜的未来城市，竖版构图',
+        model: 'gpt-image-2.5-sunburst',
+        resolution: '2k',
+        quality: 'high',
+      }),
+    );
+  });
+
   it('says plainly when Agent mode has no text model, and makes nothing', async () => {
     const user = userEvent.setup();
     skillMocks.selectSkillForBrief.mockResolvedValue({ skillId: null, modelUnavailable: true });

@@ -6,7 +6,7 @@ Agent 画布 · 14 个成套技能 · 提示词生图 · 参考图生图 · 资�
 
 ## 界面预览
 
-以下截图来自当前 `dev` 工作树的实际页面，分辨率为 1440 × 900。
+以下截图拍摄于 2026-09-11，分辨率为 1440 × 900，与现在的界面已有出入。
 
 | 发现页                               | 生图工作区                                   | 资产页                                  |
 | ------------------------------------ | -------------------------------------------- | --------------------------------------- |
@@ -20,7 +20,7 @@ Agent 画布 · 14 个成套技能 · 提示词生图 · 参考图生图 · 资�
 - **参考图生图**：最多上传 14 张参考图，也可以复用历史参考图。
 - **多模型接入**：支持 `gpt-image-2`、`gpt-image-2.5-flare` 和 `gpt-image-2.5-sunburst`。
 - **资产历史**：按日期、模型、可见范围和收藏状态筛选，支持预览、编辑、下载和删除。
-- **可见范围**：生成时可选“所有人可见”或“仅自己可见”，所有人可见的作品会出现在首页的发现墙。
+- **可见范围**：生成时可选“所有人可见”或“仅自己可见”，所有人可见的作品会出现在发现页的“灵感”和相似作品推荐里。
 - **账号与积分**：用 Better Auth 的用户名和密码登录，可选 Google OAuth。每天签到领积分，管理员也可以发放积分。
 - **OpenAI-compatible API**：提供 `/v1/images/generations` 接口。
 
@@ -149,12 +149,12 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 
 | 路径           | 用途                         |
 | -------------- | ---------------------------- |
-| `/`            | 发现页、提示词输入和公开画廊 |
+| `/`            | 发现页、需求输入和“灵感”作品 |
+| `/agent`       | Agent 对话和画布             |
 | `/generate`    | 生图工作区和当前会话结果     |
 | `/templates`   | 创作模板                     |
 | `/history`     | 个人资产历史                 |
-| `/team`        | 团队共享的成果库             |
-| `/admin/users` | 管理员用户与额度管理         |
+| `/admin/users` | 管理员用户与积分管理         |
 
 ### API 入口
 
@@ -171,7 +171,7 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 | `GET`    | `/api/auth/me`                  | 当前用户资料与权限                                               |
 | `GET`    | `/api/admin/users`              | 管理员读取用户列表                                               |
 | `POST`   | `/api/admin/users`              | 管理员创建用户                                                   |
-| `PATCH`  | `/api/admin/users/:id/quota`    | 设置用户额度                                                     |
+| `PATCH`  | `/api/admin/users/:id/quota`    | 设置用户积分                                                     |
 | `DELETE` | `/api/admin/users/:id`          | 删除普通用户                                                     |
 | `POST`   | `/v1/images/generations`        | OpenAI-compatible 生图接口                                       |
 | `POST`   | `/v1/images/edits`              | OpenAI-compatible 参考图生图（`image` 或 `image[]`，最多 14 张） |
@@ -194,7 +194,7 @@ PROVIDER_NETWORK=your-provider-network docker compose -f docker-compose.yml -f d
 | `VISION_MODEL`                | 否   | 视觉模型名，用于打标签、判断用途和核对文字             |
 | `VISION_API_BASE_URL`         | 否   | 视觉模型接口地址，默认同 `IMAGE_API_BASE_URL`          |
 | `UPLOAD_MAX_BYTES`            | 否   | 参考图上传上限，默认 10MiB                             |
-| `DAILY_CHECK_IN_REWARD`       | 否   | 每日签到发放的额度，默认 5，7 天内有效                 |
+| `DAILY_CHECK_IN_REWARD`       | 否   | 每日签到发放的积分，默认 5，7 天内有效                 |
 | `SEED_DEFAULT_ADMIN`          | 否   | 是否创建本地演示管理员，生产环境保持 `false`           |
 | `GOOGLE_CLIENT_ID`            | 否   | Google OAuth Client ID                                 |
 | `GOOGLE_CLIENT_SECRET`        | 否   | Google OAuth Client Secret                             |
@@ -251,11 +251,11 @@ npm --prefix backend run storage:report-orphans
 建议描述：
 
 ```text
-安静克制的 AI 图像生成工作台，支持提示词/参考图生图、本地资产历史、用户额度和管理员账号管理。
+设计 Agent，一句话出整套物料：活动海报、电商主图、汇报封面、品牌 Logo 等成套交付，图上文字自动校对，还能在画布上接着改。
 ```
 
 建议 topics：
 
 ```text
-react, express, typescript, ai-image-generation, better-auth, sqlite, drizzle, vite
+react, express, typescript, ai-agent, ai-image-generation, better-auth, sqlite, drizzle, vite
 ```

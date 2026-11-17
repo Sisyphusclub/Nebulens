@@ -223,7 +223,7 @@ beforeEach(() => {
 it('reads a request, shows its plan and what it costs, and makes it only once confirmed', async () => {
   const user = userEvent.setup();
   renderAgent();
-  expect(screen.getByRole('heading', { name: '想做点什么？' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: '要出什么物料？' })).toBeInTheDocument();
 
   await send(user, '雨夜的未来城市，做两张');
 

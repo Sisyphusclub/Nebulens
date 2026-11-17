@@ -31,7 +31,7 @@ export function LandingFooter() {
       <div className="home-footer__brand">
         <img src="/brand/logo.png" alt="" />
         <strong>贝尔灵画</strong>
-        <span>AI 图像创作工作台</span>
+        <span>设计 Agent</span>
       </div>
       <nav className="home-footer__nav" aria-label="页脚导航">
         {FOOTER_LINKS.map((item) => (

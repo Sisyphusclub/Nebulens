@@ -239,10 +239,10 @@ export function AgentThread({
     return (
       <div ref={scrollRef} className="agent-thread agent-thread--empty">
         <div className="agent-thread__intro">
-          <h2>想做点什么？</h2>
+          <h2>要出什么物料？</h2>
           <p>
-            说说你的需求，Agent
-            会挑合适的技能、规划每张图，生成的图会摆在画布上。选中画布上的图，下一次就以它为参考。
+            说说要做什么，Agent
+            会挑合适的技能、规划每张图，把一整套摆在画布上，图上的文字会自动校对。选中画布上的图，下一次就以它为参考。
           </p>
         </div>
         <div className="agent-thread__examples" role="group" aria-label="试试这样说">

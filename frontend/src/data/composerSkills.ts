@@ -41,7 +41,7 @@ export const COMPOSER_MODES: AgentChatMode[] = [
 
 export const VIDEO_COMING_SOON = '视频生成即将上线，现在可以先用 Agent 模式或图片生成。';
 
-export const AGENT_PLACEHOLDER = '说说你想做什么，Agent 会挑合适的技能，一次出一组图…';
+export const AGENT_PLACEHOLDER = '说说要做什么物料，Agent 规划好画面，一次出一整套…';
 
 /** Agent mode examples say which kind of set they want, the way people ask for one. */
 export const AGENT_PROMPT_EXAMPLES: readonly string[] = LANDING_SKILLS.filter(

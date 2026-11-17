@@ -3,7 +3,7 @@ import { Link, Route, Routes, useLocation } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 
-const SITE_TITLE = '贝尔灵画｜AI 图像创作工作台';
+const SITE_TITLE = '贝尔灵画｜设计 Agent，一句话出整套物料';
 const PAGE_TITLES: Readonly<Record<string, string>> = {
   '/generate': '生图',
   '/agent': 'Agent 画布',

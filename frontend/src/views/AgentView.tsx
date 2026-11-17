@@ -706,7 +706,7 @@ export function AgentView() {
                 />
               )
             }
-            placeholder="说说你想做什么，选中画布上的图可以作为参考…"
+            placeholder="说说要做什么物料，选中画布上的图可以作为参考…"
             ariaLabel="Agent 提示词"
             submitLabel={
               activeSkill === undefined ? '发送给 Agent' : `用「${activeSkill.label}」开始规划`

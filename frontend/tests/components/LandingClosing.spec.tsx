@@ -32,7 +32,7 @@ it('ends on a footer with the product’s name, its pages and the way back up', 
 
   const footer = screen.getByRole('contentinfo');
   expect(footer).toHaveTextContent('贝尔灵画');
-  expect(footer).toHaveTextContent('AI 图像创作工作台');
+  expect(footer).toHaveTextContent('设计 Agent');
 
   // Every page but the one the visitor is on, from the same list the sidebar uses.
   const links = within(within(footer).getByRole('navigation', { name: '页脚导航' })).getAllByRole(

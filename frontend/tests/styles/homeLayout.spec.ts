@@ -18,12 +18,26 @@ describe('home layout', () => {
     expect(rule('.home-hero .landing-composer-anchor::before')).toContain('display: none;');
   });
 
-  it('has a night sky behind the hero, drawn on the page rather than played from a video', () => {
+  it('lights the hero with a faint glow of the logo ribbon’s colours over the plain page', () => {
     // From the sidebar to the window edge, and down through the gap above the feed.
     expect(rule('.home-backdrop')).toContain(
       'inset: 0 calc(-1 * var(--home-gutter)) calc(-1 * var(--space-12));',
     );
     expect(rule('.home-feed')).toContain('margin-top: var(--space-12);');
+    const glow = rule('.home-backdrop__glow');
+    // The ribbon's blue, cyan and orange, faint, along the top edge.
+    for (const brand of ['--brand-blue', '--brand-cyan', '--brand-orange']) {
+      expect(glow).toContain(`var(${brand})`);
+    }
+    expect(glow).toContain('radial-gradient(');
+    // No picture and nothing moving: the composer and the work below carry the colour.
+    expect(glow).not.toContain('url(');
+    expect(glow).not.toContain('animation');
+    // A fine grain keeps so faint a gradient from settling into bands.
+    expect(rule('.home-backdrop__glow::after')).toContain(
+      'background-image: url("data:image/svg+xml',
+    );
+    // The night sky stays available while the two are compared.
     // It fades in once the first frame is up, and into the page at the bottom.
     expect(rule('.home-backdrop__stars')).toContain('opacity: 0;');
     expect(rule(".home-backdrop__stars[data-ready='true']")).toContain('opacity: 1;');

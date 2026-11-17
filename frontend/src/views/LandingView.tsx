@@ -1,6 +1,6 @@
 import { LoaderCircle } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { LiquidGlassFrame } from '@/components/common/LiquidGlassFrame';
 import { GenerationSubmitCost } from '@/components/generation/GenerationSubmitCost';
@@ -74,6 +74,9 @@ import { agentRequestState } from '@/utils/agentRequest';
 export function LandingView() {
   const navigate = useNavigate();
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const [searchParams] = useSearchParams();
+  // While the brand glow and the night sky are compared, ?backdrop=stars brings the sky back.
+  const starryBackdrop = searchParams.get('backdrop') === 'stars';
   /** The composer's box: the stars behind the hero bend around it. */
   const composerBoxRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
@@ -302,8 +305,15 @@ export function LandingView() {
         onClose={() => setImageApiKeySettingsOpen(false)}
       />
       <section className="home-hero" aria-labelledby="landing-title">
-        <div className="home-backdrop" aria-hidden="true">
-          <LandingStarfield lens={composerBoxRef} reducedMotion={reducedMotion} />
+        <div
+          className={starryBackdrop ? 'home-backdrop' : 'home-backdrop home-backdrop--glow'}
+          aria-hidden="true"
+        >
+          {starryBackdrop ? (
+            <LandingStarfield lens={composerBoxRef} reducedMotion={reducedMotion} />
+          ) : (
+            <div className="home-backdrop__glow" />
+          )}
           <div className="home-backdrop__overlay" />
         </div>
         {/* Each clause stays whole, so a narrow screen breaks the line only between them. */}

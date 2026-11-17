@@ -714,6 +714,21 @@ describe('React application routes', () => {
     expect(editor).toHaveTextContent('周年庆海报，标题“店庆”');
   });
 
+  it('lights the home hero with a faint brand glow, and the night sky only when asked for', async () => {
+    const { container, unmount } = renderRoute('/');
+    await screen.findByRole('heading', { level: 1, name: '今天，想把什么变成画面？' });
+
+    expect(container.querySelector('.home-backdrop--glow .home-backdrop__glow')).not.toBeNull();
+    expect(container.querySelector('.home-backdrop__stars')).toBeNull();
+    unmount();
+
+    // While the two are compared, ?backdrop=stars brings the sky back.
+    const stars = renderRoute('/?backdrop=stars');
+    await screen.findByRole('heading', { level: 1, name: '今天，想把什么变成画面？' });
+    expect(stars.container.querySelector('.home-backdrop__stars')).not.toBeNull();
+    expect(stars.container.querySelector('.home-backdrop__glow')).toBeNull();
+  });
+
   it('greets visitors with a Chinese headline', async () => {
     renderRoute('/');
 

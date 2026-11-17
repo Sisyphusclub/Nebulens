@@ -28,7 +28,7 @@ export function AppSidebar() {
         brandLabel="贝尔灵画"
         creditsRemaining={quota?.remaining ?? '—'}
         ctaLabel={isLanding ? (isAuthenticated ? '进入工作台' : '开始创作') : '返回发现'}
-        ctaTo={isLanding ? '/generate' : '/'}
+        ctaTo={isLanding ? '/agent' : '/'}
         checkedInToday={quota?.checkedInToday ?? false}
         dailyCheckInReward={quota?.dailyCheckInReward ?? 5}
         isAuthenticated={isAuthenticated}

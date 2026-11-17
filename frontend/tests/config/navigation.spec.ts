@@ -1,4 +1,4 @@
-import { Image } from 'lucide-react';
+import { Bot, Image } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 
 import { getAppNavigation } from '@/config/navigation';
@@ -11,9 +11,14 @@ describe('app navigation', () => {
     });
   });
 
-  it('lists four pages, and user management for an admin; there is no gallery page', () => {
+  it('puts the Agent canvas right after the home page, with the composer’s Agent icon', () => {
+    expect(getAppNavigation()[1]).toMatchObject({ label: 'Agent 画布', to: '/agent', icon: Bot });
+  });
+
+  it('lists five pages, and user management for an admin; there is no gallery page', () => {
     expect(getAppNavigation().map((item) => [item.label, item.to])).toEqual([
       ['发现', '/'],
+      ['Agent 画布', '/agent'],
       ['生图', '/generate'],
       ['创作模板', '/templates'],
       ['资产', '/history'],

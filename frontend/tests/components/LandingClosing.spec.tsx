@@ -39,6 +39,7 @@ it('ends on a footer with the product’s name, its pages and the way back up', 
     'link',
   );
   expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
+    ['Agent 画布', '/agent'],
     ['生图', '/generate'],
     ['创作模板', '/templates'],
     ['资产', '/history'],

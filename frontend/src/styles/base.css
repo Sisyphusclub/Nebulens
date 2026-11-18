@@ -11672,6 +11672,228 @@ video {
   font-size: 12px;
   line-height: 1.5;
 }
+/* The words a planned picture carries, in the plan and in the delivery list alike. */
+.agent-texts {
+  display: flex;
+  min-width: 0;
+  margin: 4px 0 0;
+  gap: 6px;
+  color: var(--text-2);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.agent-texts__label {
+  flex: 0 0 auto;
+  color: var(--text-4);
+}
+.agent-texts__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* What a request delivered: one row per planned piece, then the set's own actions. */
+.agent-delivery {
+  margin-top: 10px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-lg);
+  background: var(--fill-1);
+  padding: 12px 8px 10px;
+}
+.agent-delivery__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+}
+.agent-delivery__header strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-1);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agent-delivery__header span {
+  flex: 0 0 auto;
+  color: var(--text-3);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.agent-delivery__list {
+  display: grid;
+  margin: 8px 0 10px;
+  gap: 2px;
+  padding: 0;
+  list-style: none;
+}
+.agent-delivery__item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  padding: 6px 4px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.agent-delivery .agent-delivery__item.button {
+  min-height: 0;
+  justify-content: flex-start;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 6px 4px;
+  font-size: inherit;
+  font-weight: 400;
+  box-shadow: none;
+  cursor: pointer;
+}
+.agent-delivery .agent-delivery__item.button:hover {
+  background: var(--fill-2);
+}
+.agent-delivery .agent-delivery__item.button:focus-visible {
+  outline: 2px solid var(--line-3);
+  outline-offset: -2px;
+}
+.agent-delivery__thumb {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius-xs);
+  background: var(--fill-2);
+  color: var(--text-3);
+}
+.agent-delivery__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.agent-delivery__thumb svg {
+  width: 14px;
+  height: 14px;
+}
+.agent-delivery__thumb[data-state='failed'] {
+  color: var(--danger);
+}
+.agent-delivery__body {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+.agent-delivery__body .agent-texts {
+  margin-top: 2px;
+}
+.agent-delivery__title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+.agent-delivery__name {
+  overflow: hidden;
+  color: var(--text-1);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agent-delivery__aspect {
+  flex: 0 0 auto;
+  border-radius: var(--radius-full);
+  background: var(--fill-3);
+  padding: 1px 6px;
+  color: var(--text-3);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+.agent-delivery__status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-3);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.agent-delivery__status svg {
+  width: 12px;
+  height: 12px;
+}
+.agent-delivery__status[data-check='passed'] svg {
+  color: var(--success);
+}
+.agent-delivery__status[data-check='issues'] {
+  color: var(--warning);
+}
+/* Making a picture and checking its words are the AI at work: its tint on the spinner. */
+.agent-delivery__status[data-check='checking'] svg,
+.agent-delivery__status[data-check='making'] svg {
+  color: var(--ai);
+}
+.agent-delivery__status[data-check='failed'] {
+  color: var(--danger);
+}
+.agent-delivery__actions {
+  display: flex;
+  gap: 6px;
+  padding: 0 4px;
+}
+.agent-delivery__actions .button {
+  height: 28px;
+  min-height: 28px;
+  gap: 6px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-full);
+  padding: 0 12px;
+  color: var(--text-2);
+  font-size: 12px;
+  box-shadow: none;
+}
+.agent-delivery__actions .button:hover:not(:disabled) {
+  background: var(--fill-2);
+  color: var(--text-1);
+}
+.agent-delivery__actions svg {
+  width: 13px;
+  height: 13px;
+}
+/* Next steps hand work back to the Agent: its wash and hairline, the words white. */
+.agent-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+.agent-next__label {
+  width: 100%;
+  color: var(--text-4);
+  font-size: 11px;
+}
+.agent-next .agent-next__chip {
+  height: 28px;
+  min-height: 28px;
+  border: 1px solid var(--ai-line);
+  border-radius: var(--radius-full);
+  background: var(--ai-wash);
+  padding: 0 12px;
+  color: var(--text-1);
+  font-size: 12px;
+  font-weight: 400;
+  box-shadow: none;
+}
+.agent-next .agent-next__chip:hover:not(:disabled) {
+  background: var(--ai-wash-strong);
+  color: var(--text-1);
+}
 .agent-plan__prompt {
   display: -webkit-box;
   margin: 4px 0 0;

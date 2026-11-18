@@ -602,7 +602,7 @@ describe('React application routes', () => {
     await user.click(screen.getByRole('button', { name: '交给 Agent 开始创作' }));
 
     const plan = await screen.findByRole('region', { name: '待确认的方案' });
-    expect(screen.getByText('没有合适的技能，自己规划画面')).toBeInTheDocument();
+    expect(screen.getByText('按需求自己规划画面')).toBeInTheDocument();
     expect(skillMocks.planFreely).toHaveBeenCalledWith('雨夜的未来城市，做两张', false);
     expect(skillMocks.planSkill).not.toHaveBeenCalled();
     await user.click(within(plan).getByRole('button', { name: '开始生成' }));
@@ -681,7 +681,7 @@ describe('React application routes', () => {
     const step = await screen.findByText(/Agent 需要文本模型/);
     expect(step.closest('.agent-step')).toHaveAttribute('data-state', 'error');
     expect(screen.getByRole('list', { name: 'Agent 的步骤' })).not.toHaveTextContent(
-      '没有合适的技能',
+      '按需求自己规划画面',
     );
     expect(generation.generate).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: '重新发送' })).toBeInTheDocument();

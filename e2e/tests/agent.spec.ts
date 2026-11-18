@@ -27,7 +27,7 @@ test('plans the images on the Agent canvas, asks first, then lays them out there
   await expect(page).toHaveURL(/\/agent\?session=/);
   const plan = page.getByRole('region', { name: '待确认的方案' });
   await expect(plan).toContainText('模拟规划');
-  await expect(page.getByText('没有合适的技能，自己规划画面')).toBeVisible();
+  await expect(page.getByText('按需求自己规划画面')).toBeVisible();
   await plan.getByRole('button', { name: '开始生成' }).click();
 
   // Both pictures land on the canvas, and the session opens there from the sidebar.

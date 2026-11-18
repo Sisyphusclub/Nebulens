@@ -201,6 +201,7 @@ export function AgentView() {
   const slotByKey = useMemo(() => new Map(slots.map((slot) => [slot.key, slot])), [slots]);
   /** Each request's pictures as a set: framed on the board, named after the plan. */
   const sets = useMemo(() => agentSets(turns, visibleFeed), [turns, visibleFeed]);
+  const setsByTurn = useMemo(() => new Map(sets.map((set) => [set.turnId, set])), [sets]);
   const groups = useMemo<CanvasGroup[]>(
     () =>
       sets.map((set) => ({
@@ -540,8 +541,18 @@ export function AgentView() {
   };
 
   const revealTurn = (turn: AgentTurn): void => {
-    const keys = sets.find((set) => set.turnId === turn.id)?.keys ?? [];
+    const keys = setsByTurn.get(turn.id)?.keys ?? [];
     if (keys.length > 0) setFocus((current) => ({ keys, serial: (current?.serial ?? 0) + 1 }));
+  };
+
+  const revealPiece = (key: string): void =>
+    setFocus((current) => ({ keys: [key], serial: (current?.serial ?? 0) + 1 }));
+
+  /** A next step goes into the composer with the set picked on the board as its reference. */
+  const suggest = (turn: AgentTurn, text: string): void => {
+    setPrompt(text);
+    const set = setsByTurn.get(turn.id);
+    if (set !== undefined) setSelection(set.finals.map((piece) => piece.key));
   };
 
   const handleAttachments = (next: AgentChatAttachment[]): void => {
@@ -663,7 +674,7 @@ export function AgentView() {
         groups={groups}
         captions={captions}
         onDownloadGroup={(key) => {
-          const set = sets.find((candidate) => candidate.turnId === key);
+          const set = setsByTurn.get(key);
           if (set !== undefined) void downloadSet(set);
         }}
         insetLeft={insetLeft}
@@ -722,6 +733,7 @@ export function AgentView() {
           </header>
           <AgentThread
             turns={turns}
+            sets={setsByTurn}
             busy={busy}
             planBudget={planBudget}
             examples={EXAMPLES}
@@ -733,6 +745,12 @@ export function AgentView() {
             }
             onRetry={(turn) => void startTurn(turn.brief)}
             onReveal={revealTurn}
+            onRevealPiece={revealPiece}
+            onDownloadSet={(turn) => {
+              const set = setsByTurn.get(turn.id);
+              if (set !== undefined) void downloadSet(set);
+            }}
+            onSuggest={suggest}
             onExample={setPrompt}
           />
           {selectedEntries.length > 0 ? (

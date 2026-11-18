@@ -237,7 +237,7 @@ it('reads a request, shows its plan and what it costs, and makes it only once co
   expect(within(plan).getByText('雨夜的未来城市，竖版构图')).toBeInTheDocument();
   const steps = screen.getByRole('list', { name: 'Agent 的步骤' });
   expect(steps).toHaveTextContent(/理解需求 \d+\.\ds/);
-  expect(steps).toHaveTextContent('没有合适的技能，自己规划画面');
+  expect(steps).toHaveTextContent('按需求自己规划画面');
   expect(steps).toHaveTextContent('规划了 2 张图');
   expect(skills.selectSkillForBrief).toHaveBeenCalledWith('雨夜的未来城市，做两张', false);
   expect(generation.generate).not.toHaveBeenCalled();
@@ -409,7 +409,7 @@ it('says the text model could not pick a skill, rather than that no skill fits',
   const steps = screen.getByRole('list', { name: 'Agent 的步骤' });
   const step = within(steps).getByText('文本模型暂不可用，没能挑选技能，改为自己规划画面');
   expect(step.closest('.agent-step')).toHaveAttribute('data-state', 'error');
-  expect(steps).not.toHaveTextContent('没有合适的技能');
+  expect(steps).not.toHaveTextContent('按需求自己规划画面');
   expect(steps).not.toHaveTextContent('理解需求');
   expect(steps).toHaveTextContent('规划了 2 张图');
 });
@@ -525,7 +525,7 @@ it('folds the conversation away and brings it back', async () => {
   expect(screen.getByRole('complementary', { name: 'Agent 对话' })).toBeInTheDocument();
 });
 
-it('frames what a request made as a set on the board, named after its plan, and downloads it whole', async () => {
+it('frames what a request made as a set, downloads it whole, and offers a next step with it', async () => {
   const user = userEvent.setup();
   renderAgent();
   await send(user, '雨夜的未来城市，做两张');
@@ -548,4 +548,11 @@ it('frames what a request made as a set on the board, named after its plan, and 
     ['/api/outputs/agent-1.png', '雨夜城市-1-主视觉.png'],
     ['/api/outputs/agent-2.png', '雨夜城市-2-方图.png'],
   ]);
+
+  // A next step goes into the composer, the set picked on the board as its reference.
+  await user.click(screen.getByRole('button', { name: '补一张横版 Banner' }));
+  expect(screen.getByRole('textbox', { name: 'Agent 提示词' })).toHaveTextContent(
+    '按这一套的风格和文字，补一张横版 Banner（16:9）',
+  );
+  expect(screen.getByLabelText('作为参考的图')).toHaveTextContent('参考画布上选中的 2 张图');
 });

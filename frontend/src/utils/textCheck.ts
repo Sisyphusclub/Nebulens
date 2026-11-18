@@ -17,6 +17,22 @@ export function promptQuotesText(prompt: string): boolean {
   });
 }
 
+/** The texts a prompt quotes for the picture, each once, in the order they are written. */
+export function quotedTexts(prompt: string): string[] {
+  const found: Array<{ at: number; text: string }> = [];
+  for (const [open, close] of QUOTE_PAIRS) {
+    let start = prompt.indexOf(open);
+    while (start !== -1) {
+      const end = prompt.indexOf(close, start + open.length);
+      if (end === -1) break;
+      const text = prompt.slice(start + open.length, end).trim();
+      if (text.length > 0) found.push({ at: start, text });
+      start = prompt.indexOf(open, end + close.length);
+    }
+  }
+  return [...new Set(found.sort((a, b) => a.at - b.at).map(({ text }) => text))];
+}
+
 /** Wrong or missing text, as opposed to correct text that is merely hard to read. */
 function isMisspelled(segment: TextCheckSegment): boolean {
   return !segment.ok;

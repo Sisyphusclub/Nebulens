@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import type { TextCheckResult } from '@/types/image';
-import { buildTextFixPrompt, describeTextIssues, isTextFixPrompt } from '@/utils/textCheck';
+import {
+  buildTextFixPrompt,
+  describeTextIssues,
+  isTextFixPrompt,
+  quotedTexts,
+} from '@/utils/textCheck';
 
 const issues: TextCheckResult = {
   status: 'issues',
@@ -74,5 +79,14 @@ describe('isTextFixPrompt', () => {
     };
     expect(isTextFixPrompt(buildTextFixPrompt(check))).toBe(true);
     expect(isTextFixPrompt('奶茶价目牌，写“中杯16元”')).toBe(false);
+  });
+});
+
+describe('quotedTexts', () => {
+  it('lists the words a prompt quotes for the picture, once each, in the order written', () => {
+    expect(
+      quotedTexts('海报标题「山柚观音」，副标题“冷泡系列”，角标“新品”，再写一次「山柚观音」'),
+    ).toEqual(['山柚观音', '冷泡系列', '新品']);
+    expect(quotedTexts('没有要写的字，也没有“  ”空引号')).toEqual([]);
   });
 });

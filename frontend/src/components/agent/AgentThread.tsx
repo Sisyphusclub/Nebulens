@@ -515,6 +515,7 @@ const TIME_FORMAT = new Intl.DateTimeFormat('zh-CN', {
 export function AgentThread({
   turns,
   sets,
+  loading = false,
   busy,
   planBudget,
   examples,
@@ -531,6 +532,8 @@ export function AgentThread({
   turns: readonly AgentTurn[];
   /** The pictures each request made, by request id. */
   sets: ReadonlyMap<string, AgentSet>;
+  /** The conversation is still being read from the server. */
+  loading?: boolean;
   /** The Agent is at work, so an ended request cannot be sent again yet. */
   busy: boolean;
   planBudget: (turn: AgentTurn) => PlanBudget;
@@ -561,6 +564,16 @@ export function AgentThread({
     const element = scrollRef.current;
     if (element !== null) element.scrollTop = element.scrollHeight;
   }, [progressKey]);
+
+  if (turns.length === 0 && loading) {
+    return (
+      <div ref={scrollRef} className="agent-thread agent-thread--empty" aria-busy="true">
+        <p className="agent-thread__loading" role="status">
+          正在载入对话…
+        </p>
+      </div>
+    );
+  }
 
   if (turns.length === 0) {
     return (

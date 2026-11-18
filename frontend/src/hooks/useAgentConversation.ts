@@ -77,7 +77,7 @@ export interface AgentTurn {
   userId?: string;
 }
 
-type Conversations = Readonly<Record<string, readonly AgentTurn[]>>;
+export type Conversations = Readonly<Record<string, readonly AgentTurn[]>>;
 
 const isString = (value: unknown): value is string => typeof value === 'string';
 const isCount = (value: unknown): value is number =>
@@ -87,7 +87,8 @@ const isDuration = (value: unknown): value is number =>
 const isStringMap = (value: unknown): value is Record<string, string> =>
   isRecord(value) && Object.values(value).every(isString);
 
-function parseTurn(value: unknown): AgentTurn | null {
+/** Reads a request from storage or from the server; anything malformed is null. */
+export function parseAgentTurn(value: unknown): AgentTurn | null {
   if (!isRecord(value)) return null;
   const status = STATUSES.find((candidate) => candidate === value.status);
   const references = Array.isArray(value.references)
@@ -147,7 +148,7 @@ function readConversations(): Conversations {
     return Object.fromEntries(
       Object.entries(parsed).flatMap(([sessionId, turns]) => {
         if (!Array.isArray(turns)) return [];
-        const valid = turns.map(parseTurn).filter((turn): turn is AgentTurn => turn !== null);
+        const valid = turns.map(parseAgentTurn).filter((turn): turn is AgentTurn => turn !== null);
         return valid.length > 0 ? [[sessionId, valid]] : [];
       }),
     );
@@ -158,13 +159,50 @@ function readConversations(): Conversations {
 
 const store = createExternalStore<Conversations>(readConversations());
 
-function save(next: Conversations): void {
-  store.set(next);
+function persist(next: Conversations): void {
   try {
     window.localStorage.setItem(AGENT_CONVERSATIONS_STORAGE_KEY, JSON.stringify(next));
   } catch {
     // The conversation still works for this tab without storage.
   }
+}
+
+type ConversationWriteListener = (next: Conversations, previous: Conversations) => void;
+const writeListeners = new Set<ConversationWriteListener>();
+
+/**
+ * Reports each change this page makes to a conversation, with all of them as they were
+ * before. A change read from another tab, or applied from the server, is not one of them.
+ */
+export function onAgentConversationsWritten(listener: ConversationWriteListener): () => void {
+  writeListeners.add(listener);
+  return () => writeListeners.delete(listener);
+}
+
+export function getAgentConversations(): Conversations {
+  return store.getSnapshot();
+}
+
+function save(next: Conversations): void {
+  const previous = store.getSnapshot();
+  store.set(next);
+  persist(next);
+  writeListeners.forEach((listener) => listener(next, previous));
+}
+
+/**
+ * Applies a conversation as the server holds it, or drops it when its project is gone. It
+ * is kept in this browser but not reported as a change.
+ */
+export function replaceAgentConversation(
+  sessionId: string,
+  turns: readonly AgentTurn[] | null,
+): void {
+  const next = { ...store.getSnapshot() };
+  if (turns === null || turns.length === 0) delete next[sessionId];
+  else next[sessionId] = turns;
+  store.set(next);
+  persist(next);
 }
 
 export function addAgentTurn(sessionId: string, turn: AgentTurn): void {

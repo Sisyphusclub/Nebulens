@@ -92,7 +92,8 @@ function parsePersistedTask(value: unknown): PersistedGenerationTask | null {
   };
 }
 
-function parseSession(value: unknown): GenerationSession | null {
+/** Reads a session from storage or from the server; anything malformed is null. */
+export function parseGenerationSession(value: unknown): GenerationSession | null {
   if (typeof value !== 'object' || value === null) return null;
   const candidate = value as Partial<GenerationSession>;
   if (
@@ -125,7 +126,9 @@ function readSessions(): GenerationSession[] {
   try {
     const parsed: unknown = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]');
     return Array.isArray(parsed)
-      ? parsed.map(parseSession).filter((session): session is GenerationSession => session !== null)
+      ? parsed
+          .map(parseGenerationSession)
+          .filter((session): session is GenerationSession => session !== null)
       : [];
   } catch {
     return [];
@@ -209,8 +212,38 @@ export function forgetRememberedGenerationSession(userId: string): void {
   persistActiveSessionsByUser(activeSessions);
 }
 
+type SessionWriteListener = (
+  next: readonly GenerationSession[],
+  previous: readonly GenerationSession[],
+) => void;
+const writeListeners = new Set<SessionWriteListener>();
+
+/**
+ * Reports each change this page makes to the sessions, with the list as it was before. A
+ * change read from another tab, or applied from the server, is not one of them.
+ */
+export function onGenerationSessionsWritten(listener: SessionWriteListener): () => void {
+  writeListeners.add(listener);
+  return () => writeListeners.delete(listener);
+}
+
+export function getGenerationSessions(): readonly GenerationSession[] {
+  return store.getSnapshot().sessions;
+}
+
 function setSessions(next: SessionState | ((current: SessionState) => SessionState)): void {
+  const previous = store.getSnapshot().sessions;
   store.set(next);
+  const sessions = store.getSnapshot().sessions;
+  persist(sessions);
+  if (sessions !== previous) writeListeners.forEach((listener) => listener(sessions, previous));
+}
+
+/** Applies what the server holds. It is kept in this browser but not reported as a change. */
+export function replaceGenerationSessions(
+  update: (current: readonly GenerationSession[]) => GenerationSession[],
+): void {
+  store.set((current) => ({ sessions: update(current.sessions) }));
   persist(store.getSnapshot().sessions);
 }
 

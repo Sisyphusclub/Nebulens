@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
 import { SESSION_TITLE_MAX_LENGTH, useGenerationSessions } from '@/hooks/useGenerationSessions';
 import { useImageHistory } from '@/hooks/useImageHistory';
+import { useProjectSync } from '@/hooks/useProjectSync';
 import { sidebarSessions } from '@/utils/sidebarSessions';
 import { thumbnailUrl } from '@/utils/thumbnail';
 
@@ -44,6 +45,7 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
   const agentSessionIds = useAgentSessionIds();
   const ownAgentSessionIds = useAgentSessionIdsOf(isAuthenticated ? (user?.id ?? null) : null);
   const history = useImageHistory();
+  const { projectIds, agentProjectIds, failing, localOnlyIds } = useProjectSync();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -59,8 +61,9 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
     () =>
       sidebarSessions(sessions, history.batches, activeSessionId, {
         agentSessions: ownAgentSessionIds,
+        projects: projectIds,
       }),
-    [activeSessionId, history.batches, ownAgentSessionIds, sessions],
+    [activeSessionId, history.batches, ownAgentSessionIds, projectIds, sessions],
   );
 
   if (!isAuthenticated) {
@@ -108,6 +111,12 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
     remove(id);
     if (id === activeSessionId) void navigate(NEW_CREATION_PATH);
   };
+  // Creations are kept on the server; this says when some of that is only in this browser.
+  const syncNotice = failing
+    ? '暂时连不上服务器，改动先保存在这台设备上，连上后会自动同步。'
+    : localOnlyIds.size > 0
+      ? `有 ${localOnlyIds.size} 个创作的部分内容没能存到服务器，只保存在这台设备上。`
+      : null;
 
   return (
     <SidebarGroup className="sidebar-history" aria-labelledby="sidebar-history-title">
@@ -118,6 +127,11 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
         </Link>
       </SidebarGroupAction>
       <SidebarGroupContent>
+        {syncNotice === null ? null : (
+          <p className="sidebar-history__notice" role="status">
+            {syncNotice}
+          </p>
+        )}
         {items.length === 0 ? (
           <p className="sidebar-history__empty">生成第一张图后，创作会出现在这里</p>
         ) : (
@@ -142,11 +156,14 @@ export function SidebarCreationHistory({ onNavigate }: SidebarCreationHistoryPro
                   </SidebarMenuItem>
                 );
               }
+              // A project read from the server opens on the canvas before its conversation
+              // has been fetched into this browser.
+              const onCanvas = agentSessionIds.has(item.id) || agentProjectIds.has(item.id);
               return (
                 <SidebarMenuItem key={item.id} className="sidebar-history__item">
                   <SidebarMenuButton asChild isActive={active}>
                     <Link
-                      to={`${agentSessionIds.has(item.id) ? '/agent' : '/generate'}?session=${encodeURIComponent(item.id)}`}
+                      to={`${onCanvas ? '/agent' : '/generate'}?session=${encodeURIComponent(item.id)}`}
                       aria-current={active ? 'page' : undefined}
                       title={item.title}
                       onClick={onNavigate}

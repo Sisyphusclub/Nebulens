@@ -1,5 +1,6 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 
+import { createExternalStore } from '@/lib/externalStore';
 import { reconcilePositions, type LastPlaced, type Point } from '@/utils/canvasLayout';
 import type { FeedItem } from '@/utils/generationFeed';
 import { isRecord } from '@/utils/narrowing';
@@ -45,15 +46,48 @@ function readLayouts(): Record<string, Positions> {
   }
 }
 
-function saveLayout(sessionId: string, positions: Positions): void {
+function writeLayout(sessionId: string, positions: Positions | null): void {
   try {
-    window.localStorage.setItem(
-      CANVAS_LAYOUT_STORAGE_KEY,
-      JSON.stringify({ ...readLayouts(), [sessionId]: positions }),
-    );
+    const layouts = readLayouts();
+    if (positions === null) delete layouts[sessionId];
+    else layouts[sessionId] = positions;
+    window.localStorage.setItem(CANVAS_LAYOUT_STORAGE_KEY, JSON.stringify(layouts));
   } catch {
     // The board keeps its places for as long as the page is open.
   }
+}
+
+const writeListeners = new Set<(sessionId: string) => void>();
+
+/**
+ * Reports each board whose places this page changes: pictures placed, dragged or tidied.
+ * Places applied from the server are not among them.
+ */
+export function onCanvasLayoutWritten(listener: (sessionId: string) => void): () => void {
+  writeListeners.add(listener);
+  return () => writeListeners.delete(listener);
+}
+
+function saveLayout(sessionId: string, positions: Positions): void {
+  writeLayout(sessionId, positions);
+  writeListeners.forEach((listener) => listener(sessionId));
+}
+
+/** Where a session's pictures sit, as this browser keeps it. */
+export function getCanvasLayout(sessionId: string): Positions {
+  return readLayouts()[sessionId] ?? {};
+}
+
+/** Counts the times places were applied from outside, so an open board takes them up. */
+const appliedLayouts = createExternalStore(0);
+
+/**
+ * Applies a board's places as the server holds them, or drops them when its project is
+ * gone. They are kept in this browser but not reported as a change.
+ */
+export function replaceCanvasLayout(sessionId: string, positions: Positions | null): void {
+  writeLayout(sessionId, positions);
+  appliedLayouts.set((count) => count + 1);
 }
 
 /** Pictures given a place just now; the serial tells one batch of them from the next. */
@@ -83,20 +117,32 @@ export function useCanvasLayout({
 }) {
   const [positions, setPositions] = useState<Positions>({});
   const [placed, setPlaced] = useState<PlacedNodes>({ keys: [], serial: 0 });
+  const applied = useSyncExternalStore(
+    appliedLayouts.subscribe,
+    appliedLayouts.getSnapshot,
+    appliedLayouts.getSnapshot,
+  );
   const state = useRef<{
     sessionId: string | null | undefined;
+    applied: number;
     previous: readonly FeedItem[];
     lastPlaced: LastPlaced | null;
     positions: Positions;
-  }>({ sessionId: undefined, previous: [], lastPlaced: null, positions: {} });
+  }>({ sessionId: undefined, applied, previous: [], lastPlaced: null, positions: {} });
 
   useLayoutEffect(() => {
     const current = state.current;
     if (current.sessionId !== sessionId) {
       current.sessionId = sessionId;
+      current.applied = applied;
       current.previous = [];
       current.lastPlaced = null;
-      current.positions = sessionId === null ? {} : (readLayouts()[sessionId] ?? {});
+      current.positions = sessionId === null ? {} : getCanvasLayout(sessionId);
+      setPositions(current.positions);
+    } else if (current.applied !== applied) {
+      // Places came from the server; whatever they leave out is placed below as usual.
+      current.applied = applied;
+      current.positions = sessionId === null ? {} : getCanvasLayout(sessionId);
       setPositions(current.positions);
     }
     if (!enabled || sessionId === null) return;
@@ -117,7 +163,7 @@ export function useCanvasLayout({
     if (result.placed.length > 0) {
       setPlaced((last) => ({ keys: result.placed, serial: last.serial + 1 }));
     }
-  }, [enabled, feed, run, sessionId]);
+  }, [applied, enabled, feed, run, sessionId]);
 
   /** Moves pictures to new places, as after a drag or tidying. */
   const move = useCallback((updates: Readonly<Record<string, Point>>) => {

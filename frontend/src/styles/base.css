@@ -9553,6 +9553,13 @@ video {
   font-size: 12px;
   line-height: 1.6;
 }
+/* Says that some changes have not reached the server yet. */
+.sidebar-history__notice {
+  margin: 4px 12px 6px;
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.6;
+}
 
 /* Home: a creation workbench. A short greeting, a switch between writing and the canvas,
    the wide composer with one row of skill chips, then an inspiration feed of large cards
@@ -11465,6 +11472,11 @@ video {
   color: var(--text-3);
   font-size: 13px;
   line-height: 1.65;
+}
+.agent-thread__loading {
+  margin-bottom: 0;
+  color: var(--text-3);
+  font-size: 13px;
 }
 .agent-thread__examples {
   display: grid;

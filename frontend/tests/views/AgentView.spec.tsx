@@ -33,6 +33,16 @@ vi.mock('@/services/api/imagesApi', async (importOriginal) => ({
 const downloads = vi.hoisted(() => ({ downloadUrl: vi.fn() }));
 vi.mock('@/utils/download', () => downloads);
 
+const projects = vi.hoisted(() => ({
+  fetchProjects: vi.fn(),
+  fetchProject: vi.fn(),
+  saveProject: vi.fn(),
+  saveProjectTurn: vi.fn(),
+  saveProjectNodes: vi.fn(),
+  deleteProject: vi.fn(),
+}));
+vi.mock('@/services/api/projectsApi', () => projects);
+
 const generation = vi.hoisted(() => ({ generate: vi.fn(), cancel: vi.fn() }));
 vi.mock('@/hooks/useImageGeneration', () => ({
   useImageGeneration: () => ({
@@ -94,6 +104,7 @@ import {
   createGenerationSession,
   resetGenerationSessionsForTests,
 } from '@/hooks/useGenerationSessions';
+import { resetProjectSyncForTests } from '@/hooks/useProjectSync';
 import { agentRequestState } from '@/utils/agentRequest';
 import { AgentView } from '@/views/AgentView';
 
@@ -174,10 +185,18 @@ function historyBatch(batchId: string, id: string, prompt: string) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  resetProjectSyncForTests();
   resetGenerationSessionsForTests();
   resetAgentConversationsForTests();
   historyMocks.batches = [];
   quotaMocks.remaining = 18;
+  // The server has no projects unless a test says so, and takes whatever is saved.
+  projects.fetchProjects.mockResolvedValue([]);
+  projects.fetchProject.mockResolvedValue(null);
+  projects.saveProject.mockResolvedValue(undefined);
+  projects.saveProjectTurn.mockResolvedValue(undefined);
+  projects.saveProjectNodes.mockResolvedValue(undefined);
+  projects.deleteProject.mockResolvedValue(undefined);
   skills.fetchSkillForms.mockResolvedValue([]);
   skills.selectSkillForBrief.mockResolvedValue({ skillId: null, modelUnavailable: false });
   skills.planFreely.mockResolvedValue(PLAN);
@@ -573,4 +592,103 @@ it('frames what a request made as a set, downloads it whole, and offers a next s
     '按这一套的风格和文字，补一张横版 Banner（16:9）',
   );
   expect(screen.getByLabelText('作为参考的图')).toHaveTextContent('参考画布上选中的 2 张图');
+});
+
+it('opens a project kept on the server with its conversation and its places', async () => {
+  historyMocks.batches = [historyBatch('batch-1', 'record-1', '茶叶海报')];
+  projects.fetchProjects.mockResolvedValue([
+    {
+      id: 'server-1',
+      title: '山川茶事',
+      createdAt: '2026-11-16T08:00:00.000Z',
+      updatedAt: '2026-11-16T08:05:00.000Z',
+      batchIds: ['batch-1'],
+      tasks: [],
+      turnCount: 1,
+    },
+  ]);
+  let answer: (detail: unknown) => void = () => undefined;
+  projects.fetchProject.mockReturnValue(
+    new Promise((resolve) => {
+      answer = resolve;
+    }),
+  );
+
+  renderAgent('/agent?session=server-1');
+
+  // The board waits for the server's places instead of making up its own.
+  expect(await screen.findByText('正在载入对话…')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /^画布图片/ })).not.toBeInTheDocument();
+  expect(window.localStorage.getItem('nebulens.canvas-layout.v1')).toBeNull();
+
+  await act(async () => {
+    answer({
+      project: {
+        id: 'server-1',
+        title: '山川茶事',
+        createdAt: '2026-11-16T08:00:00.000Z',
+        updatedAt: '2026-11-16T08:05:00.000Z',
+        batchIds: ['batch-1'],
+        tasks: [],
+        turnCount: 1,
+      },
+      turns: [
+        {
+          id: 'turn-1',
+          createdAt: '2026-11-16T08:01:00.000Z',
+          brief: '做一张山川茶事的新品海报',
+          references: [],
+          status: 'done',
+          started: 1,
+          failed: 0,
+          batchIds: ['batch-1'],
+          notes: [],
+          userId: 'user-a',
+        },
+      ],
+      positions: { 'record-1': { x: 480, y: 260 } },
+    });
+    await Promise.resolve();
+  });
+
+  expect(await screen.findByText('做一张山川茶事的新品海报')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: '山川茶事' })).toBeInTheDocument();
+  const picture = await screen.findByRole('button', { name: /^画布图片：茶叶海报/ });
+  expect(picture.style.left).toBe('480px');
+  expect(picture.style.top).toBe('260px');
+  expect(projects.saveProjectNodes).not.toHaveBeenCalled();
+});
+
+it('saves a new project to the server as it is worked on', async () => {
+  const user = userEvent.setup();
+  renderAgent();
+  await send(user, '雨夜的未来城市，做两张');
+  const plan = await screen.findByRole('region', { name: '待确认的方案' });
+  await user.click(within(plan).getByRole('button', { name: '开始生成' }));
+  expect(await screen.findByText('生成了 2 张图')).toBeInTheDocument();
+
+  await waitFor(
+    () =>
+      expect(projects.saveProjectTurn).toHaveBeenLastCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          brief: '雨夜的未来城市，做两张',
+          status: 'done',
+          batchIds: ['agent-batch-1', 'agent-batch-2'],
+        }),
+      ),
+    { timeout: 3000 },
+  );
+  const projectId = (projects.saveProject.mock.calls.at(-1) as [string, unknown])[0];
+  expect(projects.saveProject).toHaveBeenLastCalledWith(
+    projectId,
+    expect.objectContaining({ batchIds: ['agent-batch-1', 'agent-batch-2'], tasks: [] }),
+  );
+  await waitFor(
+    () =>
+      expect(
+        Object.keys((projects.saveProjectNodes.mock.calls.at(-1) as [string, object])[1]),
+      ).toEqual(['agent-1.png', 'agent-2.png']),
+    { timeout: 3000 },
+  );
 });

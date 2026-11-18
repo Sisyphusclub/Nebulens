@@ -85,6 +85,16 @@ const historyMocks = vi.hoisted(() => ({
   update: vi.fn(),
 }));
 
+// The server keeps no projects in these tests and takes whatever is saved.
+vi.mock('@/services/api/projectsApi', () => ({
+  fetchProjects: () => Promise.resolve([]),
+  fetchProject: () => Promise.resolve(null),
+  saveProject: () => Promise.resolve(),
+  saveProjectTurn: () => Promise.resolve(),
+  saveProjectNodes: () => Promise.resolve(),
+  deleteProject: () => Promise.resolve(),
+}));
+
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => authMocks,
 }));
@@ -153,6 +163,7 @@ import {
   resetGenerationSessionsForTests,
   upsertGenerationTask,
 } from '@/hooks/useGenerationSessions';
+import { resetProjectSyncForTests } from '@/hooks/useProjectSync';
 import { GenerateView } from '@/views/GenerateView';
 
 function deferred<T>() {
@@ -167,6 +178,7 @@ function deferred<T>() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  resetProjectSyncForTests();
   resetGenerationSessionsForTests();
   authMocks.isAuthenticated = true;
   authMocks.isLoading = false;
@@ -2137,7 +2149,8 @@ it('restores an owning session on a bare visit without collecting unowned batche
   await waitFor(() =>
     expect(screen.getByTestId('location')).toHaveTextContent(`session=${owningSession.id}`),
   );
-  const results = screen.getByRole('region', { name: '本次创作结果' });
+  // The restore waits for the account's projects, so the results follow a moment later.
+  const results = await screen.findByRole('region', { name: '本次创作结果' });
   await waitFor(() => expect(results).toHaveTextContent('海边灯塔'));
   expect(results).not.toHaveTextContent('旧设备作品');
   const stored = JSON.parse(

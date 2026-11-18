@@ -51,6 +51,7 @@ import { useImageQuota } from '@/hooks/useImageQuota';
 import { useCreateBarReserve } from '@/hooks/useCreateBarReserve';
 import { useFollowLatestResult } from '@/hooks/useFollowLatestResult';
 import { useSkillRun } from '@/hooks/useSkillRun';
+import { useProjectSync } from '@/hooks/useProjectSync';
 import { clearPromptDraftsWithText, readPromptDraft, usePromptDraft } from '@/hooks/usePromptDraft';
 import { usePromptEnhancer } from '@/hooks/usePromptEnhancer';
 import { useTeamRecommendations } from '@/hooks/useTeamRecommendations';
@@ -92,6 +93,7 @@ export function GenerateView() {
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const history = useImageHistory();
   const { sessions, create: createSession } = useGenerationSessions();
+  const { listed: projectsListed } = useProjectSync();
   const { quota, isLoading: quotaLoading, refresh: refreshQuota, checkIn } = useImageQuota();
   const imageApiKey = useImageApiKey();
   const upload = useFileUpload();
@@ -407,7 +409,9 @@ export function GenerateView() {
       bareRouteRestoreHandled.current = true;
       return;
     }
-    if (!history.isHydrated) return;
+    // The account's projects come first: the session to go back to may be on the server,
+    // and without it every picture would be gathered into a new one.
+    if (!history.isHydrated || !projectsListed) return;
     bareRouteRestoreHandled.current = true;
 
     const rememberedSessionId = getRememberedGenerationSession(currentUserId);
@@ -453,6 +457,7 @@ export function GenerateView() {
     history.isHydrated,
     location.state,
     navigate,
+    projectsListed,
     searchParams,
     sessions,
   ]);

@@ -124,4 +124,16 @@ describe('sidebarSessions', () => {
       [{ id: 'agent-mine', title: '雨夜的未来城市' }],
     );
   });
+
+  it("lists the account's projects on the server, whatever this browser holds of them", () => {
+    const sessions = [
+      session('project', '另一台设备上做的项目', ['batch-elsewhere'], '2026-10-28T03:00:00.000Z'),
+      session('local', '别人留在这台设备上的会话', ['batch-other'], '2026-10-28T04:00:00.000Z'),
+    ];
+
+    // Its pictures and conversation may not have been read yet; it is listed all the same.
+    expect(sidebarSessions(sessions, [], null, { projects: new Set(['project']) })).toEqual([
+      { id: 'project', title: '另一台设备上做的项目' },
+    ]);
+  });
 });

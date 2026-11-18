@@ -44,6 +44,21 @@ const authMocks = vi.hoisted(
   }),
 );
 
+// The server keeps no projects unless a test lists some, and takes whatever is saved.
+const projectMocks = vi.hoisted(() => ({
+  list: [] as unknown[],
+  /** When set, the list is answered only once this resolves. */
+  pending: null as Promise<unknown[]> | null,
+}));
+vi.mock('@/services/api/projectsApi', () => ({
+  fetchProjects: () => projectMocks.pending ?? Promise.resolve(projectMocks.list),
+  fetchProject: () => Promise.resolve(null),
+  saveProject: () => Promise.resolve(),
+  saveProjectTurn: () => Promise.resolve(),
+  saveProjectNodes: () => Promise.resolve(),
+  deleteProject: () => Promise.resolve(),
+}));
+
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
     user: authMocks.user,
@@ -168,9 +183,11 @@ import { addAgentTurn, resetAgentConversationsForTests } from '@/hooks/useAgentC
 import {
   attachGenerationBatch,
   createGenerationSession,
+  getGenerationSessions,
   rememberGenerationSession,
   resetGenerationSessionsForTests,
 } from '@/hooks/useGenerationSessions';
+import { resetProjectSyncForTests } from '@/hooks/useProjectSync';
 
 /** Less common skills are not on the Discover page; they are picked by typing "/". */
 async function pickSkillBySlash(user: ReturnType<typeof userEvent.setup>, label: string) {
@@ -287,6 +304,9 @@ function RouteFixture({ entry }: { entry: TestRouteEntry }) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  projectMocks.list = [];
+  projectMocks.pending = null;
+  resetProjectSyncForTests();
   resetGenerationSessionsForTests();
   resetAgentConversationsForTests();
   authMocks.user = {
@@ -1544,6 +1564,10 @@ describe('React application routes', () => {
 
   it('does not restore after the bare route has already been initialized', async () => {
     renderRoute('/generate');
+    // The page settles on the bare route once the account's projects have been read.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
 
     act(() => {
       historyMocks.batches = [mockHistoryBatch('late-batch', '另一标签页的会话')];
@@ -1573,6 +1597,53 @@ describe('React application routes', () => {
     expect(
       screen.queryByRole('button', { name: '查看图片：账号 A 的会话' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('goes back to a project kept on the server instead of gathering its pictures anew', async () => {
+    historyMocks.batches = [mockHistoryBatch('server-batch', '服务器上的项目')];
+    let answer: (projects: unknown[]) => void = () => undefined;
+    projectMocks.pending = new Promise((resolve) => {
+      answer = resolve;
+    });
+
+    renderRoute('/generate');
+    await screen.findByRole('textbox', { name: '图像提示词' });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    // Until the account's projects are known, its pictures are not gathered into a new session.
+    expect(getGenerationSessions()).toEqual([]);
+    expect(screen.getByLabelText('当前路由')).toHaveTextContent(/^\/generate$/);
+
+    await act(async () => {
+      answer([
+        {
+          id: 'server-project',
+          title: '服务器上的项目',
+          createdAt: '2026-11-16T08:00:00.000Z',
+          updatedAt: '2026-11-16T08:05:00.000Z',
+          batchIds: ['server-batch'],
+          tasks: [],
+          turnCount: 0,
+        },
+      ]);
+      await Promise.resolve();
+    });
+
+    expect(await screen.findByRole('button', { name: '查看图片：服务器上的项目' })).toBeVisible();
+    expect(screen.getByLabelText('当前路由')).toHaveTextContent('/generate?session=server-project');
+    expect(getGenerationSessions().map((session) => session.id)).toEqual(['server-project']);
+  });
+
+  it('says in the sidebar when changes cannot reach the server', async () => {
+    projectMocks.pending = Promise.reject(new Error('offline'));
+
+    renderRoute('/generate');
+
+    expect(
+      await screen.findByText('暂时连不上服务器，改动先保存在这台设备上，连上后会自动同步。'),
+    ).toHaveAttribute('role', 'status');
   });
 
   it('keeps session management hidden while preserving the generation workspace', () => {

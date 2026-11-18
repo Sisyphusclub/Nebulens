@@ -51,6 +51,7 @@ import { useImageQuota } from '@/hooks/useImageQuota';
 import { useLeaveWarning } from '@/hooks/useLeaveWarning';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { usePrivateGeneration } from '@/hooks/usePrivateGeneration';
+import { useProjectReady } from '@/hooks/useProjectSync';
 import { useSkillRun } from '@/hooks/useSkillRun';
 import { fetchOutputBlob } from '@/services/api/imagesApi';
 import {
@@ -192,11 +193,14 @@ export function AgentView() {
       );
   }, [feed, history.pendingRemovalIds]);
   const slots = useMemo(() => boardSlots(visibleFeed), [visibleFeed]);
+  // A project kept on the server brings its own places; nothing is placed before they
+  // arrive, or places made up here would replace them.
+  const projectReady = useProjectReady(activeSessionId);
   const layout = useCanvasLayout({
     sessionId: activeSessionId,
     feed: visibleFeed,
     run: turns.at(-1)?.id ?? null,
-    enabled: isFeedSynced,
+    enabled: isFeedSynced && projectReady,
   });
   const slotByKey = useMemo(() => new Map(slots.map((slot) => [slot.key, slot])), [slots]);
   /** Each request's pictures as a set: framed on the board, named after the plan. */
@@ -739,6 +743,7 @@ export function AgentView() {
           <AgentThread
             turns={turns}
             sets={setsByTurn}
+            loading={session !== undefined && !projectReady}
             busy={busy}
             planBudget={planBudget}
             examples={EXAMPLES}

@@ -22,9 +22,10 @@ function coverImage(
 
 /**
  * Sessions to list in the sidebar's creation history, newest first. Sessions live in
- * device storage shared by every account, so only those owning one of the signed-in
- * user's batches are shown, those holding an Agent conversation the user started (which
- * may not have made a picture yet), and the session currently open.
+ * device storage shared by every account, so only the signed-in user's are shown: the
+ * account's projects on the server, sessions owning one of its batches, those holding an
+ * Agent conversation the user started (which may not have made a picture yet), and the
+ * session currently open.
  */
 export function sidebarSessions(
   sessions: readonly GenerationSession[],
@@ -32,14 +33,20 @@ export function sidebarSessions(
   activeSessionId: string | null,
   {
     agentSessions = new Set<string>(),
+    projects = new Set<string>(),
     limit = 30,
-  }: { agentSessions?: ReadonlySet<string>; limit?: number } = {},
+  }: {
+    agentSessions?: ReadonlySet<string>;
+    projects?: ReadonlySet<string>;
+    limit?: number;
+  } = {},
 ): SidebarSession[] {
   const batchById = new Map(batches.map((batch) => [batch.batchId, batch]));
   return sessions
     .filter(
       (session) =>
         session.id === activeSessionId ||
+        projects.has(session.id) ||
         agentSessions.has(session.id) ||
         session.batchIds.some((batchId) => batchById.has(batchId)),
     )

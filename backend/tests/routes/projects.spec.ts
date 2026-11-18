@@ -180,13 +180,20 @@ describe('/api/projects', () => {
     const id = randomUUID();
     await request(app).put(`/api/projects/${id}`).send(projectBody());
 
-    const first = { 'record-1': { x: 0, y: 0 }, 'pending-2#0': { x: 344, y: 0 } };
+    // A picture is kept under its file name; a failure card under its batch and a number.
+    const first = {
+      '3aa51f22-11a9-40fb-af16-438aff7dcc1f.png': { x: 0, y: 0 },
+      'pending-2#0': { x: 344, y: 0 },
+    };
     expect(
       (await request(app).put(`/api/projects/${id}/nodes`).send({ positions: first })).status,
     ).toBe(200);
     expect((await request(app).get(`/api/projects/${id}`)).body.positions).toEqual(first);
 
-    const moved = { 'record-1': { x: 12.5, y: -40 }, 'record-3': { x: 688, y: 0 } };
+    const moved = {
+      '3aa51f22-11a9-40fb-af16-438aff7dcc1f.png': { x: 12.5, y: -40 },
+      'b5c0d7e4-5d2f-4c55-9a39-0c1f6a1d2e77.png': { x: 688, y: 0 },
+    };
     await request(app).put(`/api/projects/${id}/nodes`).send({ positions: moved });
     expect((await request(app).get(`/api/projects/${id}`)).body.positions).toEqual(moved);
   });

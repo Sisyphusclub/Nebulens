@@ -24,8 +24,8 @@ export interface ProjectsRouterDeps {
 // The page makes these ids, so each is held to characters that are safe in a path.
 const ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 const BATCH_ID_PATTERN = /^[A-Za-z0-9_-]{1,120}$/;
-/** A picture's id, or "<batch>#<n>" for a placeholder or a failure card. */
-const NODE_KEY_PATTERN = /^[A-Za-z0-9_#-]{1,140}$/;
+/** A picture's id, which is its file name, or "<batch>#<n>" for a placeholder or a failure card. */
+const NODE_KEY_PATTERN = /^[A-Za-z0-9_.#-]{1,140}$/;
 const MAX_BATCHES = 2000;
 const MAX_TASKS = 200;
 const MAX_NODES = 5000;

@@ -220,3 +220,27 @@ it('says plainly when a check found wrong text that no redraw has fixed', () => 
   // Pieces the board no longer shows are told as not made, once the request has ended.
   expect(delivery).toHaveTextContent('主海报3:4图上文字山柚观音 · 冷泡系列没有生成成功');
 });
+
+it('says when a redraw is still wrong, rather than that the text was fixed', () => {
+  renderThread(
+    [
+      turn({
+        batchIds: ['batch-2'],
+        batchLabels: { 'batch-2': '地铁灯箱' },
+        redraws: { 'batch-4': 'b.png' },
+      }),
+    ],
+    [
+      item('batch-2', [entry('b.png', { prompt: LIGHTBOX, textCheck: WRONG })], '3:4'),
+      item('batch-4', [entry('d.png', { prompt: '请只修改图中的文字', textCheck: WRONG })], '3:4'),
+    ],
+  );
+
+  const step = within(screen.getByRole('list', { name: 'Agent 的步骤' })).getByText(
+    '核对了 1 张图上的文字，1 张写错已重画，其中 1 张重画后仍有误',
+  );
+  expect(step.closest('.agent-step')).toHaveAttribute('data-state', 'error');
+  expect(screen.getByRole('region', { name: '交付清单' })).toHaveTextContent(
+    '地铁灯箱3:4图上文字新品上市重画后仍有误',
+  );
+});

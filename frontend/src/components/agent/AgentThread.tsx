@@ -58,18 +58,23 @@ function checkStep(set: AgentSet): Step | null {
   const redrawn = count('redrawn');
   const wrong = count('issues');
   const unchecked = count('unchecked');
+  // A redraw is checked again; one that is still wrong needs a person to look at it.
+  const stillWrong = set.pieces.filter(
+    (piece) => piece.redrawOf !== undefined && piece.check === 'issues',
+  ).length;
   const checked = count('passed') + redrawn + wrong;
   if (checked === 0 && unchecked === 0) return null;
   const parts: string[] = [];
   if (checked > 0) parts.push(`核对了 ${checked} 张图上的文字`);
   if (checked > 0 && redrawn === 0 && wrong === 0) parts.push('都没问题');
   if (redrawn > 0) parts.push(`${redrawn} 张写错已重画`);
+  if (stillWrong > 0) parts.push(`其中 ${stillWrong} 张重画后仍有误`);
   if (wrong > 0) parts.push(`${wrong} 张有误`);
   if (unchecked > 0) parts.push(`${unchecked} 张没能核对，请留意`);
   return {
     key: 'check',
     text: parts.join('，'),
-    state: wrong > 0 ? 'error' : unchecked > 0 ? 'note' : 'done',
+    state: wrong > 0 || stillWrong > 0 ? 'error' : unchecked > 0 ? 'note' : 'done',
   };
 }
 

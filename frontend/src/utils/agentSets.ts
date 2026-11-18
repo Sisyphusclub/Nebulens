@@ -1,7 +1,7 @@
 import type { AgentTurn } from '@/hooks/useAgentConversation';
 import { ANALYSIS_POLL_WINDOW_MS } from '@/hooks/useImageHistory';
 import type { HistoryEntry } from '@/types/image';
-import { boardSlots } from '@/utils/canvasLayout';
+import { boardSlots, slotKey } from '@/utils/canvasLayout';
 import type { FeedItem } from '@/utils/generationFeed';
 import { describeTextIssues, promptQuotesText } from '@/utils/textCheck';
 
@@ -101,8 +101,35 @@ function piece(
 }
 
 /**
+ * The request each failure card belongs to. A piece that could not be made leaves a card on
+ * the board but no batch with its request, so the card is matched by its prompt to the plan
+ * that asked for it: of the requests with such a piece, the latest one sent before it.
+ */
+function failureOwners(
+  turns: readonly AgentTurn[],
+  feed: readonly FeedItem[],
+): Map<string, string[]> {
+  const claimed = new Set(
+    turns.flatMap((turn) => [...turn.batchIds, ...Object.keys(turn.redraws ?? {})]),
+  );
+  const owners = new Map<string, string[]>();
+  for (const item of feed) {
+    if (item.error === undefined || claimed.has(item.id)) continue;
+    const planned = turns.filter((turn) =>
+      turn.plan?.steps.some((step) => step.settings.prompt === item.settings.prompt),
+    );
+    const sentBefore = planned.filter((turn) => turn.createdAt.localeCompare(item.createdAt) <= 0);
+    const owner = sentBefore.at(-1) ?? planned[0];
+    if (owner === undefined) continue;
+    owners.set(owner.id, [...(owners.get(owner.id) ?? []), slotKey(item.id, 0)]);
+  }
+  return owners;
+}
+
+/**
  * Groups the board's pictures by the request that made them. A request still running also
  * covers the pictures being made, since on the Agent's board only its run is generating.
+ * A set that made something also covers the cards of its pieces that failed.
  */
 export function agentSets(
   turns: readonly AgentTurn[],
@@ -110,6 +137,7 @@ export function agentSets(
   now = Date.now(),
 ): AgentSet[] {
   const byId = new Map(feed.map((item) => [item.id, item]));
+  const failures = failureOwners(turns, feed);
   const last = turns.at(-1);
   return turns.flatMap((turn): AgentSet[] => {
     if (turn.plan === undefined) return [];
@@ -142,6 +170,7 @@ export function agentSets(
       for (const slot of boardSlots(feed)) if (slot.kind === 'pending') keys.push(slot.key);
     }
     if (keys.length === 0) return [];
+    keys.push(...(failures.get(turn.id) ?? []));
     const finals = pieces
       .filter((candidate) => candidate.redrawOf === undefined)
       .map((original) => pieces.find((other) => other.redrawOf === original.key) ?? original);

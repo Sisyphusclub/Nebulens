@@ -312,3 +312,57 @@ export function tidyPositions(
   }
   return result;
 }
+
+/**
+ * Makes room for sets on a board laid out before sets were framed, where one sits a single
+ * picture gap under whatever is above it: its frame then runs into the one above and its
+ * name lies under those pictures. Such a set moves down until it has the room a new set is
+ * given, and everything below moves with it, so the board keeps its arrangement. Pictures
+ * beside one another, or put over one another, are left as they are.
+ *
+ * Returns the new places of what moved, or null when nothing did.
+ */
+export function spreadGroups(
+  rects: readonly KeyedRect[],
+  groups: readonly (readonly string[])[],
+): Record<string, Point> | null {
+  const groupOf = new Map<string, number>();
+  groups.forEach((keys, index) => keys.forEach((key) => groupOf.set(key, index)));
+  // A set is one block; a picture in no set is a block of its own.
+  const members = new Map<string, KeyedRect[]>();
+  for (const rect of rects) {
+    const group = groupOf.get(rect.key);
+    const id = group === undefined ? `picture:${rect.key}` : `set:${group}`;
+    members.set(id, [...(members.get(id) ?? []), rect]);
+  }
+  const blocks = [...members.entries()]
+    .flatMap(([id, items]) => {
+      const bounds = boundsOf(items);
+      return bounds === null ? [] : [{ framed: id.startsWith('set:'), items, bounds }];
+    })
+    .sort((a, b) => a.bounds.y - b.bounds.y || a.bounds.x - b.bounds.x);
+
+  const moved: Record<string, Point> = {};
+  const settled: Rect[] = [];
+  let shift = 0;
+  for (const block of blocks) {
+    const top = block.bounds.y + shift;
+    if (block.framed) {
+      const left = block.bounds.x - FRAME_PADDING;
+      const right = block.bounds.x + block.bounds.width + FRAME_PADDING;
+      // What is above the set and in its way; a block level with it is beside it.
+      const floors = settled
+        .filter(
+          (other) =>
+            other.x < right && left < other.x + other.width && other.y + other.height <= top,
+        )
+        .map((other) => other.y + other.height);
+      if (floors.length > 0) shift += Math.max(0, RUN_GAP - (top - Math.max(...floors)));
+    }
+    settled.push({ ...block.bounds, y: block.bounds.y + shift });
+    if (shift > 0) {
+      for (const rect of block.items) moved[rect.key] = { x: rect.x, y: rect.y + shift };
+    }
+  }
+  return Object.keys(moved).length > 0 ? moved : null;
+}

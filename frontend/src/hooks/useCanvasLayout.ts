@@ -90,6 +90,41 @@ export function replaceCanvasLayout(sessionId: string, positions: Positions | nu
   appliedLayouts.set((count) => count + 1);
 }
 
+export const CANVAS_SPREAD_STORAGE_KEY = 'nebulens.canvas-spread.v1';
+/** How many boards are remembered as spread; older ones are forgotten first. */
+const SPREAD_MEMORY = 500;
+
+function readSpreadBoards(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(
+      window.localStorage.getItem(CANVAS_SPREAD_STORAGE_KEY) ?? '[]',
+    );
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Whether this browser already made room for the sets on a session's board. That is done
+ * once: afterwards the board is the user's to arrange, however close they put things.
+ */
+export function wasBoardSpread(sessionId: string): boolean {
+  return readSpreadBoards().includes(sessionId);
+}
+
+export function markBoardSpread(sessionId: string): void {
+  try {
+    const boards = readSpreadBoards().filter((id) => id !== sessionId);
+    window.localStorage.setItem(
+      CANVAS_SPREAD_STORAGE_KEY,
+      JSON.stringify([...boards, sessionId].slice(-SPREAD_MEMORY)),
+    );
+  } catch {
+    // Without storage the board is looked at again on the next visit, which changes nothing.
+  }
+}
+
 /** Pictures given a place just now; the serial tells one batch of them from the next. */
 export interface PlacedNodes {
   keys: readonly string[];

@@ -39,7 +39,7 @@ import {
 } from '@/hooks/useAgentExecution';
 import { useAuth } from '@/hooks/useAuth';
 import { openAuthModal } from '@/hooks/useAuthModal';
-import { useCanvasLayout } from '@/hooks/useCanvasLayout';
+import { markBoardSpread, useCanvasLayout, wasBoardSpread } from '@/hooks/useCanvasLayout';
 import { useComposerSkills, type AgentProgress } from '@/hooks/useComposerSkills';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useGenerationFeed } from '@/hooks/useGenerationFeed';
@@ -69,7 +69,7 @@ import {
 } from '@/types/image';
 import { readAgentRequest } from '@/utils/agentRequest';
 import { agentSets, setFileName, type AgentSet } from '@/utils/agentSets';
-import { boardSlots } from '@/utils/canvasLayout';
+import { boardSlots, spreadGroups } from '@/utils/canvasLayout';
 import { downloadUrl } from '@/utils/download';
 import type { FeedItem } from '@/utils/generationFeed';
 import type { SkillRunRequest } from '@/utils/skillRun';
@@ -241,6 +241,26 @@ export function AgentView() {
       }),
     [selection, slotByKey],
   );
+
+  // A board laid out before sets were framed has them one picture gap apart, so a set's
+  // name lies under the pictures above it. Room is made once, when the whole board is known.
+  const { positions: placedAt, move: moveNodes } = layout;
+  const boardKnown = isFeedSynced && projectReady && history.isHydrated;
+  useEffect(() => {
+    if (activeSessionId === null || !boardKnown || wasBoardSpread(activeSessionId)) return;
+    const rects = slots.flatMap((slot) => {
+      const point = placedAt[slot.key];
+      return point === undefined ? [] : [{ key: slot.key, ...point, ...slot.size }];
+    });
+    // Something is still to be placed; the board is looked at again once it is.
+    if (rects.length < slots.length) return;
+    markBoardSpread(activeSessionId);
+    const moved = spreadGroups(
+      rects,
+      sets.map((set) => set.keys),
+    );
+    if (moved !== null) moveNodes(moved);
+  }, [activeSessionId, boardKnown, moveNodes, placedAt, sets, slots]);
 
   useEffect(() => {
     setSelection([]);

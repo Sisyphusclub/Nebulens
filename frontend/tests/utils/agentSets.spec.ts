@@ -141,6 +141,48 @@ describe('agentSets', () => {
     expect(set?.finals.map((piece) => piece.key)).toEqual(['a.png', 'c.png']);
     expect(set?.keys).toEqual(['a.png', 'b.png', 'c.png']);
   });
+
+  it('covers the failure card of a piece that could not be made, in the set it was planned for', () => {
+    const failed: FeedItem = {
+      ...item('pending-failed', [], '方图提示词', '1:1'),
+      createdAt: '2026-11-17T08:00:30.000Z',
+      error: '上游超时',
+    };
+    const elsewhere: FeedItem = {
+      ...item('pending-other', [], '别的提示词', '1:1'),
+      error: '失败',
+    };
+    const earlier = turn({
+      id: 'turn-0',
+      createdAt: '2026-11-17T07:00:00.000Z',
+      batchIds: ['batch-0'],
+      batchLabels: { 'batch-0': '主海报' },
+    });
+    const latest = turn({ batchIds: ['batch-1'], batchLabels: { 'batch-1': '主海报' }, failed: 1 });
+    const feed = [
+      item('batch-0', [entry('z.png')], '主海报提示词', '3:4'),
+      FEED[0] as FeedItem,
+      failed,
+      elsewhere,
+    ];
+
+    const sets = agentSets([earlier, latest], feed, NOW);
+
+    // The same plan was sent twice; the card belongs to the request that was running then.
+    expect(sets.map((set) => [set.turnId, set.keys])).toEqual([
+      ['turn-0', ['z.png']],
+      ['turn-1', ['a.png', 'pending-failed#0']],
+    ]);
+    expect(sets[1]?.finals.map((piece) => piece.key)).toEqual(['a.png']);
+  });
+
+  it('makes no set of a request whose pieces all failed', () => {
+    const failed: FeedItem = { ...item('pending-failed', [], '方图提示词', '1:1'), error: '失败' };
+
+    expect(agentSets([turn({ batchIds: [], batchLabels: {}, failed: 2 })], [failed], NOW)).toEqual(
+      [],
+    );
+  });
 });
 
 describe('pieceCheck', () => {

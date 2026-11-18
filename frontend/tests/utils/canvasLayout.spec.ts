@@ -13,6 +13,7 @@ import {
   placeholderSize,
   placeNode,
   reconcilePositions,
+  spreadGroups,
   tidyPositions,
   zoomAt,
 } from '@/utils/canvasLayout';
@@ -263,5 +264,47 @@ describe('tidying a selection', () => {
       right: { x: 40, y: 344 },
       below: { x: 40, y: 568 },
     });
+  });
+});
+
+describe('making room for sets', () => {
+  const box = (key: string, x: number, y: number) => ({ key, x, y, width: 320, height: 180 });
+
+  it('moves a set that sits right under another down, with everything below it', () => {
+    // Laid out before sets were framed: rows one picture gap apart.
+    const rects = [
+      box('a1', 0, 0),
+      box('a2', 344, 0),
+      box('b1', 0, 204),
+      box('b2', 344, 204),
+      box('failed', 688, 204),
+      box('c1', 0, 408),
+    ];
+
+    expect(spreadGroups(rects, [['a1', 'a2'], ['b1', 'b2'], ['c1']])).toEqual({
+      b1: { x: 0, y: 180 + RUN_GAP },
+      b2: { x: 344, y: 180 + RUN_GAP },
+      // A card beside the set keeps its place beside it.
+      failed: { x: 688, y: 180 + RUN_GAP },
+      c1: { x: 0, y: 180 + RUN_GAP + 180 + RUN_GAP },
+    });
+  });
+
+  it('gives a set room under a picture that is in no set', () => {
+    const rects = [box('loose', 0, 0), box('a1', 0, 204)];
+
+    expect(spreadGroups(rects, [['a1']])).toEqual({ a1: { x: 0, y: 180 + RUN_GAP } });
+  });
+
+  it('leaves alone sets that have room, sit side by side, or were put over one another', () => {
+    const spaced = [box('a1', 0, 0), box('b1', 0, 180 + RUN_GAP)];
+    const beside = [box('a1', 0, 0), box('b1', 400, 60)];
+    const stacked = [box('a1', 0, 0), box('b1', 40, 100)];
+    const pictures = [box('one', 0, 0), box('two', 0, 204)];
+
+    expect(spreadGroups(spaced, [['a1'], ['b1']])).toBeNull();
+    expect(spreadGroups(beside, [['a1'], ['b1']])).toBeNull();
+    expect(spreadGroups(stacked, [['a1'], ['b1']])).toBeNull();
+    expect(spreadGroups(pictures, [])).toBeNull();
   });
 });

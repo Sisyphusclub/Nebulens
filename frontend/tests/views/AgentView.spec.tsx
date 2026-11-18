@@ -96,9 +96,11 @@ vi.mock('@/hooks/useImageHistory', () => ({
 
 import { ToastProvider } from '@/components/common/ToastProvider';
 import {
+  addAgentTurn,
   AGENT_CONVERSATIONS_STORAGE_KEY,
   resetAgentConversationsForTests,
 } from '@/hooks/useAgentConversation';
+import { replaceCanvasLayout } from '@/hooks/useCanvasLayout';
 import {
   attachGenerationBatch,
   createGenerationSession,
@@ -691,4 +693,93 @@ it('saves a new project to the server as it is worked on', async () => {
       ).toEqual(['agent-1.png', 'agent-2.png']),
     { timeout: 3000 },
   );
+});
+
+it('makes room once for the sets of a board laid out before sets were framed', async () => {
+  const session = createGenerationSession('旧画布');
+  attachGenerationBatch(session.id, 'batch-a', '第一套');
+  attachGenerationBatch(session.id, 'batch-b', '第二套');
+  historyMocks.batches = [
+    historyBatch('batch-a', 'a.png', '第一套'),
+    historyBatch('batch-b', 'b.png', '第二套'),
+  ];
+  const settings = historyMocks.batches.map((batch) => (batch as { settings: object }).settings);
+  (['第一套', '第二套'] as const).forEach((title, index) =>
+    addAgentTurn(session.id, {
+      id: `turn-${index}`,
+      createdAt: `2026-11-16T08:0${index}:00.000Z`,
+      brief: title,
+      references: [],
+      status: 'done',
+      planTitle: title,
+      plan: { skillLabel: title, steps: [{ label: '主图', settings: settings[index] as never }] },
+      started: 1,
+      failed: 0,
+      batchIds: [index === 0 ? 'batch-a' : 'batch-b'],
+      notes: [],
+      userId: 'user-a',
+    }),
+  );
+  // One picture gap apart, as boards were laid out before sets had frames and names.
+  const close = { 'a.png': { x: 0, y: 0 }, 'b.png': { x: 0, y: 344 } };
+  replaceCanvasLayout(session.id, close);
+
+  const first = renderAgent(`/agent?session=${session.id}`);
+  const lower = await screen.findByRole('button', { name: /^画布图片：第二套/ });
+  await waitFor(() => expect(lower.style.top).toBe('440px'));
+  expect(screen.getByRole('button', { name: /^画布图片：第一套/ }).style.top).toBe('0px');
+  first.unmount();
+
+  // Put close again by hand, they stay where the user wants them.
+  replaceCanvasLayout(session.id, close);
+  renderAgent(`/agent?session=${session.id}`);
+  const again = await screen.findByRole('button', { name: /^画布图片：第二套/ });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  expect(again.style.top).toBe('344px');
+});
+
+it('frames the card of a piece that failed with the set it was planned for', async () => {
+  const user = userEvent.setup();
+  let made = 0;
+  generation.generate.mockImplementation((options: { prompt: string; aspectRatio: string }) => {
+    made += 1;
+    if (made === 2) return Promise.reject(new Error('上游超时'));
+    return Promise.resolve({
+      batchId: 'agent-batch-1',
+      aspectRatio: options.aspectRatio,
+      generationMode: 'text-to-image',
+      entries: [
+        {
+          record: {
+            id: 'agent-1.png',
+            batchId: 'agent-batch-1',
+            createdAt: '2026-11-16T08:00:00.000Z',
+            prompt: options.prompt,
+            model: 'gpt-image-2',
+            aspectRatio: options.aspectRatio,
+            width: 1024,
+            height: 1024,
+            count: 1,
+            resolution: 'standard',
+            isPublic: false,
+            isFavorite: false,
+          },
+          imageUrl: '/api/outputs/agent-1.png',
+        },
+      ],
+    });
+  });
+  renderAgent();
+  await send(user, '雨夜的未来城市，做两张');
+  const plan = await screen.findByRole('region', { name: '待确认的方案' });
+  await user.click(within(plan).getByRole('button', { name: '开始生成' }));
+  expect(await screen.findByText('生成了 1 张图，1 张失败')).toBeInTheDocument();
+
+  // Picking the whole set picks the failure card too: it sits inside the frame.
+  await user.click(await screen.findByRole('button', { name: '选中整套：雨夜城市' }));
+  const failed = document.querySelector<HTMLElement>('.agent-node--error');
+  expect(failed).not.toBeNull();
+  expect(failed).toHaveAttribute('data-selected', 'true');
 });

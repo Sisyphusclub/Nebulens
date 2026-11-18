@@ -1,13 +1,16 @@
 import {
   CircleAlert,
+  CircleCheck,
   Columns3,
   Download,
   Hand,
+  LoaderCircle,
   Maximize,
   Maximize2,
   Minus,
   MousePointer2,
   Plus,
+  RefreshCw,
   Rows3,
   Trash2,
 } from 'lucide-react';
@@ -28,9 +31,12 @@ import { Button } from '@/components/ui/button';
 import { IconTooltip } from '@/components/ui/icon-tooltip';
 import type { PlacedNodes } from '@/hooks/useCanvasLayout';
 import { IMAGE_MODEL_LABELS, type HistoryEntry, type ImageModel } from '@/types/image';
+import { PIECE_CHECK_LABELS, type PieceCheck } from '@/utils/agentSets';
 import {
   boundsOf,
+  FRAME_PADDING,
   fitViewport,
+  NODE_WIDTH,
   marqueeHits,
   normalizeRect,
   tidyPositions,
@@ -113,9 +119,55 @@ function gridStep(zoom: number): number {
   return step;
 }
 
+/** Narrower than this on screen, a picture is too small to carry its name and check. */
+const CAPTION_MIN_WIDTH = 150;
+/** Below this zoom, sets' names would crowd the frames they sit on, so only frames show. */
+const GROUP_NAME_MIN_ZOOM = 0.36;
+
+/**
+ * How much the board writes on itself at a zoom: everything, frames and their names without
+ * the pictures' captions, or frames alone.
+ */
+function detailAt(zoom: number): 'full' | 'groups' | 'frames' {
+  if (zoom * NODE_WIDTH >= CAPTION_MIN_WIDTH) return 'full';
+  return zoom >= GROUP_NAME_MIN_ZOOM ? 'groups' : 'frames';
+}
+
 export interface CanvasFocus {
   keys: readonly string[];
   serial: number;
+}
+
+/** Pictures framed together as a set, such as the ones one request made. */
+export interface CanvasGroup {
+  key: string;
+  title: string;
+  /** Said after the name, such as "3 件". */
+  meta: string;
+  keys: readonly string[];
+}
+
+/** What a picture carries on the board: its name in its set, its shape and its text check. */
+export interface NodeCaption {
+  label: string;
+  aspect: string;
+  check: PieceCheck;
+  /** The wrong or deformed text the check found. */
+  issues: readonly string[];
+}
+
+function CheckIcon({ check }: { check: PieceCheck }) {
+  if (check === 'checking') return <LoaderCircle aria-hidden="true" className="spin" />;
+  if (check === 'passed') return <CircleCheck aria-hidden="true" />;
+  if (check === 'redrawn') return <RefreshCw aria-hidden="true" />;
+  return <CircleAlert aria-hidden="true" />;
+}
+
+/** The caption as words, for the picture's accessible name and the check's tooltip. */
+function captionText(caption: NodeCaption): string {
+  const parts = [caption.label, caption.aspect];
+  if (caption.check !== 'none') parts.push(PIECE_CHECK_LABELS[caption.check]);
+  return parts.join(' · ');
 }
 
 interface AgentCanvasProps {
@@ -134,11 +186,20 @@ interface AgentCanvasProps {
   onDownload: (entries: readonly HistoryEntry[]) => void;
   onDelete: (entry: HistoryEntry) => void;
   onRetry: (item: FeedItem) => void;
+  /** Sets drawn in a frame with their name over it; a picture belongs to one at most. */
+  groups?: readonly CanvasGroup[];
+  /** What to write on pictures, by key; pictures without one carry nothing. */
+  captions?: ReadonlyMap<string, NodeCaption>;
+  /** Downloads a set's pictures; without it a frame offers no download. */
+  onDownloadGroup?: (key: string) => void;
   /** Window pixels the conversation covers on the left and at the foot of the board. */
   insetLeft: number;
   insetBottom: number;
   empty: ReactNode;
 }
+
+const NO_GROUPS: readonly CanvasGroup[] = [];
+const NO_CAPTIONS: ReadonlyMap<string, NodeCaption> = new Map();
 
 /**
  * An endless board the Agent's pictures are laid out on. Wheel or pinch to zoom about the
@@ -159,6 +220,9 @@ export function AgentCanvas({
   onDownload,
   onDelete,
   onRetry,
+  groups = NO_GROUPS,
+  captions = NO_CAPTIONS,
+  onDownloadGroup,
   insetLeft,
   insetBottom,
   empty,
@@ -204,6 +268,33 @@ export function AgentCanvas({
   const selectedEntries = useMemo(
     () => selectedNodes.flatMap((node) => (node.slot.kind === 'image' ? [node.slot.entry] : [])),
     [selectedNodes],
+  );
+  /** Each set's frame round its pictures as they are drawn, a drag in progress included. */
+  const frames = useMemo(
+    () =>
+      groups.flatMap((group) => {
+        const wanted = new Set(group.keys);
+        const members = nodes
+          .filter((node) => wanted.has(node.slot.key))
+          .map(({ rect }) =>
+            drag?.keys.includes(rect.key)
+              ? { ...rect, x: rect.x + drag.offset.x, y: rect.y + drag.offset.y }
+              : rect,
+          );
+        const bounds = boundsOf(members);
+        if (bounds === null) return [];
+        return [
+          {
+            group,
+            keys: members.map((member) => member.key),
+            x: bounds.x - FRAME_PADDING,
+            y: bounds.y - FRAME_PADDING,
+            width: bounds.width + FRAME_PADDING * 2,
+            height: bounds.height + FRAME_PADDING * 2,
+          },
+        ];
+      }),
+    [drag, groups, nodes],
   );
 
   useLayoutEffect(() => {
@@ -580,10 +671,54 @@ export function AgentCanvas({
     >
       <div
         className="agent-canvas__world"
-        style={{
-          transform: `translate3d(${viewport.x}px, ${viewport.y}px, 0) scale(${viewport.zoom})`,
-        }}
+        data-detail={detailAt(viewport.zoom)}
+        style={
+          {
+            transform: `translate3d(${viewport.x}px, ${viewport.y}px, 0) scale(${viewport.zoom})`,
+            // Names and badges divide by it to stay one size on screen at any zoom.
+            '--canvas-zoom': viewport.zoom,
+          } as CSSProperties
+        }
       >
+        {frames.map((frame) => {
+          const whole = frame.keys.every((key) => selectionSet.has(key));
+          return (
+            <div
+              key={frame.group.key}
+              className="agent-group"
+              data-selected={whole ? 'true' : undefined}
+              style={{ left: frame.x, top: frame.y, width: frame.width, height: frame.height }}
+            >
+              <div className="agent-group__header" data-canvas-chrome>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="compact"
+                  className="agent-group__name"
+                  aria-label={`选中整套：${frame.group.title}`}
+                  onClick={() => onSelectionChange([...frame.keys])}
+                >
+                  <span className="agent-group__title">{frame.group.title}</span>
+                  <span className="agent-group__meta">{frame.group.meta}</span>
+                </Button>
+                {onDownloadGroup === undefined ? null : (
+                  <IconTooltip label="下载整套">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="agent-group__download"
+                      aria-label={`下载整套：${frame.group.title}`}
+                      onClick={() => onDownloadGroup(frame.group.key)}
+                    >
+                      <Download aria-hidden="true" />
+                    </Button>
+                  </IconTooltip>
+                )}
+              </div>
+            </div>
+          );
+        })}
         {nodes.map(({ slot, rect }) => {
           const selected = selectionSet.has(slot.key);
           const offset = drag?.keys.includes(slot.key) ? drag.offset : null;
@@ -597,6 +732,7 @@ export function AgentCanvas({
               : { transform: `translate3d(${offset.x}px, ${offset.y}px, 0)` }),
           };
           if (slot.kind === 'image') {
+            const caption = captions.get(slot.key);
             return (
               <Button
                 key={slot.key}
@@ -606,7 +742,9 @@ export function AgentCanvas({
                 data-node-key={slot.key}
                 data-selected={selected ? 'true' : undefined}
                 aria-pressed={selected}
-                aria-label={`画布图片：${slot.entry.record.prompt}`}
+                aria-label={`画布图片：${slot.entry.record.prompt}${
+                  caption === undefined ? '' : `（${captionText(caption)}）`
+                }`}
                 style={style}
                 onClick={(event) => selectFromKeyboard(slot.key, event)}
                 onDoubleClick={() => onOpen(slot.entry)}
@@ -621,6 +759,23 @@ export function AgentCanvas({
                   draggable={false}
                   decoding="async"
                 />
+                {caption === undefined ? null : (
+                  <span className="agent-node__caption" aria-hidden="true">
+                    <span className="agent-node__label">{caption.label}</span>
+                    <span className="agent-node__aspect">{caption.aspect}</span>
+                  </span>
+                )}
+                {caption === undefined || caption.check === 'none' ? null : (
+                  <span
+                    className="agent-node__check"
+                    data-check={caption.check}
+                    aria-hidden="true"
+                    title={[PIECE_CHECK_LABELS[caption.check], ...caption.issues].join('\n')}
+                  >
+                    <CheckIcon check={caption.check} />
+                    {PIECE_CHECK_LABELS[caption.check]}
+                  </span>
+                )}
               </Button>
             );
           }

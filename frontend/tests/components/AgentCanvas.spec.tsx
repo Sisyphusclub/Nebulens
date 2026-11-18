@@ -254,4 +254,67 @@ describe('AgentCanvas', () => {
 
     expect(world?.style.transform).toBe('translate3d(40px, -30px, 0) scale(1)');
   });
+
+  it('frames a set under its name, selects or downloads it whole, and names each picture', async () => {
+    const user = userEvent.setup();
+    const { props } = renderCanvas({
+      groups: [
+        {
+          key: 'turn-1',
+          title: '山柚观音上新',
+          meta: '2 件',
+          keys: ['a.png', 'b.png', 'pending-1#0'],
+        },
+      ],
+      captions: new Map([
+        ['a.png', { label: '主海报', aspect: '3:4', check: 'passed' as const, issues: [] }],
+        [
+          'b.png',
+          {
+            label: '方图',
+            aspect: '1:1',
+            check: 'issues' as const,
+            issues: ['“新品上市”被写成了“新吕上市”'],
+          },
+        ],
+      ]),
+      onDownloadGroup: vi.fn(),
+    });
+
+    const name = screen.getByRole('button', { name: '选中整套：山柚观音上新' });
+    expect(name).toHaveTextContent('山柚观音上新2 件');
+    // The frame reaches 16 past the pictures it holds, the one still being made included.
+    expect(name.closest('.agent-group')).toHaveStyle({
+      left: '-16px',
+      top: '-16px',
+      width: '696px',
+      height: '696px',
+    });
+
+    await user.click(name);
+    expect(props.onSelectionChange).toHaveBeenLastCalledWith(['a.png', 'b.png', 'pending-1#0']);
+    await user.click(screen.getByRole('button', { name: '下载整套：山柚观音上新' }));
+    expect(props.onDownloadGroup).toHaveBeenCalledWith('turn-1');
+
+    expect(
+      screen.getByRole('button', { name: '画布图片：提示词 a.png（主海报 · 3:4 · 文字无误）' }),
+    ).toHaveTextContent('主海报3:4文字无误');
+    expect(
+      screen.getByRole('button', { name: '画布图片：提示词 b.png（方图 · 1:1 · 文字有误）' }),
+    ).toHaveTextContent('文字有误');
+    expect(screen.getByTitle(/新吕上市/)).toHaveAttribute('data-check', 'issues');
+  });
+
+  it('marks a whole set as selected when every picture in it is', () => {
+    renderCanvas({
+      groups: [{ key: 'turn-1', title: '山柚观音上新', meta: '2 件', keys: ['a.png', 'b.png'] }],
+      selection: ['a.png', 'b.png'],
+    });
+
+    expect(
+      screen.getByRole('button', { name: '选中整套：山柚观音上新' }).closest('.agent-group'),
+    ).toHaveAttribute('data-selected', 'true');
+    // A set the page cannot download offers no download.
+    expect(screen.queryByRole('button', { name: /^下载整套/ })).not.toBeInTheDocument();
+  });
 });

@@ -30,6 +30,9 @@ vi.mock('@/services/api/imagesApi', async (importOriginal) => ({
   uploadReferenceImages: images.uploadReferenceImages,
 }));
 
+const downloads = vi.hoisted(() => ({ downloadUrl: vi.fn() }));
+vi.mock('@/utils/download', () => downloads);
+
 const generation = vi.hoisted(() => ({ generate: vi.fn(), cancel: vi.fn() }));
 vi.mock('@/hooks/useImageGeneration', () => ({
   useImageGeneration: () => ({
@@ -520,4 +523,29 @@ it('folds the conversation away and brings it back', async () => {
   expect(screen.queryByRole('complementary', { name: 'Agent 对话' })).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: '展开对话' }));
   expect(screen.getByRole('complementary', { name: 'Agent 对话' })).toBeInTheDocument();
+});
+
+it('frames what a request made as a set on the board, named after its plan, and downloads it whole', async () => {
+  const user = userEvent.setup();
+  renderAgent();
+  await send(user, '雨夜的未来城市，做两张');
+  const plan = await screen.findByRole('region', { name: '待确认的方案' });
+  await user.click(within(plan).getByRole('button', { name: '开始生成' }));
+  expect(await screen.findByText('生成了 2 张图')).toBeInTheDocument();
+
+  const name = await screen.findByRole('button', { name: '选中整套：雨夜城市' });
+  expect(name).toHaveTextContent('雨夜城市2 件');
+  expect(
+    screen.getByRole('button', { name: '画布图片：雨夜的未来城市，竖版构图（主视觉 · 3:4）' }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: '画布图片：雨夜的未来城市，方图构图（方图 · 1:1）' }),
+  ).toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: '下载整套：雨夜城市' }));
+  await waitFor(() => expect(downloads.downloadUrl).toHaveBeenCalledTimes(2));
+  expect(downloads.downloadUrl.mock.calls).toEqual([
+    ['/api/outputs/agent-1.png', '雨夜城市-1-主视觉.png'],
+    ['/api/outputs/agent-2.png', '雨夜城市-2-方图.png'],
+  ]);
 });

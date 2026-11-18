@@ -2,7 +2,12 @@ import { Bot, LayoutList, PanelLeftClose, PanelLeftOpen, Plus } from 'lucide-rea
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { AgentCanvas, type CanvasFocus } from '@/components/agent/AgentCanvas';
+import {
+  AgentCanvas,
+  type CanvasFocus,
+  type CanvasGroup,
+  type NodeCaption,
+} from '@/components/agent/AgentCanvas';
 import { AgentThread, type PlanBudget } from '@/components/agent/AgentThread';
 import { useToast } from '@/components/common/ToastProvider';
 import { ImageDetailModal } from '@/components/gallery/ImageDetailModal';
@@ -62,6 +67,7 @@ import {
   type ImageResolution,
 } from '@/types/image';
 import { readAgentRequest } from '@/utils/agentRequest';
+import { agentSets, setFileName, type AgentSet } from '@/utils/agentSets';
 import { boardSlots } from '@/utils/canvasLayout';
 import { downloadUrl } from '@/utils/download';
 import type { FeedItem } from '@/utils/generationFeed';
@@ -193,6 +199,35 @@ export function AgentView() {
     enabled: isFeedSynced,
   });
   const slotByKey = useMemo(() => new Map(slots.map((slot) => [slot.key, slot])), [slots]);
+  /** Each request's pictures as a set: framed on the board, named after the plan. */
+  const sets = useMemo(() => agentSets(turns, visibleFeed), [turns, visibleFeed]);
+  const groups = useMemo<CanvasGroup[]>(
+    () =>
+      sets.map((set) => ({
+        key: set.turnId,
+        title: set.title,
+        meta: set.running ? `${set.finals.length}/${set.planned} 件` : `${set.finals.length} 件`,
+        keys: set.keys,
+      })),
+    [sets],
+  );
+  const captions = useMemo(
+    () =>
+      new Map<string, NodeCaption>(
+        sets.flatMap((set) =>
+          set.pieces.map((piece): [string, NodeCaption] => [
+            piece.key,
+            {
+              label: piece.redrawOf === undefined ? piece.label : `${piece.label} · 重画`,
+              aspect: piece.aspect,
+              check: piece.check,
+              issues: piece.issues,
+            },
+          ]),
+        ),
+      ),
+    [sets],
+  );
   const selectedEntries = useMemo(
     () =>
       selection.flatMap((key) => {
@@ -218,19 +253,29 @@ export function AgentView() {
     return () => observer.disconnect();
   }, [narrow, panelOpen]);
 
-  /** Regenerates one picture from itself with a prompt that rewrites only the wrong text. */
+  /**
+   * Regenerates one picture from itself with a prompt that rewrites only the wrong text. The
+   * redraw joins the set of the request that made the picture, as its corrected version.
+   */
   const fixText = async (item: FeedItem, entry: HistoryEntry): Promise<void> => {
     const check = entry.record.textCheck;
     if (check === undefined) return;
+    const sessionId = activeSessionId;
+    const owner = turns.find((turn) => turn.batchIds.includes(item.id));
     try {
       const blob = await fetchOutputBlob(entry.imageUrl);
       const file = new File([blob], `text-fix-${entry.record.id}`, {
         type: blob.type || 'image/png',
       });
-      await performGeneration(
+      const batchId = await performGeneration(
         { ...item.settings, prompt: buildTextFixPrompt(check), count: 1, referenceIds: [] },
         [file],
       );
+      if (batchId !== undefined && sessionId !== null && owner !== undefined) {
+        updateAgentTurn(sessionId, owner.id, (turn) => ({
+          redraws: { ...turn.redraws, [batchId]: entry.record.id },
+        }));
+      }
     } catch (error) {
       notify(error instanceof Error ? error.message : '无法修正文字，请稍后重试。', 'error');
     }
@@ -239,7 +284,7 @@ export function AgentView() {
   const skillRun = useSkillRun({
     isGenerating: generation.isLoading,
     feed,
-    runGeneration: async (settings) => {
+    runGeneration: async (settings, label) => {
       const target = runTurn.current;
       if (target !== null) {
         updateAgentTurn(target.sessionId, target.turnId, (turn) => ({ started: turn.started + 1 }));
@@ -248,7 +293,10 @@ export function AgentView() {
       if (target !== null) {
         updateAgentTurn(target.sessionId, target.turnId, (turn) =>
           batchId !== undefined
-            ? { batchIds: [...turn.batchIds, batchId] }
+            ? {
+                batchIds: [...turn.batchIds, batchId],
+                batchLabels: { ...turn.batchLabels, [batchId]: label },
+              }
             : turn.status === 'cancelled'
               ? {}
               : { failed: turn.failed + 1 },
@@ -492,9 +540,7 @@ export function AgentView() {
   };
 
   const revealTurn = (turn: AgentTurn): void => {
-    const keys = visibleFeed
-      .filter((item) => turn.batchIds.includes(item.id))
-      .flatMap((item) => item.entries.map((entry) => entry.record.id));
+    const keys = sets.find((set) => set.turnId === turn.id)?.keys ?? [];
     if (keys.length > 0) setFocus((current) => ({ keys, serial: (current?.serial ?? 0) + 1 }));
   };
 
@@ -546,6 +592,17 @@ export function AgentView() {
   const downloadEntries = async (entries: readonly HistoryEntry[]): Promise<void> => {
     try {
       for (const entry of entries) await downloadUrl(entry.imageUrl, `${entry.record.id}.png`);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : '下载失败，请稍后重试。', 'error');
+    }
+  };
+
+  /** A set's pictures, a redraw in place of the one it fixes, named after the set's plan. */
+  const downloadSet = async (set: AgentSet): Promise<void> => {
+    try {
+      for (const [index, piece] of set.finals.entries()) {
+        await downloadUrl(piece.entry.imageUrl, setFileName(set, index, piece.label));
+      }
     } catch (error) {
       notify(error instanceof Error ? error.message : '下载失败，请稍后重试。', 'error');
     }
@@ -603,6 +660,12 @@ export function AgentView() {
         onDownload={(entries) => void downloadEntries(entries)}
         onDelete={deleteEntry}
         onRetry={(item) => void performGeneration(item.settings, [], false, item)}
+        groups={groups}
+        captions={captions}
+        onDownloadGroup={(key) => {
+          const set = sets.find((candidate) => candidate.turnId === key);
+          if (set !== undefined) void downloadSet(set);
+        }}
         insetLeft={insetLeft}
         insetBottom={insetBottom}
         empty={

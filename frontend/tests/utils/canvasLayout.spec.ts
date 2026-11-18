@@ -8,6 +8,7 @@ import {
   marqueeHits,
   nodeSize,
   NODE_GAP,
+  RUN_GAP,
   NODE_WIDTH,
   placeholderSize,
   placeNode,
@@ -89,12 +90,12 @@ describe('placing a node', () => {
     expect(placeNode(row, square, row[3])).toEqual({ x: 0, y: 480 + NODE_GAP });
   });
 
-  it('starts a new run on a fresh row under everything, at the left edge', () => {
+  it('starts a new run on a fresh row under everything, at the left edge, with room for its frame', () => {
     const board = [
       { x: 40, y: 10, width: 320, height: 320 },
       { x: 400, y: 10, width: 320, height: 200 },
     ];
-    expect(placeNode(board, square)).toEqual({ x: 40, y: 330 + NODE_GAP });
+    expect(placeNode(board, square)).toEqual({ x: 40, y: 330 + RUN_GAP });
   });
 
   it('never lands on a node that was dragged into the way', () => {
@@ -172,7 +173,7 @@ describe('keeping the board in step with the feed', () => {
       lastPlaced: second.lastPlaced,
       run: 'turn-2',
     });
-    expect(nextRun.positions['pending-3#0']).toEqual({ x: 0, y: 344 });
+    expect(nextRun.positions['pending-3#0']).toEqual({ x: 0, y: 320 + RUN_GAP });
   });
 
   it('leaves a board that needs nothing exactly as it was', () => {

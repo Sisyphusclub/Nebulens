@@ -61,6 +61,10 @@ export interface AgentTurn {
   failed: number;
   /** The batches the plan made, in order. */
   batchIds: string[];
+  /** Which planned picture each batch is, by the plan's label, so the board can name it. */
+  batchLabels?: Record<string, string>;
+  /** Batches made to fix wrong text, each with the id of the picture it redraws. */
+  redraws?: Record<string, string>;
   /** What happened along the way, such as a picture redrawn for wrong text. */
   notes: string[];
   error?: string;
@@ -78,6 +82,8 @@ const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isInteger(value) && value >= 0;
 const isDuration = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0;
+const isStringMap = (value: unknown): value is Record<string, string> =>
+  isRecord(value) && Object.values(value).every(isString);
 
 function parseTurn(value: unknown): AgentTurn | null {
   if (!isRecord(value)) return null;
@@ -118,6 +124,8 @@ function parseTurn(value: unknown): AgentTurn | null {
     started: isCount(value.started) ? value.started : 0,
     failed: isCount(value.failed) ? value.failed : 0,
     batchIds: [...value.batchIds],
+    ...(isStringMap(value.batchLabels) ? { batchLabels: { ...value.batchLabels } } : {}),
+    ...(isStringMap(value.redraws) ? { redraws: { ...value.redraws } } : {}),
     notes: Array.isArray(value.notes) ? value.notes.filter(isString) : [],
     ...(isString(value.error) ? { error: value.error } : {}),
     ...(isString(value.userId) ? { userId: value.userId } : {}),

@@ -12,8 +12,14 @@ interface UseSkillRunOptions {
   /** True while any generation, ours or the user's, is in flight. */
   isGenerating: boolean;
   feed: readonly FeedItem[];
-  /** Resolves to the saved batch id, or undefined when the generation failed. */
-  runGeneration: (settings: GenerationSettingsSnapshot) => Promise<string | undefined>;
+  /**
+   * Makes one planned picture, named by the plan's label. Resolves to the saved batch id, or
+   * undefined when the generation failed.
+   */
+  runGeneration: (
+    settings: GenerationSettingsSnapshot,
+    label: string,
+  ) => Promise<string | undefined>;
   fixText: (item: FeedItem, entry: HistoryEntry) => Promise<void>;
   notify: (message: string, tone?: 'success' | 'error') => void;
   /** False where the plan is already on screen, so starting it says nothing more. */
@@ -69,7 +75,7 @@ export function useSkillRun({
     void (async () => {
       try {
         if (job.kind === 'generate') {
-          const batchId = await latest.current.runGeneration(job.settings);
+          const batchId = await latest.current.runGeneration(job.settings, job.label);
           if (batchId !== undefined) {
             setAwaitingCheck((current) => new Map(current).set(batchId, job.label));
           }

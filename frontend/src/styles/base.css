@@ -11112,6 +11112,146 @@ video {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
+/* What a picture carries: its name and shape at the foot, its text check at the top. Both
+   divide by the zoom, so they stay one size on screen and keep 8px from the picture's edge. */
+.agent-canvas .agent-node__caption,
+.agent-canvas .agent-node__check {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: var(--radius-full);
+  background: rgb(12 12 12 / 0.64);
+  backdrop-filter: blur(10px);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.agent-canvas .agent-node__caption {
+  bottom: calc(8px / var(--canvas-zoom));
+  left: calc(8px / var(--canvas-zoom));
+  max-width: calc(100% * var(--canvas-zoom) - 16px);
+  gap: 6px;
+  padding: 0 9px;
+  color: var(--text-1);
+  transform: scale(calc(1 / var(--canvas-zoom)));
+  transform-origin: left bottom;
+}
+.agent-node__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.agent-node__aspect {
+  flex: 0 0 auto;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+.agent-canvas .agent-node__check {
+  top: calc(8px / var(--canvas-zoom));
+  right: calc(8px / var(--canvas-zoom));
+  gap: 4px;
+  padding: 0 9px 0 7px;
+  color: var(--text-2);
+  transform: scale(calc(1 / var(--canvas-zoom)));
+  transform-origin: right top;
+}
+.agent-node__check svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+}
+.agent-node__check[data-check='passed'] svg {
+  color: var(--success);
+}
+.agent-node__check[data-check='issues'] {
+  color: var(--warning);
+}
+/* Checking is the AI at work, so its spinner takes the AI tint, as other AI marks do. */
+.agent-node__check[data-check='checking'] svg {
+  color: var(--ai);
+}
+.agent-node__check[data-check='unchecked'] {
+  color: var(--text-3);
+}
+/* A set's frame: a hairline round its pictures, its name and download sitting on top. */
+.agent-group {
+  position: absolute;
+  border: calc(1px / var(--canvas-zoom)) solid var(--line-1);
+  border-radius: 24px;
+  background: rgb(255 255 255 / 0.015);
+  pointer-events: none;
+  transition: border-color 0.15s ease;
+}
+.agent-group[data-selected='true'] {
+  border-color: var(--line-3);
+}
+.agent-group__header {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 0 6px 4px;
+  transform: scale(calc(1 / var(--canvas-zoom)));
+  transform-origin: left bottom;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+.agent-group__header .agent-group__name {
+  height: 26px;
+  min-height: 26px;
+  gap: 8px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  padding: 0 10px;
+  color: var(--text-1);
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: none;
+}
+.agent-group__header .agent-group__name:hover,
+.agent-group__header .agent-group__download:hover:not(:disabled) {
+  background: var(--fill-2);
+  color: var(--text-1);
+}
+.agent-group__title {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.agent-group__meta {
+  color: var(--text-3);
+  font-size: 11.5px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.agent-group__header .agent-group__download {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  min-height: 26px;
+  border: 0;
+  border-radius: var(--radius-full);
+  padding: 0;
+  color: var(--text-3);
+  box-shadow: none;
+}
+.agent-group__download svg {
+  width: 14px;
+  height: 14px;
+}
+/* Zoomed out, pictures are too small for captions, and then names would crowd the frames. */
+.agent-canvas__world:not([data-detail='full']) .agent-node__caption,
+.agent-canvas__world:not([data-detail='full']) .agent-node__check,
+.agent-canvas__world[data-detail='frames'] .agent-group__header {
+  display: none;
+}
 .agent-canvas__marquee {
   position: absolute;
   border: 1px solid rgb(255 255 255 / 0.55);

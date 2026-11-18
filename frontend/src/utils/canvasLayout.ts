@@ -5,6 +5,13 @@ import type { FeedItem } from '@/utils/generationFeed';
 export const NODE_WIDTH = 320;
 /** The space the board leaves between the pictures it places, and that tidying leaves. */
 export const NODE_GAP = 24;
+/**
+ * The space above a new request's first row: its pictures are framed as a set, with the
+ * set's name over the frame, and frames need room between them.
+ */
+export const RUN_GAP = 120;
+/** How far a set's frame reaches past its pictures. */
+export const FRAME_PADDING = 16;
 /** A run of pictures wraps to a new row after this many. */
 export const ROW_LIMIT = 4;
 /** A picture taller or wider than this is cut to it, so a strip cannot run off the board. */
@@ -94,15 +101,16 @@ export function normalizeRect(rect: Rect): Rect {
 /**
  * Where a new picture goes: to the right of the one placed before it in the same run, or
  * under its row once the row holds four; otherwise, and whenever that spot is taken, on a
- * fresh row under everything, from the board's left edge.
+ * fresh row under everything, from the board's left edge. A new run starts further down,
+ * leaving room for its set's frame and name.
  */
 export function placeNode(rects: readonly Rect[], size: Size, after?: Rect): Point {
   if (rects.length === 0) return { x: 0, y: 0 };
-  const fresh = (): Point => ({
+  const fresh = (gap = NODE_GAP): Point => ({
     x: Math.min(...rects.map((rect) => rect.x)),
-    y: Math.max(...rects.map((rect) => rect.y + rect.height)) + NODE_GAP,
+    y: Math.max(...rects.map((rect) => rect.y + rect.height)) + gap,
   });
-  if (after === undefined) return fresh();
+  if (after === undefined) return fresh(RUN_GAP);
   const row = rects.filter((rect) => rect.y === after.y);
   const candidate: Point =
     row.length >= ROW_LIMIT

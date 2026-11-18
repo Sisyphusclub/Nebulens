@@ -54,7 +54,9 @@ const RUN = {
   ],
 };
 
-function setup(runGeneration: (s: GenerationSettingsSnapshot) => Promise<string | undefined>) {
+function setup(
+  runGeneration: (s: GenerationSettingsSnapshot, label: string) => Promise<string | undefined>,
+) {
   const fixText = vi.fn(() => Promise.resolve());
   const notify = vi.fn();
   const hook = renderHook(
@@ -65,7 +67,7 @@ function setup(runGeneration: (s: GenerationSettingsSnapshot) => Promise<string 
   return { ...hook, fixText, notify };
 }
 
-it('generates the images one at a time, each after the previous one finishes', async () => {
+it('generates the images one at a time, each after the previous one finishes, named by the plan', async () => {
   const releases: Array<(batchId: string) => void> = [];
   const runGeneration = vi.fn(
     () => new Promise<string | undefined>((resolve) => releases.push(resolve)),
@@ -75,7 +77,7 @@ it('generates the images one at a time, each after the previous one finishes', a
   act(() => result.current.start(RUN));
 
   await waitFor(() => expect(runGeneration).toHaveBeenCalledTimes(1));
-  expect(runGeneration).toHaveBeenLastCalledWith(settings('主图提示词'));
+  expect(runGeneration).toHaveBeenLastCalledWith(settings('主图提示词'), '主图');
   expect(notify).toHaveBeenCalledWith('「电商主图」会依次生成 2 张图，并自动检查文字。');
   expect(result.current.isRunning).toBe(true);
 
@@ -84,7 +86,7 @@ it('generates the images one at a time, each after the previous one finishes', a
     return Promise.resolve();
   });
   await waitFor(() => expect(runGeneration).toHaveBeenCalledTimes(2));
-  expect(runGeneration).toHaveBeenLastCalledWith(settings('卖点图提示词'));
+  expect(runGeneration).toHaveBeenLastCalledWith(settings('卖点图提示词'), '卖点图');
 
   await act(() => {
     releases[1]?.('batch-points');

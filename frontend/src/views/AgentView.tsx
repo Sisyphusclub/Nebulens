@@ -360,7 +360,11 @@ export function AgentView() {
     }
   };
 
-  const receivePlan = (title: string, request: SkillRunRequest): void => {
+  const receivePlan = (
+    title: string,
+    request: SkillRunRequest,
+    points?: readonly string[],
+  ): void => {
     const target = planningTurn.current;
     planningTurn.current = null;
     // A request stopped while it was being planned makes nothing.
@@ -368,6 +372,7 @@ export function AgentView() {
     const auto = executionRef.current === 'auto';
     updateAgentTurn(target.sessionId, target.turnId, {
       planTitle: title,
+      ...(points === undefined || points.length === 0 ? {} : { points: [...points] }),
       plan: request,
       plannedCount: request.steps.length,
       status: auto ? 'running' : 'awaiting',

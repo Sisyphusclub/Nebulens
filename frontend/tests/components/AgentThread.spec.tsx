@@ -106,7 +106,10 @@ function renderThread(turns: AgentTurn[], feed: FeedItem[]) {
 
 it('delivers a set piece by piece, with each picture’s words, shape and text check', async () => {
   const user = userEvent.setup();
-  const done = turn({ redraws: { 'batch-4': 'b.png' } });
+  const done = turn({
+    redraws: { 'batch-4': 'b.png' },
+    points: ['品牌：山川茶事', '产品：山柚观音冷泡', '时间：下周上新'],
+  });
   const props = renderThread(
     [done],
     [
@@ -118,6 +121,14 @@ it('delivers a set piece by piece, with each picture’s words, shape and text c
   );
 
   const steps = screen.getByRole('list', { name: 'Agent 的步骤' });
+  // What the Agent read from the request sits under reading it.
+  const understood = within(steps).getByRole('list', { name: '理解到的要点' });
+  expect(understood.closest('.agent-step')).toHaveTextContent(/^理解需求 1\.2s/);
+  expect(
+    within(understood)
+      .getAllByRole('listitem')
+      .map((point) => point.textContent),
+  ).toEqual(['品牌：山川茶事', '产品：山柚观音冷泡', '时间：下周上新']);
   expect(steps).toHaveTextContent('按需求自己规划画面');
   expect(steps).toHaveTextContent('核对了 2 张图上的文字，1 张写错已重画');
 

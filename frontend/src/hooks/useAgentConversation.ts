@@ -52,6 +52,8 @@ export interface AgentTurn {
   /** The text model could not be asked, so no skill was weighed before planning freely. */
   selectionFailed?: boolean;
   planningMs?: number;
+  /** What the Agent took from the request, one short line each. */
+  points?: string[];
   planTitle?: string;
   plan?: SkillRunRequest;
   /** How many pictures the plan had when it came back, before any were dropped from it. */
@@ -118,6 +120,9 @@ function parseTurn(value: unknown): AgentTurn | null {
       : {}),
     ...(value.selectionFailed === true ? { selectionFailed: true } : {}),
     ...(isDuration(value.planningMs) ? { planningMs: value.planningMs } : {}),
+    ...(Array.isArray(value.points) && value.points.every(isString)
+      ? { points: [...value.points] }
+      : {}),
     ...(isString(value.planTitle) ? { planTitle: value.planTitle } : {}),
     ...(plan === null ? {} : { plan }),
     ...(isCount(value.plannedCount) ? { plannedCount: value.plannedCount } : {}),

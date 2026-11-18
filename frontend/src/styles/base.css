@@ -11551,6 +11551,32 @@ video {
   flex: 0 0 auto;
   margin-top: 2px;
 }
+.agent-step__body {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+/* What the Agent read from the request, as small tags under the step that read it. */
+.agent-step__points {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  gap: 4px;
+  padding: 0;
+  list-style: none;
+}
+.agent-step__points li {
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-xs);
+  background: var(--fill-2);
+  padding: 2px 7px;
+  color: var(--text-2);
+  font-size: 11.5px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .agent-step[data-state='active'] {
   color: var(--text-1);
 }

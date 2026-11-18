@@ -23,6 +23,11 @@ export interface PlannedOutput {
 export interface SkillPlan {
   /** Session title for the run, e.g. "电商主图 · 山川明前绿茶". */
   title: string;
+  /**
+   * What the Agent took from the request, one short line each, such as "品牌：山川茶事".
+   * Left out when nothing was read.
+   */
+  points?: string[];
   outputs: PlannedOutput[];
 }
 
@@ -199,6 +204,29 @@ function answerText(field: SkillField, values: SkillValues): string {
   return field.kind === 'list' ? values.list(field.id).join('、') : values.text(field.id);
 }
 
+/** Longer than this, a point is cut, so the list stays one line a point. */
+const POINT_LENGTH = 24;
+const SKILL_POINTS = 5;
+
+function shortPoint(text: string): string {
+  const flat = text.replace(/\s+/g, ' ').trim();
+  return flat.length > POINT_LENGTH ? `${flat.slice(0, POINT_LENGTH - 1)}…` : flat;
+}
+
+/** The answers a skill's plan is made from, as the Agent tells what it understood. */
+export function skillPoints(skill: SkillDefinition, values: SkillValues): string[] {
+  return skill.fields
+    .flatMap((field) => {
+      const answer = answerText(field, values);
+      // A choice left at its default was not read from the request.
+      if (answer.length === 0 || (field.kind === 'choice' && answer === field.defaultValue)) {
+        return [];
+      }
+      return [shortPoint(`${field.label}：${answer}`)];
+    })
+    .slice(0, SKILL_POINTS);
+}
+
 function outputAspect(output: SkillOutput, values: SkillValues): AspectRatio | 'auto' {
   return typeof output.aspect === 'function' ? output.aspect(values) : output.aspect;
 }
@@ -288,10 +316,12 @@ const FREE_PLAN_RULES = [
   '4. 已上传参考图时，每张都写明参考上传的图片，保持图里的主体不变。',
   `5. aspect 从这些比例里选：${ASPECT_RATIOS.join('、')}，按用途选，如竖版海报 3:4、横幅 16:9、方图 1:1。`,
   '6. label 是这张图的简短名称，不超过 8 个字；title 是这组图的标题，不超过 16 个字。',
-  '7. 只输出一个 JSON 对象：{"title": "…", "images": [{"label": "…", "aspect": "3:4", "prompt": "…"}]}，不要解释。',
+  '7. points 是你从需求里读到的要点，最多 4 条，每条不超过 14 个字，如“品牌：山川茶事”“卖点：冷泡不苦”；只写用户明确提到的，不要编。',
+  '8. 只输出一个 JSON 对象：{"title": "…", "points": ["…"], "images": [{"label": "…", "aspect": "3:4", "prompt": "…"}]}，不要解释。',
 ].join('\n');
 
 const FREE_PLAN_MAX_IMAGES = 4;
+const FREE_PLAN_POINTS = 4;
 const TEXT_MODEL_UNAVAILABLE =
   'Agent 需要文本模型来规划画面，当前没有配置。可以先用图片生成，或从技能库选一个技能。';
 // A skill has templates to fall back on, so naming one still gets a plan while the text
@@ -328,7 +358,15 @@ function readFreePlan(answer: Record<string, unknown>, brief: string): SkillPlan
   }
   if (outputs.length === 0) return null;
   const title = typeof answer.title === 'string' ? answer.title.trim().slice(0, 20) : '';
-  return { title: title || brief.trim().slice(0, 20), outputs };
+  const points = (Array.isArray(answer.points) ? answer.points : [])
+    .flatMap((point) => (typeof point === 'string' ? [shortPoint(point)] : []))
+    .filter((point) => point.length > 0)
+    .slice(0, FREE_PLAN_POINTS);
+  return {
+    title: title || brief.trim().slice(0, 20),
+    ...(points.length > 0 ? { points } : {}),
+    outputs,
+  };
 }
 
 /** A skill that needs an uploaded image is only usable once there is one. */
@@ -447,8 +485,10 @@ export function createSkillPlanner(config?: SkillPlannerConfig): SkillPlanner {
           logger.warn({ err, skillId: skill.id }, 'skill planner fell back to templates');
         }
       }
+      const points = skillPoints(skill, values);
       return {
         title: `${skill.label} · ${skill.subject(values)}`,
+        ...(points.length > 0 ? { points } : {}),
         outputs: skill.outputs.map((output) => ({
           id: output.id,
           label: output.label,

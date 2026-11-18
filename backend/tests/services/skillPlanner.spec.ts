@@ -93,6 +93,23 @@ describe('createSkillPlanner', () => {
       ['bold', '9:16'],
     ]);
     expect(plan.outputs[0]?.prompt).toContain('“周末去哪儿”');
+    // What the plan was made from, as the Agent tells what it understood.
+    expect(plan.points).toEqual(['标题：周末去哪儿', '平台：抖音']);
+  });
+
+  it('leaves a choice at its default out of what it understood, and cuts long answers', async () => {
+    const values = readSkillValues(
+      ecommerce,
+      { product: '山川明前绿茶', points: ['高山云雾里慢慢生长的茶树', '明前手工采摘', '一芽一叶'] },
+      false,
+    );
+
+    const plan = await createSkillPlanner().plan(ecommerce, values, false);
+
+    expect(plan.points).toEqual([
+      '商品名称：山川明前绿茶',
+      '卖点：高山云雾里慢慢生长的茶树、明前手工采摘、…',
+    ]);
   });
 
   it('keeps planned prompts that preserve the text and replaces the ones that do not', async () => {
@@ -425,13 +442,21 @@ describe('createSkillPlanner planFreely', () => {
       prompt: `雨夜的未来城市，第 ${index + 1} 个构图，霓虹倒影`,
     }));
     const fetchImpl = vi.fn(async () =>
-      chatResponse(JSON.stringify({ title: '雨夜城市', images })),
+      chatResponse(
+        JSON.stringify({
+          title: '雨夜城市',
+          points: ['主题：雨夜的未来城市', 7, ' ', '数量：一组', '风格：霓虹', '色调：冷', '多余'],
+          images,
+        }),
+      ),
     );
     const planner = createSkillPlanner({ ...chatConfig, fetchImpl });
 
     const plan = await planner.planFreely('雨夜的未来城市，做一组', true);
 
     expect(plan.title).toBe('雨夜城市');
+    // Only words count as points, four at most.
+    expect(plan.points).toEqual(['主题：雨夜的未来城市', '数量：一组', '风格：霓虹', '色调：冷']);
     expect(plan.outputs).toHaveLength(4);
     expect(plan.outputs[0]).toEqual({
       id: 'image-1',

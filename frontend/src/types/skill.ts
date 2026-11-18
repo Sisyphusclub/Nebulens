@@ -35,5 +35,7 @@ export interface PlannedSkillOutput {
 
 export interface SkillPlan {
   title: string;
+  /** What the Agent took from the request, one short line each, such as "品牌：山川茶事". */
+  points?: readonly string[];
   outputs: PlannedSkillOutput[];
 }

@@ -277,6 +277,24 @@ it('reads a request, shows its plan and what it costs, and makes it only once co
   expect(screen.getByRole('button', { name: '在画布上查看' })).toBeInTheDocument();
 });
 
+it('tells what it read from the request under understanding it, and keeps it', async () => {
+  const user = userEvent.setup();
+  skills.planFreely.mockResolvedValueOnce({
+    ...PLAN,
+    points: ['主题：雨夜的未来城市', '数量：两张'],
+  });
+  renderAgent();
+
+  await send(user, '雨夜的未来城市，做两张');
+
+  const understood = await screen.findByRole('list', { name: '理解到的要点' });
+  expect(understood).toHaveTextContent('主题：雨夜的未来城市数量：两张');
+  const stored = JSON.parse(
+    localStorage.getItem(AGENT_CONVERSATIONS_STORAGE_KEY) ?? '{}',
+  ) as Record<string, Array<{ points?: string[] }>>;
+  expect(Object.values(stored).flat()[0]?.points).toEqual(['主题：雨夜的未来城市', '数量：两张']);
+});
+
 it('says when a plan costs more credits than are left, and lets pictures be dropped to fit', async () => {
   const user = userEvent.setup();
   quotaMocks.remaining = 1;

@@ -84,7 +84,12 @@ function readSkillPlan(response: Response, payload: unknown): SkillPlan {
   ) {
     throw new ImageApiError(response.status, 'INVALID_RESPONSE', '技能接口返回了无法识别的响应。');
   }
-  return payload as unknown as SkillPlan;
+  // What the Agent understood is a courtesy: kept when it is a list of words, else dropped.
+  const { points, ...plan } = payload as unknown as SkillPlan & { points?: unknown };
+  const words = Array.isArray(points)
+    ? points.filter((point): point is string => typeof point === 'string')
+    : [];
+  return words.length > 0 ? { ...plan, points: words } : plan;
 }
 
 /** Has the server write one ready-to-generate prompt per output image of the skill. */

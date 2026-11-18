@@ -30,6 +30,8 @@ interface Step {
   key: string;
   text: string;
   state: StepState;
+  /** What the step found, one short line each, such as what was read from the request. */
+  detail?: readonly string[];
 }
 
 function seconds(ms: number): string {
@@ -96,6 +98,12 @@ function turnSteps(turn: AgentTurn, set: AgentSet | undefined): Step[] {
           : `选用技能「${turn.chosenSkill}」`,
       state: 'done',
     });
+  }
+  // What was read from the request goes under reading it, or under the skill it was read for.
+  const understood =
+    steps.find((step) => step.key === 'think') ?? steps.find((step) => step.key === 'skill');
+  if (understood !== undefined && turn.points !== undefined && turn.points.length > 0) {
+    understood.detail = turn.points;
   }
   const total = turn.plan?.steps.length ?? 0;
   if (turn.plan !== undefined) {
@@ -609,7 +617,16 @@ export function AgentThread({
                 {turnSteps(turn, set).map((step) => (
                   <li key={step.key} className="agent-step" data-state={step.state}>
                     <StepIcon state={step.state} />
-                    <span>{step.text}</span>
+                    <span className="agent-step__body">
+                      <span>{step.text}</span>
+                      {step.detail === undefined ? null : (
+                        <ul className="agent-step__points" aria-label="理解到的要点">
+                          {step.detail.map((point) => (
+                            <li key={point}>{point}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </span>
                   </li>
                 ))}
               </ol>

@@ -43,8 +43,11 @@ interface UseComposerSkillsOptions {
   resolution: ImageResolution;
   quality: ImageQuality;
   isShared: boolean;
-  /** Starts a planned run: the homepage opens it in a new session, the generate page in place. */
-  onPlanned: (title: string, request: SkillRunRequest) => void;
+  /**
+   * Starts a planned run: the homepage opens it in a new session, the generate page in place.
+   * `points` is what the Agent took from the request, when the server said.
+   */
+  onPlanned: (title: string, request: SkillRunRequest, points?: readonly string[]) => void;
   /**
    * Given, the hook reports each step and failure here instead of in toasts, and an Agent
    * run sends every attached image as a reference rather than the first alone.
@@ -137,7 +140,7 @@ export function useComposerSkills({
         return { label: output.label, settings };
       }),
     );
-    onPlanned(plan.title, { skillLabel: runLabel, steps });
+    onPlanned(plan.title, { skillLabel: runLabel, steps }, plan.points);
   };
 
   /** Uploads the skill's images once, has the server plan a prompt per output, and starts it. */

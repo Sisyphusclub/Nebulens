@@ -1,5 +1,13 @@
 import { sql } from 'drizzle-orm';
-import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import {
+  index,
+  integer,
+  primaryKey,
+  real,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 
 // --- Better Auth core tables ---
 // Schema mirrors better-auth.com/docs/concepts/database (sqlite + ms timestamps).
@@ -205,5 +213,72 @@ export const imageRecords = sqliteTable(
       t.createdAt,
       t.id,
     ),
+  }),
+);
+
+// --- Projects ---
+// A project keeps one piece of work together: the pictures made in it, the conversation
+// with the Agent, and where everything sits on the canvas.
+
+/** A generation that failed, kept with its settings so it can be tried again. */
+export interface ProjectTask {
+  id: string;
+  createdAt: string;
+  settings: Record<string, unknown>;
+  error?: string;
+}
+
+export const projects = sqliteTable(
+  'projects',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    /** Ids of the batches made in the project, oldest first, failed generations included. */
+    batchIds: text('batch_ids', { mode: 'json' }).$type<string[]>().notNull(),
+    tasks: text('tasks', { mode: 'json' }).$type<ProjectTask[]>().notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    /** When work was last done in the project; the list is ordered by it. */
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (t) => ({
+    byUserUpdated: index('projects_user_updated_idx').on(t.userId, t.updatedAt),
+  }),
+);
+
+export const projectTurns = sqliteTable(
+  'project_turns',
+  {
+    projectId: text('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    /** Unique within its project only: the page makes these ids. */
+    id: text('id').notNull(),
+    status: text('status').notNull(),
+    /** The request and what came of it, as the page keeps it. */
+    payload: text('payload', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.projectId, t.id] }),
+    byProjectCreated: index('project_turns_project_created_idx').on(t.projectId, t.createdAt),
+  }),
+);
+
+/** Where one picture, placeholder or failure card sits on a project's canvas. */
+export const canvasNodes = sqliteTable(
+  'canvas_nodes',
+  {
+    projectId: text('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    key: text('key').notNull(),
+    x: real('x').notNull(),
+    y: real('y').notNull(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.projectId, t.key] }),
   }),
 );

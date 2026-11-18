@@ -17,6 +17,7 @@ import { buildPromptRouter } from './routes/prompt.js';
 import { buildSkillsRouter } from './routes/skills.js';
 import { buildOpenAICompatRouter } from './routes/openaiCompat.js';
 import { buildOutputsRouter } from './routes/outputs.js';
+import { buildProjectsRouter } from './routes/projects.js';
 import { buildUserSettingsRouter } from './routes/userSettings.js';
 import type { DemoPromptCacheConfig } from './services/demoPromptCache.service.js';
 import type { AnalysisQueue } from './services/imageAnalysis.service.js';
@@ -134,6 +135,13 @@ export function createApp(deps: AppDeps): Express {
     buildHistoryRouter({
       ...(deps.authMiddleware !== undefined ? { authMiddleware: deps.authMiddleware } : {}),
       ...(deps.adminMiddleware !== undefined ? { adminMiddleware: deps.adminMiddleware } : {}),
+    }),
+  );
+  app.use(
+    '/api/projects',
+    buildProjectsRouter({
+      ...(deps.authMiddleware !== undefined ? { authMiddleware: deps.authMiddleware } : {}),
+      writeRateLimiter: rateLimiters.projectWrite,
     }),
   );
   app.use(

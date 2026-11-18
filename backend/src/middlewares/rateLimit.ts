@@ -14,6 +14,7 @@ export interface AppRateLimiters {
   settingsMutation: RequestHandler;
   promptEnhance: RequestHandler;
   skillPlan: RequestHandler;
+  projectWrite: RequestHandler;
   openAICompat: RequestHandler;
 }
 
@@ -35,6 +36,8 @@ export function createAppRateLimiters(): AppRateLimiters {
     settingsMutation: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 10, preferUserId: true }),
     promptEnhance: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 20, preferUserId: true }),
     skillPlan: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 20, preferUserId: true }),
+    // A page saves its project as the user works: each step of a run, each picture moved.
+    projectWrite: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 240, preferUserId: true }),
     openAICompat: createLimiter({ windowMs: ONE_MINUTE_MS, limit: 30 }),
   };
 }
